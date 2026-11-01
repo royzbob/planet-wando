@@ -23001,6 +23001,8 @@
       if (e.k === 'o' || e.k === 'b') { const o = e.k === 'o' ? cleanOutfit({ c: e.c, u: e.u }) : cleanBoard({ c: e.c, u: e.u }); return o && Number.isInteger(o.c) ? { k: e.k, u: o.u, name: o.name, r: o.r, obj: o } : null; }
       if (e.k === 't') { const D = TOOL_DESIGNS[e.d]; return D && Number.isInteger(e.d) && typeof e.u === 'string' && TOOL_OK_U.test(e.u) ? { k: 't', u: e.u, name: D.name, r: D.r, obj: { d: e.d } } : null; }
       if (e.k === 'g') { const g = goodsOf(e.t), n = e.n; return g && Number.isInteger(n) && n >= 1 && n <= 9999 ? { k: 'g', u: 'g:' + e.t, name: g.name(n), r: g.r, obj: { t: e.t, n } } : null; }
+      if (e.k === 'p') { const o = cleanOutfit(e.o && typeof e.o === 'object' ? Object.assign({}, e.o, { c: undefined }) : null); return o && typeof e.u === 'string' && /^p:[a-z0-9-]{1,24}:\d{1,3}$/.test(e.u) ? { k: 'p', u: e.u, name: o.name, r: clamp(o.tier || 0, 0, 2), obj: o } : null; }
+      if (e.k === 'h') { const c = plainFurnOk(e.t, e.c); return c >= 0 && typeof e.u === 'string' && /^[a-z0-9:._-]{1,40}$/i.test(e.u) ? { k: 'h', u: e.u, name: cap(furnName(FURN_BY[e.t], c)), r: 0, obj: { t: e.t, c } } : null; }
       if (e.k === 'm') { const r = mountRar(e.t); return r >= 0 && typeof e.u === 'string' && /^[a-z0-9:._-]{1,40}$/i.test(e.u) ? { k: 'm', u: e.u, name: FURN_BY[e.t].name, r, obj: { t: e.t, c: 0 } } : null; }
       if (e.k === 'f') { const d = furnCollOf(e.c); return d && typeof e.u === 'string' && /^[a-z0-9:._-]{1,40}$/i.test(e.u) ? { k: 'f', u: e.u, name: d.name, r: d.r, obj: { t: d.t, c: e.c } } : null; }
       const w = cleanWeapon(e); return w ? Object.assign(w, { k: 'w' }) : null;
@@ -23008,25 +23010,28 @@
     // A prize piece of furniture (k 'm': a mounted fish, the Harvest Scarecrow, the Snow Globe) goes by its design id. Its rarity:
     // a trophy's is its fish's (the rarer the fish, the rarer the trophy); a holiday prize is Epic. -1: not a prize piece.
     const mountRar = t => { if (typeof t !== 'string' || !/^[a-z][a-z-]{1,20}$/.test(t) || !Object.prototype.hasOwnProperty.call(FURN_BY, t) || !FURN_BY[t].prize) return -1; const F = ICE_FISH.find(F => 'mount-' + F[0] === t); return F ? clamp(F[2] + 1, 1, 4) : 3; };
+    // A shop piece of furniture (k 'h'): any catalog piece in one of its colours (not a Collector's piece, a prize or a wall). Its colour, or -1.
+    const plainFurnOk = (t, c) => { if (typeof t !== 'string' || !Object.prototype.hasOwnProperty.call(FURN_BY, t)) return -1; const d = FURN_BY[t]; if (d.prize || d.build || !Number.isInteger(c) || c < 0) return -1; return (d.pal === 'wood' ? c < FURN_WOODS.length : d.pal === 'fabric' ? c < FURN_FABRICS.length : c === 0) ? c : -1; };
     const mountWhat = t => (t.startsWith('mount-') ? ['fish trophy', 'Earned at Frostwood Lake'] : t === 'scarecrow' ? ['house decoration', 'A Harvest Festival prize'] : ['house decoration', 'A Winter Fest prize']);
     // Goods (k 'g'): a whole stack of something you gathered, by its kind (t) and how many (n): flowers of one colour, golden
     // flowers, or your bag of trash. They have no serial: the stack is what is offered.
     const goodsOf = t => (/^fl[0-4]$/.test(t) ? { name: n => cap(flowerWord(+t[2], n)), r: 0, have: () => gatherOf().gfl[+t[2]] || 0, add: n => { const F = gatherOf(); F.gfl[+t[2]] = clamp((F.gfl[+t[2]] || 0) + n, 0, 9999); } }
       : t === 'gold' ? { name: n => n + ' golden flower' + (n === 1 ? '' : 's'), r: 3, have: () => G.fan.ggd || 0, add: n => { G.fan.ggd = clamp((G.fan.ggd || 0) + n, 0, 9999); } }
       : t === 'trash' ? { name: n => 'Trash bag (' + n + ' piece' + (n === 1 ? '' : 's') + ')', r: 0, have: () => G.fan.gtr || 0, add: n => { G.fan.gtr = clamp((G.fan.gtr || 0) + n, 0, 999); } } : null);
-    const tradeItemOut = it => (it.k === 't' ? { k: 't', d: it.obj.d, u: it.u } : it.k === 'g' ? { k: 'g', t: it.obj.t, n: it.obj.n, u: it.u } : it.k === 'w' ? { k: 'w', c: it.c, u: it.u, q: it.q } : it.k === 'm' ? { k: 'm', t: it.obj.t, u: it.u } : it.k === 'f' ? { k: 'f', c: it.obj.c, u: it.u } : { k: it.k, c: it.obj.c, u: it.u });
+    const tradeItemOut = it => (it.k === 't' ? { k: 't', d: it.obj.d, u: it.u } : it.k === 'g' ? { k: 'g', t: it.obj.t, n: it.obj.n, u: it.u } : it.k === 'w' ? { k: 'w', c: it.c, u: it.u, q: it.q } : it.k === 'm' ? { k: 'm', t: it.obj.t, u: it.u } : it.k === 'f' ? { k: 'f', c: it.obj.c, u: it.u } : it.k === 'p' ? { k: 'p', o: it.obj, u: it.u } : it.k === 'h' ? { k: 'h', t: it.obj.t, c: it.obj.c, u: it.u } : { k: it.k, c: it.obj.c, u: it.u });
     // Everything of yours that can be traded: weapons; Collection outfits and boards; Collector's furniture in storage (one entry a piece).
     function tradeMine() {
       const out = G.dun.bag.map(w => Object.assign({}, w, { k: 'w' }));
-      G.outfits.forEach(o => { if (Number.isInteger(o.c)) out.push({ k: 'o', u: o.u, name: o.name, r: o.r, obj: o }); });
+      const pn = {};
+      G.outfits.forEach(o => { if (Number.isInteger(o.c)) out.push({ k: 'o', u: o.u, name: o.name, r: o.r, obj: o }); else if (typeof o.id === 'string') { const i = pn[o.id] = (pn[o.id] || 0) + 1; out.push({ k: 'p', u: 'p:' + o.id + ':' + i, name: o.name, r: clamp(o.tier || 0, 0, 2), obj: cleanOutfit(o) }); } });     // (shop and prize outfits too)
       G.boards.forEach(b => { if (Number.isInteger(b.c)) out.push({ k: 'b', u: b.u, name: b.name, r: b.r, obj: b }); });
       G.cards.forEach(k => out.push({ k: 'c', u: k.u, name: k.name, r: k.r, obj: k }));
       toolsOf().forEach(([u, d]) => out.push({ k: 't', u, name: TOOL_DESIGNS[d].name, r: TOOL_DESIGNS[d].r, obj: { d } }));
       ['fl0', 'fl1', 'fl2', 'fl3', 'fl4', 'gold', 'trash'].forEach(t => { const g = goodsOf(t), n = g.have(); if (n > 0) out.push({ k: 'g', u: 'g:' + t, name: g.name(n), r: g.r, obj: { t, n } }); });
-      Object.keys(G.home.inv).forEach(key => { const [t, ci] = key.split(':'), mr = ci === '0' ? mountRar(t) : -1; if (mr >= 0) { for (let i = 0; i < G.home.inv[key]; i++) out.push({ k: 'm', u: key + ':' + i, name: FURN_BY[t].name, r: mr, obj: { t, c: 0 } }); return; } const d = furnCollOf(Number(ci)); if (!d) return; for (let i = 0; i < G.home.inv[key]; i++) out.push({ k: 'f', u: key + ':' + i, name: d.name, r: d.r, obj: { t, c: Number(ci) } }); });
+      Object.keys(G.home.inv).forEach(key => { const [t, ci] = key.split(':'), mr = ci === '0' ? mountRar(t) : -1; if (mr >= 0) { for (let i = 0; i < G.home.inv[key]; i++) out.push({ k: 'm', u: key + ':' + i, name: FURN_BY[t].name, r: mr, obj: { t, c: 0 } }); return; } const pc = plainFurnOk(t, Number(ci)); if (pc >= 0 && String(pc) === ci) { for (let i = 0; i < G.home.inv[key]; i++) out.push({ k: 'h', u: key + ':' + i, name: cap(furnName(FURN_BY[t], pc)), r: 0, obj: { t, c: pc } }); return; } const d = furnCollOf(Number(ci)); if (!d) return; for (let i = 0; i < G.home.inv[key]; i++) out.push({ k: 'f', u: key + ':' + i, name: d.name, r: d.r, obj: { t, c: Number(ci) } }); });
       return out;
     }
-    const tradeHas = it => (it.k === 'w' ? G.dun.bag.some(x => x.u === it.u) : it.k === 'o' ? G.outfits.some(x => x.u === it.u) : it.k === 'b' ? G.boards.some(x => x.u === it.u) : it.k === 'c' ? G.cards.some(x => x.u === it.u) : it.k === 'g' ? goodsOf(it.obj.t).have() >= it.obj.n : it.k === 't' ? toolsOf().some(x => x[0] === it.u) : true);
+    const tradeHas = it => (it.k === 'w' ? G.dun.bag.some(x => x.u === it.u) : it.k === 'o' ? G.outfits.some(x => x.u === it.u) : it.k === 'b' ? G.boards.some(x => x.u === it.u) : it.k === 'c' ? G.cards.some(x => x.u === it.u) : it.k === 'g' ? goodsOf(it.obj.t).have() >= it.obj.n : it.k === 't' ? toolsOf().some(x => x[0] === it.u) : it.k === 'p' ? G.outfits.filter(o => !Number.isInteger(o.c) && o.id === it.obj.id).length >= Number(it.u.split(':')[2]) : true);
     function tradeRead(b) {                                  // one side of a trade, checked
       if (!b || typeof b !== 'object') return null;
       const w = (Array.isArray(b.w) ? b.w : []).slice(0, TRADE.MAXW).map(tradeItemIn).filter(Boolean);
@@ -23083,7 +23088,7 @@
       if (!m.w.length && !m.coins && !t.w.length && !t.coins) return 'Nothing is on the table yet.';
       if (m.coins > G.coins) return 'You do not have that many Coins.';
       if (!m.w.every(tradeHas)) return 'Something you offered is not yours any more.';
-      const fkeys = {}; m.w.forEach(x => { if (x.k === 'f' || x.k === 'm') { const key = furnKey(x.obj.t, x.obj.c); fkeys[key] = (fkeys[key] || 0) + 1; } });
+      const fkeys = {}; m.w.forEach(x => { if (x.k === 'f' || x.k === 'm' || x.k === 'h') { const key = furnKey(x.obj.t, x.obj.c); fkeys[key] = (fkeys[key] || 0) + 1; } });
       if (Object.keys(fkeys).some(key => (G.home.inv[key] || 0) < fkeys[key])) return 'A piece of furniture you offered is not in your storage any more.';
       if (D.bag.length - m.w.filter(x => x.k === 'w').length + t.w.filter(x => x.k === 'w').length > DUN.BAG) return 'Your weapon bag would be too full: offer more, or ask for less.';
       return '';
@@ -23107,11 +23112,12 @@
       D.eq = held && !gone.has(held.u) ? D.bag.indexOf(held) : -1;
       if (look.outfit && gone.has(look.outfit.u)) { look.outfit = null; lookChanged(); }
       G.outfits = G.outfits.filter(o => !(Number.isInteger(o.c) && gone.has(o.u)));
+      m.w.forEach(x => { if (x.k !== 'p') return; const i = G.outfits.findIndex(o => !Number.isInteger(o.c) && o.id === x.obj.id); if (i < 0) return; if (look.outfit === G.outfits[i] || (look.outfit && !Number.isInteger(look.outfit.c) && look.outfit.id === x.obj.id && G.outfits.filter(o => o.id === x.obj.id).length < 2)) { look.outfit = null; lookChanged(); } G.outfits.splice(i, 1); });
       if (G.board && gone.has(G.board.u)) { if (G.riding) toggleRide(); G.board = null; }
       G.boards = G.boards.filter(b => !(Number.isInteger(b.c) && gone.has(b.u)));
       G.cards = G.cards.filter(k => !gone.has(k.u)); if (G.card && gone.has(G.card)) G.card = null;
       m.w.forEach(x => { if (x.k === 'g') goodsOf(x.obj.t).add(-x.obj.n); if (x.k === 't') { G.fan.tl = toolsOf().filter(e => e[0] !== x.u); if (G.fan.th === x.u) G.fan.th = ''; } });
-      m.w.forEach(x => { if (x.k === 'f' || x.k === 'm') { const key = furnKey(x.obj.t, x.obj.c); if (--G.home.inv[key] <= 0) delete G.home.inv[key]; } });
+      m.w.forEach(x => { if (x.k === 'f' || x.k === 'm' || x.k === 'h') { const key = furnKey(x.obj.t, x.obj.c); if (--G.home.inv[key] <= 0) delete G.home.inv[key]; } });
       // what you get
       t.w.forEach(x => {
         if (x.k === 'w') { if (!D.bag.some(y => y.u === x.u)) { const w = Object.assign({}, x); delete w.k; D.bag.push(w); dunFound(D, w); } }
@@ -23120,6 +23126,8 @@
         else if (x.k === 'c') { if (!G.cards.some(y => y.u === x.u)) { G.cards.push(x.obj); collGot('c', x.obj.c); } }
         else if (x.k === 'g') goodsOf(x.obj.t).add(x.obj.n);
         else if (x.k === 't') { if (!toolsOf().some(e => e[0] === x.u)) toolsOf().push([x.u, x.obj.d]); }
+        else if (x.k === 'p') { const o = cleanOutfit(x.obj); if (o) G.outfits.push(o); }
+        else if (x.k === 'h') { const key = furnKey(x.obj.t, x.obj.c); G.home.inv[key] = Math.min(99, (G.home.inv[key] || 0) + 1); }
         else if (x.k === 'm') { const key = furnKey(x.obj.t, 0); G.home.inv[key] = Math.min(99, (G.home.inv[key] || 0) + 1); }
         else { const key = furnKey(x.obj.t, x.obj.c); G.home.inv[key] = Math.min(99, (G.home.inv[key] || 0) + 1); collGot('f', x.obj.c - FURN_COLL); }
       });
@@ -23214,6 +23222,8 @@
           text.append(nm, node('small', '', t === 'trash' ? 'Turn it in at the Recycling Yard' : t === 'gold' ? 'Rare: sells for ' + GATHER.goldPay + ' Coins each' : 'Flowers from the Village Green'), node('small', 'dun-from', 'The whole stack'));
           li.append(cv, text);
         }
+        else if (w.k === 'p') { const cv = el('canvas', 'coll-cv trade-cv', { 'aria-hidden': 'true', width: 66, height: 72 }); drawPortrait(cv, Object.assign({}, look, { outfit: w.obj })); text.append(nm, node('small', '', RARITIES[w.r][0] + ' outfit'), node('small', 'dun-from', w.obj.holiday ? 'A holiday outfit' : w.obj.price ? 'From the shops' : 'A prize')); li.append(cv, text); }
+        else if (w.k === 'h') { const cv = el('canvas', 'coll-cv trade-cv', { 'aria-hidden': 'true' }); cv.width = 112; cv.height = 112; drawFurnTile(cv, FURN_BY[w.obj.t], w.obj.c); text.append(nm, node('small', '', 'Furniture'), node('small', 'dun-from', 'From your storage')); li.append(cv, text); }
         else if (w.k === 'm') { const cv = el('canvas', 'coll-cv trade-cv', { 'aria-hidden': 'true' }); cv.width = 112; cv.height = 112; drawFurnTile(cv, FURN_BY[w.obj.t], 0); const [what, from] = mountWhat(w.obj.t); text.append(nm, node('small', '', RARITIES[w.r][0] + ' ' + what), node('small', 'dun-from', from)); li.append(cv, text); }
         else {
           const kind = w.k, d = collDef(kind, kind === 'f' ? w.obj.c - FURN_COLL : w.obj.c), cv = collCanvas(kind, d); cv.classList.add('trade-cv');
@@ -23237,7 +23247,8 @@
         const bar = node('div', 'trade-acts'), rd = el('button', 'btn', { type: 'button', 'data-tr': m.ready >= 0 ? 'unready' : 'ready' }), cx = el('button', 'btn', { type: 'button', 'data-tr': 'cancel' });
         rd.textContent = m.ready >= 0 ? 'Not ready' : 'Ready'; cx.textContent = 'Cancel trade'; bar.append(rd, cx); rows.push(bar);
         const offered = new Set(m.w.map(w => w.u)), bag = tradeMine().filter(w => !offered.has(w.u));
-        rows.push(node('div', 'mine-row mine-top', 'Your things: weapons, Collection outfits and boards, Collector\'s furniture in storage'));
+        rows.push(node('div', 'mine-row mine-top', 'Your things: outfits, boards, cards, tools, weapons, flowers, and furniture in your storage'));
+        if (G.home.rooms && G.home.rooms.some(R => R.items && R.items.some(it => !FURN_BY[it.t] || !FURN_BY[it.t].build))) rows.push(node('p', 'pet-hint', 'Furniture placed in your house can be traded once you put it back in storage (Decorate, then pick it up).'));
         if (!bag.length) rows.push(node('p', 'pet-hint', 'Nothing else that can be traded.'));
         bag.forEach(w => rows.push(row(w, 'on', 'Offer')));
       } else { const bar = node('div', 'trade-acts'), ok = el('button', 'btn', { type: 'button', 'data-tr': 'close' }); ok.textContent = 'Done'; bar.appendChild(ok); rows.push(bar); }
