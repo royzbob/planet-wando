@@ -4664,6 +4664,14 @@
   const SERVER_CAP = 40;                                   // a full server cannot be joined (unless you are already on it)
   const ACCT = () => (ONLINE_OWN() && window.claude.account && typeof window.claude.account.signIn === 'function' ? window.claude.account : null);   // email accounts (the stand-alone beta)
   const acctEmail = () => { try { const A = ACCT(); return A ? A.email() || '' : ''; } catch (e) { return ''; } };
+  // Why the stand-alone beta fell back to a guest: what the check found (most often Firestore not set up yet).
+  function guestWhy() {
+    const S = window.claude && window.claude.status;
+    if (!S) return '';
+    if (S.auth && S.auth.ok === false) return 'Why: ' + S.auth.why;
+    if (S.db && S.db.ok === false) return 'Why: ' + S.db.why;
+    return 'Your account did not answer in time: reload the page to try again.';
+  }
   // The Connection check: each part of playing online, working or not, and what to do about it.
   function connLines() {
     const C = window.claude, S = C && C.status, out = [];
@@ -4732,7 +4740,11 @@
       if (!user || !db) return guest;
       const uid = await user.id();
       if (!uid) return guest;
-      const doc = db.doc('data/users/' + uid + '/player'), snap = await doc.get(), body = snap && snap.exists ? snap.data() : null;
+      const doc = db.doc('data/users/' + uid + '/player');
+      let snap;
+      try { snap = await doc.get(); }
+      catch (e) { if (!ONLINE_OWN() || (e && e.code !== 'unavailable')) throw e; await new Promise(r => setTimeout(r, 1500)); snap = await doc.get(); }     // (the stand-alone beta: one more try if Firestore was only slow to wake)
+      const body = snap && snap.exists ? snap.data() : null;
       return { uid, doc, cloud: body && body.state && typeof body.state === 'object' ? { savedAt: Number(body.savedAt) || 0, state: body.state } : null };
     } catch (e) { return guest; }
   }
@@ -19244,7 +19256,7 @@
     const socialOn = () => !!soc.db && !!soc.uid;
     const socialWhy = () => (soc.down ? 'Friends and messages are not available right now.'
       : account.uid && !account.cloud ? 'Friends and messages need an account that can save here. Ask the owner of this Planet Wando to share it with you as an Editor.'
-      : !account.uid ? 'Friends and messages need a Planet Wando account, and you are playing as a guest.' : 'Connecting your friends list...');
+      : !account.uid ? 'Friends and messages need a Planet Wando account, and you are playing as a guest.' + (ONLINE_OWN() ? ' ' + guestWhy() : '') : 'Connecting your friends list...');
     const friendOf = id => G.friends.find(f => f.id === id) || null;
     const isFriend = id => { const f = friendOf(id); return !!f && f.ok; };
     const peerOf = id => { let hit = null; net.peers.forEach(p => { if (p.uid === id && !p.mine) hit = p; }); return hit; };     // that player, if they are on Planet Wando now
@@ -24959,7 +24971,7 @@
       status.textContent = existing ? 'Sign in to carry on, or sign up to start again.' : 'Sign up to make your player.';
       foot.textContent = acct.uid ? (ONLINE_OWN() ? 'Online: you can see and play with everyone in the beta.' : 'Signed in through your Claude account. No password needed.')
         : acct.slow ? 'Your account did not answer in time, so this visit is saved in this browser only.'
-        : 'Your player is saved in this browser.';
+        : 'Your player is saved in this browser.' + (ONLINE_OWN() ? ' ' + guestWhy() : '');
       show(existing ? 'in' : 'up');
     }).catch(() => guestNow('Something went wrong reading your account, so this visit is saved in this browser only.'));
   }
