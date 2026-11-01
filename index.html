@@ -1095,6 +1095,30 @@
     .dock .clock-text span { display: none; }
   }
   @media (max-width: 540px) { #app { --dock-h: 164px; } .emote-pop { right: auto; left: 0; } }
+  /* "Playing on": the picker, and what the phone and computer layouts change */
+  .scr-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font: 800 12px/1.2 var(--font-display); color: var(--ink); }
+  .scr-pick b { flex-basis: 100%; }
+  .gate-scr b { flex-basis: auto; margin-right: 4px; }
+  .scr-pick .scr-btn { flex: 1 1 auto; min-height: 36px; padding: 6px 8px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); font: 800 12px/1.1 var(--font-body); cursor: pointer; }
+  .scr-pick .scr-btn::after { content: none !important; }
+  .scr-pick .scr-btn[aria-pressed="true"] { background: var(--sun, #ffd84d); }
+  html[data-screen="pc"] .tpad { display: none !important; }
+  html[data-screen="pc"] .touch-hint { display: none !important; } html[data-screen="pc"] .keys-hint { display: inline !important; }
+  html[data-screen="phone"] .keys-hint { display: none !important; } html[data-screen="phone"] .touch-hint { display: inline !important; }
+  html[data-screen="phone"] #app { --dock-h: 112px; }
+  html[data-screen="phone"] .dock { flex-wrap: wrap; align-content: center; gap: 6px 8px; padding-left: 10px; }
+  html[data-screen="phone"] .dock-hub { position: static; width: 48px; height: 48px; border-width: 2px; box-shadow: none; }
+  html[data-screen="phone"] .hub-face { width: 40px; height: 40px; border-width: 2px; }
+  html[data-screen="phone"] .dock .chat { order: -1; flex-basis: 100%; max-width: none; }
+  html[data-screen="phone"] .dock .clock-text span { display: none; }
+  html[data-screen="phone"] .dock-btn { min-width: 44px; min-height: 44px; }
+  html[data-screen="phone"] .plate { top: 8px; left: 8px; gap: 6px; padding: 4px 8px 4px 6px; border-radius: 12px; }
+  html[data-screen="phone"] .plate svg { width: 20px; height: 20px; }
+  html[data-screen="phone"] .plate .plate-name { display: none; }
+  html[data-screen="phone"] .plate .plate-area, html[data-screen="phone"] .plate .plate-srv { font-size: 10px; }
+  html[data-screen="phone"] .chatbox { width: min(230px, calc(100% - 24px)); }
+  html[data-screen="phone"] .chatbox-log { height: 84px; }
+  @media (max-width: 540px) { html[data-screen="phone"] #app { --dock-h: 164px; } }
   /* The clock: time and date in the top-right corner, with a small card behind it; and quest rows on the phone */
   .clock {
     flex: none; display: flex; align-items: center; gap: 7px; padding: 4px 10px 4px 7px;
@@ -2519,6 +2543,11 @@
         <button id="snd-music" type="button" aria-pressed="true">Music</button>
         <button id="snd-fx" type="button" aria-pressed="true">Sound effects</button>
         <label class="snd-vol">Music volume <input id="snd-vol" type="range" min="0" max="100" value="60"></label>
+        <div class="scr-pick" role="group" aria-label="Screen"><b>Playing on</b>
+          <button class="scr-btn" type="button" data-scr="auto" aria-pressed="true">Auto</button>
+          <button class="scr-btn" type="button" data-scr="phone" aria-pressed="false">📱 Phone / tablet</button>
+          <button class="scr-btn" type="button" data-scr="pc" aria-pressed="false">💻 Computer</button>
+        </div>
       </div>
       <button id="phone-btn" class="dock-btn" type="button" aria-label="Phone" aria-controls="phone" aria-expanded="false" title="Phone">
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><rect x="8.6" y="5" width="6.8" height="5.6" rx="1"/><path d="M9 14h.01M12 14h.01M15 14h.01M9 17.5h.01M12 17.5h.01M15 17.5h.01"/></svg>
@@ -2889,6 +2918,11 @@
         <p>Each server is its own world: you see and play with the players on the same one. Your player, friends and mail come with you to every server, and you can switch any time from Who is here.</p>
         <ul id="gate-srv-list" class="srv-list"></ul>
         <div class="gate-actions"><button id="gate-srv-back" class="btn plain" type="button">Back</button></div>
+      </div>
+      <div class="scr-pick gate-scr" role="group" aria-label="Playing on"><b>Playing on</b>
+        <button class="scr-btn" type="button" data-scr="auto" aria-pressed="true">Auto</button>
+        <button class="scr-btn" type="button" data-scr="phone" aria-pressed="false">📱 Phone / tablet</button>
+        <button class="scr-btn" type="button" data-scr="pc" aria-pressed="false">💻 Computer</button>
       </div>
       <p id="gate-foot" class="gate-foot"></p>
     </div>
@@ -3909,6 +3943,17 @@
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const DEV = { touch: false };                           // this player is on a phone or tablet (set once they touch the screen; told to the others)
+  // Screen: 'auto' (the game works it out), 'phone' (phone or tablet layout: compact bars, the tap buttons, a wider view)
+  // or 'pc' (computer layout: no tap buttons). Kept in this browser; it sets <html data-screen="phone|pc">.
+  const SCREEN = { mode: 'auto' };
+  try { const v = localStorage.getItem('meadowmere-screen'); if (['auto', 'phone', 'pc'].includes(v)) SCREEN.mode = v; } catch (e) { /* a convenience */ }
+  const screenPhone = () => (SCREEN.mode === 'phone' ? true : SCREEN.mode === 'pc' ? false : DEV.touch);
+  function screenApply() {
+    try { document.documentElement.dataset.screen = screenPhone() ? 'phone' : 'pc'; } catch (e) { /* (no page: the tests) */ }
+    document.querySelectorAll('[data-scr]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scr === SCREEN.mode)));
+    if (typeof window !== 'undefined' && window.dispatchEvent && typeof Event === 'function') { try { window.dispatchEvent(new Event('resize')); } catch (e) { /* (the tests) */ } }
+  }
+  function screenSet(mode) { SCREEN.mode = ['phone', 'pc'].includes(mode) ? mode : 'auto'; try { localStorage.setItem('meadowmere-screen', SCREEN.mode); } catch (e) { /* (as above) */ } screenApply(); }
   const TOUCH_FIRST = (() => { try { return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); } catch (e) { return false; } })();   // a phone or tablet: say "tap", not "click"
   const TAU = Math.PI * 2;
   const SPEED = 235;                        // walk speed, world units per second
@@ -13476,7 +13521,7 @@
     spotBubble() {
       const h = this.nearSpot;
       if (!h) { if (this.spotTip) { this.spotTip.setVisible(false); this.spotTip.pill.setVisible(false); } return; }
-      const touch = !!(this.input && this.input.activePointer && this.input.activePointer.wasTouch) || TOUCH_FIRST;
+      const touch = screenPhone();
       const text = (touch ? '👆 Tap to open' : '👆 Click or press E');
       if (!this.spotTip) this.spotTip = this.pillTag(0, 0, text, 9000, '#2a1a6a');
       const T = this.spotTip, top = h.hit ? h.hit.y : h.y - 60, x = h.hit ? h.hit.x + h.hit.width / 2 : h.x;
@@ -16921,7 +16966,7 @@
       cam.setFollowOffset(0, 26);
       const fit = () => {
         const w = this.scale.width / DPR, h = this.scale.height / DPR;
-        const z = Math.max(clamp(Math.min(w, h) / 640, 0.7, 1.25), w / D.w, h / D.h);
+        const z = Math.max(clamp(Math.min(w, h) / 640, screenPhone() ? 0.6 : 0.7, 1.25), w / D.w, h / D.h);     // (phone layout: a little more of the world in view)
         cam.setZoom(z * DPR);
         // the bar at the bottom (and the round portrait standing up from it) covers the world's bottom edge: the camera may
         // go that much further, so every spot can be brought into view. At home, likewise under the chat box at the top.
@@ -19184,6 +19229,8 @@
     window.__meadowmere = game;
 
     const scene = () => game.scene.getScenes(true).find(s => s.ready) || null;   // whichever location is live
+    document.addEventListener('click', e => { const b = e.target && e.target.closest ? e.target.closest('[data-scr]') : null; if (!b || !b.dataset || !b.dataset.scr) return; screenSet(b.dataset.scr); const sc = scene(); if (sc && sc.fitCam) sc.fitCam(); if (sc && sc.note) { sc.noteUntil = 0; sc.note(SCREEN.mode === 'phone' ? '📱 Phone / tablet layout' : SCREEN.mode === 'pc' ? '💻 Computer layout' : 'Layout: picked for you', '#ffe9a8'); } });
+    screenApply();
     // ── phones and tablets: no pinch-zoom while you play. (The CSS above stops it in most browsers; Safari on iPhone and
     //    iPad needs its gesture events stopped too, and a two-finger move.) ──
     ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
@@ -19192,7 +19239,8 @@
     {
       const pad = document.getElementById('tpad'), ICON = { E: '✋', SPACE: '⛏️', F: '🎣', H: '🛹' };
       let touchy = TOUCH_FIRST; DEV.touch = touchy;
-      window.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' || e.pointerType === 'pen') touchy = true; else if (e.pointerType === 'mouse' && !TOUCH_FIRST) touchy = false; DEV.touch = touchy; }, true);
+      window.addEventListener('pointerdown', e => { const was = touchy; if (e.pointerType === 'touch' || e.pointerType === 'pen') touchy = true; else if (e.pointerType === 'mouse' && !TOUCH_FIRST) touchy = false; DEV.touch = touchy; if (was !== touchy && SCREEN.mode === 'auto') screenApply(); }, true);
+      screenApply();
       pad.addEventListener('click', e => {
         const b = e.target.closest('[data-k]'), s = scene();
         if (!b || !s || !s.keyActs || !s.keyActs[b.dataset.k]) return;
@@ -19200,7 +19248,7 @@
         b.blur();
       });
       setInterval(() => {
-        const s = scene(), show = touchy && !!s && !!s.touchActs && !busy();
+        const s = scene(), show = screenPhone() && !!s && !!s.touchActs && !busy();
         pad.hidden = !show;
         if (!show) return;
         const A = s.touchActs();
@@ -23526,7 +23574,7 @@
       if (!s || !s.pz) return null;
       return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
         boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
-        kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, sv: SRV.id, dv: DEV.touch ? 'm' : 'd', uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
+        kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
     }
     function netPush() {                                    // called ten times a second; only a change is sent
       if (!net.room) return;
@@ -23601,7 +23649,7 @@
       document.getElementById('net-srv').hidden = !net.room || !net.live;
       document.getElementById('net-conn').hidden = !ONLINE_OWN(); if (ONLINE_OWN()) connPaint(document.getElementById('net-conn-list'));
       if (net.room && net.live) srvRows(document.getElementById('net-srv-list'), true);
-      netList.replaceChildren(row((DEV.touch ? '📱 ' : '💻 ') + (G.name || 'You') + (G.name ? ' (you)' : ''), LOCS[here].name), ...others.map(p => {
+      netList.replaceChildren(row((screenPhone() ? '📱 ' : '💻 ') + (G.name || 'You') + (G.name ? ' (you)' : ''), LOCS[here].name), ...others.map(p => {
         const acts = node('span', 'net-acts'), f = p.uid ? friendOf(p.uid) : null;
         if (!p.mine && p.uid && socialOn() && !f) { const add = el('button', 'btn', { type: 'button', 'data-add': p.uid }); add.textContent = soc.reqs.some(r => r.from === p.uid) ? 'Accept friend' : 'Add friend'; acts.appendChild(add); }
         if (!p.mine && p.uid && socialOn() && p.loc === here) { const tb = el('button', 'btn', { type: 'button', 'data-trade': p.uid }); tb.textContent = 'Trade'; acts.appendChild(tb); }
