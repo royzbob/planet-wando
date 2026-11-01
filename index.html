@@ -1770,6 +1770,17 @@
     .keys-hint { display: none; }
     .touch-hint { display: inline; }
   }
+  /* Phones and tablets: big round buttons for what the keyboard's E, Space, F and H do, shown only when they would do something */
+  .tpad { position: absolute; right: max(12px, env(safe-area-inset-right)); bottom: calc(var(--dock-h) + 12px); z-index: 30; display: flex; flex-direction: column-reverse; align-items: center; gap: 10px; pointer-events: none; }
+  .tpad[hidden], .tp-btn[hidden] { display: none; }
+  .tp-btn { pointer-events: auto; width: 62px; height: 62px; border-radius: 50%; border: 3px solid var(--ink); background: #fff; color: var(--ink); box-shadow: 0 4px 0 rgba(26, 16, 64, 0.45); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 0; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; cursor: pointer; }
+  .tp-btn i { font-style: normal; font-size: 22px; line-height: 1; }
+  .tp-btn span { font: 800 11px/1 var(--font-body); }
+  .tp-btn.main { width: 76px; height: 76px; background: linear-gradient(#fff36a, #ffc21a); }
+  .tp-btn.main i { font-size: 28px; }
+  .tp-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(26, 16, 64, 0.45); }
+  html, body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  button, a, input, select { touch-action: manipulation; }
   .fail {
     position: absolute; inset: 0; margin: auto; height: max-content;
     max-width: 32ch; padding: 16px; text-align: center;
@@ -2309,6 +2320,12 @@
 
 <div id="app">
   <div id="stage" role="application" aria-label="Planet Wando village green. Walk with W, A, S, D or the arrow keys."></div>
+  <div id="tpad" class="tpad" role="group" aria-label="Actions" hidden>
+    <button id="tp-SPACE" class="tp-btn" type="button" data-k="SPACE" hidden><i>⛏️</i><span>Dig</span></button>
+    <button id="tp-F" class="tp-btn" type="button" data-k="F" hidden><i>🎣</i><span>Reel</span></button>
+    <button id="tp-H" class="tp-btn" type="button" data-k="H" hidden><i>🛹</i><span>Ride</span></button>
+    <button id="tp-E" class="tp-btn main" type="button" data-k="E" hidden><i>✋</i><span>Use</span></button>
+  </div>
   <div class="vignette"></div>
 
   <div class="plate">
@@ -3883,6 +3900,7 @@
   const TEX = 2;                            // procedural textures are baked at 2x for crisp edges
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const TOUCH_FIRST = (() => { try { return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); } catch (e) { return false; } })();   // a phone or tablet: say "tap", not "click"
   const TAU = Math.PI * 2;
   const SPEED = 235;                        // walk speed, world units per second
   const FOOT = 9;                           // feet sit this far below the collision circle's centre
@@ -13444,6 +13462,38 @@
     // A hotspot opens a panel when the player walks into its circle, or clicks inside its hit rectangle.
     // extra.door names a location: walking into that hotspot goes there (a doorway) rather than opening a panel.
     hotspot(kind, x, y, r, hit, extra) { this.hotspots.push(Object.assign({ kind, x, y, r, hit, inside: null }, extra)); }
+    // The bubble over the thing you are standing by: "Tap to open" (touch) or "Click or press E" (keyboard and mouse).
+    spotBubble() {
+      const h = this.nearSpot;
+      if (!h) { if (this.spotTip) { this.spotTip.setVisible(false); this.spotTip.pill.setVisible(false); } return; }
+      const touch = !!(this.input && this.input.activePointer && this.input.activePointer.wasTouch) || TOUCH_FIRST;
+      const text = (touch ? '👆 Tap to open' : '👆 Click or press E');
+      if (!this.spotTip) this.spotTip = this.pillTag(0, 0, text, 9000, '#2a1a6a');
+      const T = this.spotTip, top = h.hit ? h.hit.y : h.y - 60, x = h.hit ? h.hit.x + h.hit.width / 2 : h.x;
+      if (T.text !== text) { T.setText(text); this.pillFit(T); }
+      const bob = REDUCED ? 0 : Math.sin(this.time.now / 260) * 3;
+      this.pillMove(T, x, Math.max(8, top - 30 + bob)); T.setVisible(true); T.pill.setVisible(true);
+    }
+    // For the on-screen buttons: what E, Space, F and H would do right now ('' = nothing, so the button hides).
+    touchActs() {
+      const fx = this.pz.x, fy = this.pz.y + FOOT, out = { E: '', SPACE: '', F: '', H: '' };
+      try {
+        if (this.nearSpot && this.nearSpot.inside) out.E = 'Open';
+        else if (this.homeRecs && !(this.homeEdit && this.homeEdit.on) && (this.seated || this.homeNear())) out.E = this.seated ? 'Get up' : 'Use';
+        else if (this.mineNodes && G.mine.tool !== 'hammer' && this.mineTarget()) out.E = 'Mine';
+        else if (this.seats && this.seats.length && (this.seated || this.seatNear())) out.E = this.seated ? 'Get up' : 'Sit';
+        else if (this.dun && this.chests && this.chests.some(q => !q.open && Math.hypot(q.x - fx, q.y - fy) < 90)) out.E = 'Open';
+        else if (this.displays && this.displays.some(d => Math.hypot(fx - d.x, fy - d.y) < 76)) out.E = 'Try on';
+        else if (this.signs && this.signs.some(q => Math.hypot(fx - q.x, fy - q.y) < 84)) out.E = 'Read';
+        if (G.riding && G.board && G.board.kind === 'skate' && !this.boating) out.SPACE = 'Jump';
+        else if (G.riding && G.board && G.board.kind === 'car' && !this.boating) out.SPACE = 'Honk';
+        else if (this.loc === 'beach' && G.shovel && !this.boating && !this.fish && !this.onPier()) out.SPACE = 'Dig';
+        if (this.fish) out.F = this.fish.state === 'bite' ? 'Strike!' : 'Reel';
+        if (!this.dun && G.board) out.H = G.riding ? 'Hop off' : 'Ride';
+      } catch (e) { /* (a place without some of these) */ }
+      return out;
+    }
+    spotOpen(h) { if (h && ui.onHotspot) { sfx.tick(); ui.onHotspot(h.kind, true, h.spot); } }
     addPad(x, y) {
       this.add.image(x, y, 'pad').setScale(1 / TEX).setDepth(-700);
       const ship = this.prop('rocket', x, y - 6, 178 / 190, { shadow: [22, 4, 150, 60], solids: [[0, -14, 34]] });
@@ -16939,10 +16989,14 @@
           } else if (ui.onHotspot) ui.onHotspot(dp.kind || 'tailor', true, dp.id);
           return;
         }
+        if (this.nearSpot && this.spotTip && this.spotTip.visible) {           // tapped the "Tap to open" bubble
+          const T = this.spotTip, w = Math.max(80, T.width + 24);
+          if (Math.abs(wp.x - T.x) < w / 2 && wp.y > T.y - 10 && wp.y < T.y + 34) { this.spotOpen(this.nearSpot); return; }
+        }
         for (const h of this.hotspots) {                                       // clicked the ship, a shop or a building
           if (!h.hit.contains(wp.x, wp.y)) continue;
           if (h.door || h.room || h.hopper || h.troom !== undefined) { this.click = null; this.digOnArrive = false; this.pickOnArrive = null; this.setTarget(h.x, h.y + 10); }   // walk to the doorway
-          else if (ui.onHotspot) ui.onHotspot(h.kind, true);
+          else this.spotOpen(h);
           return;
         }
         // Rod in hand by the water: a click anywhere on the water throws the line to that spot. (To steer a boat by clicking,
@@ -16997,9 +17051,11 @@
       });
       this.input.on('pointerupoutside', () => { this.steering = false; this.fightClick = null; });
 
-      this.input.keyboard.on('keydown-SPACE', ev => {
+      this.keyActs = {};                                     // (the same actions, for the on-screen buttons on phones and tablets)
+      const onKey = (k, f) => { this.keyActs[k] = f; this.input.keyboard.on('keydown-' + k, f); };
+      onKey('SPACE', ev => {
         const a = document.activeElement;
-        if ((ev && ev.repeat) || isTyping() || busy() || (a && a.tagName === 'BUTTON')) return;
+        if ((ev && ev.repeat) || isTyping() || busy() || (a && a.tagName === 'BUTTON' && !(ev && ev.touch))) return;
         if (G.riding && G.board && G.board.kind === 'skate' && !this.boating && !(this.loc === 'beach' && G.equipped)) {   // on a skateboard, Space pops an ollie
           if (this.time.now - this.ollieAt > 540) { this.ollieAt = this.time.now; this.landed = false; sfx.clack(); }
           return;
@@ -17014,18 +17070,19 @@
         if (!G.equipped) { holdTool('shovel'); if (ui.onState) ui.onState(); }    // Space takes the shovel out and digs where you stand
         this.dig();
       });
-      this.input.keyboard.on('keydown-H', ev => {            // hop on or off the hoverboard
+      onKey('H', ev => {            // hop on or off the hoverboard
         if ((ev && ev.repeat) || isTyping() || busy() || this.dun) return;          // (in the crypt, H is a potion)
         if (!toggleRide()) this.note('No board yet. The skate shop and Hover Hub are in Cosmo Mall, and Wando Motors sells cars on the Village Green.');
       });
-      this.input.keyboard.on('keydown-F', ev => {            // fishing: strike on a bite, or pull the line in
+      onKey('F', ev => {            // fishing: strike on a bite, or pull the line in
         if ((ev && ev.repeat) || isTyping() || busy() || (!this.D.pier && !(this.spots && this.spots.length))) return;
         this.reelIn();
       });
-      this.input.keyboard.on('keydown-E', ev => {            // interaction key: read (or put away) a signpost you are standing by
+      onKey('E', ev => {            // interaction key: read (or put away) a signpost you are standing by
         if ((ev && ev.repeat) || isTyping() || busy()) return;
         const fx = this.pz.x, fy = this.pz.y + FOOT, now = this.time.now;
         this.signs.forEach(s => { if (Math.hypot(fx - s.x, fy - s.y) < 84) { s.until = s.until > now ? 0 : now + 6000; sfx.thud(); } });
+        if (this.nearSpot && this.nearSpot.inside) this.spotOpen(this.nearSpot);     // ...or open the shop, game or ship you are standing by
         const dp = this.displays.find(d => Math.hypot(fx - d.x, fy - d.y) < 76);     // ...or try on the mannequin you are standing by
         if (dp && ui.onHotspot) ui.onHotspot(dp.kind || 'tailor', true, dp.id);
         if (this.dun) { const ch = this.chests.find(q => !q.open && Math.hypot(q.x - fx, q.y - fy) < 90); if (ch) this.dunOpen(ch); }     // ...or open the chest you are standing by
@@ -18854,19 +18911,23 @@
       }
       if (!REDUCED) for (const c of this.clouds) { c.img.x += c.v * dt; if (c.img.x > this.D.w + 800) c.img.x = -800; }
 
-      // ── hotspots: walking into the ship's ring or up to the shop opens its panel, walking away closes it ──
+      // ── hotspots: doorways take you through when you walk into them. Everything else (the ship, shops, games...) waits
+      //    to be clicked or tapped (or E pressed while you stand by it): standing by one shows a "tap" bubble over it,
+      //    and walking away closes its panel. ──
       if (!this.leaving) for (const h of this.hotspots) {
         const inside = Math.hypot(fx - h.x, fy - h.y) < h.r;
-        if (h.inside === null) h.inside = inside;
+        if (h.inside === null) { h.inside = inside; if (inside && !(h.door || h.room || h.hopper || h.troom !== undefined)) this.nearSpot = h; }
         else if (inside !== h.inside) {
           h.inside = inside;
           if (h.door) { if (inside) { this.travelTo(h.door); break; } }       // a doorway: go through it
           else if (h.room) { if (inside) { this.homeGo(h.room); break; } }    // a door to the next room of the house
           else if (h.troom !== undefined) { if (inside) { this.tradeRoomGo(h.troom); break; } }     // a door to another room of the Manor
           else if (h.hopper) { if (inside) this.mineUnload(); }              // the mine's hopper: tip the cart
-          else if (ui.onHotspot) ui.onHotspot(h.kind, inside, h.spot);
+          else if (inside) this.nearSpot = h;                                // close by: show the bubble (it opens on a click, a tap or E)
+          else { if (this.nearSpot === h) this.nearSpot = null; if (ui.onHotspot) ui.onHotspot(h.kind, false, h.spot); }
         }
       }
+      this.spotBubble();
       for (const d of this.displays) d.tag.setVisible(Math.hypot(fx - d.x, fy - d.y) < 76);   // a mannequin names its outfit when you stand by it
 
       // ── signposts: the plaque shows after E or a tap, or while a mouse hovers the sign; a prompt shows when close ──
@@ -19113,6 +19174,29 @@
     window.__meadowmere = game;
 
     const scene = () => game.scene.getScenes(true).find(s => s.ready) || null;   // whichever location is live
+    // ── phones and tablets: the action buttons (shown once the screen is touched, or on a touch-first device) ──
+    {
+      const pad = document.getElementById('tpad'), ICON = { E: '✋', SPACE: '⛏️', F: '🎣', H: '🛹' };
+      let touchy = TOUCH_FIRST;
+      window.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' || e.pointerType === 'pen') touchy = true; else if (e.pointerType === 'mouse' && !TOUCH_FIRST) touchy = false; }, true);
+      pad.addEventListener('click', e => {
+        const b = e.target.closest('[data-k]'), s = scene();
+        if (!b || !s || !s.keyActs || !s.keyActs[b.dataset.k]) return;
+        s.keyActs[b.dataset.k]({ touch: true, repeat: false });
+        b.blur();
+      });
+      setInterval(() => {
+        const s = scene(), show = touchy && !!s && !!s.touchActs && !busy();
+        pad.hidden = !show;
+        if (!show) return;
+        const A = s.touchActs();
+        Object.keys(A).forEach(k => {
+          const b = document.getElementById('tp-' + k); if (!b) return;
+          b.hidden = !A[k];
+          if (A[k]) { const lab = b.querySelector('span'), ic = b.querySelector('i'); if (lab.textContent !== A[k]) lab.textContent = A[k]; const want = k === 'SPACE' ? (A[k] === 'Dig' ? '⛏️' : A[k] === 'Honk' ? '📯' : '⤴️') : k === 'H' && A[k] === 'Hop off' ? '⬇️' : ICON[k]; if (ic.textContent !== want) ic.textContent = want; b.setAttribute('aria-label', A[k]); }
+        });
+      }, 200);
+    }
     new ResizeObserver(() => {
       const [w, h] = size();
       if (w !== game.scale.width || h !== game.scale.height) game.scale.resize(w, h);
