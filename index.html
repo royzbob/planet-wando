@@ -2353,6 +2353,36 @@
   @keyframes cb-back { from { transform: rotateY(0); opacity: 1; } to { transform: rotateY(178deg); opacity: 0.2; } }
   @media (prefers-reduced-motion: reduce) { .cb-flip { display: none; } .cb-open { animation: none; } }
   @media (max-width: 640px) { .cb-pages { grid-template-columns: 1fr; } .cb-page.right { box-shadow: none; } .cb-book { padding-right: 36px; } .cb-tabs { --cbmin: 44px; } .cb-grid { gap: 6px; } .cb-burst { width: 84px; height: 84px; font-size: 10px; } }
+
+  /* ── Fitting phones and tablets (checked at iPhone, Android and iPad sizes, upright and sideways) ── */
+  .net-list li > .net-dot { flex: none; }                  /* (the online dot stays a dot) */
+  .clock-pop, .net-pop { max-height: calc(100% - var(--dock-h) - 24px); overflow: hidden auto; }
+  #app { padding-bottom: env(safe-area-inset-bottom); }
+  @media (max-width: 520px) {                              /* the start screen's menu: two rows instead of cut-off words */
+    .gate-nav { flex-wrap: wrap; }
+    .gate-nav button { flex: 1 1 30%; font-size: 11px; letter-spacing: 0.02em; padding: 6px 2px; }
+  }
+  /* the pop-ups over the bar (emotes, sound and settings): the whole width of the screen, scrolling if they are tall */
+  html[data-screen="phone"] .emote-pop { position: fixed; left: 8px; right: 8px; bottom: calc(var(--dock-h) + 10px); width: auto; max-width: none; max-height: calc(100% - var(--dock-h) - 24px); overflow: hidden auto; z-index: 70; }
+  html[data-screen="phone"] .emo-grid { grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); }
+  @media (max-width: 540px) {                              /* an upright phone */
+    html[data-screen="phone"] #app { --dock-h: 166px; }
+    html[data-screen="phone"] .clock { padding: 4px 6px; }
+    html[data-screen="phone"] .clock .clock-text { display: none; }     /* (the clock as a button: the time is in its pop-up) */
+    html[data-screen="phone"] .chatbox { top: 44px; left: 8px; right: 8px; width: auto; }   /* (under the place sign, not on top of it) */
+    html[data-screen="phone"] .hint { font-size: 12px; }
+  }
+  @media (max-height: 500px) and (orientation: landscape) { /* a phone on its side: one slim bar, and a small chat box */
+    html[data-screen="phone"] #app { --dock-h: 62px; }
+    html[data-screen="phone"] .dock { flex-wrap: nowrap; gap: 6px; }
+    html[data-screen="phone"] .dock .chat { order: 0; flex: 1 1 140px; min-width: 120px; }
+    html[data-screen="phone"] .dock-hub { width: 44px; height: 44px; }
+    html[data-screen="phone"] .hub-face { width: 36px; height: 36px; }
+    html[data-screen="phone"] .clock .clock-text { display: none; }
+    html[data-screen="phone"] .chatbox { width: min(230px, 40%); }
+    html[data-screen="phone"] .chatbox-log { height: 52px; }
+    html[data-screen="phone"] .tp-btn { width: 52px; height: 52px; } html[data-screen="phone"] .tp-btn.main { width: 62px; height: 62px; }
+  }
 </style>
 
 <div id="app">
