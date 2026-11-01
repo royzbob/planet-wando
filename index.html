@@ -38,6 +38,9 @@
 
   // When something is not set up yet, why says so in plain words (the game shows it under the server list).
   var api = { platform: 'firebase', why: '' };
+  // A check of each part, for the game's Connection check: ok true / false / null (not known yet), and why (plain words).
+  var status = api.status = { auth: { ok: null, why: '' }, room: { ok: null, why: '' }, send: { ok: null, why: '' }, db: { ok: null, why: '' }, email: '' };
+  function mark(part, ok, why) { status[part].ok = ok; status[part].why = why || ''; }
   var WHY = {
     'auth/operation-not-allowed': 'Anonymous sign-in is off. In Firebase: Authentication > Sign-in method > Anonymous > Enable.',
     'auth/admin-restricted-operation': 'Anonymous sign-in is off. In Firebase: Authentication > Sign-in method > Anonymous > Enable.',
@@ -48,10 +51,11 @@
   var signedIn = new Promise(function (resolve) {
     var done = false;
     auth.onAuthStateChanged(function (u) {
-      if (u) { if (!done) { done = true; resolve(u); } return; }
+      if (u) { mark('auth', true); status.email = u.email || ''; if (!done) { done = true; resolve(u); } return; }
       auth.signInAnonymously().catch(function (e) {
         var code = e && e.code || '';
         api.why = WHY[code] || 'Could not sign in to Firebase (' + (code || (e && e.message) || 'unknown error') + ').';
+        mark('auth', false, api.why);
         if (!done) { done = true; resolve(null); }
       });
     });
@@ -68,19 +72,27 @@
   }
   function dec(b) { if (!b) return b; if (typeof b._j === 'string') { try { return JSON.parse(b._j); } catch (e) { return null; } } return b; }
   function snapDoc(d) { return { id: d.id, exists: d.exists, data: function () { return d.exists ? dec(d.data()) : undefined; } }; }
+  var DBWHY = {
+    'permission-denied': 'Firestore refused (its rules). In Firebase: Firestore Database > Rules: paste firestore.rules and Publish.',
+    'not-found': 'There is no Firestore database yet. In Firebase: Build > Firestore Database > Create database.',
+    'failed-precondition': 'Firestore is not set up yet. In Firebase: Build > Firestore Database > Create database.',
+    'unavailable': 'Could not reach Firestore. If it is not created yet: Build > Firestore Database > Create database.'
+  };
+  function dbOk(x) { mark('db', true); return x; }
+  function dbErr(e) { var c = e && e.code || ''; mark('db', false, DBWHY[c] || 'Firestore error (' + (c || 'unknown') + ').'); throw e; }
   function snapQuery(s) { return { docs: s.docs.map(snapDoc), size: s.size, empty: s.empty }; }
   var pendingSaves = {};
   function ref(r) {
     var isSave = /^data\/users\/[^/]+\/player$/.test(r.path);
     return {
       id: r.id, path: r.path,
-      get: function () { return r.get().then(snapDoc); },
+      get: function () { return r.get().then(snapDoc).then(dbOk, dbErr); },
       set: function (o) {
-        if (!isSave) return r.set(enc(o));
+        if (!isSave) return r.set(enc(o)).then(dbOk, dbErr);
         var p = pendingSaves[r.path] || (pendingSaves[r.path] = { last: 0, data: null, timer: 0 });
         p.data = o;
         var wait = Math.max(0, p.last + SAVE_MS - Date.now());
-        if (!wait && !p.timer) { p.last = Date.now(); p.data = null; return r.set(enc(o)); }
+        if (!wait && !p.timer) { p.last = Date.now(); p.data = null; return r.set(enc(o)).then(dbOk, dbErr); }
         if (!p.timer) p.timer = setTimeout(function () { p.timer = 0; p.last = Date.now(); var d = p.data; p.data = null; if (d) r.set(enc(d)).catch(function () {}); }, wait || SAVE_MS);
         return Promise.resolve();
       },
@@ -95,7 +107,7 @@
       where: function (a, b, c) { return query(q.where(a, b, c)); },
       orderBy: function (a, b) { return query(q.orderBy(a, b)); },
       limit: function (n) { return query(q.limit(n)); },
-      get: function () { return q.get().then(snapQuery); },
+      get: function () { return q.get().then(snapQuery).then(dbOk, dbErr); },
       onSnapshot: function (f, e) { return q.onSnapshot(function (s) { f(snapQuery(s)); }, e); },
       doc: function (id) { return ref(q.doc(id)); }
     };
@@ -111,14 +123,19 @@
     var peersRef = rtdb.ref('rooms/' + ROOM + '/peers'), mine = peersRef.child(tab);
     var peers = {}, peerCbs = [], connCbs = [], latest = null, sentText = '', lastAt = 0, timer = 0, offset = 0;
     rtdb.ref('.info/serverTimeOffset').on('value', function (s) { offset = s.val() || 0; });
-    mine.onDisconnect().remove();
+    var dcSet = false;
     function write() {
       timer = 0;
       if (!latest) return;
       var text = JSON.stringify(latest);
       if (text === sentText && Date.now() - lastAt < HEARTBEAT_MS) return;
       sentText = text; lastAt = Date.now();
-      mine.set({ by: uid, p: text, at: firebase.database.ServerValue.TIMESTAMP }).catch(function () {});
+      mine.set({ by: uid, p: text, at: firebase.database.ServerValue.TIMESTAMP }).then(function () {
+        mark('send', true);
+        if (!dcSet) { dcSet = true; mine.onDisconnect().remove().catch(function () { dcSet = false; }); }     // (gone when the page closes; set once the spot is ours)
+      }, function (e) {
+        mark('send', false, 'The Realtime Database would not take your position (' + (e && e.code || 'denied') + '). In Firebase: Realtime Database > Rules: paste database.rules.json and Publish.');
+      });
     }
     setInterval(function () { if (latest && Date.now() - lastAt >= HEARTBEAT_MS) write(); }, 5000);
     var notifyQueued = false;
@@ -140,6 +157,7 @@
     function blocked(e) {                               // (the Realtime Database refused: it is missing, or its rules were not pasted in)
       if (isLost) return; isLost = true;
       api.why = 'The Realtime Database refused to connect (' + (e && e.code || 'permission denied') + '). In Firebase: create the Realtime Database, then paste database.rules.json into its Rules tab and Publish.';
+      mark('room', false, api.why);
       lostCbs.forEach(function (f) { try { f(); } catch (x) { /* (the game's own handler) */ } });
     }
     peersRef.on('child_added', take, blocked);
@@ -150,7 +168,8 @@
     var everOn = false;
     rtdb.ref('.info/connected').on('value', function (s) {
       var on = !!s.val(); if (on) everOn = true;
-      if (on) { mine.onDisconnect().remove(); sentText = ''; if (latest) write(); }
+      if (on && !isLost) mark('room', true);
+      if (on) { dcSet = false; sentText = ''; if (latest) write(); }
       connCbs.forEach(function (f) { try { f(on); } catch (e) { /* (the game's own handler) */ } });
     });
     return {
@@ -164,6 +183,38 @@
       emit: function () { return Promise.resolve(); }, on: function () { return function () {}; }
     };
   }
+
+  // ── accounts with an email and password: the player you have now is kept when you add one (the anonymous account is
+  //    linked to it, so nothing moves); on another device, signing in brings that player back. ──
+  var AWHY = {
+    'auth/email-already-in-use': 'That email already has an account. Use Sign in instead.',
+    'auth/credential-already-in-use': 'That email already has an account. Use Sign in instead.',
+    'auth/invalid-email': 'That does not look like an email address.',
+    'auth/weak-password': 'Pick a password of at least 6 characters.',
+    'auth/missing-password': 'Type your password.',
+    'auth/wrong-password': 'Wrong email or password.',
+    'auth/invalid-credential': 'Wrong email or password.',
+    'auth/invalid-login-credentials': 'Wrong email or password.',
+    'auth/user-not-found': 'Wrong email or password.',
+    'auth/too-many-requests': 'Too many tries. Wait a few minutes and try again.',
+    'auth/operation-not-allowed': 'Email sign-in is off. In Firebase: Authentication > Sign-in method > Email/Password > Enable.',
+    'auth/requires-recent-login': 'Sign in again first, then try that.',
+    'auth/network-request-failed': 'Could not reach the sign-in service. Check your internet connection.'
+  };
+  function aerr(e) { var c = e && e.code || ''; var m = AWHY[c] || 'That did not work (' + (c || 'unknown error') + ').'; var x = new Error(m); x.code = c; throw x; }
+  function okEmail(u) { status.email = (u && u.email) || ''; return status.email; }
+  api.account = {
+    email: function () { return auth.currentUser && auth.currentUser.email || ''; },
+    // add an email and password to the player you have now (it stays the same player, the same id)
+    protect: function (email, pw) {
+      var u = auth.currentUser; if (!u) return Promise.reject(new Error('Not signed in yet. Wait a moment and try again.'));
+      return u.linkWithCredential(firebase.auth.EmailAuthProvider.credential(String(email).trim(), String(pw))).then(function (c) { return okEmail(c.user); }, aerr);
+    },
+    // sign in to an account made before (on this or another device): the page reloads into it
+    signIn: function (email, pw) { return auth.signInWithEmailAndPassword(String(email).trim(), String(pw)).then(function (c) { return okEmail(c.user); }, aerr); },
+    reset: function (email) { return auth.sendPasswordResetEmail(String(email).trim()).then(function () { return true; }, aerr); },
+    signOut: function () { return auth.signOut().then(function () { return true; }); }
+  };
 
   var roomP = null;
   window.claude = api;
@@ -1176,6 +1227,16 @@
   .gate-actions { display: flex; gap: 8px; }
   .gate-actions .gate-go { flex: 1; }
   .gate-foot { opacity: 0.8; text-align: center; }
+  /* email accounts and the connection check */
+  .gate-acct { margin: 0; padding: 8px 10px; border: 2px dashed var(--ink); border-radius: 12px; background: #fff7c2; font: 700 13px/1.4 var(--font-body); }
+  .gate-acct.safe { border-style: solid; background: #e4ffd8; }
+  .gate-acct .btn { margin-top: 6px; padding: 5px 12px; font-size: 13px; }
+  .gate-linkish { padding: 0; border: 0; background: none; color: #3b5bdb; font: 800 13px/1.4 var(--font-body); text-decoration: underline; cursor: pointer; }
+  .conn-check { font: 700 12px/1.4 var(--font-body); }
+  .conn-check summary { cursor: pointer; font-weight: 800; }
+  .conn-check ul { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .conn-check li { display: grid; grid-template-columns: 18px 1fr; gap: 4px; overflow-wrap: anywhere; }
+  .conn-check li b { font-weight: 800; }
   @media (max-width: 520px) { .gate-make { flex-direction: column; align-items: center; } .gate-portrait { width: 150px; min-height: 180px; } .gate-rows { align-self: stretch; } }
   /* Playing together: the card behind the people button in the bottom bar */
   .net-pop { width: min(320px, calc(100% - 24px)); max-height: calc(100% - var(--dock-h) - 24px); overflow: hidden auto; }
@@ -2321,6 +2382,7 @@
     <p id="save-status"></p>
     <ul id="net-list" class="net-list"></ul>
     <div id="net-srv" hidden><p><b>Servers</b></p><ul id="net-srv-list" class="srv-list compact"></ul></div>
+    <details id="net-conn" class="conn-check" hidden><summary>Connection check</summary><ul id="net-conn-list"></ul></details>
     <p><button id="party-btn" class="btn" type="button">Throw a party at my house</button></p>
     <form id="name-form" class="name-row" autocomplete="off">
       <label for="name-input">Your name</label>
@@ -2706,6 +2768,7 @@
           <button id="gate-login-srv" class="gate-link gate-login-srv" type="button">Server: Wando Main</button>
           <button id="gate-login-go" class="gate-yellow" type="button">PLAY!</button>
           <button id="gate-login-new" class="gate-link" type="button">Create a new player</button>
+          <button id="gate-login-email" class="gate-link" type="button" hidden>Sign in with email</button>
         </div>
       </header>
       <div class="gate-hero">
@@ -2739,22 +2802,45 @@
         <button id="gate-tab-in" class="tab" type="button" role="tab" aria-selected="true" aria-controls="gate-in">Sign in</button>
         <button id="gate-tab-up" class="tab" type="button" role="tab" aria-selected="false" aria-controls="gate-up">Sign up</button>
       </div>
-      <div id="gate-in-servers" class="gate-pane" hidden><p class="gate-srv-head"><b>Servers</b> <span id="gate-srv-sub">Pick one to play on</span></p><ul id="gate-in-srv" class="srv-list compact"></ul><p id="gate-srv-why" class="gate-error" role="status"></p></div>
+      <div id="gate-in-servers" class="gate-pane" hidden><p class="gate-srv-head"><b>Servers</b> <span id="gate-srv-sub">Pick one to play on</span></p><ul id="gate-in-srv" class="srv-list compact"></ul><p id="gate-srv-why" class="gate-error" role="status"></p><details id="gate-conn" class="conn-check" hidden><summary>Connection check</summary><ul id="gate-conn-list"></ul></details></div>
       <div id="gate-in" class="gate-pane" role="tabpanel" aria-labelledby="gate-tab-in" hidden>
         <div id="gate-who" class="gate-who">
           <canvas id="gate-face" width="220" height="238" role="img" aria-label="Your character"></canvas>
           <div><b id="gate-name"></b><span id="gate-facts"></span></div>
         </div>
         <p id="gate-in-note"></p>
+        <div id="gate-acct" class="gate-acct" hidden></div>
         <button id="gate-play" class="btn gate-go" type="button">Play</button>
       </div>
       <form id="gate-up" class="gate-pane" role="tabpanel" aria-labelledby="gate-tab-up" autocomplete="off" hidden>
         <p id="gate-up-note"></p>
         <label for="gate-name-input">Player name</label>
         <input id="gate-name-input" class="gate-input" type="text" maxlength="16" placeholder="2 to 16 characters" autocomplete="off">
+        <div id="gate-up-mail" class="gate-pane" hidden>
+          <label for="gate-up-email">Email</label>
+          <input id="gate-up-email" class="gate-input" type="email" autocomplete="email" placeholder="you@example.com">
+          <label for="gate-up-pw">Password</label>
+          <input id="gate-up-pw" class="gate-input" type="password" autocomplete="new-password" placeholder="At least 6 characters">
+          <p class="gate-foot">Sign in with these on any computer to get your player back.</p>
+        </div>
         <label id="gate-replace-row" class="gate-check" hidden><input id="gate-replace" type="checkbox"> <span>Replace my current player with a brand-new one. Its Coins, gear and progress will be gone.</span></label>
         <p id="gate-up-error" class="gate-error" role="alert"></p>
-        <button class="btn gate-go" type="submit">Next: create your character</button>
+        <button id="gate-up-go" class="btn gate-go" type="submit">Next: create your character</button>
+        <p id="gate-up-have" hidden>Already have an account? <button id="gate-up-signin" class="gate-linkish" type="button">Sign in with email</button></p>
+      </form>
+      <form id="gate-mail" class="gate-pane" autocomplete="on" hidden>
+        <h2 id="gate-mail-title">Sign in</h2>
+        <p id="gate-mail-note"></p>
+        <label for="gate-mail-email">Email</label>
+        <input id="gate-mail-email" class="gate-input" type="email" autocomplete="email" placeholder="you@example.com">
+        <label for="gate-mail-pw">Password</label>
+        <input id="gate-mail-pw" class="gate-input" type="password" autocomplete="current-password">
+        <p id="gate-mail-error" class="gate-error" role="alert"></p>
+        <div class="gate-actions">
+          <button id="gate-mail-back" class="btn plain" type="button">Back</button>
+          <button id="gate-mail-go" class="btn gate-go" type="submit">Sign in</button>
+        </div>
+        <p><button id="gate-mail-forgot" class="gate-linkish" type="button">Forgot your password?</button></p>
       </form>
       <div id="gate-make" class="gate-pane" hidden>
         <h2 id="gate-make-title">Create your character</h2>
@@ -4576,6 +4662,26 @@
     { id: 'moon', name: 'Moonbeam', blurb: 'A calmer world for hanging out with friends.', c: '#ff7ad9' }
   ];
   const SERVER_CAP = 40;                                   // a full server cannot be joined (unless you are already on it)
+  const ACCT = () => (ONLINE_OWN() && window.claude.account && typeof window.claude.account.signIn === 'function' ? window.claude.account : null);   // email accounts (the stand-alone beta)
+  const acctEmail = () => { try { const A = ACCT(); return A ? A.email() || '' : ''; } catch (e) { return ''; } };
+  // The Connection check: each part of playing online, working or not, and what to do about it.
+  function connLines() {
+    const C = window.claude, S = C && C.status, out = [];
+    if (!C) return [[false, 'Online play', 'Not available in this copy of the game.']];
+    const part = (st, name, good) => out.push([st ? st.ok : null, name, st && st.ok === false ? st.why : st && st.ok ? good : 'Checking...']);
+    if (S) {
+      part(S.auth, 'Signed in', S.email ? 'As ' + S.email + '.' : 'As a guest (no email yet).');
+      part(S.room, 'Players connection', 'Connected.');
+      part(S.send, 'Others can see you', 'Yes: your position is being sent.');
+      part(S.db, 'Saves, friends and trades', 'Working.');
+    }
+    const K = SRV.counts;
+    out.push([K ? true : K === false ? false : null, 'Players online', K ? SERVERS.map(V => V.name + ': ' + (K[V.id] || 0)).join(' · ') + (SRV.on ? ' (not counting you)' : '') : K === false ? (SRV.why || 'Not connected.') : 'Counting...']);
+    return out;
+  }
+  function connPaint(ul) {
+    ul.replaceChildren(...connLines().map(([ok, name, text]) => { const li = document.createElement('li'), i = document.createElement('span'), t = document.createElement('span'), b = document.createElement('b'); i.textContent = ok ? '✅' : ok === false ? '❌' : '⏳'; b.textContent = name + ': '; t.append(b, text); li.append(i, t); return li; }));
+  }
   const srvById = id => SERVERS.find(S => S.id === id) || SERVERS[0];
   const SRV = { id: 'main', counts: null, cbs: [], on: false, why: '' };     // why: what stopped the servers connecting, in plain words     // counts: players on each server (null: still asking; false: offline)
   try { const v = localStorage.getItem('meadowmere-server'); if (SERVERS.some(S => S.id === v)) SRV.id = v; } catch (e) { /* remembered servers are a convenience */ }
@@ -23312,7 +23418,7 @@
       netCount.hidden = !net.room; netCount.textContent = String(others.length + 1); netCount.classList.toggle('ready', others.length > 0);
       netBtn.title = net.room ? (others.length ? others.length + 1 + ' players here' : 'Who is here: just you so far') : 'Playing together';
       if (netPop.hidden) return;
-      document.getElementById('save-status').textContent = account.cloud ? (ONLINE_OWN() ? 'Your player is saved online.' : 'Your player is saved to your Planet Wando account, through your Claude sign-in.')
+      document.getElementById('save-status').textContent = account.cloud ? (ONLINE_OWN() ? (acctEmail() ? 'Your player is saved to your account (' + acctEmail() + '): sign in with it on any computer.' : 'Your player is saved online, but only for this browser. To keep it safe, add an email and password on the start screen.') : 'Your player is saved to your Planet Wando account, through your Claude sign-in.')
         : account.uid ? 'Your account cannot save on this page (it is shared with you as view-only), so your player is saved in this browser only.'
         : 'You are playing as a guest: your player is saved in this browser only.';
       if (!window.claude) document.getElementById('net-help').textContent = 'Playing together online is not available in this copy, so you are playing alone.';
@@ -23328,6 +23434,7 @@
         return li;
       };
       document.getElementById('net-srv').hidden = !net.room || !net.live;
+      document.getElementById('net-conn').hidden = !ONLINE_OWN(); if (ONLINE_OWN()) connPaint(document.getElementById('net-conn-list'));
       if (net.room && net.live) srvRows(document.getElementById('net-srv-list'), true);
       netList.replaceChildren(row((G.name || 'You') + (G.name ? ' (you)' : ''), LOCS[here].name), ...others.map(p => {
         const acts = node('span', 'net-acts'), f = p.uid ? friendOf(p.uid) : null;
@@ -24501,7 +24608,8 @@
   function boot(data) {                                     // data: what a live update of this page carried over from the running game, if anything
     const $ = id => document.getElementById(id);
     const gate = $('gate'), status = $('gate-status'), tabs = $('gate-tabs'), tabIn = $('gate-tab-in'), tabUp = $('gate-tab-up');
-    const paneIn = $('gate-in'), paneUp = $('gate-up'), paneMake = $('gate-make'), paneSrv = $('gate-srv'), foot = $('gate-foot');
+    const paneIn = $('gate-in'), paneUp = $('gate-up'), paneMake = $('gate-make'), paneSrv = $('gate-srv'), paneMail = $('gate-mail'), foot = $('gate-foot');
+    let mailMode = 'signin', mailFrom = 'in';               // the email screen: 'signin' (an account made before) or 'protect' (add one to this player)
     const nameIn = $('gate-name-input'), upError = $('gate-up-error'), replaceRow = $('gate-replace-row'), replaceBox = $('gate-replace');
     const local = loadGame(), live = !!(data && (data.player || data.coins != null));
     let ready = false, existing = null, carry = null, entered = false, srvPicked = false, srvWaiting = null, srvFrom = 'in';      // existing: a player who has signed up before; carry: earlier progress to bring into a new sign-up
@@ -24511,18 +24619,20 @@
       const stars = Array.isArray(st.cakeStars) ? st.cakeStars.length : 0, fish = st.log && typeof st.log === 'object' ? Object.keys(st.log).length : 0;
       return (Number.isFinite(st.coins) ? Math.floor(st.coins) : 100) + ' Coins' + (fish ? ' · ' + fish + ' kinds of fish' : '') + (stars ? ' · ' + stars + ' Bakery levels' : '');
     };
-    function show(which) {                                  // 'in' | 'up' | 'make' | 'srv'
-      paneIn.hidden = which !== 'in'; paneUp.hidden = which !== 'up'; paneMake.hidden = which !== 'make'; paneSrv.hidden = which !== 'srv';
+    function show(which) {                                  // 'in' | 'up' | 'make' | 'srv' | 'mail'
+      paneIn.hidden = which !== 'in'; paneUp.hidden = which !== 'up'; paneMake.hidden = which !== 'make'; paneSrv.hidden = which !== 'srv'; paneMail.hidden = which !== 'mail';
       gate.dataset.mode = which; gateScreen(which === 'srv' ? 'srv' : 'home'); gateLogin();
-      tabs.hidden = which === 'make' || which === 'srv' || !ready;
+      tabs.hidden = which === 'make' || which === 'srv' || which === 'mail' || !ready;
+      $('gate-login-email').hidden = !ACCT() || !!acctEmail() || which === 'mail';
       paintGateSrv(which);
       tabIn.setAttribute('aria-selected', String(which === 'in')); tabUp.setAttribute('aria-selected', String(which === 'up'));
       if (which === 'in') {
-        $('gate-who').hidden = !existing; $('gate-play').hidden = !existing;
+        $('gate-who').hidden = !existing; $('gate-play').hidden = !existing; $('gate-acct').hidden = true;
         if (existing) {
           $('gate-name').textContent = cleanText(existing.name, 16) || 'Player';
           $('gate-facts').textContent = facts(existing);
           $('gate-play').textContent = 'Play on ' + srvById(SRV.id).name;
+          paintAcct();
           drawPortrait($('gate-face'), normLook(existing.look));
           $('gate-in-note').textContent = account.uid ? (ONLINE_OWN() ? 'Welcome back! This is your player, saved online to this browser.' : 'Welcome back! You are signed in with your Claude account, and this is the player saved to it.')
             : 'Welcome back! This is the player saved in this browser.';
@@ -24532,10 +24642,62 @@
           : 'Your player is saved in this browser, so play on the same computer and browser to keep your progress. ')
           + (carry && !existing ? 'The progress already on this device (' + facts(carry) + ') comes with you.' : 'Pick the name other players will see.');
         replaceRow.hidden = !existing; replaceBox.checked = false; upError.textContent = '';
+        const needMail = !!ACCT() && !acctEmail();
+        $('gate-up-mail').hidden = !needMail; $('gate-up-have').hidden = !needMail;
         nameIn.value = draft.name;
       } else if (which === 'srv') srvRows($('gate-srv-list'), false);
+      else if (which === 'mail') {
+        $('gate-mail-title').textContent = mailMode === 'protect' ? 'Keep your player safe' : 'Sign in';
+        $('gate-mail-note').textContent = mailMode === 'protect' ? 'Add an email and password to ' + (existing ? cleanText(existing.name, 16) || 'your player' : 'your player') + '. Then you can sign in on any computer and get it back.'
+          : 'Sign in with the email and password you made your player with.';
+        $('gate-mail-go').textContent = mailMode === 'protect' ? 'Save my player' : 'Sign in';
+        $('gate-mail-pw').setAttribute('autocomplete', mailMode === 'protect' ? 'new-password' : 'current-password');
+        $('gate-mail-forgot').hidden = mailMode === 'protect';
+        $('gate-mail-error').textContent = '';
+      }
       else paintMaker();
     }
+    // ── email accounts (the stand-alone beta) ──
+    function paintAcct() {
+      const box = $('gate-acct'), A = ACCT();
+      box.hidden = !A || !existing;
+      if (box.hidden) return;
+      const em = acctEmail();
+      box.classList.toggle('safe', !!em);
+      box.replaceChildren();
+      const t = document.createElement('span'), b = document.createElement('button');
+      b.type = 'button'; b.className = 'btn';
+      if (em) { t.textContent = '✅ Saved to your account: ' + em + '. '; b.textContent = 'Sign out'; b.className = 'gate-linkish'; b.dataset.acct = 'out'; }
+      else { t.textContent = '⚠️ This player is only kept in this browser. Add an email and password so you never lose it.'; b.textContent = 'Keep my player safe'; b.dataset.acct = 'protect'; }
+      box.append(t, document.createElement('br'), b);
+    }
+    function openMail(mode) { mailMode = mode; mailFrom = !paneUp.hidden ? 'up' : 'in'; show('mail'); }
+    $('gate-acct').addEventListener('click', e => {
+      const b = e.target.closest('[data-acct]'), A = ACCT(); if (!b || !A) return;
+      if (b.dataset.acct === 'protect') openMail('protect');
+      else if (b.dataset.acct === 'out') { saveGame(); A.signOut().then(() => location.reload(), () => location.reload()); }
+    });
+    $('gate-login-email').addEventListener('click', () => { if (ready && ACCT()) openMail('signin'); });
+    $('gate-up-signin').addEventListener('click', () => { if (ready && ACCT()) openMail('signin'); });
+    $('gate-mail-back').addEventListener('click', () => show(mailFrom));
+    $('gate-mail-forgot').addEventListener('click', () => {
+      const A = ACCT(), em = String($('gate-mail-email').value || '').trim(); if (!A) return;
+      if (!em) { $('gate-mail-error').textContent = 'Type your email first, then press this again.'; return; }
+      A.reset(em).then(() => { $('gate-mail-error').textContent = 'Sent! Check your email for a link to pick a new password.'; }, err => { $('gate-mail-error').textContent = (err && err.message) || 'That did not work.'; });
+    });
+    let mailBusy = false;
+    paneMail.addEventListener('submit', async e => {
+      e.preventDefault();
+      const A = ACCT(); if (!A || mailBusy) return;
+      const em = String($('gate-mail-email').value || '').trim(), pw = String($('gate-mail-pw').value || ''), err = $('gate-mail-error');
+      if (!em || !pw) { err.textContent = 'Type your email and password.'; return; }
+      mailBusy = true; $('gate-mail-go').disabled = true; err.textContent = mailMode === 'protect' ? 'Saving...' : 'Signing in...';
+      try {
+        if (mailMode === 'protect') { await A.protect(em, pw); $('gate-mail-pw').value = ''; show('in'); foot.textContent = 'Your player is saved to ' + em + '. Sign in with it on any computer.'; }
+        else { await A.signIn(em, pw); err.textContent = 'Signed in! Loading your player...'; setTimeout(() => location.reload(), 300); return; }
+      } catch (x) { err.textContent = (x && x.message) || 'That did not work. Try again.'; }
+      mailBusy = false; $('gate-mail-go').disabled = false;
+    });
     // ── the server list: on the door's front page (Join goes in on that server; with no player yet, Pick chooses it), in
     //    the login box at the top, and, for a new player, once more before going in ──
     function paintGateSrv(which) {
@@ -24545,6 +24707,7 @@
       if (on) { $('gate-srv-sub').textContent = w === 'in' && existing ? 'Join one to play on it' : 'Pick the one you will play on'; srvRows($('gate-in-srv'), false, !(w === 'in' && existing)); }
       const C = SRV.counts, n = C ? C[SRV.id] || 0 : 0;
       $('gate-srv-why').textContent = C === false && SRV.why ? 'Why offline: ' + SRV.why : '';
+      $('gate-conn').hidden = !ONLINE_OWN(); if (ONLINE_OWN()) connPaint($('gate-conn-list'));
       $('gate-login-srv').textContent = 'Server: ' + srvById(SRV.id).name + (C ? ' · ' + n + ' online' : C === false ? ' · offline' : '');
       if (!paneIn.hidden && existing) $('gate-play').textContent = 'Play on ' + srvById(SRV.id).name;
     }
@@ -24563,6 +24726,7 @@
       if (!paneIn.hidden && existing) { srvFrom = 'in'; srvWaiting = null; srvGo(id); return; }
       srvSet(id); srvPicked = true; paintGateSrv();         // (no player yet: this is the server you will go in on)
     });
+    if (ONLINE_OWN()) { const tick = setInterval(() => { if (entered) { clearInterval(tick); return; } if (!$('gate-in-servers').hidden) connPaint($('gate-conn-list')); }, 1500); }
     srvWatch(() => { if (!paneSrv.hidden) srvRows($('gate-srv-list'), false); paintGateSrv(); if (SRV.counts === false && srvWaiting && !entered) { srvPicked = true; enter(srvWaiting); } });
     $('gate-srv-back').addEventListener('click', () => { srvWaiting = null; show(srvFrom); });
     function enter(st) {                                    // through the door: start the world from this save, and write both copies
@@ -24578,12 +24742,23 @@
     tabIn.addEventListener('click', () => { if (ready) show('in'); });
     tabUp.addEventListener('click', () => { if (ready) show('up'); });
     // ── sign up: a name, then a character ──
-    paneUp.addEventListener('submit', e => {
+    let upBusy = false;
+    paneUp.addEventListener('submit', async e => {
       e.preventDefault();
-      if (!ready) return;
+      if (!ready || upBusy) return;
       const name = cleanText(nameIn.value, 16);
       if (name.length < 2) { upError.textContent = 'Pick a name of 2 to 16 characters.'; return; }
       if (existing && !replaceBox.checked) { upError.textContent = 'You already have a player. Tick the box to replace it, or use Sign in.'; return; }
+      const A = ACCT();
+      if (A && !acctEmail()) {                             // the stand-alone beta: an email and password keep the player
+        const em = String($('gate-up-email').value || '').trim(), pw = String($('gate-up-pw').value || '');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { upError.textContent = 'Type your email address.'; return; }
+        if (pw.length < 6) { upError.textContent = 'Pick a password of at least 6 characters.'; return; }
+        upBusy = true; $('gate-up-go').disabled = true; upError.textContent = 'Saving your account...';
+        try { await A.protect(em, pw); upError.textContent = ''; $('gate-up-pw').value = ''; }
+        catch (err) { upError.textContent = (err && err.message) || 'That did not work. Try again.'; return; }
+        finally { upBusy = false; $('gate-up-go').disabled = false; }
+      }
       draft.name = name;
       show('make');
     });
