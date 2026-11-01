@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#120b3a;}</style>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<style>html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#120b3a;touch-action:pan-x pan-y;overscroll-behavior:none;}</style>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -1779,7 +1779,7 @@
   .tp-btn.main { width: 76px; height: 76px; background: linear-gradient(#fff36a, #ffc21a); }
   .tp-btn.main i { font-size: 28px; }
   .tp-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(26, 16, 64, 0.45); }
-  html, body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: pan-x pan-y; overscroll-behavior: none; }   /* no pinch-zoom anywhere in the game (panels still scroll) */
   button, a, input, select { touch-action: manipulation; }
   .fail {
     position: absolute; inset: 0; margin: auto; height: max-content;
@@ -19174,6 +19174,10 @@
     window.__meadowmere = game;
 
     const scene = () => game.scene.getScenes(true).find(s => s.ready) || null;   // whichever location is live
+    // ── phones and tablets: no pinch-zoom while you play. (The CSS above stops it in most browsers; Safari on iPhone and
+    //    iPad needs its gesture events stopped too, and a two-finger move.) ──
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+    document.addEventListener('touchmove', e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
     // ── phones and tablets: the action buttons (shown once the screen is touched, or on a touch-first device) ──
     {
       const pad = document.getElementById('tpad'), ICON = { E: '✋', SPACE: '⛏️', F: '🎣', H: '🛹' };
