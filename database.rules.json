@@ -1,0 +1,17 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$room": {
+        "peers": {
+          ".read": "auth != null",
+          "$tab": {
+            ".write": "auth != null && (newData.exists() ? newData.child('by').val() === auth.uid && (!data.exists() || data.child('by').val() === auth.uid) : (!data.exists() || data.child('by').val() === auth.uid))",
+            ".validate": "newData.hasChildren(['by', 'p', 'at']) && newData.child('p').isString() && newData.child('p').val().length < 8000"
+          }
+        }
+      }
+    }
+  }
+}

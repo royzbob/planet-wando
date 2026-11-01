@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function me() { return request.auth != null; }
+    function owner(id) { return me() && request.auth.uid == id; }
+    function small() { return request.resource.data.size() < 60; }   // (a document of a sensible size: not too many fields)
+
+    // each player's save: only they can read or write it
+    match /data/users/{uid}/{rest=**} { allow read, write: if owner(uid); }
+
+    // the players' list, the Hall of Fame and house visits: everyone signed in can read; only the owner writes theirs
+    match /players/{uid} { allow read: if me(); allow create, update: if owner(uid) && small(); allow delete: if owner(uid); }
+    match /fame/{uid}    { allow read: if me(); allow create, update: if owner(uid) && small(); allow delete: if owner(uid); }
+    match /houses/{uid}  { allow read: if me(); allow create, update: if owner(uid) && small(); allow delete: if owner(uid); }
+
+    // mail: you read and clear your own mailbox; anyone signed in can drop a note in it, signed with their own id
+    match /mail/{box}/items/{id} {
+      allow read, delete: if owner(box);
+      allow create: if me() && request.resource.data.from == request.auth.uid && small();
+    }
+
+    // trades: both players can read the table; each writes only their own side
+    match /trades/{tid}/sides/{side} {
+      allow read: if me();
+      allow create, update: if owner(side) && small();
+      allow delete: if owner(side);
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
