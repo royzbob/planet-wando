@@ -1227,6 +1227,10 @@
   .gate-actions { display: flex; gap: 8px; }
   .gate-actions .gate-go { flex: 1; }
   .gate-foot { opacity: 0.8; text-align: center; }
+  .trade-hot { color: #1d7a2a; font-weight: 800; animation: trade-pulse 1s ease-in-out infinite; }
+  .trade-backout { background: #ffd0d0 !important; }
+  @keyframes trade-pulse { 50% { opacity: 0.55; } }
+  @media (prefers-reduced-motion: reduce) { .trade-hot { animation: none; } }
   /* email accounts and the connection check */
   .gate-acct { margin: 0; padding: 8px 10px; border: 2px dashed var(--ink); border-radius: 12px; background: #fff7c2; font: 700 13px/1.4 var(--font-body); }
   .gate-acct.safe { border-style: solid; background: #e4ffd8; }
@@ -22986,7 +22990,7 @@
     // When each side is ready for the other's current offer, each page makes its half of the swap on its own: it gives
     // what it offered and takes what the other offered. Changing an offer takes both sides off "ready". Like everything
     // else shared on this page, this is fair play between friends' pages, not a bank: trade with people you trust.
-    const TRADE = { WAIT: 120000, MAXW: 8, MAXC: 100000 };
+    const TRADE = { WAIT: 120000, MAXW: 8, MAXC: 100000, COUNT: 10000, PV: 2 };   // COUNT: once both are ready, this long to back out before the swap. PV: how trades work now (both sides must match)
     const TRADE_ID = /^[a-z0-9-]{4,40}$/;
     // id, other, otherName: the trade. me / them: the two offers as they stand ({ w, coins, rev, ready, gone, done }).
     // invite: a trade someone asked you to, waiting for your answer. note: a line for the panel. writing: the last write.
@@ -23037,11 +23041,12 @@
       const w = (Array.isArray(b.w) ? b.w : []).slice(0, TRADE.MAXW).map(tradeItemIn).filter(Boolean);
       const seen = new Set(), list = w.filter(x => !seen.has(x.u) && seen.add(x.u));
       return { by: typeof b.by === 'string' ? b.by : '', name: cleanText(b.name, 16) || 'Player', w: list, coins: Number.isInteger(b.coins) ? clamp(b.coins, 0, TRADE.MAXC) : 0,
-        rev: Number.isInteger(b.rev) ? b.rev : 0, ready: Number.isInteger(b.ready) ? b.ready : -1, gone: !!b.gone, done: !!b.done };
+        rev: Number.isInteger(b.rev) ? b.rev : 0, ready: Number.isInteger(b.ready) ? b.ready : -1, gone: !!b.gone, done: !!b.done,
+        go: Number.isInteger(b.go) ? b.go : -1, pv: Number.isInteger(b.pv) ? b.pv : 1 };      // go: the offer of theirs this side has locked in (after the countdown)
     }
     function tradeWrite() {                                  // your side, as it is now (one write at a time)
       if (!tr.id || !tr.me || !socialOn()) return;
-      const m = tr.me, body = { by: soc.uid, name: G.name || 'Player', w: m.w.map(tradeItemOut), coins: m.coins, rev: m.rev, ready: m.ready, gone: !!m.gone, done: !!m.done, at: Date.now() };
+      const m = tr.me, body = { by: soc.uid, name: G.name || 'Player', w: m.w.map(tradeItemOut), coins: m.coins, rev: m.rev, ready: m.ready, go: Number.isInteger(m.go) ? m.go : -1, pv: TRADE.PV, gone: !!m.gone, done: !!m.done, at: Date.now() };
       const ref = tradeSides(tr.id).doc(soc.uid);
       tr.writing = tr.writing.then(() => ref.set(body)).catch(() => { tr.note = 'The trade could not be saved. Check your connection.'; tradePaint(); });
       return tr.writing;
@@ -23061,13 +23066,44 @@
       let them = null, mine = null;
       (snap && snap.docs ? snap.docs : []).forEach(d => { const b = typeof d.data === 'function' ? d.data() : null, side = tradeRead(b); if (!side) return; if (String(d.id) === tr.other && side.by === tr.other) them = side; else if (String(d.id) === soc.uid) mine = side; });
       if (mine && mine.done && !tr.done) { tr.done = true; }                                  // (picked up again after it was done)
+      const was = tr.them;
       if (them) tr.them = them;
+      if (them && !tr.done && tr.me) {                      // tell you when they press Ready, or back out of it
+        const nowReady = them.ready >= 0 && them.ready === tr.me.rev, wasReady = !!was && was.ready >= 0 && was.ready === tr.me.rev && was.rev === them.rev;
+        if (nowReady && !wasReady) { tradeTell('✅ ' + tr.otherName + ' is ready to trade!' + (tr.me.ready >= 0 ? '' : ' Press Ready if you like the deal.')); chatLine('', '✅ ' + tr.otherName + ' pressed Ready on your trade.', 'sys'); }
+        else if (!nowReady && wasReady && !them.gone) { tradeTell('↩️ ' + tr.otherName + (was.rev !== them.rev ? ' changed their offer.' : ' is not ready any more.')); }
+      }
       if (tr.them && tr.them.gone && !tr.done) { const n = tr.otherName; tradeClose(false); tradeTell(n + (tr.them && tr.them.rev > 0 ? ' cancelled the trade.' : ' declined the trade.')); return; }
-      if (tr.them && tr.me && !tr.done && tr.me.ready === tr.them.rev && tr.them.ready === tr.me.rev) tradeDo();
+      if (tr.them && tr.me && !tr.done) tradeCheck();
       else if (tr.done && tr.them && tr.them.done) tradeClose(false);
       tradePaint();
     }
-    function tradeChanged() { tr.me.rev++; tr.me.ready = -1; tr.note = ''; tradeWrite(); tradePaint(); }
+    function tradeChanged() { tr.me.rev++; tr.me.ready = -1; tr.me.go = -1; tr.note = ''; tradeCount(false); tradeWrite(); tradePaint(); }
+    // Both ready: a countdown (TRADE.COUNT) in which either of you can back out. When it runs out, each side locks in
+    // (go = the other's offer it accepts), and the swap happens only once BOTH have locked in the same two offers, so
+    // backing out at the last moment can never leave one of you swapped and the other not.
+    const locked = () => !!tr.me && tr.me.go >= 0;
+    function tradeCount(on) {
+      if (!on) { if (tr.count) { clearInterval(tr.count.tick); tr.count = null; } return; }
+      if (tr.count) return;
+      tr.count = { end: Date.now() + TRADE.COUNT, tick: 0 };
+      tr.count.tick = setInterval(() => {
+        if (!tr.count) return;
+        if (Date.now() >= tr.count.end) { tradeCount(false); if (tr.me && tr.them && !tr.done && tr.me.ready === tr.them.rev && tr.them.ready === tr.me.rev) { tr.me.go = tr.them.rev; tradeWrite(); tradeCheck(); } }
+        tradePaint();
+      }, 250);
+      if (!TRADE.COUNT) setTimeout(() => { if (tr.count && tr.count.end <= Date.now()) { const f = tr.count; tradeCount(false); tr.count = null; if (f && tr.me && tr.them && !tr.done && tr.me.ready === tr.them.rev && tr.them.ready === tr.me.rev) { tr.me.go = tr.them.rev; tradeWrite(); tradeCheck(); } } }, 0);
+      sfx.tick();
+    }
+    function tradeCheck() {
+      const m = tr.me, t = tr.them;
+      if (!m || !t || tr.done) return;
+      const both = m.ready >= 0 && m.ready === t.rev && t.ready === m.rev;
+      if (!both) { tradeCount(false); if (m.go >= 0) { m.go = -1; tradeWrite(); } return; }
+      if (m.go === t.rev && t.go === m.rev) { tradeDo(); return; }
+      if (m.go === t.rev) return;                         // locked in: waiting for theirs
+      tradeCount(true);
+    }
     function tradeOffer(u) {                                 // put something of yours on the table (or take it back)
       if (!tr.me || tr.done) return false;
       const on = tr.me.w.findIndex(x => x.u === u);
@@ -23085,6 +23121,7 @@
     function tradeWhy() {
       const D = G.dun, m = tr.me, t = tr.them;
       if (!t) return 'Waiting for ' + tr.otherName + ' to join.';
+      if (t.pv !== TRADE.PV) return tr.otherName + ' needs to refresh the game before you can trade.';
       if (!m.w.length && !m.coins && !t.w.length && !t.coins) return 'Nothing is on the table yet.';
       if (m.coins > G.coins) return 'You do not have that many Coins.';
       if (!m.w.every(tradeHas)) return 'Something you offered is not yours any more.';
@@ -23095,17 +23132,18 @@
     }
     function tradeReady(on) {
       if (!tr.me || tr.done) return false;
+      if (!on && locked()) return false;                    // (locked in: too late to back out)
       if (on) { const why = tradeWhy(); if (why) { tr.note = why; tradePaint(); return false; } tr.me.ready = tr.them.rev; }
-      else tr.me.ready = -1;
+      else { tr.me.ready = -1; tr.me.go = -1; }
       tr.note = ''; tradeWrite();
-      if (on && tr.them.ready === tr.me.rev) tradeDo();
+      tradeCheck();
       tradePaint(); return true;
     }
     // Both ready for each other's offer: your half of the swap.
     function tradeDo() {
       const D = G.dun, m = tr.me, t = tr.them;
       if (tr.done || D.traded.includes(tr.id)) { tr.done = true; return false; }
-      if (tradeWhy()) { tr.me.ready = -1; tr.note = tradeWhy(); tradeWrite(); return false; }
+      if (tradeWhy()) { tr.me.ready = -1; tr.me.go = -1; tr.note = tradeWhy(); tradeWrite(); return false; }
       const gone = new Set(m.w.map(w => w.u)), held = D.eq >= 0 ? D.bag[D.eq] : null;
       // what you give
       D.bag = D.bag.filter(x => !gone.has(x.u));
@@ -23141,6 +23179,8 @@
       return true;
     }
     function tradeClose(cancel) {                            // leave the trade (cancel: tell the other side)
+      if (cancel && locked() && !tr.done) return false;        // (locked in: the swap is a moment away)
+      tradeCount(false);
       if (cancel && tr.me && !tr.done) { tr.me.gone = true; tradeWrite(); }
       if (tr.stop) { try { tr.stop(); } catch (e) { /* closed */ } }
       tr.stop = null; tr.id = ''; tr.me = null; tr.them = null;
@@ -23245,7 +23285,10 @@
       const cols = node('div', 'trade-cols'); cols.append(mineCol, theirCol); rows.push(cols);
       if (!tr.done) {
         const bar = node('div', 'trade-acts'), rd = el('button', 'btn', { type: 'button', 'data-tr': m.ready >= 0 ? 'unready' : 'ready' }), cx = el('button', 'btn', { type: 'button', 'data-tr': 'cancel' });
-        rd.textContent = m.ready >= 0 ? 'Not ready' : 'Ready'; cx.textContent = 'Cancel trade'; bar.append(rd, cx); rows.push(bar);
+        const secs = tr.count ? Math.max(0, Math.ceil((tr.count.end - Date.now()) / 1000)) : 0;
+        rd.textContent = locked() ? 'Trading...' : tr.count ? 'Back out (' + secs + ')' : m.ready >= 0 ? 'Not ready' : 'Ready'; cx.textContent = 'Cancel trade';
+        rd.disabled = cx.disabled = locked(); if (tr.count) rd.classList.add('trade-backout');
+        bar.append(rd, cx); rows.push(bar);
         const offered = new Set(m.w.map(w => w.u)), bag = tradeMine().filter(w => !offered.has(w.u));
         rows.push(node('div', 'mine-row mine-top', 'Your things: outfits, boards, cards, tools, weapons, flowers, and furniture in your storage'));
         if (G.home.rooms && G.home.rooms.some(R => R.items && R.items.some(it => !FURN_BY[it.t] || !FURN_BY[it.t].build))) rows.push(node('p', 'pet-hint', 'Furniture placed in your house can be traded once you put it back in storage (Decorate, then pick it up).'));
@@ -23253,7 +23296,8 @@
         bag.forEach(w => rows.push(row(w, 'on', 'Offer')));
       } else { const bar = node('div', 'trade-acts'), ok = el('button', 'btn', { type: 'button', 'data-tr': 'close' }); ok.textContent = 'Done'; bar.appendChild(ok); rows.push(bar); }
       tradeBody.replaceChildren(...rows);
-      tradeMsg.textContent = tr.note || (tr.done ? '' : m.ready >= 0 ? (t && t.ready === m.rev ? 'Both ready...' : 'Waiting for ' + tr.otherName + ' to be ready.') : 'Both of you press Ready to swap. Changing an offer takes you both off Ready.');
+      tradeMsg.classList.toggle('trade-hot', !!tr.count || (!!t && !tr.done && t.ready === m.rev && m.ready < 0));
+      tradeMsg.textContent = tr.note || (tr.done ? '' : locked() ? 'Swapping...' : tr.count ? 'Both ready! Trading in ' + Math.max(0, Math.ceil((tr.count.end - Date.now()) / 1000)) + ' seconds. Press Back out to stop it.' : m.ready >= 0 ? (t && t.ready === m.rev ? 'Both ready...' : 'Waiting for ' + tr.otherName + ' to be ready.') : t && t.ready === m.rev ? '✅ ' + tr.otherName + ' is ready! Press Ready to trade.' : 'Both of you press Ready to swap. Changing an offer takes you both off Ready.');
     }
     if (tradeBody) {
       tradeBody.addEventListener('click', e => {
@@ -23269,7 +23313,7 @@
       tradeBody.addEventListener('change', e => { if (e.target && e.target.id === 'trade-coins') tradeCoins(e.target.value); });
       document.getElementById('trade-close').addEventListener('click', () => { if (tr.invite) tradeAnswer(false); else if (tr.id && !tr.done) tradeClose(true); else tradeClose(false); });
     }
-    ui.trade = { tr, mine: tradeMine, ask: tradeAsk, answer: tradeAnswer, offer: tradeOffer, coins: tradeCoins, ready: tradeReady, close: tradeClose, resume: tradeResume, invited: tradeInvited };     // read by the logic tests
+    ui.trade = { tr, TRADE, mine: tradeMine, ask: tradeAsk, answer: tradeAnswer, offer: tradeOffer, coins: tradeCoins, ready: tradeReady, close: tradeClose, resume: tradeResume, invited: tradeInvited };     // read by the logic tests
 
     const panels = { coll: collP, trade: tradeP, dun: dunP, dunclass: classP, dungate: gateP, dunshrine: shrineP, pets: petsP, petcare: careP, mine: mineP, npc: npcP, ship: travelP, shop: shopP, dj: djP, hover: hoverP, skate: skateP, tailor: tailorP, cupcake: cupP, tackle: tackleP, gear: specP, arcade: arcP, deed: deedP, furn: furnP };
     const plainCard = b => Object.assign(b, { plain: true });      // a place that is not a shop opens a plain card (see cbPlain), not a catalog book
