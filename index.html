@@ -1103,6 +1103,11 @@
   .scr-pick .scr-btn::after { content: none !important; }
   .scr-pick .scr-btn[aria-pressed="true"] { background: var(--sun, #ffd84d); }
   html[data-screen="pc"] .tpad { display: none !important; }
+  html[data-hidechat="1"] .chatbox { display: none !important; }
+  html[data-hideplate="1"] .plate { display: none !important; }
+  .sound-pop .snd-head { font: 800 12px/1.2 var(--font-display); color: var(--ink); margin-top: 4px; }
+  html[data-screen="phone"] #ride-btn { display: none !important; }      /* (on a phone the round Ride button does this) */
+  html[data-screen="phone"] .dig-btn small { display: none; }
   html[data-screen="pc"] .touch-hint { display: none !important; } html[data-screen="pc"] .keys-hint { display: inline !important; }
   html[data-screen="phone"] .keys-hint { display: none !important; } html[data-screen="phone"] .touch-hint { display: inline !important; }
   html[data-screen="phone"] #app { --dock-h: 112px; }
@@ -2543,6 +2548,9 @@
         <button id="snd-music" type="button" aria-pressed="true">Music</button>
         <button id="snd-fx" type="button" aria-pressed="true">Sound effects</button>
         <label class="snd-vol">Music volume <input id="snd-vol" type="range" min="0" max="100" value="60"></label>
+        <b class="snd-head">Show</b>
+        <button type="button" data-hud="chat" aria-pressed="true">Chat box</button>
+        <button type="button" data-hud="plate" aria-pressed="true">Place sign (top left)</button>
         <div class="scr-pick" role="group" aria-label="Screen"><b>Playing on</b>
           <button class="scr-btn" type="button" data-scr="auto" aria-pressed="true">Auto</button>
           <button class="scr-btn" type="button" data-scr="phone" aria-pressed="false">📱 Phone / tablet</button>
@@ -3953,6 +3961,20 @@
     document.querySelectorAll('[data-scr]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scr === SCREEN.mode)));
     if (typeof window !== 'undefined' && window.dispatchEvent && typeof Event === 'function') { try { window.dispatchEvent(new Event('resize')); } catch (e) { /* (the tests) */ } }
   }
+  // What shows over the world: the chat box and the place sign (top left). Kept in this browser.
+  const HUD = { chat: true, plate: true };
+  try { const v = JSON.parse(localStorage.getItem('meadowmere-hud') || 'null'); if (v && typeof v === 'object') { HUD.chat = v.chat !== false; HUD.plate = v.plate !== false; } } catch (e) { /* a convenience */ }
+  function hudApply() {
+    try { const R = document.documentElement; R.dataset.hidechat = HUD.chat ? '' : '1'; R.dataset.hideplate = HUD.plate ? '' : '1'; } catch (e) { /* (the tests) */ }
+    document.querySelectorAll('[data-hud]').forEach(b => b.setAttribute('aria-pressed', String(!!HUD[b.dataset.hud])));
+  }
+  // The "Playing on" and "Show" buttons, wherever they are (the start screen or the sound pop-up).
+  document.addEventListener('click', e => {
+    const t = e.target && e.target.closest ? e.target : null; if (!t) return;
+    const b = t.closest('[data-scr]'), h = t.closest('[data-hud]');
+    if (b && b.dataset && b.dataset.scr) { screenSet(b.dataset.scr); if (typeof window.__wandoScreenChanged === 'function') window.__wandoScreenChanged(); }
+    else if (h && h.dataset && h.dataset.hud in HUD) { HUD[h.dataset.hud] = !HUD[h.dataset.hud]; try { localStorage.setItem('meadowmere-hud', JSON.stringify(HUD)); } catch (x) { /* (as above) */ } hudApply(); if (typeof window.__wandoScreenChanged === 'function') window.__wandoScreenChanged(); }
+  });
   function screenSet(mode) { SCREEN.mode = ['phone', 'pc'].includes(mode) ? mode : 'auto'; try { localStorage.setItem('meadowmere-screen', SCREEN.mode); } catch (e) { /* (as above) */ } screenApply(); }
   const TOUCH_FIRST = (() => { try { return !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); } catch (e) { return false; } })();   // a phone or tablet: say "tap", not "click"
   const TAU = Math.PI * 2;
@@ -19229,8 +19251,8 @@
     window.__meadowmere = game;
 
     const scene = () => game.scene.getScenes(true).find(s => s.ready) || null;   // whichever location is live
-    document.addEventListener('click', e => { const b = e.target && e.target.closest ? e.target.closest('[data-scr]') : null; if (!b || !b.dataset || !b.dataset.scr) return; screenSet(b.dataset.scr); const sc = scene(); if (sc && sc.fitCam) sc.fitCam(); if (sc && sc.note) { sc.noteUntil = 0; sc.note(SCREEN.mode === 'phone' ? '📱 Phone / tablet layout' : SCREEN.mode === 'pc' ? '💻 Computer layout' : 'Layout: picked for you', '#ffe9a8'); } });
-    screenApply();
+    screenApply(); hudApply();
+    window.__wandoScreenChanged = () => { const sc = scene(); if (sc && sc.fitCam) sc.fitCam(); if (sc && sc.note) { sc.noteUntil = 0; sc.note(SCREEN.mode === 'phone' ? '📱 Phone / tablet layout' : SCREEN.mode === 'pc' ? '💻 Computer layout' : 'Layout: picked for you', '#ffe9a8'); } };
     // ── phones and tablets: no pinch-zoom while you play. (The CSS above stops it in most browsers; Safari on iPhone and
     //    iPad needs its gesture events stopped too, and a two-finger move.) ──
     ['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
@@ -24819,6 +24841,7 @@
   // page is told who is signed in to Claude, and that is the account. Someone the page cannot identify plays as a guest,
   // with the same screens and a save kept on their device.
   function boot(data) {                                     // data: what a live update of this page carried over from the running game, if anything
+    try { screenApply(); hudApply(); } catch (e) { /* (decoration) */ }
     const $ = id => document.getElementById(id);
     const gate = $('gate'), status = $('gate-status'), tabs = $('gate-tabs'), tabIn = $('gate-tab-in'), tabUp = $('gate-tab-up');
     const paneIn = $('gate-in'), paneUp = $('gate-up'), paneMake = $('gate-make'), paneSrv = $('gate-srv'), paneMail = $('gate-mail'), foot = $('gate-foot');
