@@ -230,7 +230,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793582401';
+window.WANDO_BUILD = '1793582494';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -2519,7 +2519,7 @@ window.WANDO_BUILD = '1793582401';
     <ul id="net-list" class="net-list"></ul>
     <div id="net-srv" hidden><p><b>Servers</b></p><ul id="net-srv-list" class="srv-list compact"></ul></div>
     <details id="net-conn" class="conn-check" hidden><summary>Connection check</summary><ul id="net-conn-list"></ul></details>
-    <p><button id="party-btn" class="btn" type="button">Throw a party at my house</button></p>
+    <p><button id="party-btn" class="btn" type="button">Throw a party at my house</button> <button id="invite-btn" class="btn" type="button" hidden>📨 Invite a friend</button></p>
     <form id="name-form" class="name-row" autocomplete="off">
       <label for="name-input">Your name</label>
       <input id="name-input" type="text" maxlength="16" placeholder="Pick a name" autocomplete="off">
@@ -23833,6 +23833,16 @@ window.WANDO_BUILD = '1793582401';
     });
     ui.partyAt = id => { let on = false; net.peers.forEach(p => { if (p.uid === id && p.party) on = true; }); return on; };
     netBtn.addEventListener('click', paintParty);
+    // Invite a friend (the online game): the phone's share sheet, or the link copied to paste anywhere
+    const GAME_LINK = 'https://royzbob.github.io/planet-wando/';
+    const inviteBtn = document.getElementById('invite-btn');
+    inviteBtn.hidden = !ONLINE_OWN();
+    inviteBtn.addEventListener('click', async () => {
+      const text = 'Come play Planet Wando with me' + (G.name ? ' (I am ' + G.name + ')' : '') + ' on the ' + srvById(SRV.id).name + ' server!', sc = scene();
+      const tell = t => { if (sc) { sc.noteUntil = 0; sc.note(t, '#ffe9a8'); } };
+      try { if (navigator.share && screenPhone()) { await navigator.share({ title: 'Planet Wando', text, url: GAME_LINK }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+      try { await navigator.clipboard.writeText(text + ' ' + GAME_LINK); tell('📋 Invite link copied! Paste it to your friend.'); } catch (e) { tell('Send your friend this link: ' + GAME_LINK); }
+    });
     document.getElementById('plate-srv').addEventListener('click', e => { if (netPop.hidden) netBtn.click(); if (e.detail > 0) e.currentTarget.blur(); });
     nameForm.addEventListener('submit', e => {
       e.preventDefault();
