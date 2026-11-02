@@ -230,7 +230,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793582871';
+window.WANDO_BUILD = '1793582967';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -1117,6 +1117,9 @@ window.WANDO_BUILD = '1793582871';
   .emote-pop button.throw-btn { background: #7fd0ff; }
   .dance-moves { display: contents; }
   .dance-moves button { background: #ffd6f4; }
+  .quick-say { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; }
+  .quick-say b { flex-basis: 100%; font: 800 12px/1.2 var(--font-display); color: var(--ink); }
+  .emote-pop .quick-say button { padding: 5px 9px; border-radius: 999px; background: #e8f4ff; font-size: 12px; }
   .emo-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; width: 100%; }
   .emote-pop .emo-grid button { display: grid; place-items: center; padding: 2px; border-radius: 10px; background: #ffffff; aspect-ratio: 1; }
   .emote-pop .emo-grid button:hover { background: var(--sun); transform: scale(1.1); }
@@ -2600,6 +2603,11 @@ window.WANDO_BUILD = '1793582871';
         <div id="dance-moves" class="dance-moves" role="group" aria-label="Dance moves"></div>
         <button type="button" data-throw="1" class="throw-btn">Throw!</button>
         <div id="emo-grid" class="emo-grid" role="group" aria-label="Emoticons"></div>
+        <div class="quick-say" role="group" aria-label="Quick chat"><b>Quick chat</b>
+          <button type="button" data-say="Hi! 👋">Hi! 👋</button><button type="button" data-say="Want to trade?">Want to trade?</button><button type="button" data-say="Follow me!">Follow me!</button>
+          <button type="button" data-say="Be my friend?">Be my friend?</button><button type="button" data-say="Nice outfit!">Nice outfit!</button><button type="button" data-say="Let's go fishing!">Let's go fishing!</button>
+          <button type="button" data-say="brb">brb</button><button type="button" data-say="GG!">GG!</button><button type="button" data-say="Bye! 👋">Bye! 👋</button>
+        </div>
       </div>
     </div>
     <form id="chat" class="chat" autocomplete="off">
@@ -22298,6 +22306,8 @@ window.WANDO_BUILD = '1793582871';
       if ((e.key === 't' || e.key === 'T') && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !isTyping() && !busy() && G.loc !== 'dungeon') throwArm();
     });
     emotePop.addEventListener('click', e => {
+      const qs = e.target.closest('[data-say]');
+      if (qs) { const s = scene(), m = chatSafe(cleanText(qs.dataset.say, 80)); if (s && m) { s.say(m); netSay(m); chatLine(G.name || 'You', m, 'me'); questHappened('chat'); } showEmotes(false); if (e.detail > 0) qs.blur(); return; }     // a quick-chat line, said out loud
       const th = e.target.closest('[data-throw]');
       if (th) { throwArm(); showEmotes(false); if (e.detail > 0) th.blur(); return; }
       const em = e.target.closest('[data-emo]');
@@ -24155,7 +24165,7 @@ window.WANDO_BUILD = '1793582871';
     window.addEventListener('keydown', e => { if (e.key === 'Escape' && loginP.isOpen()) loginP.close(); });
     if (loginState(G.login, dayNumber()).ready) {           // the first visit today: the card opens by itself, but never over a shop or card you already opened
       let tries = 0;
-      const auto = () => { if (!loginState(G.login, dayNumber()).ready || tries++ > 24) return; if (busy() || G.loc === 'dungeon' || Object.keys(panels).some(k => k !== 'login' && panels[k].isOpen && panels[k].isOpen())) { setTimeout(auto, 5000); return; } loginOpen(); };
+      const auto = () => { if (!loginState(G.login, dayNumber()).ready || tries++ > 24) return; if (busy() || G.loc === 'dungeon' || Object.keys(panels).some(k => k !== 'login' && panels[k].isOpen && panels[k].isOpen()) || document.querySelector('.emote-pop:not([hidden]), .clock-pop:not([hidden]), #phone:not([hidden]), #catbook:not([hidden])') || document.activeElement === document.getElementById('chat-input')) { setTimeout(auto, 5000); return; } loginOpen(); };
       setTimeout(auto, 1600);
     }
     document.getElementById('clock-login').addEventListener('click', () => { document.getElementById('clock-pop').hidden = true; loginOpen(); });
