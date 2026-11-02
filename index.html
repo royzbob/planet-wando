@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793583343';
+window.WANDO_BUILD = '1793583426';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -4053,7 +4053,10 @@ window.WANDO_BUILD = '1793583343';
   const TEX = 2;                            // procedural textures are baked at 2x for crisp edges
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
   const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const DEV = { touch: false };                           // this player is on a phone or tablet (set once they touch the screen; told to the others)
+  const DEV = { touch: false };
+  const IDLE = { at: Date.now(), AFTER: 3 * 60000 };       // the last time this player touched anything; after AFTER, the others see 💤
+  ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(t => window.addEventListener(t, () => { IDLE.at = Date.now(); }, { capture: true, passive: true }));
+  const isIdle = () => Date.now() - IDLE.at > IDLE.AFTER || (typeof document !== 'undefined' && document.hidden === true);                           // this player is on a phone or tablet (set once they touch the screen; told to the others)
   // Screen: 'auto' (the game works it out), 'phone' (phone or tablet layout: compact bars, the tap buttons, a wider view)
   // or 'pc' (computer layout: no tap buttons). Kept in this browser; it sets <html data-screen="phone|pc">.
   const SCREEN = { mode: 'auto' };
@@ -11803,7 +11806,8 @@ window.WANDO_BUILD = '1793583343';
       card: Number.isInteger(q.card) && collDef('c', q.card) ? q.card : -1,     // the player card they show
       ad: q.loc === 'trade' ? chatSafe(cleanText(q.ad, 40)) : '',          // their sign in the Trading Manor
       pet: petUncode(q.pet) ? q.pet : -1,                 // their pet, if it is out with them (see petCode)
-      dv: q.dv === 'm' ? 'm' : q.dv === 'd' ? 'd' : '',      // on a phone or tablet ('m'), or a computer ('d')
+      dv: q.dv === 'm' ? 'm' : q.dv === 'd' ? 'd' : '',
+      afk: q.afk === 1,                                     // away from the keyboard (or the game is in another tab)      // on a phone or tablet ('m'), or a computer ('d')
       boat: Number.isInteger(q.boat) ? clamp(q.boat, 0, BOAT_LEVELS.length - 1) : 0,
       car: CAR_LOCS.includes(q.loc) && carUncode(q.car) ? q.car : 0,     // the car they are driving (see carCode)
       party: q.loc === 'home' && q.party === 1 ? 1 : 0,                  // a party on at their house
@@ -18638,7 +18642,7 @@ window.WANDO_BUILD = '1793583343';
           o.img.setTexture(key).setScale(1 / TEX).setOrigin(0.5, p.boat ? 0.8 : car ? 140 / 150 : FEET_OA);
         }
         if (car && Math.abs(p.x - o.x) > 2) o.carFace = p.x < o.x ? -1 : 1;     // a car faces the way it is going
-        const shown = (p.dv === 'm' ? '📱 ' : '') + p.name + (this.loc === 'dungeon' && p.lv ? ' (' + p.lv + ')' : '') + (p.ti ? ' · ' + PLAYER_TITLES[p.ti].name : '');
+        const shown = (p.afk ? '💤 ' : '') + (p.dv === 'm' ? '📱 ' : '') + p.name + (this.loc === 'dungeon' && p.lv ? ' (' + p.lv + ')' : '') + (p.ti ? ' · ' + PLAYER_TITLES[p.ti].name : '');
         if (o.name !== shown) { o.name = shown; o.tag.setText(shown); this.pillFit(o.tag); }
         const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy), k = d > 420 ? 1 : Math.min(1, dt * 9), moving = d > 3 && !p.boat && !car;
         o.x += dx * k; o.y += dy * k;
@@ -23757,7 +23761,7 @@ window.WANDO_BUILD = '1793583343';
       if (!s || !s.pz) return null;
       return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
         boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
-        kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
+        kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
     }
     function netPush() {                                    // called ten times a second; only a change is sent
       if (!net.room) return;
@@ -23844,7 +23848,7 @@ window.WANDO_BUILD = '1793583343';
         if (p.loc !== here && p.loc !== 'home') { const go = el('button', 'btn', { type: 'button', 'data-go': p.loc }); go.textContent = 'Go there'; acts.appendChild(go); }
         if (!p.mine) { const mk = p.uid || 'tab:' + p.id, mb = el('button', 'btn' + (isMuted(mk) ? ' muted' : ''), { type: 'button', 'data-mute': mk, title: isMuted(mk) ? 'Show what ' + p.name + ' says again' : 'Hide everything ' + p.name + ' says or sends you' }); mb.textContent = isMuted(mk) ? 'Unmute' : 'Mute'; acts.appendChild(mb); }
         if (p.party && p.uid && !p.mine) { const pb = el('button', 'btn', { type: 'button', 'data-party': p.uid }); pb.textContent = f && f.ok ? 'Join party!' : 'Party! (friends only)'; pb.disabled = !(f && f.ok); acts.appendChild(pb); }
-        return row((p.dv === 'm' ? '📱 ' : p.dv === 'd' ? '💻 ' : '') + p.name + (p.mine ? ' (your other tab)' : f ? (f.ok ? ' · friend' : ' · asked') : ''), p.loc === 'home' ? 'At home' : !LOCS[p.loc] ? 'Away' : p.loc === here ? LOCS[p.loc].name + ' · here with you' : LOCS[p.loc].name, acts);
+        return row((p.dv === 'm' ? '📱 ' : p.dv === 'd' ? '💻 ' : '') + p.name + (p.afk ? ' 💤' : '') + (p.mine ? ' (your other tab)' : f ? (f.ok ? ' · friend' : ' · asked') : ''), p.loc === 'home' ? 'At home' : !LOCS[p.loc] ? 'Away' : p.loc === here ? LOCS[p.loc].name + ' · here with you' : LOCS[p.loc].name, acts);
       }));
       if (net.far) net.far.forEach(fr => {                  // your friends on the other servers, with a way to join them
         if (!G.friends.some(x => x.ok && x.id === fr.uid)) return;
