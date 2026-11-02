@@ -230,7 +230,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793582212';
+window.WANDO_BUILD = '1793582401';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -24082,7 +24082,7 @@ window.WANDO_BUILD = '1793582212';
     ui.onChatLine = (name, text, mine) => chatLine(name, text, mine ? 'me' : 'them');
     const locWas = ui.onLoc;
     ui.onLoc = loc => { locWas(loc); document.getElementById('app').dataset.loc = loc; const D = LOCS[loc]; chatLine('', 'You are at ' + (loc === 'home' ? 'a house' : D.name) + '.', 'sys'); if (wmapP.isOpen()) wmapPaint(); mapBtn.setAttribute('aria-expanded', String(wmapP.isOpen())); };
-    chatLine('', 'Welcome to Planet Wando, ' + (G.name || 'friend') + '! Press Enter to chat.', 'sys');
+    chatLine('', 'Welcome to Planet Wando, ' + (G.name || 'friend') + '! ' + (screenPhone() ? 'Tap the chat bar to talk.' : 'Press Enter to chat.') + ' Type /help for commands.', 'sys');
     // ── Daily rewards: on the first visit of each day the week's card opens; collect today's, come back tomorrow ──
     const loginEl = document.getElementById('login'), loginP = makePanel(loginEl), loginDays = document.getElementById('login-days'), loginBtn = document.getElementById('login-claim'), loginSub = document.getElementById('login-sub');
     panels.login = loginP;
@@ -24967,6 +24967,53 @@ window.WANDO_BUILD = '1793582212';
     ui.wmap = { open: wmapOpen, close: wmapClose, go: wmapGo, paint: wmapPaint, btns: wmapBtns, panel: wmapP, el: wmapEl, note: wmapNote };   // read by the logic tests
     ui.chat = { lines: chatLines, line: chatLine, min: chatMin, el: chatBoxEl };
 
+    // ── Chat commands. Typed in the chat box, never sent to anyone: /help, emotes (/wave, /dance...), /server, /who,
+    //    /go, /pm, /mute and /unmute. ──
+    const CMD_HELP = ['/wave /dance /sit /jump /cheer /spin: do an emote (and any dance you own, like /robot)', '/who: who is on your server', '/server Starfall: switch server (or /server 2)',
+      '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/mute Name and /unmute Name'];
+    const GO_WORDS = { beach: 'beach', starfish: 'beach', mall: 'mall', cosmo: 'mall', cave: 'cave', crystal: 'cave', mine: 'cave', trade: 'trade', manor: 'trade', trading: 'trade', dance: 'dance', club: 'dance', ice: 'ice', frost: 'ice', frostwood: 'ice', lake: 'ice', crypt: 'dungeon', dungeon: 'dungeon', hollow: 'dungeon', home: 'home', house: 'home', green: 'green', village: 'green', town: 'green' };
+    function chatCommand(raw) {
+      const say = t => chatLine('', t, 'sys'), parts = raw.slice(1).trim().split(/\s+/), cmd = (parts.shift() || '').toLowerCase(), rest = parts.join(' '), s = scene();
+      const byName = n => { const k = String(n || '').toLowerCase(); let hit = null; net.peers.forEach(p => { if (!hit && !p.mine && p.name.toLowerCase() === k) hit = p; }); return hit; };
+      if (!cmd || cmd === 'help' || cmd === '?' || cmd === 'commands') { say('Commands: ' + CMD_HELP.join(' · ')); return true; }
+      const dance = DANCES.find(d => d.id === cmd || d.name.toLowerCase().replace(/\s+/g, '') === cmd);
+      if (EMOTE_IDS.includes(cmd) || dance) {
+        const id = dance ? dance.id : cmd;
+        if (!s) return true;
+        if (dance && !danceOwned(G, dance)) { say('You do not know the ' + dance.name + ' yet. The Dance House teaches it.'); return true; }
+        setEmoteUI(s.setEmote(id)); return true;
+      }
+      if (cmd === 'who') {
+        const list = [...net.peers.values()].filter(p => !p.mine).map(p => p.name + ' (' + (p.loc === 'home' ? 'at home' : LOCS[p.loc] ? LOCS[p.loc].name : 'away') + ')');
+        say('On ' + srvById(SRV.id).name + ': you' + (list.length ? ', ' + list.join(', ') : ', and nobody else yet') + '.'); return true;
+      }
+      if (cmd === 'server' || cmd === 'srv') {
+        const k = rest.toLowerCase().replace(/\s+/g, ''), S = SERVERS.find((V, i) => String(i + 1) === k || V.id === k || V.name.toLowerCase().replace(/\s+/g, '') === k || V.name.toLowerCase().split(' ').pop() === k);
+        if (!S) { say('Servers: ' + SERVERS.map((V, i) => (i + 1) + ' ' + V.name).join(', ') + '. You are on ' + srvById(SRV.id).name + '.'); return true; }
+        if (!net.room) { say('You are not connected to the other players right now.'); return true; }
+        if (S.id === SRV.id) { say('You are already on ' + S.name + '.'); return true; }
+        if (ui.srv) ui.srv.switch(S.id); return true;
+      }
+      if (cmd === 'go' || cmd === 'warp' || cmd === 'tp') {
+        const loc = GO_WORDS[rest.toLowerCase().split(/\s+/)[0]];
+        if (!loc) { say('Go where? Try: ' + [...new Set(Object.values(GO_WORDS))].map(l => l === 'dungeon' ? 'crypt' : l).join(', ') + '.'); return true; }
+        const why = ui.wmap && ui.wmap.go ? ui.wmap.go(loc) : 'Use the map.'; if (why) say(why); return true;
+      }
+      if (cmd === 'pm' || cmd === 'msg' || cmd === 'w' || cmd === 'whisper') {
+        const name = parts.shift() || '', text = parts.join(' '), f = G.friends.find(x => x.ok && x.name.toLowerCase() === name.toLowerCase());
+        if (!name || !text) { say('Type /pm then a friend\'s name and your message.'); return true; }
+        if (!f) { say(name + ' is not on your friends list. Add them as a friend first.'); return true; }
+        if (!(ui.social && ui.social.send)) { say('Messages need a Planet Wando account.'); return true; }
+        ui.social.send(f.id, chatSafe(text)).then(ok => say(ok ? 'Message sent to ' + f.name + '.' : 'Your message could not be sent just now.')); return true;
+      }
+      if (cmd === 'mute' || cmd === 'unmute') {
+        const p = byName(rest); if (!p) { say('Nobody called "' + rest + '" is on this server.'); return true; }
+        const key = p.uid || 'tab:' + p.id; if (isMuted(key) !== (cmd === 'mute')) muteToggle(key);
+        say(cmd === 'mute' ? p.name + ' is muted: you will not see what they say or send.' : p.name + ' is not muted any more.'); paintNet(); return true;
+      }
+      say('No command called /' + cmd + '. Type /help to see them.'); return true;
+    }
+    ui.cmd = chatCommand;
     // ── Chat: Enter focuses the box, Enter again sends and hands the keys back to the game ──
     const form = document.getElementById('chat');
     const input = document.getElementById('chat-input');
@@ -24975,6 +25022,7 @@ window.WANDO_BUILD = '1793582212';
       e.preventDefault();
       const msg = input.value.trim(), s = scene();
       if (msg && !s) return;                         // world still loading: keep the text
+      if (msg && msg[0] === '/') { chatCommand(msg); input.value = ''; return; }     // a command, like Graal's: /help lists them
       const short = msg && EMO_SHORT[msg.trim()]; if (short && ui.emo && ui.emo(short)) { input.value = ''; questHappened('chat'); return; }
       if (msg) { const said = chatSafe(msg); s.say(said); netSay(said); chatLine(G.name || 'You', said, 'me'); input.value = ''; questHappened('chat'); }
       input.blur();
