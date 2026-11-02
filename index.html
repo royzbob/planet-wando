@@ -230,7 +230,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793582592';
+window.WANDO_BUILD = '1793582660';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -24137,7 +24137,11 @@ window.WANDO_BUILD = '1793582592';
     loginBtn.addEventListener('click', e => { if (loginClaim()) loginPaint(); if (e.detail > 0) loginBtn.blur(); });
     document.getElementById('login-close').addEventListener('click', () => loginP.close());
     window.addEventListener('keydown', e => { if (e.key === 'Escape' && loginP.isOpen()) loginP.close(); });
-    if (loginState(G.login, dayNumber()).ready) setTimeout(() => { if (!busy() && G.loc !== 'dungeon') loginOpen(); }, 1600);     // the first visit today: the card opens by itself
+    if (loginState(G.login, dayNumber()).ready) {           // the first visit today: the card opens by itself, but never over a shop or card you already opened
+      let tries = 0;
+      const auto = () => { if (!loginState(G.login, dayNumber()).ready || tries++ > 24) return; if (busy() || G.loc === 'dungeon' || Object.keys(panels).some(k => k !== 'login' && panels[k].isOpen && panels[k].isOpen())) { setTimeout(auto, 5000); return; } loginOpen(); };
+      setTimeout(auto, 1600);
+    }
     document.getElementById('clock-login').addEventListener('click', () => { document.getElementById('clock-pop').hidden = true; loginOpen(); });
     const helpP = makePanel(document.getElementById('help')); panels.help = helpP;
     document.getElementById('clock-help').addEventListener('click', () => { document.getElementById('clock-pop').hidden = true; for (const k in panels) if (k !== 'help') panels[k].close(); helpP.open(); });
