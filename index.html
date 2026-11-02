@@ -229,6 +229,38 @@
   };
 })();
 </script>
+<script>
+window.WANDO_BUILD = '1793581574';
+// Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
+// build is there, a banner offers to refresh (your progress is saved first).
+(function () {
+  if (!/^https?:$/.test(location.protocol)) return;
+  var shown = false;
+  function banner() {
+    if (shown || !document.body) return; shown = true;
+    var b = document.createElement('div');
+    b.setAttribute('role', 'status');
+    b.style.cssText = 'position:fixed;top:max(8px,env(safe-area-inset-top));left:50%;width:max-content;transform:translateX(-50%);z-index:9999;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;max-width:calc(100% - 24px);box-sizing:border-box;background:#fff8e3;color:#1a1040;border:3px solid #1a1040;border-radius:14px;box-shadow:0 4px 0 rgba(26,16,64,.45);font:800 14px/1.3 Nunito,system-ui,sans-serif';
+    var t = document.createElement('span'); t.textContent = '✨ A new update is ready!';
+    var go = document.createElement('button'); go.type = 'button'; go.textContent = 'Refresh';
+    go.style.cssText = 'flex:none;padding:6px 14px;border:2px solid #1a1040;border-radius:10px;background:linear-gradient(#fff36a,#ffc21a);color:#1a1040;font:800 14px/1 Nunito,system-ui,sans-serif;cursor:pointer;touch-action:manipulation';
+    var x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.setAttribute('aria-label', 'Later');
+    x.style.cssText = 'flex:none;width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:#1a1040;font:800 20px/1 system-ui;cursor:pointer';
+    go.onclick = function () { try { window.dispatchEvent(new Event('pagehide')); } catch (e) { /* (saving is best effort) */ } setTimeout(function () { location.reload(); }, 400); };
+    x.onclick = function () { b.remove(); setTimeout(function () { shown = false; }, 15 * 60 * 1000); };
+    b.append(t, go, x); document.body.appendChild(b);
+  }
+  function look() {
+    if (shown || document.hidden) return;
+    fetch(location.pathname + '?check=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (html) {
+      var m = /WANDO_BUILD\s*=\s*'(\d+)'/.exec(html || '');
+      if (m && m[1] !== window.WANDO_BUILD && Number(m[1]) > Number(window.WANDO_BUILD)) banner();
+    }).catch(function () { /* offline: try later */ });
+  }
+  setTimeout(look, 60000); setInterval(look, 3 * 60000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) look(); });
+})();
+</script>
 </head>
 <body>
 <title>Planet Wando</title>
@@ -624,6 +656,8 @@
   .friend, .mission { display: flex; align-items: center; gap: 6px; }
   .on-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--online); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7); }
   .on-dot.off { background: var(--ph-rim); }
+  .on-dot.far { background: #ffc21a; }
+  .net-list .btn.muted { background: #ffd0d0; }
   .status, .soon { margin-left: auto; flex: none; font-size: 10px; font-weight: 800; }
   .soon { padding: 1px 7px; border-radius: 999px; background: var(--lcd-bar); color: #fff; }
   .lcd-note { margin: 0; font-size: 10.5px; opacity: 0.78; }
@@ -2666,7 +2700,7 @@
     </div>
     <h2 id="pcard-name" class="pcard-name">Player</h2>
     <p id="pcard-info" class="pcard-info"></p>
-    <div class="pcard-btns"><button id="pcard-friend" class="btn" type="button">Add friend</button><button id="pcard-trade" class="btn" type="button">Trade</button></div>
+    <div class="pcard-btns"><button id="pcard-friend" class="btn" type="button">Add friend</button><button id="pcard-trade" class="btn" type="button">Trade</button><button id="pcard-mute" class="btn" type="button">Mute</button></div>
     <p id="pcard-note" class="pcard-note" aria-live="polite"></p>
   </section>
   <div id="tablebar" class="tablebar" role="status" hidden><span id="tablebar-text"></span><button id="tablebar-trade" class="btn" type="button" hidden>Trade</button></div>
@@ -4152,6 +4186,24 @@
   // ───────────────────────── helpers ─────────────────────────
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   // Text that came from a person (a name, a chat line): no control or invisible characters, single spaces, cut to length.
+  // ── Chat safety. chatSafe() is what the world shows of anyone's words (theirs and yours): swear words and slurs become
+  //    ***, and email addresses and phone numbers are hidden, so nobody shares how to reach them in public. Muting a
+  //    player hides everything they say or send you (kept in this browser). ──
+  const CHAT_BAD = ['fuck', 'fucking', 'fucker', 'fck', 'fuk', 'shit', 'shitty', 'bitch', 'bitches', 'cunt', 'dick', 'dicks', 'cock', 'pussy', 'asshole', 'bastard', 'slut', 'whore', 'porn', 'sex', 'sexy', 'nude', 'nudes', 'boobs', 'penis', 'vagina', 'rape', 'nigger', 'nigga', 'faggot', 'fag', 'retard', 'retarded', 'tranny', 'spic', 'chink', 'kike', 'kys', 'killyourself', 'wanker', 'twat', 'bollocks', 'motherfucker', 'dumbass', 'jackass'];
+  const CHAT_BAD_RE = new RegExp('(^|[^a-z])(' + CHAT_BAD.join('|') + ')(?=[^a-z]|$)', 'gi');
+  const chatLeet = t => t.replace(/[0@]/g, 'o').replace(/[1!|]/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/\$|5/g, 's').replace(/7/g, 't');
+  function chatSafe(text) {
+    let t = String(text || '');
+    t = t.replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, '(email hidden)');
+    t = t.replace(/(\+?\d[\d\s().-]{6,}\d)/g, m => (m.replace(/\D/g, '').length >= 7 ? '(number hidden)' : m));
+    const low = chatLeet(t.toLowerCase());                 // find bad words in a de-leeted copy, then star the same letters in the original
+    if (low.length === t.length) { let out = t.split(''); low.replace(CHAT_BAD_RE, (m, pre, word, at) => { const from = at + pre.length; for (let i = from; i < from + word.length; i++) out[i] = '*'; return m; }); t = out.join(''); }
+    return t;
+  }
+  const MUTED = new Set();
+  try { const v = JSON.parse(localStorage.getItem('meadowmere-muted') || '[]'); if (Array.isArray(v)) v.slice(0, 500).forEach(k => { if (typeof k === 'string') MUTED.add(k); }); } catch (e) { /* a convenience */ }
+  const isMuted = id => !!id && MUTED.has(String(id));
+  function muteToggle(id) { id = String(id || ''); if (!id) return false; if (MUTED.has(id)) MUTED.delete(id); else MUTED.add(id); try { localStorage.setItem('meadowmere-muted', JSON.stringify([...MUTED])); } catch (e) { /* (as above) */ } return MUTED.has(id); }
   const cleanText = (v, max) => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
   const hashStr = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); };
   const isTyping = () => { const el = document.activeElement; return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT'); };
@@ -11690,7 +11742,7 @@
     const D = LOCS[q.loc];
     if (!Number.isFinite(q.x) || !Number.isFinite(q.y)) return null;
     const say = q.say && typeof q.say === 'object' ? q.say : {}, look = normLook(q.look && typeof q.look === 'object' ? q.look : null);
-    return { id: String(p.peer), mine: !!p.isMe, name: cleanText(q.who, 16) || 'Player', loc: q.loc,
+    return { id: String(p.peer), mine: !!p.isMe, name: chatSafe(cleanText(q.who, 16)) || 'Player', loc: q.loc,
       x: clamp(q.x, 0, D.w), y: clamp(q.y, 0, D.h),
       em: EMOTE_IDS.includes(q.em) ? q.em : '',
       house: typeof q.house === 'string' ? q.house.slice(0, 90) : '',     // whose house they are in and which room of it, when they are in one
@@ -11700,7 +11752,7 @@
       ti: Number.isInteger(q.ti) && q.ti > 0 && q.ti < PLAYER_TITLES.length ? q.ti : 0,     // the title they wear
       tb: q.loc === 'trade' && Number.isInteger(q.tb) ? clamp(q.tb, 0, 99999) : 0,     // the trading table seat they sit in (table * 2 + side)
       card: Number.isInteger(q.card) && collDef('c', q.card) ? q.card : -1,     // the player card they show
-      ad: q.loc === 'trade' ? cleanText(q.ad, 40) : '',          // their sign in the Trading Manor
+      ad: q.loc === 'trade' ? chatSafe(cleanText(q.ad, 40)) : '',          // their sign in the Trading Manor
       pet: petUncode(q.pet) ? q.pet : -1,                 // their pet, if it is out with them (see petCode)
       dv: q.dv === 'm' ? 'm' : q.dv === 'd' ? 'd' : '',      // on a phone or tablet ('m'), or a computer ('d')
       boat: Number.isInteger(q.boat) ? clamp(q.boat, 0, BOAT_LEVELS.length - 1) : 0,
@@ -18559,9 +18611,9 @@
           if (BT) { if (ui.onBeat) ui.onBeat(BT, p.name || 'Someone'); continue; }
           const TH = throwOf(p.sayT);
           if (TH) this.throwAt(o.x, o.y, TH.x, TH.y, TH.k, p.name || 'Someone');        // they threw something
-          else if (p.sayT) {
-            const b = o.bubble = this.makeBubble(p.sayT).setPosition(o.x, o.y - 92);
-            if (ui.onChatLine) ui.onChatLine(p.name || 'Player', p.sayT, false);
+          else if (p.sayT && !isMuted(p.uid || 'tab:' + p.id)) {
+            const said = chatSafe(p.sayT), b = o.bubble = this.makeBubble(said).setPosition(o.x, o.y - 92);
+            if (ui.onChatLine) ui.onChatLine(p.name || 'Player', said, false);
             this.tweens.add({ targets: b, alpha: 0, delay: 4500, duration: 700, ease: 'Sine.in', onComplete: () => { b.destroy(); if (o.bubble === b) o.bubble = null; } });
             sfx.pop();
           }
@@ -19461,6 +19513,7 @@
       : !account.uid ? 'Friends and messages need a Planet Wando account, and you are playing as a guest.' + (ONLINE_OWN() ? ' ' + guestWhy() : '') : 'Connecting your friends list...');
     const friendOf = id => G.friends.find(f => f.id === id) || null;
     const isFriend = id => { const f = friendOf(id); return !!f && f.ok; };
+    const farOf = id => (net.far && net.far.get(id)) || null;      // a friend on another server: { sv, loc, name }
     const peerOf = id => { let hit = null; net.peers.forEach(p => { if (p.uid === id && !p.mine) hit = p; }); return hit; };     // that player, if they are on Planet Wando now
     const mailbox = id => soc.db.collection('mail/' + id + '/items');
     const mailId = () => Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
@@ -19472,8 +19525,9 @@
       if (!b || typeof b !== 'object' || !['pm', 'req', 'ok', 'bye', 'trade', 'gift'].includes(b.k)) return null;
       if (typeof b.from !== 'string' || !UID_OK.test(b.from) || typeof b.to !== 'string' || !UID_OK.test(b.to) || !Number.isFinite(b.at)) return null;
       const mine = b.from === soc.uid;
-      if (mine ? b.k !== 'pm' || b.to === soc.uid : b.to !== soc.uid) return null;        // addressed to you; or your own copy of a message you sent
-      return { id: String(d.id), k: b.k, from: b.from, to: b.to, name: cleanText(b.fromName, 16) || 'Player', text: cleanText(b.text, MAIL.TEXT), at: b.at, mine, amt: b.k === 'gift' && GIFT_SIZES.includes(b.amt) ? b.amt : 0 };
+      if (mine ? b.k !== 'pm' || b.to === soc.uid : b.to !== soc.uid) return null;
+      if (!mine && isMuted(b.from)) return null;                                  // (from someone you muted: not shown)        // addressed to you; or your own copy of a message you sent
+      return { id: String(d.id), k: b.k, from: b.from, to: b.to, name: cleanText(b.fromName, 16) || 'Player', text: chatSafe(cleanText(b.text, MAIL.TEXT)), at: b.at, mine, amt: b.k === 'gift' && GIFT_SIZES.includes(b.amt) ? b.amt : 0 };
     }
     async function mailSend(to, k, text) {                  // put a note in another player's mailbox (a message also keeps a copy in your own)
       if (!socialOn() || !UID_OK.test(to || '') || to === soc.uid) return false;
@@ -19657,7 +19711,7 @@
       if (ok) sfx.notify();
       return ok;
     }
-    ui.social = { soc, start: socialStart, ask: friendAsk, answer: friendAnswer, remove: friendRemove, send: pmSend, unread, find: playerFind, found: () => ph.found };     // read by the logic tests
+    ui.social = { soc, start: socialStart, ask: friendAsk, answer: friendAnswer, remove: friendRemove, send: pmSend, unread, find: playerFind, found: () => ph.found, farOf, act: socialAct };     // read by the logic tests
 
     // ── Phone: Menu → Inbox / PMs, Friends List, Missions / Games, and the rest. ──
     const phoneEl = document.getElementById('phone'), phoneBtn = document.getElementById('phone-btn');
@@ -19793,8 +19847,9 @@
         out.push(node('p', 'log-tier', 'Your friends · ' + G.friends.length));
         const list = node('ul', 'lcd-list');
         G.friends.forEach(f => {
-          const on = f.ok ? peerOf(f.id) : null, li = node('li', 'friend');
-          li.append(node('span', 'on-dot' + (on ? '' : ' off')), node('b', '', f.name), node('span', 'status', !f.ok ? 'Asked' : on ? LOCS[on.loc].name : 'Away'));
+          const on = f.ok ? peerOf(f.id) : null, far = f.ok && !on ? farOf(f.id) : null, li = node('li', 'friend');
+          li.append(node('span', 'on-dot' + (on ? '' : far ? ' far' : ' off')), node('b', '', f.name), node('span', 'status', !f.ok ? 'Asked' : on ? LOCS[on.loc].name : far ? 'On ' + srvById(far.sv).name : 'Away'));
+          if (far) li.appendChild(mini('Join', 'srvgo', f.id, 'Go to the ' + srvById(far.sv).name + ' server, where ' + f.name + ' is'));
           if (f.ok) li.appendChild(mini('PM', 'pm', f.id, 'Message ' + f.name));
           if (on && on.loc !== here && on.loc !== 'home') li.appendChild(mini('Go', 'go', f.id, 'Go to ' + f.name));
           if (f.ok) li.appendChild(mini('House', 'visit', f.id, 'Visit the house of ' + f.name));
@@ -19957,6 +20012,11 @@
     };
     function socialAct(act, id) {                          // a small button on a row of the Inbox or the Friends List
       if (act === 'pm') { if (isFriend(id)) { ph.thread = id; ph.draft = ''; showView('thread'); } return; }
+      if (act === 'srvgo') {                               // a friend on another server: switch to it, and go where they are
+        const far = farOf(id), s = scene();
+        if (far && ui.srv) { ui.srv.switch(far.sv); closePhone(); if (s && !busy() && far.loc !== s.loc && far.loc !== 'home' && LOCS[far.loc]) s.travelTo(far.loc); }
+        return;
+      }
       if (act === 'go') {
         const on = peerOf(id), s = scene();
         if (on && s && !busy() && on.loc !== s.loc) { closePhone(); s.travelTo(on.loc); }
@@ -23642,6 +23702,11 @@
       const now = new Map();
       net.raw = peers || [];
       srvCount(net.raw);
+      // players on the other servers: only who and where, so your friends list can show them and offer to join them
+      const far = new Map();
+      net.raw.forEach(p => { if (!p || p.sameTab || p.kind !== 'viewer' || srvOf(p) === SRV.id) return; const q = p.presence, uid = typeof p.by === 'string' && UID_OK.test(p.by) ? p.by : q && typeof q.uid === 'string' && UID_OK.test(q.uid) ? q.uid : ''; if (!q || q.v !== 1 || !uid || typeof q.loc !== 'string' || !LOCS[q.loc]) return; far.set(uid, { uid, sv: srvOf(p), loc: q.loc, name: cleanText(q.who, 16) || 'Player' }); });
+      if (!net.quiet && net.far) far.forEach((f, id) => { if (!net.far.has(id) && G.friends.some(x => x.ok && x.id === id)) { const S = srvById(f.sv); chatLine('', '★ Your friend ' + f.name + ' is online on the ' + S.name + ' server. Open your friends list to join them.', 'sys'); sfx.notify(); } });
+      net.far = far;
       (peers || []).forEach(p => {
         if (!p || p.sameTab || p.kind !== 'viewer' || srvOf(p) !== SRV.id) return;
         const old = net.peers.get(String(p.peer)), st = old && old.raw === p.presence ? old : peerState(p);
@@ -23706,6 +23771,7 @@
         if (!p.mine && p.uid && socialOn() && !f) { const add = el('button', 'btn', { type: 'button', 'data-add': p.uid }); add.textContent = soc.reqs.some(r => r.from === p.uid) ? 'Accept friend' : 'Add friend'; acts.appendChild(add); }
         if (!p.mine && p.uid && socialOn() && p.loc === here) { const tb = el('button', 'btn', { type: 'button', 'data-trade': p.uid }); tb.textContent = 'Trade'; acts.appendChild(tb); }
         if (p.loc !== here && p.loc !== 'home') { const go = el('button', 'btn', { type: 'button', 'data-go': p.loc }); go.textContent = 'Go there'; acts.appendChild(go); }
+        if (!p.mine) { const mk = p.uid || 'tab:' + p.id, mb = el('button', 'btn' + (isMuted(mk) ? ' muted' : ''), { type: 'button', 'data-mute': mk, title: isMuted(mk) ? 'Show what ' + p.name + ' says again' : 'Hide everything ' + p.name + ' says or sends you' }); mb.textContent = isMuted(mk) ? 'Unmute' : 'Mute'; acts.appendChild(mb); }
         if (p.party && p.uid && !p.mine) { const pb = el('button', 'btn', { type: 'button', 'data-party': p.uid }); pb.textContent = f && f.ok ? 'Join party!' : 'Party! (friends only)'; pb.disabled = !(f && f.ok); acts.appendChild(pb); }
         return row((p.dv === 'm' ? '📱 ' : p.dv === 'd' ? '💻 ' : '') + p.name + (p.mine ? ' (your other tab)' : f ? (f.ok ? ' · friend' : ' · asked') : ''), p.loc === 'home' ? 'At home' : !LOCS[p.loc] ? 'Away' : p.loc === here ? LOCS[p.loc].name + ' · here with you' : LOCS[p.loc].name, acts);
       }));
@@ -23718,6 +23784,8 @@
       if (e.detail > 0) netBtn.blur();
     });
     netList.addEventListener('click', e => {                // "Add friend"; and "Go there": travel to the place a player is in
+      const mu = e.target.closest('[data-mute]');
+      if (mu) { const p = [...net.peers.values()].find(x => (x.uid || 'tab:' + x.id) === mu.dataset.mute), on = muteToggle(mu.dataset.mute), sc = scene(); if (sc) { sc.noteUntil = 0; sc.note((p ? p.name : 'That player') + (on ? ' is muted: you will not see what they say or send.' : ' is not muted any more.'), '#ffe9a8'); } paintNet(); return; }
       const add = e.target.closest('[data-add]');
       if (add) { const p = peerOf(add.dataset.add), line = friendAsk(add.dataset.add, p ? p.name : 'Player'), sc = scene(); if (sc && line) sc.note(line, '#ffd0f0'); paintNet(); return; }
       const tb = e.target.closest('[data-trade]');
@@ -23743,7 +23811,9 @@
     document.getElementById('plate-srv').addEventListener('click', e => { if (netPop.hidden) netBtn.click(); if (e.detail > 0) e.currentTarget.blur(); });
     nameForm.addEventListener('submit', e => {
       e.preventDefault();
-      G.name = cleanText(nameInput.value, 16);
+      const want = cleanText(nameInput.value, 16);
+      if (chatSafe(want) !== want) { nameInput.value = G.name; const sc = scene(); if (sc) { sc.noteUntil = 0; sc.note('Pick a different name: that one is not allowed here.', '#ffd0d0'); } return; }
+      G.name = want;
       nameInput.value = G.name; nameInput.blur();
       document.getElementById('profile-name').textContent = G.name || 'You';
       const s = scene(); if (s && s.nameTag) { s.nameTag.setText(s.myTagText()); s.pillFit(s.nameTag); }
@@ -24061,6 +24131,7 @@
       const friend = typeof friendOf === 'function' && p.uid ? friendOf(p.uid) : null;
       document.getElementById('pcard-friend').hidden = !p.uid || !!friend;
       document.getElementById('pcard-trade').hidden = !p.uid;
+      document.getElementById('pcard-mute').textContent = isMuted(p.uid || 'tab:' + p.id) ? 'Unmute' : 'Mute';
       if (!p.uid) pcardNote.textContent = 'A guest: no account to trade or be friends with.';
       for (const k in panels) if (k !== 'pcard') panels[k].close();
       pcardP.open();
@@ -24070,6 +24141,7 @@
     document.getElementById('pcard-close').addEventListener('click', () => pcardP.close());
     document.getElementById('pcard-friend').addEventListener('click', () => { const p = pcardWho; if (!p) return; pcardNote.textContent = friendAsk(p.uid, p.name) || ''; });
     document.getElementById('pcard-trade').addEventListener('click', () => { const p = pcardWho; if (!p) return; const line = tradeAsk(p.uid, p.name); if (!tr.id) pcardNote.textContent = line || ''; });
+    document.getElementById('pcard-mute').addEventListener('click', () => { const p = pcardWho; if (!p) return; const on = muteToggle(p.uid || 'tab:' + p.id); document.getElementById('pcard-mute').textContent = on ? 'Unmute' : 'Mute'; pcardNote.textContent = on ? 'Muted: you will not see what ' + p.name + ' says or sends you.' : p.name + ' is not muted any more.'; paintNet(); });
     window.addEventListener('keydown', e => { if (e.key === 'Escape' && pcardP.isOpen()) pcardP.close(); });
     // ── The Manor's sign box: say what you are trading; everyone in the room sees it over your head ──
     const adBox = document.getElementById('adbox'), adInput = document.getElementById('ad-input');
@@ -24848,7 +24920,7 @@
       const msg = input.value.trim(), s = scene();
       if (msg && !s) return;                         // world still loading: keep the text
       const short = msg && EMO_SHORT[msg.trim()]; if (short && ui.emo && ui.emo(short)) { input.value = ''; questHappened('chat'); return; }
-      if (msg) { s.say(msg); netSay(msg); chatLine(G.name || 'You', msg, 'me'); input.value = ''; questHappened('chat'); }
+      if (msg) { const said = chatSafe(msg); s.say(said); netSay(said); chatLine(G.name || 'You', said, 'me'); input.value = ''; questHappened('chat'); }
       input.blur();
     });
     input.addEventListener('keydown', e => { if (e.key === 'Escape') input.blur(); });
@@ -25014,6 +25086,7 @@
       if (!ready || upBusy) return;
       const name = cleanText(nameIn.value, 16);
       if (name.length < 2) { upError.textContent = 'Pick a name of 2 to 16 characters.'; return; }
+      if (chatSafe(name) !== name) { upError.textContent = 'Pick a different name: that one is not allowed here.'; return; }
       if (existing && !replaceBox.checked) { upError.textContent = 'You already have a player. Tick the box to replace it, or use Sign in.'; return; }
       const A = ACCT();
       if (A && !acctEmail()) {                             // the stand-alone beta: an email and password keep the player
