@@ -230,7 +230,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793582810';
+window.WANDO_BUILD = '1793582871';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -19881,7 +19881,8 @@ window.WANDO_BUILD = '1793582810';
         }
         out.push(node('p', 'log-tier', 'Your friends · ' + G.friends.length));
         const list = node('ul', 'lcd-list');
-        G.friends.forEach(f => {
+        const rank = f => (!f.ok ? 3 : peerOf(f.id) ? 0 : farOf(f.id) ? 1 : 2);       // online here first, then on other servers, then away
+        G.friends.slice().sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name)).forEach(f => {
           const on = f.ok ? peerOf(f.id) : null, far = f.ok && !on ? farOf(f.id) : null, li = node('li', 'friend');
           li.append(node('span', 'on-dot' + (on ? '' : far ? ' far' : ' off')), node('b', '', f.name), node('span', 'status', !f.ok ? 'Asked' : on ? LOCS[on.loc].name : far ? 'On ' + srvById(far.sv).name : 'Away'));
           if (far) li.appendChild(mini('Join', 'srvgo', f.id, 'Go to the ' + srvById(far.sv).name + ' server, where ' + f.name + ' is'));
@@ -25317,7 +25318,10 @@ window.WANDO_BUILD = '1793582810';
       if (which === 'home') return;
       const wk = armoryWeek(), Dg = dailyDelve(dayNumber()), n = armory().list.length + ['o', 'b', 'f'].reduce((a, k) => a + collCat(k).list.length, 0);
       const page = {
-        news: ['What\'s new', ['<b>Ice fishing</b> at Frostwood Lake: drill a hole, wait for the bite, and reel in rare fish. Level up your Fishing Rank for better gear.', '<b>New in town:</b> the ice cream truck, the Wishing Fountain, a kickabout pitch, a playground, the daily Hedge Maze and the Green Grand Prix on the Village Green. The Big Wheel and sandcastles at the beach. A Claw Machine at the mall, and Freeze Dance at the Neon Dance House.',
+        news: ['What\'s new', [...(ONLINE_OWN() ? ['<b>Open beta:</b> servers (Wando Main, Starfall, Moonbeam), email sign-in to keep your player, and the game updates itself.',
+          '<b>Trading:</b> trade outfits, furniture, tools and more, with 10 seconds to back out. Your last trades are in your phone\'s Inbox.',
+          '<b>Chat:</b> type <b>/help</b> for commands like /wave, /who, /go beach and /server. Mute or report anyone from their player card.',
+          '<b>Phones and tablets:</b> pick "Playing on: Phone / tablet" for big tap buttons and a layout that fits.'] : []), '<b>Ice fishing</b> at Frostwood Lake: drill a hole, wait for the bite, and reel in rare fish. Level up your Fishing Rank for better gear.', '<b>New in town:</b> the ice cream truck, the Wishing Fountain, a kickabout pitch, a playground, the daily Hedge Maze and the Green Grand Prix on the Village Green. The Big Wheel and sandcastles at the beach. A Claw Machine at the mall, and Freeze Dance at the Neon Dance House.',
           (trickOn() ? '<b>Halloween:</b> trick-or-treat! The townsfolk give you candy to swap at the cauldrons.' : 'Ducks, birds, crabs, kites and fireflies: the world is a lot busier now.'),
           'This week\'s set: <b>' + armoryTheme(wk).name + '</b>, 12 new weapons, outfits, boards and furniture pieces each. Win them!',
           'Today\'s Daily Delve: <b>' + Dg.name + '</b> (' + Dg.mods.map(k => DELVE_MODS[k].name).join(', ') + ').',
