@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793583128';
+window.WANDO_BUILD = '1793583198';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -19792,7 +19792,11 @@ window.WANDO_BUILD = '1793583128';
       if (text != null) n.textContent = text;       // user-typed text only ever enters the page as text
       return n;
     };
-    const paintPip = () => { const n = unread() + questsReady() + (G.pet && petMood(G.pet).bad ? 1 : 0); phonePip.hidden = !n; phonePip.textContent = n; };   // unread messages, friend requests and quest rewards waiting
+    const BASE_TITLE = document.title || 'Planet Wando';
+    const paintPip = () => {
+      const n = unread() + questsReady() + (G.pet && petMood(G.pet).bad ? 1 : 0); phonePip.hidden = !n; phonePip.textContent = n;
+      const m = unread(); document.title = m ? '(' + m + ') ' + BASE_TITLE : BASE_TITLE;      // (a message waiting shows on the browser tab too)
+    };   // unread messages, friend requests and quest rewards waiting
 
     const VIEWS = {
       menu() {
