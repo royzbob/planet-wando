@@ -26,6 +26,9 @@ service cloud.firestore {
       allow delete: if owner(side);
     }
 
+    // announcements you write yourself in the Firebase console (news/motd, a field called text): everyone can read
+    match /news/{id} { allow read: if me(); allow write: if false; }
+
     // feedback from players: anyone signed in can send one (signed with their own id); only you read them, in the console
     match /feedback/{id} {
       allow create: if me() && request.resource.data.by == request.auth.uid && request.resource.data.text is string && request.resource.data.text.size() <= 600 && small();

@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793583060';
+window.WANDO_BUILD = '1793583128';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -4908,6 +4908,16 @@ window.WANDO_BUILD = '1793583060';
     ul.replaceChildren(...connLines().map(([ok, name, text]) => { const li = document.createElement('li'), i = document.createElement('span'), t = document.createElement('span'), b = document.createElement('b'); i.textContent = ok ? '✅' : ok === false ? '❌' : '⏳'; b.textContent = name + ': '; t.append(b, text); li.append(i, t); return li; }));
   }
   const srvById = id => SERVERS.find(S => S.id === id) || SERVERS[0];
+  // The announcement (online copies): one line the game's makers set in the database (news/motd: { text }), shown on
+  //    the start screen's ticker and in the chat box when you arrive. Read once per visit.
+  let motdP = null;
+  function motdGet() {
+    if (!motdP) motdP = (async () => {
+      try { if (!ONLINE_OWN()) return ''; const db = await window.claude.use('db'); if (!db) return ''; const d = await db.doc('news/motd').get(); const b = d && d.exists ? d.data() : null; return b && typeof b.text === 'string' ? chatSafe(cleanText(b.text, 160)) : ''; }
+      catch (e) { return ''; }
+    })();
+    return motdP;
+  }
   const SRV = { id: 'main', counts: null, cbs: [], on: false, why: '' };     // why: what stopped the servers connecting, in plain words     // counts: players on each server (null: still asking; false: offline)
   try { const v = localStorage.getItem('meadowmere-server'); if (SERVERS.some(S => S.id === v)) SRV.id = v; } catch (e) { /* remembered servers are a convenience */ }
   function srvSet(id) { SRV.id = srvById(id).id; try { localStorage.setItem('meadowmere-server', SRV.id); } catch (e) { /* (as above) */ } }
@@ -24130,6 +24140,7 @@ window.WANDO_BUILD = '1793583060';
     ui.onChatLine = (name, text, mine) => chatLine(name, text, mine ? 'me' : 'them');
     const locWas = ui.onLoc;
     ui.onLoc = loc => { locWas(loc); document.getElementById('app').dataset.loc = loc; const D = LOCS[loc]; chatLine('', 'You are at ' + (loc === 'home' ? 'a house' : D.name) + '.', 'sys'); if (wmapP.isOpen()) wmapPaint(); mapBtn.setAttribute('aria-expanded', String(wmapP.isOpen())); };
+    motdGet().then(m => { if (m) chatLine('', '📣 ' + m, 'sys'); });
     chatLine('', 'Welcome to Planet Wando, ' + (G.name || 'friend') + '! ' + (screenPhone() ? 'Tap the chat bar to talk.' : 'Press Enter to chat.') + ' Type /help for commands.', 'sys');
     // ── Daily rewards: on the first visit of each day the week's card opens; collect today's, come back tomorrow ──
     const loginEl = document.getElementById('login'), loginP = makePanel(loginEl), loginDays = document.getElementById('login-days'), loginBtn = document.getElementById('login-claim'), loginSub = document.getElementById('login-sub');
@@ -25371,6 +25382,7 @@ window.WANDO_BUILD = '1793583060';
         'Trade with your friends', 'Build a house and fill it with Collector\'s pieces', 'Adopt a pet on the Green'].join('   ★   ');
       $('gate-delve').textContent = Dg.name;
     } catch (e) { /* the news can wait */ }
+    motdGet().then(m => { if (m) { const t = $('gate-ticker-text'); t.textContent = '📣 ' + m + '   ★   ' + t.textContent; } });
     // The banner: five players in this week's showcase, under the stage lights, one riding a Legend board.
     function gateHero() {
       const cv = $('gate-hero'), w = cv.clientWidth, h = cv.clientHeight;
