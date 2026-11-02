@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793583198';
+window.WANDO_BUILD = '1793583343';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -1148,6 +1148,7 @@ window.WANDO_BUILD = '1793583198';
   html[data-hidechat="1"] .chatbox { display: none !important; }
   html[data-hideplate="1"] .plate { display: none !important; }
   .sound-pop .snd-plain::after { content: none !important; }
+  .sound-pop .snd-title { margin-top: 0; font-size: 14px; }
   .sound-pop .snd-head { font: 800 12px/1.2 var(--font-display); color: var(--ink); margin-top: 4px; }
   html[data-screen="phone"] #ride-btn { display: none !important; }      /* (on a phone the round Ride button does this) */
   html[data-screen="phone"] .dig-btn small { display: none; }
@@ -2635,7 +2636,8 @@ window.WANDO_BUILD = '1793583198';
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.500h3.500L12 5.500v13l-4.500-4H4z" fill="currentColor"/><path class="sound-on" d="M15.500 9a4.500 4.500 0 0 1 0 6M18 6.500a8 8 0 0 1 0 11"/><path class="sound-off" d="M16 9.500l5 5M21 9.500l-5 5"/></svg>
         <span id="sound-tag" class="dock-badge" hidden>FX</span>
       </button>
-      <div id="sound-pop" class="emote-pop sound-pop" role="group" aria-label="Sound settings" hidden>
+      <div id="sound-pop" class="emote-pop sound-pop" role="group" aria-label="Sound and settings" hidden>
+        <b class="snd-head snd-title">⚙️ Sound and settings</b>
         <button id="snd-music" type="button" aria-pressed="true">Music</button>
         <button id="snd-fx" type="button" aria-pressed="true">Sound effects</button>
         <label class="snd-vol">Music volume <input id="snd-vol" type="range" min="0" max="100" value="60"></label>
@@ -22340,8 +22342,8 @@ window.WANDO_BUILD = '1793583198';
     const paintSound = () => {                              // three settings: everything, effects only (no background music), off
       const off = !AUDIO.music && AUDIO.fx === false, mode = off ? 'Sound is off' : AUDIO.music && AUDIO.fx !== false ? 'Music and sound effects are on' : AUDIO.music ? 'Music only: the sound effects are off' : 'Sound effects only: the music is off';
       soundBtn.setAttribute('aria-pressed', String(off));
-      soundBtn.setAttribute('aria-label', mode + '. Click for sound settings.');
-      soundBtn.title = mode + '. Click for sound settings.';
+      soundBtn.setAttribute('aria-label', mode + '. Sound and settings.');
+      soundBtn.title = mode + '. Sound and settings: screen, chat box, feedback.';
       soundTag.hidden = off || (AUDIO.music && AUDIO.fx !== false); soundTag.textContent = AUDIO.music ? '♪' : 'FX';
     };
     // The sound button opens two switches, the place music and the sound effects (each on or off by itself), and the music's volume.
@@ -25046,7 +25048,7 @@ window.WANDO_BUILD = '1793583198';
     // ── Chat commands. Typed in the chat box, never sent to anyone: /help, emotes (/wave, /dance...), /server, /who,
     //    /go, /pm, /mute and /unmute. ──
     const CMD_HELP = ['/wave /dance /sit /jump /cheer /spin: do an emote (and any dance you own, like /robot)', '/who: who is on your server', '/server Starfall: switch server (or /server 2)',
-      '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/mute Name and /unmute Name'];
+      '/settings: sound, screen, chat box and feedback', '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/mute Name and /unmute Name'];
     const GO_WORDS = { beach: 'beach', starfish: 'beach', mall: 'mall', cosmo: 'mall', cave: 'cave', crystal: 'cave', mine: 'cave', trade: 'trade', manor: 'trade', trading: 'trade', dance: 'dance', club: 'dance', ice: 'ice', frost: 'ice', frostwood: 'ice', lake: 'ice', crypt: 'dungeon', dungeon: 'dungeon', hollow: 'dungeon', home: 'home', house: 'home', green: 'green', village: 'green', town: 'green' };
     function chatCommand(raw) {
       const say = t => chatLine('', t, 'sys'), parts = raw.slice(1).trim().split(/\s+/), cmd = (parts.shift() || '').toLowerCase(), rest = parts.join(' '), s = scene();
@@ -25059,6 +25061,7 @@ window.WANDO_BUILD = '1793583198';
         if (dance && !danceOwned(G, dance)) { say('You do not know the ' + dance.name + ' yet. The Dance House teaches it.'); return true; }
         setEmoteUI(s.setEmote(id)); return true;
       }
+      if (cmd === 'settings' || cmd === 'options') { const b = document.getElementById('sound-btn'); if (b && document.getElementById('sound-pop').hidden) b.click(); return true; }
       if (cmd === 'who') {
         const list = [...net.peers.values()].filter(p => !p.mine).map(p => p.name + ' (' + (p.loc === 'home' ? 'at home' : LOCS[p.loc] ? LOCS[p.loc].name : 'away') + ')');
         say('On ' + srvById(SRV.id).name + ': you' + (list.length ? ', ' + list.join(', ') : ', and nobody else yet') + '.'); return true;
