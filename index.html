@@ -230,7 +230,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793582494';
+window.WANDO_BUILD = '1793582592';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -2709,8 +2709,8 @@ window.WANDO_BUILD = '1793582494';
 
   <section id="fbk" class="pcard fbk" role="dialog" aria-labelledby="fbk-title" hidden>
     <h2 id="fbk-title" class="pcard-name">Tell us what you think</h2>
-    <p class="pcard-info">Found a bug, or have an idea? It goes straight to the people making Planet Wando. Please do not put your email or phone number in it.</p>
-    <div class="fbk-kinds" role="group" aria-label="What kind"><button type="button" data-fbk="bug" aria-pressed="false">🐞 A bug</button><button type="button" data-fbk="idea" aria-pressed="true">💡 An idea</button><button type="button" data-fbk="love" aria-pressed="false">💜 I like…</button></div>
+    <p id="fbk-intro" class="pcard-info">Found a bug, or have an idea? It goes straight to the people making Planet Wando. Please do not put your email or phone number in it.</p>
+    <div class="fbk-kinds" role="group" aria-label="What kind"><button type="button" data-fbk="bug" aria-pressed="false">🐞 A bug</button><button type="button" data-fbk="idea" aria-pressed="true">💡 An idea</button><button type="button" data-fbk="love" aria-pressed="false">💜 I like…</button><button type="button" data-fbk="report" aria-pressed="false" hidden>🚩 Report a player</button></div>
     <textarea id="fbk-text" class="fbk-text" maxlength="600" rows="5" placeholder="What happened, or what would make the game better?"></textarea>
     <p id="fbk-note" class="pcard-info" role="status"></p>
     <div class="pcard-btns"><button id="fbk-cancel" class="btn" type="button">Close</button><button id="fbk-send" class="btn" type="button">Send</button></div>
@@ -2723,7 +2723,7 @@ window.WANDO_BUILD = '1793582494';
     </div>
     <h2 id="pcard-name" class="pcard-name">Player</h2>
     <p id="pcard-info" class="pcard-info"></p>
-    <div class="pcard-btns"><button id="pcard-friend" class="btn" type="button">Add friend</button><button id="pcard-trade" class="btn" type="button">Trade</button><button id="pcard-mute" class="btn" type="button">Mute</button></div>
+    <div class="pcard-btns"><button id="pcard-friend" class="btn" type="button">Add friend</button><button id="pcard-trade" class="btn" type="button">Trade</button><button id="pcard-mute" class="btn" type="button">Mute</button><button id="pcard-report" class="btn" type="button" hidden>Report</button></div>
     <p id="pcard-note" class="pcard-note" aria-live="polite"></p>
   </section>
   <div id="tablebar" class="tablebar" role="status" hidden><span id="tablebar-text"></span><button id="tablebar-trade" class="btn" type="button" hidden>Trade</button></div>
@@ -24166,6 +24166,7 @@ window.WANDO_BUILD = '1793582494';
       const friend = typeof friendOf === 'function' && p.uid ? friendOf(p.uid) : null;
       document.getElementById('pcard-friend').hidden = !p.uid || !!friend;
       document.getElementById('pcard-trade').hidden = !p.uid;
+      document.getElementById('pcard-report').hidden = !ONLINE_OWN();
       document.getElementById('pcard-mute').textContent = isMuted(p.uid || 'tab:' + p.id) ? 'Unmute' : 'Mute';
       if (!p.uid) pcardNote.textContent = 'A guest: no account to trade or be friends with.';
       for (const k in panels) if (k !== 'pcard') panels[k].close();
@@ -24179,16 +24180,23 @@ window.WANDO_BUILD = '1793582494';
     // ── Feedback: a note to the makers (online copies only), kept in the database's feedback list ──
     {
       const box = document.getElementById('fbk'), fbP = makePanel(box), txt = document.getElementById('fbk-text'), note = document.getElementById('fbk-note'), sendB = document.getElementById('fbk-send');
-      let kind = 'idea', sentAt = 0;
+      let kind = 'idea', sentAt = 0, about = null;           // about: the player being reported { uid, name }
       panels.fbk = fbP;
       const paintK = () => box.querySelectorAll('[data-fbk]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.fbk === kind)));
       box.addEventListener('click', e => { const b = e.target.closest('[data-fbk]'); if (b) { kind = b.dataset.fbk; paintK(); } });
-      document.getElementById('fbk-open').addEventListener('click', () => {
+      const repB = box.querySelector('[data-fbk="report"]'), titleEl = document.getElementById('fbk-title');
+      function fbkOpen(who) {
         soundPop.hidden = true; soundBtn.setAttribute('aria-expanded', 'false');
         for (const k in panels) if (k !== 'fbk') panels[k].close();
+        about = who || null; repB.hidden = !about; if (about) kind = 'report'; else if (kind === 'report') kind = 'idea';
+        titleEl.textContent = about ? 'Report ' + about.name : 'Tell us what you think';
+        document.getElementById('fbk-intro').textContent = about ? 'Tell the people running Planet Wando what happened. Reports are private: ' + about.name + ' will not see it.' : 'Found a bug, or have an idea? It goes straight to the people making Planet Wando. Please do not put your email or phone number in it.';
+        txt.placeholder = about ? 'What did ' + about.name + ' do? (Tip: you can also Mute them.)' : 'What happened, or what would make the game better?';
         note.textContent = window.claude ? '' : 'Feedback can only be sent from the online game.'; sendB.disabled = !window.claude;
         paintK(); fbP.open(); setTimeout(() => { try { txt.focus(); } catch (e) { /* (a phone may not focus) */ } }, 50);
-      });
+      }
+      ui.fbkOpen = fbkOpen;
+      document.getElementById('fbk-open').addEventListener('click', () => fbkOpen(null));
       document.getElementById('fbk-cancel').addEventListener('click', () => fbP.close());
       sendB.addEventListener('click', async () => {
         const text = chatSafe(cleanText(txt.value, 600));
@@ -24201,12 +24209,13 @@ window.WANDO_BUILD = '1793582494';
           const id = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8), s = scene();
           let by = account.uid || '';
           if (!by) { try { const u = await window.claude.use('user'); by = u && u.id ? String(await u.id() || '') : ''; } catch (e) { by = ''; } }     // (signed in, even if your save is only in this browser)
-          await db.collection('feedback').doc(id).set({ by, name: G.name || 'Player', kind, text, at: Date.now(), where: s ? s.loc : G.loc, screen: screenPhone() ? 'phone' : 'pc', build: String(window.WANDO_BUILD || '') });
+          await db.collection('feedback').doc(id).set({ by, name: G.name || 'Player', kind, text, at: Date.now(), where: s ? s.loc : G.loc, about: about ? about.uid : '', aboutName: about ? about.name : '', server: SRV.id, screen: screenPhone() ? 'phone' : 'pc', build: String(window.WANDO_BUILD || '') });
           sentAt = Date.now(); txt.value = ''; note.textContent = 'Sent! Thank you for helping make Planet Wando better. 💜';
         } catch (e) { note.textContent = 'It could not be sent just now. Try again in a little while.'; }
         sendB.disabled = false;
       });
     }
+    document.getElementById('pcard-report').addEventListener('click', () => { const p = pcardWho; if (p && ui.fbkOpen) ui.fbkOpen({ uid: p.uid || 'tab:' + p.id, name: p.name }); });
     document.getElementById('pcard-mute').addEventListener('click', () => { const p = pcardWho; if (!p) return; const on = muteToggle(p.uid || 'tab:' + p.id); document.getElementById('pcard-mute').textContent = on ? 'Unmute' : 'Mute'; pcardNote.textContent = on ? 'Muted: you will not see what ' + p.name + ' says or sends you.' : p.name + ' is not muted any more.'; paintNet(); });
     window.addEventListener('keydown', e => { if (e.key === 'Escape' && pcardP.isOpen()) pcardP.close(); });
     // ── The Manor's sign box: say what you are trading; everyone in the room sees it over your head ──
