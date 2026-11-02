@@ -89,11 +89,13 @@
       get: function () { return r.get().then(snapDoc).then(dbOk, dbErr); },
       set: function (o) {
         if (!isSave) return r.set(enc(o)).then(dbOk, dbErr);
-        var p = pendingSaves[r.path] || (pendingSaves[r.path] = { last: 0, data: null, timer: 0 });
-        p.data = o;
+        var p = pendingSaves[r.path] || (pendingSaves[r.path] = { last: 0, data: null, timer: 0, sent: '' });
+        var key = JSON.stringify(o && typeof o === 'object' && 'state' in o ? o.state : o);     // (the player itself, not when it was saved)
+        if (key === p.sent) { p.data = null; return Promise.resolve(); }                        // nothing changed: no write (the free plan counts them)
+        p.data = o; p.key = key;
         var wait = Math.max(0, p.last + SAVE_MS - Date.now());
-        if (!wait && !p.timer) { p.last = Date.now(); p.data = null; return r.set(enc(o)).then(dbOk, dbErr); }
-        if (!p.timer) p.timer = setTimeout(function () { p.timer = 0; p.last = Date.now(); var d = p.data; p.data = null; if (d) r.set(enc(d)).catch(function () {}); }, wait || SAVE_MS);
+        if (!wait && !p.timer) { p.last = Date.now(); p.data = null; p.sent = key; return r.set(enc(o)).then(dbOk, dbErr); }
+        if (!p.timer) p.timer = setTimeout(function () { p.timer = 0; p.last = Date.now(); var d = p.data; p.data = null; if (d) { p.sent = p.key; r.set(enc(d)).catch(function () { p.sent = ''; }); } }, wait || SAVE_MS);
         return Promise.resolve();
       },
       update: function (o) { return r.get().then(function (s) { var cur = s.exists ? dec(s.data()) || {} : {}; return r.set(enc(Object.assign({}, cur, o))); }); },
@@ -230,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793582967';
+window.WANDO_BUILD = '1793583060';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -658,6 +660,8 @@ window.WANDO_BUILD = '1793582967';
   .on-dot.off { background: var(--ph-rim); }
   .on-dot.far { background: #ffc21a; }
   .tl-line { display: block; }
+  .net-list li.net-far { background: #fff7c2; }
+  .net-list li.net-far .net-dot { background: #ffc21a; }
   .net-list .btn.muted { background: #ffd0d0; }
   .status, .soon { margin-left: auto; flex: none; font-size: 10px; font-weight: 800; }
   .soon { padding: 1px 7px; border-radius: 999px; background: var(--lcd-bar); color: #fff; }
@@ -23826,6 +23830,12 @@ window.WANDO_BUILD = '1793582967';
         if (p.party && p.uid && !p.mine) { const pb = el('button', 'btn', { type: 'button', 'data-party': p.uid }); pb.textContent = f && f.ok ? 'Join party!' : 'Party! (friends only)'; pb.disabled = !(f && f.ok); acts.appendChild(pb); }
         return row((p.dv === 'm' ? '📱 ' : p.dv === 'd' ? '💻 ' : '') + p.name + (p.mine ? ' (your other tab)' : f ? (f.ok ? ' · friend' : ' · asked') : ''), p.loc === 'home' ? 'At home' : !LOCS[p.loc] ? 'Away' : p.loc === here ? LOCS[p.loc].name + ' · here with you' : LOCS[p.loc].name, acts);
       }));
+      if (net.far) net.far.forEach(fr => {                  // your friends on the other servers, with a way to join them
+        if (!G.friends.some(x => x.ok && x.id === fr.uid)) return;
+        const acts = node('span', 'net-acts'), j = el('button', 'btn', { type: 'button', 'data-srvgo': fr.uid }); j.textContent = 'Join'; acts.appendChild(j);
+        const li = row('★ ' + fr.name + ' · friend', 'On ' + srvById(fr.sv).name + ' · ' + (fr.loc === 'home' ? 'at home' : LOCS[fr.loc].name), acts);
+        li.classList.add('net-far'); netList.appendChild(li);
+      });
     }
     netBtn.addEventListener('click', e => {
       netPop.hidden = !netPop.hidden;
@@ -23835,6 +23845,8 @@ window.WANDO_BUILD = '1793582967';
       if (e.detail > 0) netBtn.blur();
     });
     netList.addEventListener('click', e => {                // "Add friend"; and "Go there": travel to the place a player is in
+      const sg = e.target.closest('[data-srvgo]');
+      if (sg) { netPop.hidden = true; netBtn.setAttribute('aria-expanded', 'false'); if (ui.social && ui.social.act) ui.social.act('srvgo', sg.dataset.srvgo); return; }
       const mu = e.target.closest('[data-mute]');
       if (mu) { const p = [...net.peers.values()].find(x => (x.uid || 'tab:' + x.id) === mu.dataset.mute), on = muteToggle(mu.dataset.mute), sc = scene(); if (sc) { sc.noteUntil = 0; sc.note((p ? p.name : 'That player') + (on ? ' is muted: you will not see what they say or send.' : ' is not muted any more.'), '#ffe9a8'); } paintNet(); return; }
       const add = e.target.closest('[data-add]');
