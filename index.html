@@ -230,7 +230,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793581574';
+window.WANDO_BUILD = '1793581698';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -2416,6 +2416,14 @@ window.WANDO_BUILD = '1793581574';
     html[data-screen="phone"] .chatbox { width: min(230px, 40%); }
     html[data-screen="phone"] .chatbox-log { height: 52px; }
     html[data-screen="phone"] .tp-btn { width: 52px; height: 52px; } html[data-screen="phone"] .tp-btn.main { width: 62px; height: 62px; }
+  }
+
+  @media (max-height: 500px) {                             /* a short screen (a phone on its side): the catalog books use all the height there is */
+    .catbook { gap: 4px; max-height: calc(100% - var(--dock-h) - 8px); }
+    .cb-book { padding: 6px 40px 6px 6px; }
+    .cb-pages, .catbook:not(.plain) .cb-pages { min-height: 0; height: calc(100vh - var(--dock-h) - 66px); max-height: calc(100vh - var(--dock-h) - 66px); }
+    .cb-turn { width: 34px; height: 34px; font-size: 15px; }
+    .cb-title { font-size: clamp(22px, 5vw, 34px); }
   }
 </style>
 
@@ -19334,6 +19342,7 @@ window.WANDO_BUILD = '1793581574';
 
     const scene = () => game.scene.getScenes(true).find(s => s.ready) || null;   // whichever location is live
     screenApply(); hudApply();
+    setTimeout(() => { const h = document.getElementById('hint'); if (h) h.classList.add('gone'); }, 25000);   // (the walking tip goes after a while even if you have not walked far)
     window.__wandoScreenChanged = () => { const sc = scene(); if (sc && sc.fitCam) sc.fitCam(); if (sc && sc.note) { sc.noteUntil = 0; sc.note(SCREEN.mode === 'phone' ? '📱 Phone / tablet layout' : SCREEN.mode === 'pc' ? '💻 Computer layout' : 'Layout: picked for you', '#ffe9a8'); } };
     // ── phones and tablets: no pinch-zoom while you play. (The CSS above stops it in most browsers; Safari on iPhone and
     //    iPad needs its gesture events stopped too, and a two-finger move.) ──
@@ -24872,7 +24881,7 @@ window.WANDO_BUILD = '1793581574';
         art('Card Counter', 'New Classic player cards today: ' + cards.join(', ') + '. Collect them all at the Trading Manor.'),
         art('Catch of the Day', 'Land a ' + cotd.name + ' (' + FISH_TIERS[cotd.tier].name + ') at the ' + pool + ' for double its price in bonus Coins, once today.', G.angler.cotd === day ? 'You already claimed it today. Nice work!' : ''),
         art('The Daily Delve', delve.name + ' waits under the crypt today. ' + (DELVE_MODS[delve.mods[0]] ? 'Expect: ' + delve.mods.map(m => DELVE_MODS[m].name || m).join(', ') + '.' : '')),
-        art('Who\'s About', here.length ? here.length + (here.length > 1 ? ' players are' : ' player is') + ' on Planet Wando right now' + (busiest ? ', most at ' + busiest : '') + '.' : 'It is quiet right now. Share the page with a friend to play together.', ui.wmap ? go('Open the map', () => ui.wmap.open()) : null),
+        art('Who\'s About', here.length ? here.length + (here.length > 1 ? ' players are' : ' player is') + ' on Planet Wando right now' + (busiest ? ', most at ' + busiest : '') + '.' : (ONLINE_OWN() ? 'It is quiet right now. Send a friend the game\'s link and play together!' : 'It is quiet right now. Share the page with a friend to play together.'), ui.wmap ? go('Open the map', () => ui.wmap.open()) : null),
         (() => { const a = art('Hall of Fame', 'Reading the record books...'); a.id = 'times-fame'; return a; })(),
         art(starName() + ' Hunt', G.login.star === day ? 'You found today\'s ' + starName() + '. Well done! A new one hides tomorrow.' : 'Today\'s ' + starName() + ' is hiding somewhere in ' + LOCS[starPlace(day)].name + '. Find it for ' + STAR_PRIZE + ' Coins!'),
         art('Weather', weatherNow() === 'rain' ? 'RAIN over the Village Green and Starfish Beach this hour. Anglers rejoice: fish bite faster in the rain!' : 'Clear skies this hour. When it rains, fish bite faster.'),
