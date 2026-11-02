@@ -230,7 +230,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793582660';
+window.WANDO_BUILD = '1793582810';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -657,6 +657,7 @@ window.WANDO_BUILD = '1793582660';
   .on-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--online); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7); }
   .on-dot.off { background: var(--ph-rim); }
   .on-dot.far { background: #ffc21a; }
+  .tl-line { display: block; }
   .net-list .btn.muted { background: #ffd0d0; }
   .status, .soon { margin-left: auto; flex: none; font-size: 10px; font-weight: 800; }
   .soon { padding: 1px 7px; border-radius: 999px; background: var(--lcd-bar); color: #fff; }
@@ -3925,6 +3926,7 @@ window.WANDO_BUILD = '1793582660';
     if (Number.isInteger(v.pg)) f.pg = v.pg;
     f.host = !!v.host;
     f.rushWin = !!v.rushWin;
+    if (Array.isArray(v.tlog)) f.tlog = v.tlog.filter(e => e && typeof e === 'object' && Number.isFinite(e.at)).slice(0, 20).map(e => ({ at: e.at, w: String(e.w || '').slice(0, 16), g: (Array.isArray(e.g) ? e.g : []).slice(0, 8).map(x => String(x).slice(0, 40)), r: (Array.isArray(e.r) ? e.r : []).slice(0, 8).map(x => String(x).slice(0, 40)), cg: Number.isInteger(e.cg) ? e.cg : 0, cr: Number.isInteger(e.cr) ? e.cr : 0 }));   // your trade history
     if (Number.isInteger(v.kd)) f.kd = v.kd;
     if (Number.isInteger(v.wd)) f.wd = v.wd;
     if (Number.isInteger(v.cd)) f.cd = v.cd;
@@ -19806,6 +19808,14 @@ window.WANDO_BUILD = '1793582660';
           b.type = 'button'; b.dataset.go = 'friends';
           out.push(node('p', 'lcd-note', 'You can message your friends here. Add a friend first.'), b);
         }
+        const TL = ui.tradeLog ? ui.tradeLog() : [];
+        if (TL.length) {                                    // your trade history
+          out.push(node('p', 'log-tier', 'Your last trades'));
+          const tl = node('ul', 'lcd-list');
+          const said = (items, coins) => items.concat(coins ? [coins + ' Coins'] : []).join(', ') || 'nothing';
+          TL.forEach(e => { const li = node('li', 'msg'), d = new Date(e.at); li.append(node('b', '', 'With ' + e.w + ' · ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })), node('span', 'tl-line', 'You gave: ' + said(e.g, e.cg)), node('span', 'tl-line', 'You got: ' + said(e.r, e.cr))); tl.appendChild(li); });
+          out.push(tl);
+        }
         return out;
       },
       thread() {                                           // the messages between you and one friend, and a box to write the next
@@ -23279,6 +23289,10 @@ window.WANDO_BUILD = '1793582660';
     // invite: a trade someone asked you to, waiting for your answer. note: a line for the panel. writing: the last write.
     const tr = { id: '', other: '', otherName: '', me: null, them: null, stop: null, done: false, invite: null, note: '', writing: Promise.resolve() };
     const tradeP = makePanel(document.getElementById('trade')), tradeBody = document.getElementById('trade-body'), tradeMsg = document.getElementById('trade-msg');
+    // Your last trades, newest first (kept in the save; shown in the phone's Inbox), each checked as it is read.
+    const tradeLog = () => (Array.isArray(G.fan && G.fan.tlog) ? G.fan.tlog : []).filter(e => e && Number.isFinite(e.at)).slice(0, 20).map(e => ({ at: e.at, w: cleanText(e.w, 16) || 'Player',
+      g: (Array.isArray(e.g) ? e.g : []).slice(0, 8).map(x => cleanText(x, 40)), r: (Array.isArray(e.r) ? e.r : []).slice(0, 8).map(x => cleanText(x, 40)), cg: Number.isInteger(e.cg) ? e.cg : 0, cr: Number.isInteger(e.cr) ? e.cr : 0 }));
+    ui.tradeLog = tradeLog;
     const tradeSides = id => soc.db.collection('trades/' + id + '/sides');
     // One thing on the table, checked, as { k: its kind, u: its serial, name, r: rarity, ... }. A weapon is the weapon
     // itself (k 'w'); an outfit or a board carries its copy as obj; a piece of furniture carries { t, c } (no serial of its own).
@@ -23454,6 +23468,7 @@ window.WANDO_BUILD = '1793582660';
       });
       G.coins += t.coins - m.coins;
       D.traded.push(tr.id); D.traded = D.traded.slice(-30); D.trade = null;
+      G.fan.tlog = [{ at: Date.now(), w: tr.otherName, g: m.w.map(x => String(x.name)).slice(0, 8), r: t.w.map(x => String(x.name)).slice(0, 8), cg: m.coins, cr: t.coins }].concat(tradeLog()).slice(0, 20);   // (your trade history, on the phone)
       tr.done = true; m.done = true; tradeWrite();
       sfx.chime(); saveGame(); if (ui.onDun) ui.onDun(); if (ui.onState) ui.onState();
       tr.note = 'Trade done! ' + (t.w.length ? 'You got ' + t.w.map(w => w.name).join(', ') + (t.coins ? ' and ' + t.coins + ' Coins' : '') : t.coins ? 'You got ' + t.coins + ' Coins' : 'You gave a gift') + '.';
