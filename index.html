@@ -230,7 +230,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793581698';
+window.WANDO_BUILD = '1793582212';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -1139,6 +1139,7 @@ window.WANDO_BUILD = '1793581698';
   html[data-screen="pc"] .tpad { display: none !important; }
   html[data-hidechat="1"] .chatbox { display: none !important; }
   html[data-hideplate="1"] .plate { display: none !important; }
+  .sound-pop .snd-plain::after { content: none !important; }
   .sound-pop .snd-head { font: 800 12px/1.2 var(--font-display); color: var(--ink); margin-top: 4px; }
   html[data-screen="phone"] #ride-btn { display: none !important; }      /* (on a phone the round Ride button does this) */
   html[data-screen="phone"] .dig-btn small { display: none; }
@@ -2195,6 +2196,11 @@ window.WANDO_BUILD = '1793581698';
     animation: pop-in 0.22s cubic-bezier(0.3, 1.4, 0.5, 1) both;
   }
   .pcard.closing { animation: pop-out 0.15s ease-in both; }
+  .fbk { z-index: 75; width: min(360px, calc(100% - 24px)); }
+  .fbk-kinds { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .fbk-kinds button { padding: 6px 10px; border: 2px solid #120b3a; border-radius: 10px; background: #fff; color: #1a1040; font: 800 13px/1.1 var(--font-body); cursor: pointer; }
+  .fbk-kinds button[aria-pressed="true"] { background: var(--sun, #ffd84d); }
+  .fbk-text { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 2px solid #120b3a; border-radius: 12px; font: 600 15px/1.35 var(--font-body); color: #1a1040; resize: vertical; }
   .pcard-face { position: relative; width: 100%; aspect-ratio: 300 / 330; border: 3px solid #120b3a; border-radius: 14px; overflow: hidden; background: linear-gradient(#bfe6ff, #fff3d6); }
   .pcard-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .pcard-me { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: auto; }
@@ -2620,6 +2626,7 @@ window.WANDO_BUILD = '1793581698';
         <button id="snd-music" type="button" aria-pressed="true">Music</button>
         <button id="snd-fx" type="button" aria-pressed="true">Sound effects</button>
         <label class="snd-vol">Music volume <input id="snd-vol" type="range" min="0" max="100" value="60"></label>
+        <button id="fbk-open" class="snd-plain" type="button">✉️ Send feedback or report a bug</button>
         <b class="snd-head">Show</b>
         <button type="button" data-hud="chat" aria-pressed="true">Chat box</button>
         <button type="button" data-hud="plate" aria-pressed="true">Place sign (top left)</button>
@@ -2700,6 +2707,14 @@ window.WANDO_BUILD = '1793581698';
     <p class="login-sub">The smiley button: moves (wave, dance, sit, jump, cheer, spin), Throw!, and 16 emoticons. Or type :) &lt;3 :D ;) :( gg on their own in chat. Your title (under your name) is picked on your profile card.</p>
   </section>
 
+  <section id="fbk" class="pcard fbk" role="dialog" aria-labelledby="fbk-title" hidden>
+    <h2 id="fbk-title" class="pcard-name">Tell us what you think</h2>
+    <p class="pcard-info">Found a bug, or have an idea? It goes straight to the people making Planet Wando. Please do not put your email or phone number in it.</p>
+    <div class="fbk-kinds" role="group" aria-label="What kind"><button type="button" data-fbk="bug" aria-pressed="false">🐞 A bug</button><button type="button" data-fbk="idea" aria-pressed="true">💡 An idea</button><button type="button" data-fbk="love" aria-pressed="false">💜 I like…</button></div>
+    <textarea id="fbk-text" class="fbk-text" maxlength="600" rows="5" placeholder="What happened, or what would make the game better?"></textarea>
+    <p id="fbk-note" class="pcard-info" role="status"></p>
+    <div class="pcard-btns"><button id="fbk-cancel" class="btn" type="button">Close</button><button id="fbk-send" class="btn" type="button">Send</button></div>
+  </section>
   <section id="pcard" class="pcard" role="dialog" aria-labelledby="pcard-name" hidden>
     <div class="pcard-face">
       <canvas id="pcard-bg" class="pcard-bg" width="300" height="360" aria-hidden="true"></canvas>
@@ -16257,11 +16272,12 @@ window.WANDO_BUILD = '1793581698';
       this.tag(x, y + 22, 'Recycling Yard: turn in trash, grabbers', -400, 11).setColor('#b8ff9a');
       this.bins.push({ x, y, yard: true });
     }
+    underSpot(x, y) { return this.hotspots.some(h => h.hit && h.hit.contains(x, y - 18)); }   // (not where a tap would open a shop instead)
     flowerSpawn() {                                             // a bunch of wild flowers, springing up somewhere out in the open
       const B = this.D.bounds;
       for (let k = 0; k < 40; k++) {
         const x = B.x + 100 + Math.random() * (B.w - 200), y = B.y + 140 + Math.random() * (B.h - 220);
-        if (!this.free(x, y, 24) || (this.pz && Math.hypot(x - this.pz.x, y - this.pz.y) < 220) || this.flowerBeds.some(b => Math.hypot(b.x - x, b.y - y) < 160)) continue;
+        if (!this.free(x, y, 24) || this.underSpot(x, y) || (this.pz && Math.hypot(x - this.pz.x, y - this.pz.y) < 220) || this.flowerBeds.some(b => Math.hypot(b.x - x, b.y - y) < 160)) continue;
         const kind = Math.floor(Math.random() * FLOWER_COLORS.length);
         const img = this.add.image(x, y, 'fbunch_' + kind).setOrigin(0.5, 0.95).setScale(1 / TEX).setDepth(y).setFlipX(Math.random() < 0.5);
         if (!REDUCED) { img.setScale(0.2 / TEX); this.tweens.add({ targets: img, scale: 1 / TEX, duration: 500, ease: 'Back.out' }); }      // (it pops up)
@@ -16274,7 +16290,7 @@ window.WANDO_BUILD = '1793581698';
       const B = this.D.bounds;
       for (let k = 0; k < 40; k++) {
         const x = B.x + 80 + Math.random() * (B.w - 160), y = this.loc === 'beach' ? 430 + Math.random() * 360 : B.y + 120 + Math.random() * (B.h - 200);
-        if (!this.free(x, y, 22) || (this.pz && Math.hypot(x - this.pz.x, y - this.pz.y) < 260)) continue;
+        if (!this.free(x, y, 22) || this.underSpot(x, y) || (this.pz && Math.hypot(x - this.pz.x, y - this.pz.y) < 260)) continue;
         const kind = Math.floor(Math.random() * TRASH_KINDS.length);
         const t = { gather: 'trash', kind, x, y, img: this.add.image(x, y, 'trash_' + kind).setOrigin(0.5, 0.75).setScale(1 / TEX).setDepth(y - 2).setRotation((Math.random() - 0.5) * 0.6) };
         this.trash.push(t); return t;
@@ -24150,6 +24166,37 @@ window.WANDO_BUILD = '1793581698';
     document.getElementById('pcard-close').addEventListener('click', () => pcardP.close());
     document.getElementById('pcard-friend').addEventListener('click', () => { const p = pcardWho; if (!p) return; pcardNote.textContent = friendAsk(p.uid, p.name) || ''; });
     document.getElementById('pcard-trade').addEventListener('click', () => { const p = pcardWho; if (!p) return; const line = tradeAsk(p.uid, p.name); if (!tr.id) pcardNote.textContent = line || ''; });
+    // ── Feedback: a note to the makers (online copies only), kept in the database's feedback list ──
+    {
+      const box = document.getElementById('fbk'), fbP = makePanel(box), txt = document.getElementById('fbk-text'), note = document.getElementById('fbk-note'), sendB = document.getElementById('fbk-send');
+      let kind = 'idea', sentAt = 0;
+      panels.fbk = fbP;
+      const paintK = () => box.querySelectorAll('[data-fbk]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.fbk === kind)));
+      box.addEventListener('click', e => { const b = e.target.closest('[data-fbk]'); if (b) { kind = b.dataset.fbk; paintK(); } });
+      document.getElementById('fbk-open').addEventListener('click', () => {
+        soundPop.hidden = true; soundBtn.setAttribute('aria-expanded', 'false');
+        for (const k in panels) if (k !== 'fbk') panels[k].close();
+        note.textContent = window.claude ? '' : 'Feedback can only be sent from the online game.'; sendB.disabled = !window.claude;
+        paintK(); fbP.open(); setTimeout(() => { try { txt.focus(); } catch (e) { /* (a phone may not focus) */ } }, 50);
+      });
+      document.getElementById('fbk-cancel').addEventListener('click', () => fbP.close());
+      sendB.addEventListener('click', async () => {
+        const text = chatSafe(cleanText(txt.value, 600));
+        if (text.length < 4) { note.textContent = 'Write a little more first.'; return; }
+        if (Date.now() - sentAt < 60000) { note.textContent = 'Thanks! Wait a minute before sending another.'; return; }
+        sendB.disabled = true; note.textContent = 'Sending...';
+        try {
+          const db = window.claude && window.claude.use ? await window.claude.use('db') : null;
+          if (!db) throw new Error('offline');
+          const id = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8), s = scene();
+          let by = account.uid || '';
+          if (!by) { try { const u = await window.claude.use('user'); by = u && u.id ? String(await u.id() || '') : ''; } catch (e) { by = ''; } }     // (signed in, even if your save is only in this browser)
+          await db.collection('feedback').doc(id).set({ by, name: G.name || 'Player', kind, text, at: Date.now(), where: s ? s.loc : G.loc, screen: screenPhone() ? 'phone' : 'pc', build: String(window.WANDO_BUILD || '') });
+          sentAt = Date.now(); txt.value = ''; note.textContent = 'Sent! Thank you for helping make Planet Wando better. 💜';
+        } catch (e) { note.textContent = 'It could not be sent just now. Try again in a little while.'; }
+        sendB.disabled = false;
+      });
+    }
     document.getElementById('pcard-mute').addEventListener('click', () => { const p = pcardWho; if (!p) return; const on = muteToggle(p.uid || 'tab:' + p.id); document.getElementById('pcard-mute').textContent = on ? 'Unmute' : 'Mute'; pcardNote.textContent = on ? 'Muted: you will not see what ' + p.name + ' says or sends you.' : p.name + ' is not muted any more.'; paintNet(); });
     window.addEventListener('keydown', e => { if (e.key === 'Escape' && pcardP.isOpen()) pcardP.close(); });
     // ── The Manor's sign box: say what you are trading; everyone in the room sees it over your head ──

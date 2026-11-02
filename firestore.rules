@@ -26,6 +26,11 @@ service cloud.firestore {
       allow delete: if owner(side);
     }
 
+    // feedback from players: anyone signed in can send one (signed with their own id); only you read them, in the console
+    match /feedback/{id} {
+      allow create: if me() && request.resource.data.by == request.auth.uid && request.resource.data.text is string && request.resource.data.text.size() <= 600 && small();
+    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }
