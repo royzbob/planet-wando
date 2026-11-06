@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793975190';
+window.WANDO_BUILD = '1793975759';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -12342,75 +12342,70 @@ window.WANDO_BUILD = '1793975190';
 
   // Townsfolk are animals, so nobody mistakes one for another player. Each is drawn in the same 96 x 112 cell as a player and
   // wears a player's clothes (L, from palette()); fur colours the head and paws, snout the muzzle, ear the ear lining or mask.
+  // The townsfolk: aliens from all over the galaxy, in players' clothes (the 2000s virtual-world way). kind picks the
+  //  species; fur is the skin, snout a second colour, ear the accent (antenna tips, spots, fins).
   const CRITTERS = [
-    { kind: 'fox',     fur: '#e8823a', snout: '#fff3dc', ear: '#4a2f22' },
-    { kind: 'bunny',   fur: '#f3ecdc', snout: '#ffffff', ear: '#ffb3c1' },
-    { kind: 'bear',    fur: '#a8713c', snout: '#e6c9a0', ear: '#e6c9a0' },
-    { kind: 'cat',     fur: '#8f98a8', snout: '#eef1f5', ear: '#ffb3c1' },
-    { kind: 'frog',    fur: '#6cc24a', snout: '#c9f08a', ear: '#6cc24a' },
-    { kind: 'raccoon', fur: '#a3a3ae', snout: '#f3f0e6', ear: '#3a3a48' },
-    { kind: 'pig',     fur: '#ffb3c1', snout: '#ff8fa6', ear: '#ff8fa6' },
-    { kind: 'panda',   fur: '#fbfbf6', snout: '#ffffff', ear: '#2b2b33' }
+    { kind: 'zorb',    fur: '#7ddf4a', snout: '#c8ff9a', ear: '#ff5aa8' },     // green, two antennae with bobbles, big almond eyes
+    { kind: 'blip',    fur: '#b06bff', snout: '#e0c4ff', ear: '#ffd84d' },     // purple cyclops, one curly antenna
+    { kind: 'mellow',  fur: '#5ec8f2', snout: '#c4f0ff', ear: '#2a7ac8' },     // blue, three eyes, little fins for ears
+    { kind: 'spiko',   fur: '#ff9a3a', snout: '#ffd9a8', ear: '#e8323c' },     // orange, a crest of spikes and two small horns
+    { kind: 'goo',     fur: '#b8f03a', snout: '#e8ffb0', ear: '#6ab01a' },     // lime slime, drippy on top, a big grin
+    { kind: 'nimbus',  fur: '#ff8fd0', snout: '#ffd6ef', ear: '#ffffff' },     // pink, fluffy cloud puffs, star antennae
+    { kind: 'tendril', fur: '#3fd8b8', snout: '#b8fff0', ear: '#1f8a7a' },     // teal, tentacle locks, freckles
+    { kind: 'glim',    fur: '#ffd84d', snout: '#fff3b0', ear: '#5ef2ff' }      // yellow, a glowing bulb on a stalk, lashes
   ];
   function drawCritter(c, K, look) {
     if (TOON.on && !c.__toon) { toonPart(c, k => { k.__toon = true; drawCritter(k, K, look); }, null, [-6, -34, 108, 152]); return; }
-    const lw = 2.2, kind = K.kind, fur = K.fur, line = ink(fur), L = Object.assign({}, look, { skin: fur });
-    const tri = (x0, y0, x1, y1, x2, y2) => k => { k.moveTo(x0, y0); k.lineTo(x1, y1); k.lineTo(x2, y2); k.closePath(); };
-    const both = fn => { fn(1); c.save(); c.translate(96, 0); c.scale(-1, 1); fn(-1); c.restore(); };      // draw the left one, and its mirror
-    // tail, behind everything
-    if (kind === 'fox') { inked(c, fur, line, lw, k => k.ellipse(73, 80, 8, 14, -0.5, 0, TAU)); c.fillStyle = K.snout; oval(c, 78, 70.5, 4.5, 5.5, -0.5); }
-    if (kind === 'raccoon') { inked(c, fur, line, lw, k => k.ellipse(73, 80, 7, 13, -0.5, 0, TAU)); c.fillStyle = K.ear; oval(c, 71, 85, 6, 2.2, -0.5); oval(c, 75.500, 76, 6, 2.2, -0.5); }
-    if (kind === 'cat') {
-      const tail = () => { c.beginPath(); c.moveTo(62, 88); c.quadraticCurveTo(81, 87, 77, 68); };
-      c.lineCap = 'round'; c.strokeStyle = line; c.lineWidth = 8; tail(); c.stroke(); c.strokeStyle = fur; c.lineWidth = 4; tail(); c.stroke();
-    }
-    // body: a player's legs, arms and top, with paws for hands
+    const lw = 2.2, kind = K.kind, fur = K.fur, line = ink(fur), L = Object.assign({}, look, { skin: fur }), acc = K.ear;
+    const ball = (x, y, r, col) => inked(c, col, ink(col), 1.6, k => k.arc(x, y, r, 0, TAU));
+    const stalk = (x0, y0, x1, y1, bend) => { c.lineCap = 'round'; c.strokeStyle = line; c.lineWidth = 5; c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo((x0 + x1) / 2 + bend, (y0 + y1) / 2, x1, y1); c.stroke(); c.strokeStyle = fur; c.lineWidth = 2.4; c.stroke(); };
+    const eye = (x, y, rx, ry, look2, lash) => {
+      c.fillStyle = '#ffffff'; c.strokeStyle = '#1d1424'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.fill(); c.stroke();
+      c.fillStyle = '#1d1424'; c.beginPath(); c.ellipse(x + look2, y + ry * 0.12, rx * 0.5, ry * 0.55, 0, 0, TAU); c.fill();
+      c.fillStyle = '#ffffff'; disc(c, x + look2 - rx * 0.15, y - ry * 0.12, Math.max(0.8, rx * 0.18));
+      if (lash) { c.strokeStyle = '#1d1424'; c.lineWidth = 1.3; [-0.6, 0, 0.6].forEach(a => { c.beginPath(); c.moveTo(x + Math.sin(a) * rx, y - Math.cos(a) * ry); c.lineTo(x + Math.sin(a) * (rx + 2.6), y - Math.cos(a) * (ry + 2.6)); c.stroke(); }); }
+    };
+    const smile = (y, w, open) => {
+      if (open) { c.fillStyle = '#5a1222'; c.strokeStyle = '#1d1424'; c.lineWidth = 1.3; c.beginPath(); c.moveTo(48 - w, y); c.quadraticCurveTo(48, y + 1, 48 + w, y); c.quadraticCurveTo(48, y + w * 0.9, 48 - w, y); c.closePath(); c.fill(); c.stroke();
+        c.fillStyle = '#ff7a9a'; c.beginPath(); c.ellipse(48, y + w * 0.5, w * 0.45, w * 0.22, 0, 0, TAU); c.fill(); }
+      else { c.strokeStyle = '#1d1424'; c.lineWidth = 1.7; c.lineCap = 'round'; c.beginPath(); c.moveTo(48 - w, y); c.quadraticCurveTo(48, y + w * 0.6, 48 + w, y); c.stroke(); }
+    };
+    // body: a player's legs, arms and top
     [-7, 7].forEach(dx => { c.save(); c.translate(48 + dx - 8, FEET_Y - 18.8); drawLeg(c, L); c.restore(); });
     [[-armX(L), 0.2], [armX(L), -0.2]].forEach(([dx, rot]) => { c.save(); c.translate(48 + dx, FEET_Y - 39); c.rotate(rot); c.translate(-7, -4); drawArm(c, L); c.restore(); });
     c.save(); drawAvatarLayer(c, 'torso', 'front', L); c.restore();
-    // ears, behind the head
-    if (kind === 'fox' || kind === 'cat') {
-      inked(c, fur, line, lw, tri(27, 35, 30, 8, 46, 25), tri(69, 35, 66, 8, 50, 25));
-      c.fillStyle = K.ear; both(() => { c.beginPath(); tri(31, 28, 32.5, 15, 41, 25)(c); c.fill(); });
-    } else if (kind === 'bunny') {
-      inked(c, fur, line, lw, k => k.ellipse(38, 13, 6.5, 15, -0.12, 0, TAU), k => k.ellipse(58, 13, 6.5, 15, 0.12, 0, TAU));
-      c.fillStyle = K.ear; oval(c, 38, 14, 2.8, 10, -0.12); oval(c, 58, 14, 2.8, 10, 0.12);
-    } else if (kind === 'pig') {
-      inked(c, K.ear, line, lw, tri(27, 34, 28, 17, 43, 25), tri(69, 34, 68, 17, 53, 25));
-    } else if (kind === 'frog') {
-      inked(c, fur, line, lw, k => k.arc(37, 25, 9.5, 0, TAU), k => k.arc(59, 25, 9.5, 0, TAU));        // eye bumps
-    } else {                                                    // bear, raccoon, panda: round ears
-      const dark = kind !== 'bear';
-      inked(c, dark ? K.ear : fur, dark ? ink(K.ear) : line, lw, k => k.arc(30, 26, 8.5, 0, TAU), k => k.arc(66, 26, 8.5, 0, TAU));
-      if (!dark) { c.fillStyle = K.ear; disc(c, 30, 26, 4.5); disc(c, 66, 26, 4.5); }
-    }
-    inked(c, fur, line, lw, k => k.ellipse(48, 42, 22, 20, 0, 0, TAU));                               // the head
-    if (kind === 'frog') inked(c, fur, line, 0.01, k => k.arc(37, 25, 8, 0, TAU), k => k.arc(59, 25, 8, 0, TAU));   // bumps join the head
-    if (kind === 'panda') { c.fillStyle = K.ear; oval(c, 39, 42, 6.5, 8, 0.35); oval(c, 57, 42, 6.5, 8, -0.35); }
-    if (kind === 'raccoon') { c.fillStyle = K.ear; oval(c, 38.500, 43, 9, 6.5, 0.15); oval(c, 57.500, 43, 9, 6.5, -0.15); c.fillRect(42, 40, 12, 5); }
-    if (kind === 'fox') { c.fillStyle = K.snout; both(() => { c.beginPath(); c.moveTo(27, 46); c.quadraticCurveTo(34, 60, 48, 61); c.lineTo(48, 48); c.quadraticCurveTo(36, 50, 27, 46); c.fill(); }); }
-    if (kind !== 'frog') { c.fillStyle = 'rgba(255,100,118,.3)'; oval(c, 32.500, 51.500, 4, 2.4); oval(c, 63.500, 51.500, 4, 2.4); }
-    if (kind !== 'frog') { c.fillStyle = K.snout; oval(c, 48, 51.500, kind === 'pig' ? 9 : 11, kind === 'pig' ? 6.5 : 7.5); }
-    // eyes
-    const mask = kind === 'panda' || kind === 'raccoon';
-    (kind === 'frog' ? [[37, 25], [59, 25]] : [[39, 42], [57, 42]]).forEach(([x, y]) => {
-      if (kind === 'frog' || mask) { c.fillStyle = '#ffffff'; disc(c, x, y, kind === 'frog' ? 5.5 : 3.6); c.fillStyle = '#2b2033'; disc(c, x + 0.6, y + 0.4, kind === 'frog' ? 2.6 : 2); }
-      else { c.fillStyle = '#2b2033'; oval(c, x, y, 3.3, 4.7); c.fillStyle = '#ffffff'; disc(c, x + 1.1, y - 1.8, 1.4); }
-    });
-    // nose and mouth
-    c.strokeStyle = '#2b2033'; c.lineWidth = 1.7; c.lineCap = 'round';
-    if (kind === 'frog') {
-      c.beginPath(); c.arc(48, 40, 15, 0.16 * Math.PI, 0.84 * Math.PI); c.stroke();
-      c.fillStyle = '#2b2033'; disc(c, 45, 43, 1); disc(c, 51, 43, 1);
-    } else {
-      c.fillStyle = kind === 'pig' ? '#b8506a' : '#2b2033';
-      if (kind === 'pig') { oval(c, 45, 51, 1.5, 2.2); oval(c, 51, 51, 1.5, 2.2); }
-      else oval(c, 48, 47.500, 3.4, 2.5);
-      const my = kind === 'pig' ? 57 : 51.500;
-      c.beginPath(); c.moveTo(44, my); c.quadraticCurveTo(46, my + 3, 48, my); c.quadraticCurveTo(50, my + 3, 52, my); c.stroke();
-      if (kind === 'bunny') { c.fillStyle = '#ffffff'; c.fillRect(46.300, my + 1.5, 3.4, 4); c.strokeRect(46.300, my + 1.5, 3.4, 4); }
-      if (kind === 'cat') { c.lineWidth = 1.1; [[-1, 49.500, 47], [-1, 52.500, 54], [1, 49.500, 47], [1, 52.500, 54]].forEach(w => { c.beginPath(); c.moveTo(48 + w[0] * 10, w[1]); c.lineTo(48 + w[0] * 24, w[2]); c.stroke(); }); }
-    }
+    // everything above the neck, a size up (the big-headed look)
+    c.save(); c.translate(48, 62); c.scale(1.12, 1.12); c.translate(-48, -62);
+    // behind the head
+    if (kind === 'zorb') { stalk(38, 24, 30, 4, -4); stalk(58, 24, 66, 4, 4); ball(30, 3, 4.6, acc); ball(66, 3, 4.6, acc); }
+    if (kind === 'blip') { stalk(48, 22, 52, 2, 8); ball(52, 2, 4, acc); }
+    if (kind === 'glim') { stalk(48, 22, 44, 0, -7); c.save(); c.globalAlpha = 0.35; c.fillStyle = acc; disc(c, 44, -1, 9); c.restore(); ball(44, -1, 5.2, acc); c.fillStyle = 'rgba(255,255,255,.8)'; disc(c, 42.4, -2.6, 1.6); }
+    if (kind === 'nimbus') { [[34, 8], [62, 8]].forEach(([x, y], i) => { stalk(48 + (i ? 7 : -7), 24, x, y, i ? 3 : -3); c.fillStyle = acc; inked(c, '#ffd84d', ink('#ffd84d'), 1.4, k => { for (let a = 0; a < 10; a++) { const an = -Math.PI / 2 + a * Math.PI / 5, r = a % 2 ? 2.2 : 5; k.lineTo(x + Math.cos(an) * r, y + Math.sin(an) * r); } k.closePath(); }); }); }
+    if (kind === 'mellow') { [[23, 40, -0.5], [73, 40, 0.5]].forEach(([x, y, r]) => inked(c, acc, ink(acc), lw, k => { k.moveTo(x + (x < 48 ? 6 : -6), y - 8); k.quadraticCurveTo(x + (x < 48 ? -10 : 10), y - 6, x + (x < 48 ? -6 : 6), y + 10); k.quadraticCurveTo(x, y + 4, x + (x < 48 ? 6 : -6), y + 6); k.closePath(); })); }
+    if (kind === 'tendril') { [[28, 44, -1], [32, 52, -1], [64, 52, 1], [68, 44, 1], [26, 36, -1], [70, 36, 1]].forEach(([x, y, d]) => { c.lineCap = 'round'; c.strokeStyle = ink(acc); c.lineWidth = 6.5; c.beginPath(); c.moveTo(x, y - 6); c.quadraticCurveTo(x + d * 8, y + 4, x + d * 4, y + 14); c.stroke(); c.strokeStyle = acc; c.lineWidth = 3.4; c.stroke(); }); }
+    if (kind === 'spiko') { inked(c, acc, ink(acc), lw, k => { [[30, 26], [37, 12], [44, 22], [48, 6], [52, 22], [59, 12], [66, 26]].forEach(([x, y], i) => (i ? k.lineTo(x, y) : k.moveTo(x, y))); k.lineTo(60, 30); k.lineTo(36, 30); k.closePath(); }); }
+    // the head: a big round one (an egg for zorb, a dome for blip, a blob for goo)
+    const head = kind === 'zorb' ? (k => k.ellipse(48, 40, 22, 22, 0, 0, TAU)) : kind === 'goo' ? (k => { k.moveTo(26, 46); k.bezierCurveTo(24, 16, 72, 16, 70, 46); k.quadraticCurveTo(70, 62, 48, 62); k.quadraticCurveTo(26, 62, 26, 46); })
+      : kind === 'blip' ? (k => k.ellipse(48, 42, 23, 20, 0, 0, TAU)) : (k => k.ellipse(48, 42, 22, 20, 0, 0, TAU));
+    inked(c, fur, line, lw, head);
+    c.save(); c.beginPath(); head(c); c.clip();
+    const g = c.createRadialGradient(42, 32, 3, 48, 44, 26); g.addColorStop(0, 'rgba(255,255,255,.35)'); g.addColorStop(0.6, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(40,10,60,.18)'); c.fillStyle = g; c.fillRect(20, 14, 56, 52);
+    if (kind === 'goo') { c.fillStyle = K.snout; [[36, 20, 4], [50, 18, 3], [60, 24, 3.5]].forEach(([x, y, r]) => { c.beginPath(); c.ellipse(x, y, r, r * 1.6, 0, 0, TAU); c.fill(); }); }   // drips
+    if (kind === 'zorb') { c.fillStyle = K.snout; c.beginPath(); c.ellipse(48, 52, 13, 8, 0, 0, TAU); c.fill(); }
+    if (kind === 'tendril') { c.fillStyle = acc; [[38, 50], [41, 52], [55, 52], [58, 50]].forEach(([x, y]) => disc(c, x, y, 0.9)); }
+    c.restore();
+    if (kind === 'nimbus') [[30, 26, 7], [40, 19, 8], [52, 18, 8], [63, 25, 7]].forEach(([x, y, r]) => inked(c, K.snout, ink(K.snout), lw, k => k.arc(x, y, r, 0, TAU)));   // cloud puffs on top
+    if (kind === 'spiko') { [[33, 26, -1], [63, 26, 1]].forEach(([x, y, d]) => inked(c, '#fff3dc', ink('#fff3dc'), 1.4, k => { k.moveTo(x - 3, y + 2); k.lineTo(x + d * 4, y - 9); k.lineTo(x + 3, y + 2); k.closePath(); })); }
+    // faces
+    if (kind === 'zorb') { [[39, 42, -0.35], [57, 42, 0.35]].forEach(([x, y, r]) => { c.fillStyle = '#1d1424'; c.beginPath(); c.ellipse(x, y, 6.5, 8.5, r, 0, TAU); c.fill(); c.fillStyle = '#ffffff'; disc(c, x - 2, y - 3, 1.8); disc(c, x + 1.5, y + 2, 0.9); }); smile(53, 5, true); }
+    else if (kind === 'blip') { eye(48, 41, 10, 10.5, 1.2, true); smile(55, 6, true); }
+    else if (kind === 'mellow') { eye(38.5, 44, 4.4, 5.2, 0.8); eye(57.5, 44, 4.4, 5.2, -0.8); eye(48, 34, 3.6, 4.2, 0); smile(54, 4.5); }
+    else if (kind === 'spiko') { eye(41.5, 44, 5, 6, 0.9); eye(54.5, 44, 5, 6, -0.9); c.strokeStyle = '#1d1424'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(36, 36.5); c.lineTo(45.5, 38.5); c.moveTo(50.5, 38.5); c.lineTo(60, 36.5); c.stroke(); smile(54, 6, true); }
+    else if (kind === 'goo') { eye(40.5, 40, 5.4, 6.4, 1); eye(55.5, 40, 5.4, 6.4, -1); smile(51, 8, true); }
+    else if (kind === 'nimbus') { eye(41.5, 44, 5, 6, 0.9, true); eye(54.5, 44, 5, 6, -0.9, true); c.fillStyle = 'rgba(255,90,140,.45)'; oval(c, 33, 52, 4, 2.4); oval(c, 63, 52, 4, 2.4); smile(54, 4); }
+    else if (kind === 'tendril') { eye(41.5, 43, 5, 6, 0.9); eye(54.5, 43, 5, 6, -0.9); smile(54, 5.5, true); }
+    else { eye(41.5, 44, 5.4, 6.4, 0.9, true); eye(54.5, 44, 5.4, 6.4, -0.9, true); smile(54.5, 4.5); }
+    c.restore();
   }
 
   // A shop mannequin: plain head, no hair or face, on a stand. It wears one outfit (o), or the pieces in extra (a hat,
