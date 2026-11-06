@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793975759';
+window.WANDO_BUILD = '1793976437';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -5576,8 +5576,8 @@ window.WANDO_BUILD = '1793975759';
   }
   const lighten = (c, t) => mix(c, '#ffffff', t);
   const darken = (c, t) => mix(c, '#1a1030', t);
-  const TOON = { line: "#120c16", on: !window.__NOTOON, inking: 0 };   // the toon pass (see toonPass)
-  const ink = c => (TOON.inking ? mix(c, '#140e18', 0.86) : mix(c, '#2a1a3a', 0.58));   // outline colour (in a toon part: near black)          // outline colour: the fill pulled toward plum
+  const TOON = { line: "#2a1f24", on: !window.__NOTOON, inking: 0, gloss: 0, shade: 0.7 };   // the toon pass (see toonPass)
+  const ink = c => (TOON.inking ? mix(c, '#24181e', 0.74) : mix(c, '#2a1a3a', 0.58));   // outline colour (in a toon part: near black)          // outline colour: the fill pulled toward plum
 
   // Draw a hair smaller about the middle of its foot, for art that was drawn right out to its canvas's edges (so its outline is not cut off).
   const fitFoot = (c, w, h, k) => { c.translate(w / 2, h); c.scale(k, k); c.translate(-w / 2, -h); };
@@ -5644,15 +5644,15 @@ window.WANDO_BUILD = '1793975759';
       else for (let i = 1; i <= steps; i++) { mc.globalAlpha = 1 / steps * 1.6; mc.drawImage(solid, dx * i / steps, dy * i / steps); }
       return [m, alpha];
     };
-    const sh = o.shade === 0 ? null : tint(o.dark || '#1a0a2a', 0.4 * (o.shade || 1), -4.2 * u, -4.6 * u, 5);   // shadow: lower right
-    const hi = o.shade === 0 ? null : tint('#ffffff', 0.32 * (o.shade || 1), 2.4 * u, 2.8 * u, 3);              // light: upper left
+    const sh = o.shade === 0 ? null : tint(o.dark || '#2a1420', 0.4 * TOON.shade * (o.shade || 1), -5 * u, -5.4 * u, 5);   // shadow: lower right (soft, not glossy)
+    const hi = o.shade === 0 || !TOON.gloss ? null : tint('#ffffff', 0.32 * TOON.gloss * (o.shade || 1), 2.4 * u, 2.8 * u, 3);  // light: upper left (off for the Cazmo look)
     const body = toonCanvas(w, h), bc = body.getContext('2d');
     bc.drawImage(shape, 0, 0);
     bc.globalCompositeOperation = 'source-atop';
     [sh, hi].forEach(t => { if (t) { bc.globalAlpha = t[1]; bc.drawImage(t[0], 0, 0); } });
     bc.globalAlpha = 1; bc.globalCompositeOperation = 'source-over';
     const out = toonCanvas(w, h), oc = out.getContext('2d');
-    const r = (o.line == null ? 1.25 : o.line) * u;
+    const r = (o.line == null ? 0.85 : o.line * 0.7) * u;
     if (r > 0.2) {                                         // the outline: the shape in ink, pushed out all round, underneath
       const ink1 = toonCanvas(w, h), ic = ink1.getContext('2d');
       ic.drawImage(solid, 0, 0); ic.globalCompositeOperation = 'source-in'; ic.fillStyle = o.ink || TOON.line; ic.fillRect(0, 0, w, h);
@@ -6251,7 +6251,7 @@ window.WANDO_BUILD = '1793975759';
         inked(c, L.skin, skinInk, lw, k => k.ellipse(25, 46, 6, 7.5, -0.15, 0, TAU), k => k.ellipse(71, 46, 6, 7.5, 0.15, 0, TAU));     // big round ears
         c.strokeStyle = earIn; c.lineWidth = 1.5; c.beginPath(); c.arc(25.4, 46, 3.3, 1.9, 4.6); c.moveTo(70.6 + 3.3 * Math.cos(-1.45), 46 + 3.3 * Math.sin(-1.45)); c.arc(70.6, 46, 3.3, -1.45, 1.25); c.stroke();
         inked(c, L.skin, skinInk, lw, k => k.ellipse(48, 42, 22, 20, 0, 0, TAU));
-        const g = c.createRadialGradient(42, 36, 3, 48, 44, 24); g.addColorStop(0, 'rgba(255,255,255,.22)'); g.addColorStop(0.55, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(90,30,40,.16)');
+        const g = c.createRadialGradient(44, 38, 4, 48, 44, 24); g.addColorStop(0, 'rgba(255,240,220,.08)'); g.addColorStop(0.6, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(70,30,30,.2)');
         c.fillStyle = g; c.beginPath(); c.ellipse(48, 42, 22, 20, 0, 0, TAU); c.fill();      // (rounded: lit from the upper left)
       }
     } else if (layer === 'face' || layer === 'faceBlink') {
@@ -6262,11 +6262,13 @@ window.WANDO_BUILD = '1793975759';
       const eye = (x, y, rx, ry, look) => {
         if (blink) { c.strokeStyle = line; c.lineWidth = 1.7; c.beginPath(); c.moveTo(x - rx, y + 0.5); c.quadraticCurveTo(x, y + ry * 0.55, x + rx, y + 0.5); c.stroke(); return; }
         c.fillStyle = '#ffffff'; c.strokeStyle = line; c.lineWidth = 1.5; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.fill(); c.stroke();
-        c.save(); c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.clip();
-        c.fillStyle = 'rgba(70,80,120,.18)'; c.beginPath(); c.ellipse(x, y - ry * 0.9, rx * 1.2, ry * 0.45, 0, 0, TAU); c.fill();        // the lid's shadow on the white
+        c.fillStyle = line; c.beginPath(); c.ellipse(x + look, y + ry * 0.22, rx * 0.36, ry * 0.4, 0, 0, TAU); c.fill();       // a small pupil, low in the eye
+        c.fillStyle = 'rgba(255,255,255,.85)'; disc(c, x + look - rx * 0.1, y + ry * 0.08, 0.7);
+        c.save(); c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.clip();                // the upper lid, half down: the laid-back Cazmo look
+        c.fillStyle = mix(L.skin, '#3a2020', 0.12); c.fillRect(x - rx - 1, y - ry - 1, rx * 2 + 2, ry * 0.95);
         c.restore();
-        c.fillStyle = line; c.beginPath(); c.ellipse(x + look, y + 1, rx * 0.48, ry * 0.5, 0, 0, TAU); c.fill();
-        c.fillStyle = '#ffffff'; disc(c, x + look - rx * 0.12, y - ry * 0.05, 0.85);
+        c.strokeStyle = line; c.lineWidth = 1.5; c.beginPath(); c.moveTo(x - rx * 1.02, y - ry * 0.05); c.quadraticCurveTo(x, y - ry * 0.18, x + rx * 1.02, y - ry * 0.05); c.stroke();
+        c.strokeStyle = mix(L.skin, '#2a1a20', 0.6); c.lineWidth = 1.1; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU); c.stroke();
         if (!guy) { c.strokeStyle = line; c.lineWidth = 1.3; c.beginPath(); c.moveTo(x + (look >= 0 ? rx * 0.7 : -rx * 0.7), y - ry * 0.72); c.lineTo(x + (look >= 0 ? rx * 1.15 : -rx * 1.15), y - ry * 1.05); c.stroke(); }   // a lash
       };
       if (side) {
@@ -6277,7 +6279,7 @@ window.WANDO_BUILD = '1793975759';
         c.strokeStyle = '#5a1f2a'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(61, 56); c.quadraticCurveTo(64.5, 58, 67.5, 55.5); c.stroke();
         return;
       }
-      eye(42.2, 45.2, 5, 6, 0.9); eye(53.8, 45.2, 5, 6, -0.9);
+      eye(41.4, 45.4, 4.8, 5.8, 0.9); eye(54.6, 45.4, 4.8, 5.8, -0.9);
       c.strokeStyle = brow; c.lineCap = 'round'; c.lineWidth = guy ? 2.5 : 1.8; c.beginPath();
       if (guy) { c.moveTo(37, 37.4); c.quadraticCurveTo(41.5, 35.4, 46, 37); c.moveTo(50, 37); c.quadraticCurveTo(54.5, 35.4, 59, 37.4); }
       else { c.moveTo(38, 37.2); c.quadraticCurveTo(42, 35, 46, 36.4); c.moveTo(50, 36.4); c.quadraticCurveTo(54, 35, 58, 37.2); }
@@ -6928,7 +6930,15 @@ window.WANDO_BUILD = '1793975759';
       if (o.neck) { L.neck = o.neck.style; L.neckC = o.neck.color; }
       if (o.pack) { L.pack = o.pack.style; L.packC = o.pack.color; }
     }
+    // The Planet Cazmo look: colours a little greyed and darker, not candy-bright.
+    ['skin', 'hat', 'fringe', 'back', 'eyesC', 'neckC', 'packC', 'shirt', 'accent', 'pants', 'shoe'].forEach(k => { if (typeof L[k] === 'string' && /^#[0-9a-f]{6}$/i.test(L[k])) L[k] = mute(L[k], k === 'skin' ? 0.12 : 0.24); });
     return L;
+  }
+  // A colour with some of its brightness and saturation taken out: t of the way toward a mid grey of the same lightness.
+  function mute(hex, t) {
+    const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255, y = 0.3 * r + 0.59 * g + 0.11 * b;
+    const f = v => Math.max(0, Math.min(255, Math.round((v + (y - v) * t) * (1 - t * 0.22))));
+    return '#' + ((1 << 24) | (f(r) << 16) | (f(g) << 8) | f(b)).toString(16).slice(1);
   }
   // One leg, in a 16 x 20 cell. Bottoms: 0 trousers, 1 shorts, 2 a skirt (bare legs: the skirt itself is on the torso), 3 baggy.
   function drawLeg(c, L) {
@@ -12356,6 +12366,7 @@ window.WANDO_BUILD = '1793975759';
   ];
   function drawCritter(c, K, look) {
     if (TOON.on && !c.__toon) { toonPart(c, k => { k.__toon = true; drawCritter(k, K, look); }, null, [-6, -34, 108, 152]); return; }
+    K = Object.assign({}, K, { fur: mute(K.fur, 0.24), snout: mute(K.snout, 0.2), ear: mute(K.ear, 0.24) });     // (the Cazmo look: a little dull)
     const lw = 2.2, kind = K.kind, fur = K.fur, line = ink(fur), L = Object.assign({}, look, { skin: fur }), acc = K.ear;
     const ball = (x, y, r, col) => inked(c, col, ink(col), 1.6, k => k.arc(x, y, r, 0, TAU));
     const stalk = (x0, y0, x1, y1, bend) => { c.lineCap = 'round'; c.strokeStyle = line; c.lineWidth = 5; c.beginPath(); c.moveTo(x0, y0); c.quadraticCurveTo((x0 + x1) / 2 + bend, (y0 + y1) / 2, x1, y1); c.stroke(); c.strokeStyle = fur; c.lineWidth = 2.4; c.stroke(); };
