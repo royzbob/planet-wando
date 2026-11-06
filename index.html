@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794002626';
+window.WANDO_BUILD = '1794002977';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -5197,6 +5197,7 @@ window.WANDO_BUILD = '1794002626';
 
   // What the townsfolk say, per location. One of them speaks every few seconds.
   const CHAT = {
+    icefish: ['Brrr, close the door!', 'I landed a Moonfin yesterday!', 'Captain Floe pays the best.', 'Is the Derby on yet?', 'My toes are frozen.', 'Hot cocoa by the stove, anyone?'],
     motors: ['That Legendary one is gorgeous.', 'New cars came in Monday!', 'I am saving up for the hover car.', 'Mine has flames on it.', 'Can I trade you for that one?', 'Beep beep!'],
     green: ['Fresh bread at the Bakery!', 'Anyone seen my hat?', 'Meet you by the pond.', 'The spaceship goes to the beach now.', 'Nice outfit!', 'The lanterns look great tonight.', 'See a gold ! over someone? They have an errand for you.', 'Juniper shows every newcomer around.', 'I got lost in the Hedge Maze for ages!', 'The maze is different every day.', 'Ice cream truck! Ice cream truck!', 'Mint Chip is the best flavour.', 'GOAL! Did you see that?', 'Push me on the swings!', 'I made a wish at the fountain.', 'The ducklings are so cute.', 'My best Grand Prix time is 30 seconds.', 'Saw a shooting star last night!'],
     beach: ['The tide is perfect today.', 'I dug up a golden nautilus once.', 'Watch out for the crabs.', 'My shovel broke again...', 'Race you to the water!', 'Snacks by the Shovel Shop!', 'They are biting off the pier today.', 'I saw something huge out past the Reef.', 'Storm fish are worth a fortune, they say.', 'The Big Wheel has the best view.', 'Want to build a sandcastle?', 'My kite is stuck again...', 'Look, a sailboat!', 'The crabs dig in when you get close.', 'Bump the beach ball to me!'],
@@ -14186,6 +14187,11 @@ window.WANDO_BUILD = '1794002626';
       }
     }
     createNow() {
+      if (!this.time.__safe) {                                // a mistake in a timed event must not stop the whole game either
+        const later = this.time.delayedCall.bind(this.time), scene = this;
+        this.time.delayedCall = (delay, fn, args, scope) => later(delay, function (...a) { try { return fn.apply(scope || this, a); } catch (e) { gameError('timer in ' + scene.loc, e); } }, args, scope);
+        this.time.__safe = true;
+      }
       const D = this.D = LOCS[this.loc];
       this.R = rng(D.seed);
       this.trip = null; this.leftAt = 0;
@@ -17116,8 +17122,9 @@ window.WANDO_BUILD = '1794002626';
     }
     // Every few seconds one of the townsfolk says a line in a speech bubble.
     chatter(lines) {
-      if (!this.npcs.length) return;
+      if (!this.npcs.length || !Array.isArray(lines) || !lines.length) return;      // (a place with nothing written for its townsfolk to say: they keep quiet)
       const speak = () => {
+        if (!this.npcs.length) return;
         const n = this.npcs[Math.floor(Math.random() * this.npcs.length)];
         const b = this.makeBubble(lines[Math.floor(Math.random() * lines.length)]).setPosition(n.x, n.y - 92).setDepth(9550);
         this.tweens.add({ targets: b, alpha: 0, delay: 2600, duration: 500, ease: 'Sine.in', onComplete: () => b.destroy() });
