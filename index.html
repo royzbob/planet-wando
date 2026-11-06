@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794002152';
+window.WANDO_BUILD = '1794002626';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -4464,9 +4464,27 @@ window.WANDO_BUILD = '1794002152';
     const M = CAR_MODELS[model], P = CAR_PAINTS[paint];
     return { id: 'car-' + model + '-' + paint, kind: 'car', model, paint, name: P[0] + ' ' + M.name, speed: M.speed, price: M.price, deck: P[1], trim: '#e8ecf4', glow: M.hover ? '#5ef2ff' : '#ffe9a8' };
   }
+  // Where you are: kept in this browser every few seconds (and as the page closes), so the game opens where you left off.
+  const WHERE_KEY = 'meadowmere-where';
+  function whereRead() {
+    try { const w = JSON.parse(localStorage.getItem(WHERE_KEY) || 'null'); return w && LOCS[w.loc] && Number.isFinite(w.x) && Number.isFinite(w.y) && Date.now() - (w.t || 0) < 30 * 86400000 ? w : null; } catch (e) { return null; }
+  }
+  function whereKeep(sc) {
+    if (!sc || !sc.pz || !sc.ready || sc.leaving) return;
+    const loc = sc.loc === 'home' && !sc.homeMine ? 'green' : sc.loc, w = { loc, x: Math.round(sc.pz.x), y: Math.round(sc.pz.y), t: Date.now() };     // (a friend's house: you wake up on the green)
+    try { localStorage.setItem(WHERE_KEY, JSON.stringify(w)); } catch (e) { /* storage unavailable */ }
+  }
   // Parking. Hop out (H) and your car stays where you left it; to drive again, walk up to it and start it with your key
   // (H, E, or tap it). A car not parked anywhere is at Wando Motors' lot, by the showroom door.
-  let SCENE_NOW = null;                                        // the place you are in now (set as each one is made)
+  let SCENE_NOW = null;
+  // Something broke: tell the console, keep it for the feedback box, and show a line on screen (once a minute at most).
+  let errShown = 0;
+  function gameError(where, e) {
+    if (window.__WANDO_STRICT) throw e;                       // (the tests want to see it)
+    const msg = where + ': ' + (e && e.message ? e.message : String(e)), stack = e && e.stack ? String(e.stack).split('\n').slice(0, 3).join(' | ') : '';
+    try { console.error('[Planet Wando] ' + msg, e); localStorage.setItem('meadowmere-lasterr', JSON.stringify({ msg, stack, t: Date.now(), v: window.WANDO_BUILD || '' })); } catch (x) { /* fine */ }
+    if (Date.now() - errShown > 60000 && SCENE_NOW && SCENE_NOW.note) { errShown = Date.now(); try { SCENE_NOW.noteUntil = 0; SCENE_NOW.note('Oops, something went wrong (' + msg.slice(0, 80) + '). The game kept going.', '#ffb3b3'); } catch (x) { /* fine */ } }
+  }                                        // the place you are in now (set as each one is made)
   const cleanPark = v => (v && typeof v.id === 'string' && v.id.length <= 40 && CAR_LOCS.includes(v.loc) && Number.isFinite(v.x) && Number.isFinite(v.y)
     ? { id: v.id, loc: v.loc, x: Math.round(v.x), y: Math.round(v.y), f: v.f < 0 ? -1 : 1 } : null);
   const carLot = () => { const e = LOCS.green.exits && LOCS.green.exits.motors; return { loc: 'green', x: e ? e.x - 190 : PLAZA.x + 330, y: e ? e.y + 30 : PLAZA.y + 260, f: 1, lot: true }; };
@@ -5324,7 +5342,7 @@ window.WANDO_BUILD = '1794002152';
         }
         const fr = P[1] + (P[2] - P[1]) * clamp(amt, 0, 1);
         h.o1.frequency.setTargetAtTime(fr, t, 0.14); h.o2.frequency.setTargetAtTime(fr * P[8], t, 0.14); h.lfo.frequency.setTargetAtTime(P[4] * (1 + amt * 0.8), t, 0.2);
-        h.f.frequency.setTargetAtTime(P[6] * (0.6 + amt * 0.7), t, 0.15);
+        h.f.frequency.setTargetAtTime(P[6] * (0.45 + amt * 0.5), t, 0.15);   // (a soft filter: a hum, not a buzz)
         h.g.gain.setTargetAtTime(on ? Math.max(0.0001, vol * P[7] * (0.55 + 0.45 * amt) * AUDIO.duck) : 0.0001, t, on ? 0.09 : 0.12);
         if (on) { if (h.stop) { clearTimeout(h.timer); h.stop = 0; } }
         else if (!h.stop) { const hh = h; hh.stop = 1; hh.timer = setTimeout(() => hh.kill(), 700); }
@@ -14160,8 +14178,17 @@ window.WANDO_BUILD = '1794002152';
     }
 
     create() {
+      try { this.createNow(); }
+      catch (e) {                                              // a place that will not build: say so, and go back where you came from rather than freeze
+        gameError('building ' + this.loc, e);
+        const back = this.loc !== 'green' ? (LOCS[this.loc].home || 'green') : null;
+        if (back && back !== this.loc) this.time.delayedCall(50, () => this.scene.start(back, { from: this.loc }));
+      }
+    }
+    createNow() {
       const D = this.D = LOCS[this.loc];
       this.R = rng(D.seed);
+      this.trip = null; this.leftAt = 0;
       this.leaving = false; this.digUntil = 0; this.noteUntil = 0; this.beat = -1; this.wash = null;
       this.trees = []; this.butterflies = []; this.clouds = []; this.hotspots = [];
       this.nightRect = null; this.warmRect = null; this.flies = null; this.lightKey = -1;
@@ -18335,9 +18362,9 @@ window.WANDO_BUILD = '1794002152';
     }
     carHum() {                                                // engines: yours while you drive, and the nearest few other players' cars, fainter
       const keep = new Set(), me = G.riding && G.board && G.board.kind === 'car' ? G.board : null;
-      if (me) { sfx.hum('me', me.model, this.moveAmt || 0, 0.07); keep.add('me'); }
+      if (me) { sfx.hum('me', me.model, this.moveAmt || 0, 0.02); keep.add('me'); }
       if (this.pz) [...this.others.entries()].filter(([, o]) => o.carModel >= 0).map(([id, o]) => [id, o, Math.hypot(o.x - this.pz.x, o.y - this.pz.y)]).filter(e => e[2] < 600).sort((a, b) => a[2] - b[2]).slice(0, 3)
-        .forEach(([id, o, d]) => { const k = 'p:' + id; sfx.hum(k, o.carModel, o.carSp || 0, 0.07 * 0.45 * (1 - d / 600)); keep.add(k); });
+        .forEach(([id, o, d]) => { const k = 'p:' + id; sfx.hum(k, o.carModel, o.carSp || 0, 0.02 * 0.4 * (1 - d / 600)); keep.add(k); });
       sfx.humOnly(keep);
     }
 
@@ -18349,7 +18376,8 @@ window.WANDO_BUILD = '1794002152';
       sfx.humStop();
       this.clearTarget(); this.steering = false; this.vel.set(0, 0);
       music.setScene(BGM_FOR[loc]);                            // this place's music starts fading now; the next one's comes in as you arrive
-      const go = () => this.scene.start(loc, { from: this.loc, road: !!road });
+      const trip = this.trip = { done: false }, go = () => { if (this.trip !== trip || trip.done) return; trip.done = true; this.scene.start(loc, { from: this.loc, road: !!road }); };
+      setTimeout(go, 1500);                                    // (if the fade never finishes, go anyway)
       if (REDUCED) { go(); return; }
       const cam = this.cameras.main, f = LOCS[loc].fade;
       cam.once('camerafadeoutcomplete', go);
@@ -19418,6 +19446,14 @@ window.WANDO_BUILD = '1794002152';
     }
 
     update(time, delta) {
+      try { this.updateNow(time, delta); }
+      catch (e) {
+        if (!this.errSaid) { this.errSaid = true; gameError('update ' + this.loc, e); }
+        if (this.leaving && !this.leftAt) this.leftAt = time;
+        if (this.leftAt && time - this.leftAt > 3000) { this.leftAt = 0; this.leaving = false; }      // (stuck on the way out: let you move again)
+      }
+    }
+    updateNow(time, delta) {
       const dt = Math.min(delta, 50) / 1000;
       const k = this.keys, b = this.pz.body, cam = this.cameras.main, P = this.parts;
       const boating = this.boating;
@@ -19921,6 +19957,7 @@ window.WANDO_BUILD = '1794002152';
       if (this.askers.length) this.errandMarks();
       this.syncOthers(dt, time);                               // other players in this place
       this.carParkedShow(); this.carHum();
+      if (time > (this.whereAt || 0)) { this.whereAt = time + 3000; whereKeep(this); }
       if (this.carWalk && (time > this.carWalk || G.riding)) this.carWalk = 0; else if (this.carWalk && this.carNear()) { this.carWalk = 0; this.carKey(); }   // walked up to your car: start it
 
       // camera lag stays the same at any refresh rate
@@ -20040,6 +20077,7 @@ window.WANDO_BUILD = '1794002152';
     }
     // nothing is worn that has not been bought (a tailor outfit brings its own hat, which is checked with the outfit)
     [['hat', 'hatStyle'], ['eyes', 'eyes'], ['neck', 'neck'], ['pack', 'pack']].forEach(([k, f]) => { if (!owns(k, look[f])) look[f] = 0; });
+    if (!(data && data.loc)) { const w = whereRead(); if (w) data = Object.assign({}, data || {}, { loc: w.loc, player: w.loc === 'dungeon' ? null : { x: w.x, y: w.y, look: G.look } }); }   // back where you left off
     const startLoc = data && LOCS[data.loc] && (data.loc !== 'home' || G.home.owned) ? data.loc : 'green';
     G.loc = startLoc;
     // One scene per location, all from the same class. Only the starting one runs; the ship starts the others.
@@ -24403,8 +24441,8 @@ window.WANDO_BUILD = '1794002152';
     paintTravel(); paintState();
     // Browsers only allow sound after a click or a key press: the first one starts the audio and the music for wherever you are.
     ['pointerdown', 'keydown'].forEach(type => window.addEventListener(type, () => { sfx.unlock(); music.wake(); }));
-    document.addEventListener('visibilitychange', () => { music.hide(document.hidden); if (document.hidden) cloudFlush(); });   // no music from a tab nobody is looking at; and get the save up before it goes
-    window.addEventListener('pagehide', () => { cloudFlush(); });
+    document.addEventListener('visibilitychange', () => { music.hide(document.hidden); if (document.hidden) { cloudFlush(); whereKeep(scene()); sfx.humStop(); } });   // no music from a tab nobody is looking at; and get the save up before it goes
+    window.addEventListener('pagehide', () => { cloudFlush(); whereKeep(scene()); });
     account.onChange = () => {                              // the account copy was written, or had to be given up
       paintNet(); socialConnect();
       if (!account.cloud && account.uid && !account.told) { account.told = true; const s = scene(); if (s) s.note('Could not save to your account. Saving on this device instead.', '#ffe066'); }
