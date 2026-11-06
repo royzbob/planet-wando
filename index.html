@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794000539';
+window.WANDO_BUILD = '1794001526';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -4288,6 +4288,7 @@ window.WANDO_BUILD = '1794000539';
   const boardPrice = b => (b.price != null ? b.price : Math.round((HOVER_BASE + (b.speed - 1) * HOVER_PER_SPEED) / 5) * 5);
   // Checks one board entry (from the weekly stock or a saved game) and fills in anything missing; returns null if unusable.
   function cleanBoard(b) {
+    if (b && b.kind === 'car' && Number.isInteger(b.kc)) { const d = carCollDesign(b.kc); return d ? collCar(d, b.u) : null; }     // a collector car: what it is comes from its design
     if (b && Number.isInteger(b.c)) { const d = collDef('b', b.c); return d ? collBoard(d, b.u) : null; }     // a Board Garage copy: what it is comes from its design
     if (!b || typeof b.id !== 'string' || !/^[a-z0-9-]{1,24}$/.test(b.id) || typeof b.name !== 'string' || !Number.isFinite(b.speed)) return null;
     const hex = (v, d) => (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) ? v : d);
@@ -4462,8 +4463,38 @@ window.WANDO_BUILD = '1794000539';
     const M = CAR_MODELS[model], P = CAR_PAINTS[paint];
     return { id: 'car-' + model + '-' + paint, kind: 'car', model, paint, name: P[0] + ' ' + M.name, speed: M.speed, price: M.price, deck: P[1], trim: '#e8ecf4', glow: M.hover ? '#5ef2ff' : '#ffe9a8' };
   }
-  const carCode = b => (b && b.kind === 'car' ? 1 + b.model * 100 + b.paint : 0);           // (sent to the other players: which car you are in)
-  const carUncode = n => (Number.isInteger(n) && n > 0 && CAR_MODELS[Math.floor((n - 1) / 100)] && CAR_PAINTS[(n - 1) % 100] ? makeCar(Math.floor((n - 1) / 100), (n - 1) % 100) : null);
+  const CAR_COLL_CODE = 1000000;                              // a car code from here up is a collector car: CAR_COLL_CODE + its design
+  const carCode = b => (b && b.kind === 'car' ? (Number.isInteger(b.kc) ? CAR_COLL_CODE + b.kc : 1 + b.model * 100 + b.paint) : 0);           // (sent to the other players: which car you are in)
+  const carUncode = n => { if (Number.isInteger(n) && n >= CAR_COLL_CODE) { const d = carCollDesign(n - CAR_COLL_CODE); return d ? collCar(d, 'PREVIEW0') : null; }
+    return Number.isInteger(n) && n > 0 && CAR_MODELS[Math.floor((n - 1) / 100)] && CAR_PAINTS[(n - 1) % 100] ? makeCar(Math.floor((n - 1) / 100), (n - 1) % 100) : null; };
+  // ── Collector cars: six new ones at Wando Motors every Monday (the Armory's weeks), each a one-off: its model, a custom
+  //    paint and a livery (stripes, flames, stars...), and a rarity. They are sold that week only; after that they have
+  //    retired, and trading is the only way to get one. Each copy has its own serial. A design is worked out from its
+  //    code (week * 10 + its place in the week), so nothing about it needs saving but the code and the serial. ──
+  const CAR_LIVERIES = ['Racing stripes', 'Flames', 'Stars', 'Checkers', 'Polka dots', 'Lightning', 'Two-tone', 'Pinstripes'];
+  const CAR_COLL_WAYS = [['#1a1030', '#ff5a1f', '#ffd84d'], ['#fdfdfd', '#e8323c', '#2b2f6a'], ['#2b2f6a', '#5ef2ff', '#ff3df2'], ['#ffd84d', '#1d1a2e', '#e8323c'], ['#7b3fd1', '#ffd84d', '#5ef2ff'],
+    ['#2fbf8f', '#fdfdfd', '#1a1030'], ['#e8323c', '#fdfdfd', '#ffd84d'], ['#ff8fb8', '#7b3fd1', '#fff8e3'], ['#3fa7f5', '#fff8e3', '#ff7a1a'], ['#141414', '#7dff5a', '#fdfdfd'],
+    ['#f6f1e4', '#2fbf8f', '#ff7ad9'], ['#ff8a2a', '#1d1a2e', '#fff3b0'], ['#5ee8c0', '#2b2f6a', '#ffffff'], ['#b0b6c8', '#e8323c', '#1d1a2e']];
+  const CAR_COLL_RAR = [1, 1, 2, 2, 3, 4];                    // the week's six: two Uncommon, two Rare, an Epic and a Legendary
+  const CAR_COLL_X = [1, 1.3, 1.7, 2.3, 3.4];                 // the price, times the model's own, by rarity
+  const CAR_WORDS = ['Neon', 'Turbo', 'Cosmic', 'Midnight', 'Comet', 'Sunset', 'Thunder', 'Bubble', 'Retro', 'Nova', 'Galaxy', 'Rocket', 'Lucky', 'Velvet', 'Blaze', 'Frosty', 'Starlight', 'Disco', 'Laser', 'Moonlit'];
+  function carCollDesign(code) {
+    if (!Number.isInteger(code) || code < 0 || code % 10 > 5) return null;
+    const week = Math.floor(code / 10), i = code % 10, R = rng(dunHash(week, 7337)), r = CAR_COLL_RAR[i];
+    const models = [0, 1, 2, 3, 4, 5, 6, 7, 8].sort((a, b) => CAR_MODELS[a].price - CAR_MODELS[b].price), pick = [];
+    for (let k = 0; k < 6; k++) { const lo = Math.min(models.length - 1, k), band = models.slice(lo, Math.min(models.length, lo + 4)).filter(m => !pick.includes(m)); pick.push(band[Math.floor(R() * band.length)]); }   // cheaper models first, the fanciest last
+    const ways = CAR_COLL_WAYS.map((_, k) => k).sort(() => R() - 0.5), livs = CAR_LIVERIES.map((_, k) => k).sort(() => R() - 0.5), words = CAR_WORDS.map((_, k) => k).sort(() => R() - 0.5);
+    const model = pick[i], M = CAR_MODELS[model], W2 = CAR_COLL_WAYS[ways[i]];
+    return { code, week, i, r, model, deck: W2[0], liv: { pat: livs[i], c2: W2[1], c3: W2[2], gold: r >= 4 }, name: CAR_WORDS[words[i]] + ' ' + M.name,
+      speed: Math.round((M.speed + 0.04 * r) * 100) / 100, price: Math.round(M.price * CAR_COLL_X[r] / 50) * 50 };
+  }
+  const carCollWeek = w => { const wk = Number.isInteger(w) ? w : armoryWeek(); return [0, 1, 2, 3, 4, 5].map(i => carCollDesign(wk * 10 + i)).filter(Boolean); };
+  function collCar(d, u) {                                     // your copy of a collector car, with its serial
+    u = typeof u === 'string' && /^[0-9A-Z]{8}$/.test(u) ? u : serial();
+    const M = CAR_MODELS[d.model];
+    return { id: 'kc' + d.code + '-' + u.toLowerCase(), kind: 'car', model: d.model, paint: 0, kc: d.code, u, name: d.name, speed: d.speed, price: d.price, deck: d.deck, trim: '#e8ecf4',
+      glow: M.hover ? d.liv.c2 : '#ffe9a8', liv: d.liv, r: d.r };
+  }
   function carWheel(c, x, r, opts) {
     const o = opts || {}, y = 68 - r;
     inked(c, '#2a2833', CAR_INK, 1.4, k => k.arc(x, y, r, 0, TAU));
@@ -4474,9 +4505,24 @@ window.WANDO_BUILD = '1794000539';
     c.fillStyle = 'rgba(255,255,255,.55)'; disc(c, x - r * 0.18, y - r * 0.2, r * 0.12);
   }
   // A body panel in the paint: outlined, with a light band along its top and a shade along its bottom.
+  let CAR_LIV = null;                                          // the livery of the car being drawn (a collector car's), painted on its body panels
+  function carLivery(c, L, top, bot) {
+    const h = bot - top, mid = top + h * 0.48, star = (x, y, s) => { c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? s * 0.45 : s; c.lineTo(x + Math.cos(a) * q, y + Math.sin(a) * q); } c.closePath(); c.fill(); };
+    c.fillStyle = L.c2; c.strokeStyle = L.c3;
+    if (L.pat === 0) { c.fillRect(0, mid - h * 0.2, 120, h * 0.13); c.fillRect(0, mid + h * 0.02, 120, h * 0.13); }
+    else if (L.pat === 1) { c.beginPath(); c.moveTo(122, top); c.lineTo(122, bot); for (let k = 0; k <= 6; k++) { const y = bot - (k / 6) * h, x = 56 + (k % 2 ? 22 : 0) - k * 2; c.lineTo(x, y); } c.closePath(); c.fill(); c.fillStyle = L.c3; c.beginPath(); c.moveTo(122, top + h * 0.25); c.lineTo(122, bot - h * 0.15); for (let k = 0; k <= 4; k++) c.lineTo(84 + (k % 2 ? 14 : 0), bot - h * 0.15 - (k / 4) * h * 0.6); c.closePath(); c.fill(); }
+    else if (L.pat === 2) { [[24, 0.35, 5], [46, 0.62, 4], [66, 0.3, 6], [90, 0.6, 4.5], [106, 0.36, 3.5]].forEach(([x, f, r]) => { c.fillStyle = r > 4.6 ? L.c3 : L.c2; star(x, top + h * f, r); }); }
+    else if (L.pat === 3) { const sq = Math.max(3, h * 0.16); for (let x = 0, k = 0; x < 120; x += sq, k++) { c.fillStyle = k % 2 ? L.c2 : L.c3; c.fillRect(x, mid - sq, sq, sq); c.fillStyle = k % 2 ? L.c3 : L.c2; c.fillRect(x, mid, sq, sq); } }
+    else if (L.pat === 4) { for (let y = top + h * 0.2, row = 0; y < bot; y += h * 0.3, row++) for (let x = row % 2 ? 9 : 0; x < 122; x += 18) { c.beginPath(); c.arc(x, y, Math.max(1.6, h * 0.09), 0, TAU); c.fill(); } }
+    else if (L.pat === 5) { c.beginPath(); c.moveTo(18, mid - h * 0.14); c.lineTo(58, mid - h * 0.2); c.lineTo(52, mid - h * 0.02); c.lineTo(104, mid - h * 0.08); c.lineTo(48, mid + h * 0.24); c.lineTo(56, mid + h * 0.06); c.lineTo(16, mid + h * 0.1); c.closePath(); c.fill(); c.lineWidth = 1.2; c.stroke(); }
+    else if (L.pat === 6) { c.fillRect(0, mid, 120, bot - mid); c.fillStyle = L.c3; c.fillRect(0, mid - 1.4, 120, 2.8); }
+    else { c.lineWidth = 1.6; c.beginPath(); c.moveTo(0, mid - h * 0.1); c.bezierCurveTo(40, mid - h * 0.16, 80, mid + h * 0.04, 122, mid - h * 0.12); c.stroke(); c.strokeStyle = L.c2; c.lineWidth = 3; c.beginPath(); c.moveTo(0, mid + h * 0.04); c.bezierCurveTo(40, mid - h * 0.02, 80, mid + h * 0.18, 122, mid + h * 0.02); c.stroke(); }
+    if (L.gold) { c.fillStyle = 'rgba(255,240,170,.9)'; [[20, 0.25], [60, 0.7], [98, 0.3]].forEach(([x, f]) => star(x, top + h * f, 2.4)); }
+  }
   function carPanel(c, col, top, bot, path) {
     inked(c, col, CAR_INK, 1.5, path);
     c.save(); c.beginPath(); path(c); c.clip();
+    if (CAR_LIV) carLivery(c, CAR_LIV, top, bot);
     c.fillStyle = 'rgba(255,255,255,.32)'; c.fillRect(0, top, 120, (bot - top) * 0.22);
     c.fillStyle = 'rgba(20,10,40,.2)'; c.fillRect(0, bot - (bot - top) * 0.28, 120, bot);
     c.restore();
@@ -4486,6 +4532,7 @@ window.WANDO_BUILD = '1794000539';
   // part: 'back' (what is behind the driver: the seat, a roll bar), 'front' (the body, wheels and glass, in front of the
   // driver), or 'whole' (both, nobody in it).
   function drawCar(c, b, part) {
+    CAR_LIV = b.liv || null;
     const m = b.model || 0, col = b.deck, dark = mix(col, '#1a1030', 0.4), lite = mix(col, '#ffffff', 0.45), back = part !== 'front', front = part !== 'back';
     c.lineJoin = c.lineCap = 'round';
     const seat = (x, y, h, w) => { if (back) inked(c, '#3a3446', CAR_INK, 1.2, k => rr(k, x, y, w || 14, h, 5)); };
@@ -4600,6 +4647,16 @@ window.WANDO_BUILD = '1794000539';
     ['head', 'face', 'hairFront', 'eyes', 'hat'].forEach(layer);
   }
   // A whole car with someone in it (L, a palette; or nobody), in a 130 x 150 cell with the ground at y 140, facing right.
+  function drawCarTile(cv, b) {                               // a car on its own, filling a square: the catalog's picture
+    const c = cv.getContext('2d'); if (!c) return;
+    const w = cv.width, h = cv.height, col = b.r != null ? RARITIES[b.r][1] : '#ffe9a8';
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, w, h);
+    const g = c.createRadialGradient(w / 2, h * 0.46, 4, w / 2, h * 0.46, w * 0.55); g.addColorStop(0, mix(col, '#ffffff', 0.55)); g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    c.fillStyle = 'rgba(30,20,50,.22)'; c.beginPath(); c.ellipse(w / 2, h * 0.79, w * 0.42, h * 0.06, 0, 0, TAU); c.fill();
+    const k = Math.min((w * 0.9) / 132, (h * 0.74) / 82); c.setTransform(k, 0, 0, k, w / 2 - 69 * k, h * 0.8 - 141 * k); c.lineJoin = c.lineCap = 'round';
+    drawCarWith(c, b, null); c.setTransform(1, 0, 0, 1, 0, 0);
+  }
   function drawCarWith(c, b, L) {
     const M = CAR_MODELS[b.model] || CAR_MODELS[0], lift = b.model === 8 ? 6 : 0;
     c.save(); c.translate(5 + 8, 72 - lift); drawCar(c, b, 'back'); c.restore();
@@ -5074,6 +5131,7 @@ window.WANDO_BUILD = '1794000539';
     arcade: { name: 'Star Arcade', interior: 'arcade', home: 'mall', w: 1100, h: 800, bounds: { x: 60, y: 200, w: 980, h: 540 }, seed: 77019, bg: '#07020f', fade: [8, 4, 24], spawn: { x: 550, y: 664 } },
     furnish: { name: 'Homestead Furniture', interior: 'furniture', home: 'green', w: 1100, h: 800, bounds: { x: 60, y: 200, w: 980, h: 540 }, seed: 77020, bg: '#2a1a12', fade: [42, 26, 18], spawn: { x: 550, y: 664 } },
     petshop: { name: 'Paws & Whiskers', interior: 'pets', home: 'green', w: 1100, h: 800, bounds: { x: 60, y: 200, w: 980, h: 540 }, seed: 77022, bg: '#2a1a12', fade: [42, 26, 18], spawn: { x: 550, y: 664 } },
+    motors: { name: 'Wando Motors', interior: 'motors', home: 'green', w: 1100, h: 800, bounds: { x: 60, y: 200, w: 980, h: 540 }, seed: 77024, bg: '#1a1a2a', fade: [26, 30, 48], spawn: { x: 550, y: 664 } },
     home: { name: 'Home', interior: 'home', home: 'green', w: 1100, h: 800, bounds: { x: 60, y: 200, w: 980, h: 540 }, seed: 77021, bg: '#2a1a12', fade: [42, 26, 18], spawn: { x: 550, y: 664 } },
     // Frostwood Lake: a frozen lake for ice fishing (built like the old planets were: see PLANETS.ice)
     ice: { name: 'Frostwood Lake', blurb: 'Ice fishing on a frozen lake', planet: true, w: 2000, h: 1400, bounds: { x: 90, y: 280, w: 1820, h: 1040 }, seed: 88004, bg: '#e8f6ff', fade: [40, 60, 90], pad: { x: 700, y: 760 }, arrive: [0, 118], p: ['#bff0ff', '#3fa7f5'],
@@ -5104,6 +5162,7 @@ window.WANDO_BUILD = '1794000539';
     hats:    { wall: '#7a2f4a', trim: '#ffd84d', rug: '#3fa7f5', goods: ['#e8504a', '#3fa7f5', '#ffc93c', '#8b5cf6', '#f6f1e4'], keeper: 'Brim', npc: 4 },
     charm:   { wall: '#1f6f6a', trim: '#fff3b0', rug: '#ff9ed2', goods: ['#ff9ed2', '#7ad8ee', '#ffd84d', '#c7a6f2', '#ffffff'], keeper: 'Opal', npc: 0 },
     furniture: { wall: '#8a6a4a', trim: '#fff3dc', rug: '#c9654a', goods: ['#c98b4a', '#ff6b5e', '#3fa7f5', '#2fbf8f', '#ffc93c'], keeper: 'Maple', npc: 7 },
+    motors:  { wall: '#3a4a6a', trim: '#ffd84d', rug: '#c8463a', goods: ['#e8323c', '#3fa7f5', '#ffd84d', '#7ed957', '#fdfdfd'], keeper: 'Gus', npc: 4 },   // Wando Motors' showroom
     pets:    { wall: '#6aa0c8', trim: '#fff3dc', rug: '#ffb3c1', goods: ['#ff8fa6', '#ffd84d', '#7ad8ee', '#a8713c', '#5cc86e'], keeper: 'Clover', npc: 1 },
     icefish: { wall: '#7a5236', trim: '#d8eefc', rug: '#3f7fb0', goods: ['#bff0ff', '#ffffff'], keeper: 'Captain Floe', npc: 3, logs: true },   // Captain Floe's shack at Frostwood Lake: a log cabin
     home:    { wall: '#f6ecd6', trim: '#f3efe6', rug: '#c9654a', goods: ['#ffffff'], keeper: '', npc: 0 },     // (its room is drawn by buildHome, from what you chose)
@@ -5112,6 +5171,7 @@ window.WANDO_BUILD = '1794000539';
 
   // What the townsfolk say, per location. One of them speaks every few seconds.
   const CHAT = {
+    motors: ['That Legendary one is gorgeous.', 'New cars came in Monday!', 'I am saving up for the hover car.', 'Mine has flames on it.', 'Can I trade you for that one?', 'Beep beep!'],
     green: ['Fresh bread at the Bakery!', 'Anyone seen my hat?', 'Meet you by the pond.', 'The spaceship goes to the beach now.', 'Nice outfit!', 'The lanterns look great tonight.', 'See a gold ! over someone? They have an errand for you.', 'Juniper shows every newcomer around.', 'I got lost in the Hedge Maze for ages!', 'The maze is different every day.', 'Ice cream truck! Ice cream truck!', 'Mint Chip is the best flavour.', 'GOAL! Did you see that?', 'Push me on the swings!', 'I made a wish at the fountain.', 'The ducklings are so cute.', 'My best Grand Prix time is 30 seconds.', 'Saw a shooting star last night!'],
     beach: ['The tide is perfect today.', 'I dug up a golden nautilus once.', 'Watch out for the crabs.', 'My shovel broke again...', 'Race you to the water!', 'Snacks by the Shovel Shop!', 'They are biting off the pier today.', 'I saw something huge out past the Reef.', 'Storm fish are worth a fortune, they say.', 'The Big Wheel has the best view.', 'Want to build a sandcastle?', 'My kite is stuck again...', 'Look, a sailboat!', 'The crabs dig in when you get close.', 'Bump the beach ball to me!'],
     mall: ['New decks at Kickflip every Monday!', 'Saving up for a hoverboard.', 'The Arcade is open! Beat my high score.', 'Have you seen the flame deck?', 'So many stores!', 'I love this floor.', 'Top Shelf has a hat for every head.', 'I got my wings at Charm & Shade.', 'The benches are for sitting on: click one.', 'Nova always has an errand going.', 'I won a teddy at the Claw Machine!', 'The claw is so wobbly...', 'Freeze Dance at the Dance House later?'],
@@ -5337,7 +5397,7 @@ window.WANDO_BUILD = '1794000539';
     bass: 'x--x--x---x--x--', bassWave: 'triangle', bassVol: 0.18, bassLen: 1.4, bassCut: 600, bassOct: -1, pad: 'swell', padVol: 0.03,
     wave: 'sine', leadVol: 0.08, leadLen: 2.6, echo: 0.35,
     melody: '0...3.5.7...5...' + '3...2.0.2.......' + '7...5.3.5...7...' + '5...3.2.0.......' };
-  const BGM_FOR = { station: 'station', candy: 'candy', neon: 'neon', ice: 'ice', iceshack: 'ice', jungle: 'jungle', trade: 'bakery', dungeon: 'dungeon', cave: 'cave', green: 'green', beach: 'beach', tackleshop: 'beach', mall: 'mall', skateshop: 'mall', hovershop: 'mall', hatshop: 'mall', charmshop: 'mall', arcade: 'arcade', furnish: 'shop', petshop: 'shop', home: 'bakery', dance: 'dance', bakery: 'bakery', tailor: 'shop', florist: 'shop' };
+  const BGM_FOR = { motors: 'mall', station: 'station', candy: 'candy', neon: 'neon', ice: 'ice', iceshack: 'ice', jungle: 'jungle', trade: 'bakery', dungeon: 'dungeon', cave: 'cave', green: 'green', beach: 'beach', tackleshop: 'beach', mall: 'mall', skateshop: 'mall', hovershop: 'mall', hatshop: 'mall', charmshop: 'mall', arcade: 'arcade', furnish: 'shop', petshop: 'shop', home: 'bakery', dance: 'dance', bakery: 'bakery', tailor: 'shop', florist: 'shop' };
   // Concert Mode (Neon Dance House): the show builds in layers. Drums and a racing arpeggio first, the bass at bar 3,
   // chords and stabs at bar 5, the lead at bar 9, and a noise riser with a snare roll into every eighth bar.
   const CONCERT = { name: 'Supernova Live', bpm: 140, root: 54, major: false, prog: [0, 5, 3, 6], gain: 1.25, enter: { bass: 2, stab: 4, lead: 8 }, riser: 8,
@@ -14328,6 +14388,7 @@ window.WANDO_BUILD = '1794000539';
       else if (kind === 'arcade') this.buildArcade();
       else if (kind === 'furniture') this.buildFurnitureStore();
       else if (kind === 'pets') this.buildPetShop();
+      else if (kind === 'motors') this.buildMotors();
       else {
         this.npc(cx, 262, T.npc, T.keeper);                                                         // stands behind the counter
         this.prop('shopcounter', cx, 316, 104 / 110, { shadow: [8, -4, 230, 50], solids: [[-70, -26, 30], [0, -26, 30], [70, -26, 30]], reserve: 130 });
@@ -14343,6 +14404,38 @@ window.WANDO_BUILD = '1794000539';
         }
       }
       this.chatter(CHAT[kind]);
+    }
+    // Wando Motors' showroom: this week's six collector cars on turntables, Gus at the counter with the whole catalog.
+    // Walk up to a car and click it (or press E) to see it in the catalog.
+    buildMotors() {
+      const D = this.D, cx = D.w / 2, T = INTERIORS.motors, ADD = Phaser.BlendModes.ADD;
+      this.npc(cx, 262, T.npc, T.keeper);
+      this.prop('shopcounter', cx, 316, 104 / 110, { shadow: [8, -4, 230, 50], solids: [[-70, -26, 30], [0, -26, 30], [70, -26, 30]], reserve: 130 });
+      this.tag(cx, 322, 'Ask ' + T.keeper + ' for the catalog', -400, 11);
+      this.label(cx, 150, 'New collector cars every Monday!', '#7a1420');
+      this.hotspot('carlot', cx, 358, 50, new Phaser.Geom.Rectangle(cx - 110, 160, 220, 162));
+      if (!this.textures.exists('turntable')) bake(this, 'turntable', 200, 70, c => {
+        c.fillStyle = '#1d1a2e'; c.beginPath(); c.ellipse(100, 38, 96, 28, 0, 0, TAU); c.fill();
+        c.fillStyle = '#c8ccd8'; c.beginPath(); c.ellipse(100, 33, 92, 25, 0, 0, TAU); c.fill();
+        c.fillStyle = '#e8ecf4'; c.beginPath(); c.ellipse(100, 31, 80, 20, 0, 0, TAU); c.fill();
+        c.strokeStyle = 'rgba(29,26,46,.25)'; c.lineWidth = 2; [60, 40].forEach(r => { c.beginPath(); c.ellipse(100, 31, r, r * 0.25, 0, 0, TAU); c.stroke(); });
+        c.fillStyle = '#ffd84d'; for (let i = 0; i < 12; i++) { const a = i * TAU / 12; c.beginPath(); c.arc(100 + Math.cos(a) * 89, 34 + Math.sin(a) * 24, 2.6, 0, TAU); c.fill(); }
+      });
+      const spots = [[230, 470], [870, 470], [230, 650], [870, 650], [410, 560], [690, 560]];
+      carCollWeek().forEach((d, i) => {
+        const [x, y] = spots[i], car = collCar(d, 'PREVIEW0'), key = 'showcar_' + d.code, col = parseInt(RARITIES[d.r][1].slice(1), 16);
+        bake(this, key, 150, 150, c => { c.translate(10, 0); drawCarWith(c, car, null); });
+        this.add.image(x, y - 6, 'glow').setDisplaySize(220, 90).setTint(col).setAlpha(0.35).setBlendMode(ADD).setDepth(-870);
+        this.add.image(x, y + 4, 'turntable').setOrigin(0.5, 0.62).setScale(1 / TEX).setDepth(-860);
+        const img = this.add.image(x, y + 6, key).setOrigin(0.5, 140 / 150).setScale(1.25 / TEX).setDepth(y);
+        if (!REDUCED) this.tweens.add({ targets: img, scaleX: { from: 1.25 / TEX, to: -1.25 / TEX }, duration: 5200 + i * 300, yoyo: true, repeat: -1, ease: 'Sine.inOut' });   // the turntable turns it round
+        [-40, 0, 40].forEach(dx => this.solid(x + dx, y - 8, 22)); this.reserve(x, y - 10, 100);
+        this.tag(x, y + 30, d.name, -400, 11).setColor(mix(RARITIES[d.r][1], '#ffffff', 0.4));
+        this.tag(x, y + 46, RARITIES[d.r][0] + ' · ' + d.price + 'c', -400, 10);
+        this.displays.push({ x, y: y + 30, id: 'kc:' + d.code, kind: 'carlot', near: true, tag: this.tag(x, y - 120, 'Click to see it', 9300, 11).setVisible(false), hit: new Phaser.Geom.Rectangle(x - 80, y - 90, 160, 110) });
+      });
+      [[110, 330], [990, 330]].forEach(([x, y]) => this.prop('shelf_motors', x, y - 78, 144 / 150, { scale: 0.7, solids: [[-40, -10, 22], [40, -10, 22]], reserve: 90 }));
+      this.npc(140, 560, 2, 'Axel'); this.npc(960, 560, 5, 'Penny');
     }
     // Kickflip Skate Shop and Hover Hub: this week's boards hang on the back wall and stand on tables around the room.
     // Walk up to a table and click it (or press E) for that board; the counter has the whole list.
@@ -17058,8 +17151,9 @@ window.WANDO_BUILD = '1794000539';
           this.prop('carlot', spot.x, spot.y, 1, { shadow: [4, -4, 200, 34], solids: [[-60, -16, 26], [0, -16, 26], [60, -16, 26]], reserve: 110 });
           this.add.image(spot.x + 150, spot.y + 14, 'shadow').setDisplaySize(130, 22).setDepth(-500);
           this.prop('carshow', spot.x + 150, spot.y + 14, 140 / 150, { scale: 1.2, solids: [[-30, -10, 22], [20, -10, 22]], reserve: 80 });
-          this.hotspot('carlot', spot.x, spot.y + 20, 60, new Phaser.Geom.Rectangle(spot.x - 110, spot.y - 190, 220, 190));
-          this.tag(spot.x, spot.y + 8, 'Wando Motors: buy a car!', -400, 11).setColor('#ffe9a8');
+          this.hotspot('carlot', spot.x, spot.y + 20, 34, new Phaser.Geom.Rectangle(spot.x - 110, spot.y - 190, 220, 190), { door: 'motors' });     // walk in: the showroom
+          this.D.exits.motors = { x: spot.x, y: spot.y + 70 };   // (stepping back out: in front of its door)
+          this.tag(spot.x, spot.y + 8, 'Wando Motors: walk in!', -400, 11).setColor('#ffe9a8');
           this.carSpot = spot;
         }
       }
@@ -22585,6 +22679,7 @@ window.WANDO_BUILD = '1794000539';
     }
     function drawBoardTile(cv, b) {                         // a board on its own: the deck from above (a skateboard), then as it rides
       if (!b) { drawPortrait(cv, look); return; }
+      if (b.kind === 'car') { drawCarTile(cv, b); return; }  // a car: on its own, in the showroom light
       const c = cv.getContext('2d'), skate = b.kind === 'skate', k = skate ? 1.9 : 2.15;
       c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height); c.lineJoin = c.lineCap = 'round';
       if (skate) drawDeck(c, b, 12, 30, 152, 40);
@@ -23811,6 +23906,7 @@ window.WANDO_BUILD = '1794000539';
     // itself (k 'w'); an outfit or a board carries its copy as obj; a piece of furniture carries { t, c } (no serial of its own).
     function tradeItemIn(e) {
       if (!e || typeof e !== 'object') return null;
+      if (e.k === 'k') { const o = cleanBoard({ kind: 'car', kc: e.kc, u: e.u }); return o && Number.isInteger(o.kc) ? { k: 'k', u: o.u, name: o.name, r: o.r, obj: o } : null; }     // a collector car
       if (e.k === 'c') { const k = cleanCard({ c: e.c, u: e.u }); return k ? { k: 'c', u: k.u, name: k.name, r: k.r, obj: k } : null; }
       if (e.k === 'o' || e.k === 'b') { const o = e.k === 'o' ? cleanOutfit({ c: e.c, u: e.u }) : cleanBoard({ c: e.c, u: e.u }); return o && Number.isInteger(o.c) ? { k: e.k, u: o.u, name: o.name, r: o.r, obj: o } : null; }
       if (e.k === 't') { const D = TOOL_DESIGNS[e.d]; return D && Number.isInteger(e.d) && typeof e.u === 'string' && TOOL_OK_U.test(e.u) ? { k: 't', u: e.u, name: D.name, r: D.r, obj: { d: e.d } } : null; }
@@ -23832,20 +23928,20 @@ window.WANDO_BUILD = '1794000539';
     const goodsOf = t => (/^fl[0-4]$/.test(t) ? { name: n => cap(flowerWord(+t[2], n)), r: 0, have: () => gatherOf().gfl[+t[2]] || 0, add: n => { const F = gatherOf(); F.gfl[+t[2]] = clamp((F.gfl[+t[2]] || 0) + n, 0, 9999); } }
       : t === 'gold' ? { name: n => n + ' golden flower' + (n === 1 ? '' : 's'), r: 3, have: () => G.fan.ggd || 0, add: n => { G.fan.ggd = clamp((G.fan.ggd || 0) + n, 0, 9999); } }
       : t === 'trash' ? { name: n => 'Trash bag (' + n + ' piece' + (n === 1 ? '' : 's') + ')', r: 0, have: () => G.fan.gtr || 0, add: n => { G.fan.gtr = clamp((G.fan.gtr || 0) + n, 0, 999); } } : null);
-    const tradeItemOut = it => (it.k === 't' ? { k: 't', d: it.obj.d, u: it.u } : it.k === 'g' ? { k: 'g', t: it.obj.t, n: it.obj.n, u: it.u } : it.k === 'w' ? { k: 'w', c: it.c, u: it.u, q: it.q } : it.k === 'm' ? { k: 'm', t: it.obj.t, u: it.u } : it.k === 'f' ? { k: 'f', c: it.obj.c, u: it.u } : it.k === 'p' ? { k: 'p', o: it.obj, u: it.u } : it.k === 'h' ? { k: 'h', t: it.obj.t, c: it.obj.c, u: it.u } : { k: it.k, c: it.obj.c, u: it.u });
+    const tradeItemOut = it => (it.k === 'k' ? { k: 'k', kc: it.obj.kc, u: it.u } : it.k === 't' ? { k: 't', d: it.obj.d, u: it.u } : it.k === 'g' ? { k: 'g', t: it.obj.t, n: it.obj.n, u: it.u } : it.k === 'w' ? { k: 'w', c: it.c, u: it.u, q: it.q } : it.k === 'm' ? { k: 'm', t: it.obj.t, u: it.u } : it.k === 'f' ? { k: 'f', c: it.obj.c, u: it.u } : it.k === 'p' ? { k: 'p', o: it.obj, u: it.u } : it.k === 'h' ? { k: 'h', t: it.obj.t, c: it.obj.c, u: it.u } : { k: it.k, c: it.obj.c, u: it.u });
     // Everything of yours that can be traded: weapons; Collection outfits and boards; Collector's furniture in storage (one entry a piece).
     function tradeMine() {
       const out = G.dun.bag.map(w => Object.assign({}, w, { k: 'w' }));
       const pn = {};
       G.outfits.forEach(o => { if (Number.isInteger(o.c)) out.push({ k: 'o', u: o.u, name: o.name, r: o.r, obj: o }); else if (typeof o.id === 'string') { const i = pn[o.id] = (pn[o.id] || 0) + 1; out.push({ k: 'p', u: 'p:' + o.id + ':' + i, name: o.name, r: clamp(o.tier || 0, 0, 2), obj: cleanOutfit(o) }); } });     // (shop and prize outfits too)
-      G.boards.forEach(b => { if (Number.isInteger(b.c)) out.push({ k: 'b', u: b.u, name: b.name, r: b.r, obj: b }); });
+      G.boards.forEach(b => { if (Number.isInteger(b.c)) out.push({ k: 'b', u: b.u, name: b.name, r: b.r, obj: b }); else if (Number.isInteger(b.kc)) out.push({ k: 'k', u: b.u, name: b.name, r: b.r, obj: b }); });
       G.cards.forEach(k => out.push({ k: 'c', u: k.u, name: k.name, r: k.r, obj: k }));
       toolsOf().forEach(([u, d]) => out.push({ k: 't', u, name: TOOL_DESIGNS[d].name, r: TOOL_DESIGNS[d].r, obj: { d } }));
       ['fl0', 'fl1', 'fl2', 'fl3', 'fl4', 'gold', 'trash'].forEach(t => { const g = goodsOf(t), n = g.have(); if (n > 0) out.push({ k: 'g', u: 'g:' + t, name: g.name(n), r: g.r, obj: { t, n } }); });
       Object.keys(G.home.inv).forEach(key => { const [t, ci] = key.split(':'), mr = ci === '0' ? mountRar(t) : -1; if (mr >= 0) { for (let i = 0; i < G.home.inv[key]; i++) out.push({ k: 'm', u: key + ':' + i, name: FURN_BY[t].name, r: mr, obj: { t, c: 0 } }); return; } const pc = plainFurnOk(t, Number(ci)); if (pc >= 0 && String(pc) === ci) { for (let i = 0; i < G.home.inv[key]; i++) out.push({ k: 'h', u: key + ':' + i, name: cap(furnName(FURN_BY[t], pc)), r: 0, obj: { t, c: pc } }); return; } const d = furnCollOf(Number(ci)); if (!d) return; for (let i = 0; i < G.home.inv[key]; i++) out.push({ k: 'f', u: key + ':' + i, name: d.name, r: d.r, obj: { t, c: Number(ci) } }); });
       return out;
     }
-    const tradeHas = it => (it.k === 'w' ? G.dun.bag.some(x => x.u === it.u) : it.k === 'o' ? G.outfits.some(x => x.u === it.u) : it.k === 'b' ? G.boards.some(x => x.u === it.u) : it.k === 'c' ? G.cards.some(x => x.u === it.u) : it.k === 'g' ? goodsOf(it.obj.t).have() >= it.obj.n : it.k === 't' ? toolsOf().some(x => x[0] === it.u) : it.k === 'p' ? G.outfits.filter(o => !Number.isInteger(o.c) && o.id === it.obj.id).length >= Number(it.u.split(':')[2]) : true);
+    const tradeHas = it => (it.k === 'k' ? G.boards.some(x => x.u === it.u) : it.k === 'w' ? G.dun.bag.some(x => x.u === it.u) : it.k === 'o' ? G.outfits.some(x => x.u === it.u) : it.k === 'b' ? G.boards.some(x => x.u === it.u) : it.k === 'c' ? G.cards.some(x => x.u === it.u) : it.k === 'g' ? goodsOf(it.obj.t).have() >= it.obj.n : it.k === 't' ? toolsOf().some(x => x[0] === it.u) : it.k === 'p' ? G.outfits.filter(o => !Number.isInteger(o.c) && o.id === it.obj.id).length >= Number(it.u.split(':')[2]) : true);
     function tradeRead(b) {                                  // one side of a trade, checked
       if (!b || typeof b !== 'object') return null;
       const w = (Array.isArray(b.w) ? b.w : []).slice(0, TRADE.MAXW).map(tradeItemIn).filter(Boolean);
@@ -23962,7 +24058,7 @@ window.WANDO_BUILD = '1794000539';
       G.outfits = G.outfits.filter(o => !(Number.isInteger(o.c) && gone.has(o.u)));
       m.w.forEach(x => { if (x.k !== 'p') return; const i = G.outfits.findIndex(o => !Number.isInteger(o.c) && o.id === x.obj.id); if (i < 0) return; if (look.outfit === G.outfits[i] || (look.outfit && !Number.isInteger(look.outfit.c) && look.outfit.id === x.obj.id && G.outfits.filter(o => o.id === x.obj.id).length < 2)) { look.outfit = null; lookChanged(); } G.outfits.splice(i, 1); });
       if (G.board && gone.has(G.board.u)) { if (G.riding) toggleRide(); G.board = null; }
-      G.boards = G.boards.filter(b => !(Number.isInteger(b.c) && gone.has(b.u)));
+      G.boards = G.boards.filter(b => !((Number.isInteger(b.c) || Number.isInteger(b.kc)) && gone.has(b.u)));
       G.cards = G.cards.filter(k => !gone.has(k.u)); if (G.card && gone.has(G.card)) G.card = null;
       m.w.forEach(x => { if (x.k === 'g') goodsOf(x.obj.t).add(-x.obj.n); if (x.k === 't') { G.fan.tl = toolsOf().filter(e => e[0] !== x.u); if (G.fan.th === x.u) G.fan.th = ''; } });
       m.w.forEach(x => { if (x.k === 'f' || x.k === 'm' || x.k === 'h') { const key = furnKey(x.obj.t, x.obj.c); if (--G.home.inv[key] <= 0) delete G.home.inv[key]; } });
@@ -23971,6 +24067,7 @@ window.WANDO_BUILD = '1794000539';
         if (x.k === 'w') { if (!D.bag.some(y => y.u === x.u)) { const w = Object.assign({}, x); delete w.k; D.bag.push(w); dunFound(D, w); } }
         else if (x.k === 'o') { if (!G.outfits.some(y => y.u === x.u)) { G.outfits.push(x.obj); collGot('o', x.obj.c); } }
         else if (x.k === 'b') { if (!G.boards.some(y => y.u === x.u)) { G.boards.push(x.obj); collGot('b', x.obj.c); } }
+        else if (x.k === 'k') { if (!G.boards.some(y => y.u === x.u)) G.boards.push(x.obj); }
         else if (x.k === 'c') { if (!G.cards.some(y => y.u === x.u)) { G.cards.push(x.obj); collGot('c', x.obj.c); } }
         else if (x.k === 'g') goodsOf(x.obj.t).add(x.obj.n);
         else if (x.k === 't') { if (!toolsOf().some(e => e[0] === x.u)) toolsOf().push([x.u, x.obj.d]); }
@@ -24075,6 +24172,7 @@ window.WANDO_BUILD = '1794000539';
         }
         else if (w.k === 'p') { const cv = el('canvas', 'coll-cv trade-cv', { 'aria-hidden': 'true', width: 66, height: 72 }); drawPortrait(cv, Object.assign({}, look, { outfit: w.obj })); text.append(nm, node('small', '', RARITIES[w.r][0] + ' outfit'), node('small', 'dun-from', w.obj.holiday ? 'A holiday outfit' : w.obj.price ? 'From the shops' : 'A prize')); li.append(cv, text); }
         else if (w.k === 'h') { const cv = el('canvas', 'coll-cv trade-cv', { 'aria-hidden': 'true' }); cv.width = 112; cv.height = 112; drawFurnTile(cv, FURN_BY[w.obj.t], w.obj.c); text.append(nm, node('small', '', 'Furniture'), node('small', 'dun-from', 'From your storage')); li.append(cv, text); }
+        else if (w.k === 'k') { const cv = el('canvas', 'coll-cv trade-cv', { 'aria-hidden': 'true' }); cv.width = 112; cv.height = 112; drawCarTile(cv, w.obj); const d = carCollDesign(w.obj.kc); text.append(nm, node('small', '', RARITIES[w.r][0] + ' collector car · ' + CAR_LIVERIES[d.liv.pat].toLowerCase()), node('small', 'dun-from', 'Week ' + (d.week + 1) + (d.week === armoryWeek() ? ' · on sale now' : ' · retired') + ' · #' + w.u)); li.append(cv, text); }
         else if (w.k === 'm') { const cv = el('canvas', 'coll-cv trade-cv', { 'aria-hidden': 'true' }); cv.width = 112; cv.height = 112; drawFurnTile(cv, FURN_BY[w.obj.t], 0); const [what, from] = mountWhat(w.obj.t); text.append(nm, node('small', '', RARITIES[w.r][0] + ' ' + what), node('small', 'dun-from', from)); li.append(cv, text); }
         else {
           const kind = w.k, d = collDef(kind, kind === 'f' ? w.obj.c - FURN_COLL : w.obj.c), cv = collCanvas(kind, d); cv.classList.add('trade-cv');
@@ -25140,12 +25238,13 @@ window.WANDO_BUILD = '1794000539';
           { name: 'This week', blurb: 'Not for sale: win them in the crypt, the cave, at sea and in the daily quests.', items: S.week.map(d => item(d, false)) },
           ...(S.legend ? [{ name: 'Legend', blurb: 'The rarest of all. Only the luckiest win it.', items: [item(S.legend, false)] }] : [])]; } };
     }
-    function carBook() {                                     // Wando Motors: every model, every paint
+    function carBook() {                                     // Wando Motors: this week's collector cars, then every model in every paint
+      const drive = car => (car.kind === 'car' ? car.name + ' is yours! Press H (or Drive) to get in, and Space to honk. Cars go on the Village Green and Starfish Beach.' : '');
       const item = car => {
         const owned = G.boards.some(o => o.id === car.id), using = !!G.board && G.board.id === car.id, M = CAR_MODELS[car.model];
-        return { id: 'k:' + car.id, name: car.name, tag: '+' + Math.round((car.speed - 1) * 100) + '% speed', price: car.price, owned,
+        return { id: 'k:' + car.id, name: car.name, tag: Number.isInteger(car.kc) ? RARITIES[car.r][0] + ' · #' + car.u : '+' + Math.round((car.speed - 1) * 100) + '% speed', price: car.price, owned,
           btn: owned ? (using ? 'Your car' : 'Drive this one') : 'Buy', disabled: owned ? using : G.coins < car.price,
-          draw: cv => { const c = cv.getContext('2d'), k = cv.width / 130; c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height); c.lineJoin = c.lineCap = 'round'; c.setTransform(k, 0, 0, k, 0, (cv.height - 150 * k) / 2 + 6 * k); drawCarWith(c, car, palette(look)); },
+          draw: cv => drawCarTile(cv, car),
           act: () => {
             const mine = G.boards.find(o => o.id === car.id);
             if (mine) { if (G.riding) toggleRide(); G.board = mine; saveGame(); return mine.name + ' is your car now. Press H (or Drive) to get in.'; }
@@ -25155,9 +25254,25 @@ window.WANDO_BUILD = '1794000539';
             return 'The keys to the ' + car.name + ' are yours! Press H (or Drive) to get in, and Space to honk. ' + M.name + 's go on the Village Green and Starfish Beach.';
           } };
       };
-      return { id: 'cars', title: 'Wando Motors', sub: 'Car catalog', color: '#ff5a5a', burst: 'Drive it home today!', per: 4,
+      const collItem = (d, onSale) => {                      // a collector car: this week's are for sale; last week's have retired
+        const n = G.boards.filter(o => o.kc === d.code).length, pic = collCar(d, 'PREVIEW0');
+        return { id: 'kc:' + d.code, name: d.name, tag: RARITIES[d.r][0] + ' · ' + CAR_LIVERIES[d.liv.pat], price: d.price, owned: n > 0,
+          priceText: onSale ? d.price + ' Coins' + (n ? ' · you have ' + n : '') : 'Retired: trade for it' + (n ? ' · you have ' + n : ''),
+          btn: onSale ? 'Buy' : 'Retired', disabled: !onSale || G.coins < d.price,
+          draw: cv => drawCarTile(cv, pic),
+          act: () => {
+            if (!onSale || !carCollWeek().some(x => x.code === d.code)) return 'That one has retired. Trade for it at the Trading Manor.';
+            if (G.coins < d.price) return 'You need ' + (d.price - G.coins) + ' more Coins.';
+            if (G.riding) toggleRide();
+            G.coins -= d.price; const copy = collCar(d); G.boards.push(copy); G.board = copy; sfx.coin(); saveGame();
+            return 'The ' + d.name + ' (number ' + copy.u + ') is yours! ' + drive(copy);
+          } };
+      };
+      return { id: 'cars', title: 'Wando Motors', sub: 'Car catalog', color: '#ff5a5a', burst: 'New collector cars every Monday!', per: 4,
         keeper: keeperLook({ body: 1, hat: 7, hatStyle: 1, fringe: 2, back: 2, top: 8, topStyle: 0 }),
-        sections: () => CAR_MODELS.map((M, m) => ({ name: M.name, blurb: M.blurb + ' ' + M.price + ' Coins in any colour. Drive with the arrow keys, honk with Space.', items: CAR_PAINTS.map((P, i) => item(makeCar(m, i))) }))
+        sections: () => [{ name: 'Collector cars', blurb: 'Six new ones every Monday, each one of a kind, with its own serial number. On sale this week only: after that they retire, and trading is the only way to get one.', items: carCollWeek().map(d => collItem(d, true)) },
+          { name: 'Last week\'s', blurb: 'Retired: no longer sold. Find someone who has one and trade for it.', items: carCollWeek(armoryWeek() - 1).map(d => collItem(d, false)) }]
+          .concat(CAR_MODELS.map((M, m) => ({ name: M.name, blurb: M.blurb + ' ' + M.price + ' Coins in any colour. Drive with the arrow keys, honk with Space.', items: CAR_PAINTS.map((P, i) => item(makeCar(m, i))) })))
           .concat([{ name: 'Your cars', blurb: 'Pick one to drive.', items: G.boards.filter(o => o.kind === 'car').map(item), empty: 'No cars yet.' }]) };
     }
     function danceBook() {                                   // the Dance Studio: each move drawn as a little dancer, learnt for good
