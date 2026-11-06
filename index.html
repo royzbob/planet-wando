@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794001526';
+window.WANDO_BUILD = '1794002152';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -4259,7 +4259,7 @@ window.WANDO_BUILD = '1794001526';
   // shovel: you own one that still works. digsLeft: its remaining uses. equipped: it is out, so clicking sand digs.
   // boards: hoverboards owned (full copies, so they outlive the week they were sold). board: the one selected. riding: on it now.
   const G = { name: '', look: null, loc: 'green', coins: 100, shovel: false, digsLeft: 0, equipped: false, shells: { common: 0, rare: 0, legendary: 0 },
-              boards: [], board: null, riding: false,
+              boards: [], board: null, riding: false, park: null,   // park: where your car was left ({ id, loc, x, y, f }); none: at Wando Motors' lot
               owned: { hat: [], eyes: [], neck: [], pack: [] },            // bought at the mall: positions in HATS, EYEWEAR, NECKWEAR and BACKWEAR
               found: { o: [], b: [], f: [], c: [] }, cards: [], card: null,     // cards: the player cards you own; card: the serial of the one you show                                // the Collections book: Wardrobe, Garage and furniture designs ever owned
               outfits: [], cakeBest: 0, cakeStars: [], cakeTut: false,     // Cupcake Chaos: best points in a shift, the stars (1 or 2) for each level passed, in order, and whether the training is done
@@ -4432,6 +4432,7 @@ window.WANDO_BUILD = '1794001526';
   function bakeBoard(scene, b) { bake(scene, 'board_' + b.id, 84, 30, c => { c.translate(4, 0); drawBoard(c, b); }); }      // (4 spare each side: the nose is not cut off)
   function toggleRide() {                                     // hop on or off the selected board
     if (!G.board) return false;
+    if (G.board.kind === 'car') return SCENE_NOW ? SCENE_NOW.carKey() : false;     // a car: park it, or start it with your key when you are by it
     if (!G.riding && G.board.kind === 'car' && !CAR_LOCS.includes(G.loc)) { if (ui.carNote) ui.carNote(); return true; }   // cars stay outdoors
     G.riding = !G.riding;
     if (G.riding) { if (G.board.kind === 'skate') sfx.clack(); else if (G.board.kind === 'car') sfx.engine(); else sfx.whoosh(); }
@@ -4463,6 +4464,13 @@ window.WANDO_BUILD = '1794001526';
     const M = CAR_MODELS[model], P = CAR_PAINTS[paint];
     return { id: 'car-' + model + '-' + paint, kind: 'car', model, paint, name: P[0] + ' ' + M.name, speed: M.speed, price: M.price, deck: P[1], trim: '#e8ecf4', glow: M.hover ? '#5ef2ff' : '#ffe9a8' };
   }
+  // Parking. Hop out (H) and your car stays where you left it; to drive again, walk up to it and start it with your key
+  // (H, E, or tap it). A car not parked anywhere is at Wando Motors' lot, by the showroom door.
+  let SCENE_NOW = null;                                        // the place you are in now (set as each one is made)
+  const cleanPark = v => (v && typeof v.id === 'string' && v.id.length <= 40 && CAR_LOCS.includes(v.loc) && Number.isFinite(v.x) && Number.isFinite(v.y)
+    ? { id: v.id, loc: v.loc, x: Math.round(v.x), y: Math.round(v.y), f: v.f < 0 ? -1 : 1 } : null);
+  const carLot = () => { const e = LOCS.green.exits && LOCS.green.exits.motors; return { loc: 'green', x: e ? e.x - 190 : PLAZA.x + 330, y: e ? e.y + 30 : PLAZA.y + 260, f: 1, lot: true }; };
+  const carSpotOf = car => (G.park && car && G.park.id === car.id ? G.park : carLot());
   const CAR_COLL_CODE = 1000000;                              // a car code from here up is a collector car: CAR_COLL_CODE + its design
   const carCode = b => (b && b.kind === 'car' ? (Number.isInteger(b.kc) ? CAR_COLL_CODE + b.kc : 1 + b.model * 100 + b.paint) : 0);           // (sent to the other players: which car you are in)
   const carUncode = n => { if (Number.isInteger(n) && n >= CAR_COLL_CODE) { const d = carCollDesign(n - CAR_COLL_CODE); return d ? collCar(d, 'PREVIEW0') : null; }
@@ -4889,7 +4897,7 @@ window.WANDO_BUILD = '1794001526';
   function saveData() {
     return {
       made: account.made, name: G.name, coins: G.coins, digsLeft: G.digsLeft, equipped: G.equipped, shells: G.shells,
-      boards: G.boards, board: G.board ? G.board.id : null, outfits: G.outfits, cards: G.cards, card: G.card, found: G.found, owned: G.owned, look: G.look, cakeBest: G.cakeBest, cakeStars: G.cakeStars, cakeTut: G.cakeTut, arcade: G.arcade, friends: G.friends, seen: G.seen, home: G.home, errands: G.errands, mine: G.mine, dun: G.dun, pet: G.pet, petMemory: G.petMemory, petBag: G.petBag,
+      boards: G.boards, board: G.board ? G.board.id : null, park: G.park, outfits: G.outfits, cards: G.cards, card: G.card, found: G.found, owned: G.owned, look: G.look, cakeBest: G.cakeBest, cakeStars: G.cakeStars, cakeTut: G.cakeTut, arcade: G.arcade, friends: G.friends, seen: G.seen, home: G.home, errands: G.errands, mine: G.mine, dun: G.dun, pet: G.pet, petMemory: G.petMemory, petBag: G.petBag,
       gear: G.gear, cooler: G.cooler, log: G.log, quests: G.quests, login: G.login, title: G.title, angler: G.angler, fan: G.fan, pj: G.pj || {}, muted: AUDIO.muted, music: AUDIO.music, fx: AUDIO.fx, mvol: AUDIO.mvol
     };
   }
@@ -5248,6 +5256,12 @@ window.WANDO_BUILD = '1794001526';
       src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.02);
     };
     let lastClick = 0;
+    // engines, by model: wave, idle Hz, top Hz, how much of the second voice, wobble Hz, wobble depth, filter Hz, loudness,
+    // the second voice's pitch (times the first: an octave below for a rumble; above for the hover car's whir)
+    const HUM = [['square', 85, 260, 0.15, 32, 8, 1800, 0.5, 0.5], ['triangle', 110, 230, 0.3, 18, 5, 1300, 0.9, 0.5], ['sawtooth', 60, 170, 0.4, 16, 5, 900, 0.6, 0.5],
+      ['sawtooth', 48, 130, 0.5, 11, 6, 700, 0.65, 0.5], ['sawtooth', 64, 190, 0.35, 20, 4, 1100, 0.55, 0.5], ['square', 52, 140, 0.3, 8, 7, 800, 0.5, 0.5],
+      ['sawtooth', 90, 330, 0.25, 40, 6, 2400, 0.5, 0.5], ['sawtooth', 34, 95, 0.8, 13, 5, 520, 0.9, 0.5], ['sine', 240, 520, 0.45, 6, 22, 3200, 0.75, 1.5]];
+    const hums = new Map();
     return {
       unlock: get,
       poke: () => { blip(300, 160, 0.06, 0.13, 'triangle'); hiss(0.05, 0.06, 1400, 900, 2); },              // a grabber poking at litter
@@ -5287,6 +5301,36 @@ window.WANDO_BUILD = '1794001526';
       clack: () => { blip(560, 230, 0.05, 0.13, 'square'); blip(150, 90, 0.09, 0.15, 'triangle', 0.035); },      // a skateboard dropped onto its wheels
       engine: () => { blip(70, 150, 0.35, 0.1, 'sawtooth'); blip(150, 110, 0.4, 0.07, 'sawtooth', 0.3); blip(110, 120, 0.3, 0.05, 'sawtooth', 0.65); },   // a car starting up
       horn: () => { blip(415, 415, 0.26, 0.07, 'square'); blip(523, 523, 0.26, 0.05, 'square'); },
+      key: () => { blip(2400, 1900, 0.03, 0.05, 'square'); blip(1300, 1000, 0.05, 0.05, 'square', 0.07); blip(600, 420, 0.06, 0.05, 'triangle', 0.14); },   // a key turning in the ignition
+      hoverUp: () => { blip(180, 900, 0.6, 0.06, 'sine'); blip(360, 1400, 0.5, 0.03, 'triangle', 0.1); },   // a hover car waking up: no engine, a rising whir
+      // The engine's hum while you drive: higher as you speed up, an idle when you stop, a sound for each model. key:
+      // whose car (yours, or a nearby player's), amt: 0 (idle) to 1 (flat out), vol: how loud (0 turns it off).
+      hum: (key, model, amt, vol) => {
+        const on = vol > 0 && !AUDIO.muted && AUDIO.fx !== false, a = on ? get() : ctx && ctx.state === 'running' ? ctx : null;
+        let h = hums.get(key);
+        if (!a || (!h && !on)) return;
+        if (h && h.model !== model) { h.kill(); h = null; if (!on) return; }
+        const P = HUM[model] || HUM[0], t = a.currentTime;
+        if (!h) {
+          const o1 = a.createOscillator(), o2 = a.createOscillator(), lfo = a.createOscillator(), lg = a.createGain(), sub = a.createGain(), f = a.createBiquadFilter(), g = a.createGain();
+          o1.type = P[0]; o2.type = model === 8 ? 'triangle' : 'sine'; lfo.type = 'sine'; lfo.frequency.value = P[4]; lg.gain.value = P[5]; sub.gain.value = P[3];
+          f.type = 'lowpass'; f.Q.value = 2; g.gain.value = 0.0001;
+          lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency);
+          o1.connect(f); o2.connect(sub); sub.connect(f); f.connect(g); g.connect(a.destination);
+          o1.frequency.value = P[1]; o2.frequency.value = P[1] * P[8];
+          [o1, o2, lfo].forEach(o => o.start(t));
+          const hh = { model, stop: 0, timer: 0, o1, o2, f, g, lfo, kill() { clearTimeout(hh.timer); [o1, o2, lfo].forEach(o => { try { o.stop(); } catch (e) { /* stopped */ } }); try { g.disconnect(); } catch (e) { /* gone */ } hums.delete(key); } };
+          h = hh; hums.set(key, h);
+        }
+        const fr = P[1] + (P[2] - P[1]) * clamp(amt, 0, 1);
+        h.o1.frequency.setTargetAtTime(fr, t, 0.14); h.o2.frequency.setTargetAtTime(fr * P[8], t, 0.14); h.lfo.frequency.setTargetAtTime(P[4] * (1 + amt * 0.8), t, 0.2);
+        h.f.frequency.setTargetAtTime(P[6] * (0.6 + amt * 0.7), t, 0.15);
+        h.g.gain.setTargetAtTime(on ? Math.max(0.0001, vol * P[7] * (0.55 + 0.45 * amt) * AUDIO.duck) : 0.0001, t, on ? 0.09 : 0.12);
+        if (on) { if (h.stop) { clearTimeout(h.timer); h.stop = 0; } }
+        else if (!h.stop) { const hh = h; hh.stop = 1; hh.timer = setTimeout(() => hh.kill(), 700); }
+      },
+      humOnly: keep => { for (const [k, h] of hums) if (!keep.has(k) && !h.stop) sfx.hum(k, h.model, 0, 0); },     // quiet every engine but these
+      humStop: () => { for (const [k, h] of hums) if (!h.stop) sfx.hum(k, h.model, 0, 0); },
       bit: (f0 = 440, f1 = 440, dur = 0.08, delay = 0) => blip(f0, f1, dur, 0.07, 'square', delay)             // the arcade: one square-wave blip, the way an 8-bit sound chip makes them //                 // knuckles on a wooden signpost
     };
   })();
@@ -14205,7 +14249,7 @@ window.WANDO_BUILD = '1794001526';
       const h = this.nearSpot;
       if (!h) { if (this.spotTip) { this.spotTip.setVisible(false); this.spotTip.pill.setVisible(false); } return; }
       const touch = screenPhone();
-      const text = (touch ? '👆 Tap to open' : '👆 Click or press E');
+      const text = h.kind === 'mycar' ? (touch ? '🔑 Tap to start' : '🔑 Click or press E to start') : (touch ? '👆 Tap to open' : '👆 Click or press E');
       if (!this.spotTip) this.spotTip = this.pillTag(0, 0, text, 9000, '#2a1a6a');
       const T = this.spotTip, top = h.hit ? h.hit.y : h.y - 60, x = h.hit ? h.hit.x + h.hit.width / 2 : h.x;
       if (T.text !== text) { T.setText(text); this.pillFit(T); }
@@ -14227,7 +14271,8 @@ window.WANDO_BUILD = '1794001526';
         else if (G.riding && G.board && G.board.kind === 'car' && !this.boating) out.SPACE = 'Honk';
         else if (this.loc === 'beach' && G.shovel && !this.boating && !this.fish && !this.onPier()) out.SPACE = 'Dig';
         if (this.fish) out.F = this.fish.state === 'bite' ? 'Strike!' : 'Reel';
-        if (!this.dun && G.board && !this.boating && (G.riding || CAR_LOCS.includes(this.loc))) out.H = G.riding ? 'Hop off' : 'Ride';     // (outdoors only: indoors you walk)
+        if (G.board && G.board.kind === 'car' && !this.boating) out.H = G.riding ? 'Park' : this.carNear() ? '🔑 Start' : '';
+        else if (!this.dun && G.board && !this.boating && (G.riding || CAR_LOCS.includes(this.loc))) out.H = G.riding ? 'Hop off' : 'Ride';     // (outdoors only: indoors you walk)
       } catch (e) { /* (a place without some of these) */ }
       return out;
     }
@@ -17686,6 +17731,8 @@ window.WANDO_BUILD = '1794001526';
     // Shared by every location: player, camera, input and lifecycle.
     finishCreate() {
       const D = this.D;
+      SCENE_NOW = this; this.parkFor = null; this.parkImg = null; this.carWalk = 0;
+      if (G.riding && G.board && G.board.kind === 'car' && !CAR_LOCS.includes(this.loc)) { G.riding = false; G.park = null; }   // (no driving in here: it went back to the lot)
       this.buildPlayer();
 
       // camera: world-bounded, lerped follow, zoom fitted to the frame and the screen's pixel density
@@ -18256,10 +18303,50 @@ window.WANDO_BUILD = '1794001526';
       g.strokePath();
     }
 
+    // ── your car: parked, started with its key, its engine ──
+    carNear() { const car = G.board; if (!car || car.kind !== 'car' || G.riding || !this.pz) return false; const at = carSpotOf(car); return at.loc === this.loc && Math.hypot(at.x - this.pz.x, at.y - this.pz.y - FOOT) < 110; }
+    carKey() {                                                // H with a car: in it, park it here; out of it, start it with your key if you are by it
+      const car = G.board; if (!car || car.kind !== 'car') return false;
+      if (G.riding) { this.carParkHere(); return true; }
+      const at = carSpotOf(car), here = at.loc === this.loc && at.loc === G.loc && !!this.pz;
+      if (!here) { this.note('Your ' + car.name + ' is parked at ' + LOCS[at.loc].name + (at.lot ? ', outside Wando Motors' : '') + '. Walk up to it and use your key.', '#ffe9a8'); return true; }
+      if (Math.hypot(at.x - this.pz.x, at.y - this.pz.y - FOOT) > 110) { this.note('Walk up to your ' + car.name + ' and use your key to start it.', '#ffe9a8'); this.setTarget(at.x, at.y + 10); this.carWalk = this.time.now + 9000; return true; }
+      this.carWalk = 0; this.pz.body.reset(at.x, at.y - FOOT); this.pz.x = at.x; this.pz.y = at.y - FOOT; this.flip = at.f || 1;
+      G.park = null; G.riding = true; sfx.key(); if (CAR_MODELS[car.model].hover) sfx.hoverUp(); else setTimeout(() => sfx.engine(), 160);
+      this.carParkedShow(); saveGame(); if (ui.onState) ui.onState();
+      return true;
+    }
+    carParkHere() {                                           // out of the car: it stays right here
+      if (!G.board || G.board.kind !== 'car') return;
+      G.park = CAR_LOCS.includes(this.loc) && this.pz ? cleanPark({ id: G.board.id, loc: this.loc, x: this.pz.x, y: this.pz.y + FOOT, f: this.flip < 0 ? -1 : 1 }) : null;
+      G.riding = false; sfx.thud(); saveGame(); if (ui.onState) ui.onState(); this.carParkedShow();
+    }
+    carParkedShow() {                                         // your parked car, where you left it (or at the lot), with a key bubble when you are by it
+      const car = G.board, at = car && car.kind === 'car' && !G.riding ? carSpotOf(car) : null, want = at && at.loc === this.loc ? car.id + '|' + at.x + ',' + at.y + ',' + at.f : '';
+      if (want === this.parkFor) return; this.parkFor = want;
+      if (this.parkImg) { this.parkImg.destroy(); this.parkShadow.destroy(); this.hotspots = this.hotspots.filter(h => h !== this.parkSpot); if (this.nearSpot === this.parkSpot) this.nearSpot = null; this.parkImg = null; }
+      if (!want) return;
+      const key = 'parkcar_' + car.id;
+      bake(this, key, 130, 150, c => drawCarWith(c, car, null));
+      this.parkShadow = this.add.image(at.x, at.y - 2, 'shadow').setDisplaySize(118, 22).setDepth(-500);
+      this.parkImg = this.add.image(at.x, at.y, key).setOrigin(0.5, 140 / 150).setScale((at.f < 0 ? -1 : 1) / TEX, 1 / TEX).setDepth(at.y);
+      this.parkSpot = { kind: 'mycar', x: at.x, y: at.y, r: 70, hit: new Phaser.Geom.Rectangle(at.x - 64, at.y - 84, 128, 92), inside: null };
+      this.hotspots.push(this.parkSpot);
+    }
+    carHum() {                                                // engines: yours while you drive, and the nearest few other players' cars, fainter
+      const keep = new Set(), me = G.riding && G.board && G.board.kind === 'car' ? G.board : null;
+      if (me) { sfx.hum('me', me.model, this.moveAmt || 0, 0.07); keep.add('me'); }
+      if (this.pz) [...this.others.entries()].filter(([, o]) => o.carModel >= 0).map(([id, o]) => [id, o, Math.hypot(o.x - this.pz.x, o.y - this.pz.y)]).filter(e => e[2] < 600).sort((a, b) => a[2] - b[2]).slice(0, 3)
+        .forEach(([id, o, d]) => { const k = 'p:' + id; sfx.hum(k, o.carModel, o.carSp || 0, 0.07 * 0.45 * (1 - d / 600)); keep.add(k); });
+      sfx.humOnly(keep);
+    }
+
     // ── travel ──
     travelTo(loc, again, road) {                              // again: start this place over (into a friend's house from your own, say). road: walked there
       if (this.leaving || !LOCS[loc] || (loc === this.loc && !again) || (loc === 'home' && !G.home.owned && !(ui.visit && ui.visit()))) return;
       this.leaving = true; this.ready = false;
+      if (G.riding && G.board && G.board.kind === 'car' && !(road && CAR_LOCS.includes(loc))) this.carParkHere();     // off by ship, or indoors: the car is parked here (down a road to the beach, you drive)
+      sfx.humStop();
       this.clearTarget(); this.steering = false; this.vel.set(0, 0);
       music.setScene(BGM_FOR[loc]);                            // this place's music starts fading now; the next one's comes in as you arrive
       const go = () => this.scene.start(loc, { from: this.loc, road: !!road });
@@ -19214,6 +19301,7 @@ window.WANDO_BUILD = '1794001526';
           o.img.setTexture(key).setScale(1 / TEX).setOrigin(0.5, p.boat ? 0.8 : car ? 140 / 150 : FEET_OA);
         }
         if (car && Math.abs(p.x - o.x) > 2) o.carFace = p.x < o.x ? -1 : 1;     // a car faces the way it is going
+        o.carModel = car ? car.model : -1; o.carSp = car ? clamp(Math.hypot(p.x - o.x, p.y - o.y) / 160, 0, 1) : 0;   // (for its engine's hum)
         const shown = (p.afk ? '💤 ' : '') + (p.dv === 'm' ? '📱 ' : '') + p.name + (this.loc === 'dungeon' && p.lv ? ' (' + p.lv + ')' : '') + (p.ti ? ' · ' + PLAYER_TITLES[p.ti].name : '');
         if (o.name !== shown) { o.name = shown; o.tag.setText(shown); this.pillFit(o.tag); }
         const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy), k = d > 420 ? 1 : Math.min(1, dt * 9), moving = d > 3 && !p.boat && !car;
@@ -19620,7 +19708,7 @@ window.WANDO_BUILD = '1794001526';
       this.boardImg.setVisible(riding && !driving); this.boardGlow.setVisible(floating);
       if (driving !== this.inCar) { this.inCar = driving; this.parts.legL.setVisible(!driving); this.parts.legR.setVisible(!driving); this.carBack.setVisible(driving); this.carFront.setVisible(driving); }
       if (!driving) this.boardGlow.y = 7;                          // (a hover car lowers the glow; a hoverboard has it back where it was)
-      if (driving && !CAR_LOCS.includes(this.loc)) { toggleRide(); this.note('You parked your car outside. Cars can go on the Village Green and Starfish Beach.', '#ffe9a8'); }
+      if (driving && !CAR_LOCS.includes(this.loc)) { G.riding = false; G.park = null; this.note('Your car went back to Wando Motors\' lot. Cars can go on the Village Green and Starfish Beach.', '#ffe9a8'); }
       if (driving) {                                           // a car: you sit in it, it rolls with a little bounce, puffs exhaust, and a hover car floats
         const M = CAR_MODELS[sel.model], face = this.flip < 0 ? -1 : 1, bump = lively * this.moveAmt * Math.abs(Math.sin(time * 0.02)) * 1.4, float = M.hover ? -8 + lively * Math.sin(time * 0.005) * 2.5 : 0;
         this.rig.y += -(M.seat + 0) * this.rideAmt - bump + float;
@@ -19832,6 +19920,8 @@ window.WANDO_BUILD = '1794001526';
       if (this.seats.length) this.seatUpdate();
       if (this.askers.length) this.errandMarks();
       this.syncOthers(dt, time);                               // other players in this place
+      this.carParkedShow(); this.carHum();
+      if (this.carWalk && (time > this.carWalk || G.riding)) this.carWalk = 0; else if (this.carWalk && this.carNear()) { this.carWalk = 0; this.carKey(); }   // walked up to your car: start it
 
       // camera lag stays the same at any refresh rate
       const lerp = REDUCED ? 1 : 1 - Math.pow(1 - 0.085, dt * 60);
@@ -19873,6 +19963,7 @@ window.WANDO_BUILD = '1794001526';
       if (Array.isArray(st.boards)) G.boards = st.boards.map(cleanBoard).filter(Boolean);
       G.board = G.boards.find(b => b.id === st.board) || null;
       G.riding = !!st.riding && !!G.board;
+      G.park = cleanPark(st.park);
       AUDIO.muted = !!st.muted; AUDIO.music = st.music !== false; AUDIO.fx = st.fx !== false; AUDIO.mvol = Number.isFinite(st.mvol) ? clamp(st.mvol, 0, 1) : 0.6;
       if (AUDIO.muted) { AUDIO.muted = false; AUDIO.music = false; AUDIO.fx = false; }      // (the old all-off setting: both switches off)
       music.setVolume(AUDIO.mvol);
@@ -24229,6 +24320,7 @@ window.WANDO_BUILD = '1794001526';
     ui.onHotspot = (kind, inside, data) => {                // data: for the tailor, the outfit on the mannequin that was clicked
       if (kind === 'dungate') { if (inside) { for (const k in panels) panels[k].close(); gateOpen(); } else gateP.close(); return; }     // the Dungeon Gate, at the camp
       if (kind === 'news') { if (inside) ui.times.open(); else panels.times.close(); return; }
+      if (kind === 'mycar') { const s = scene(); if (inside && s && s.carKey) s.carKey(); return; }     // your parked car: start it with your key
       if (kind === 'carlot') { if (inside) ui.book.open(ui.books.car()); else panels.catbook.close(); return; }
       if (kind === 'icecream') { if (inside) ui.book.open(plainCard(ui.books.icecream())); else panels.catbook.close(); return; }
       if (kind === 'feedducks') { if (inside) { const sc = scene(); if (sc && sc.feedDucks) sc.feedDucks(); } return; }
@@ -25239,7 +25331,7 @@ window.WANDO_BUILD = '1794001526';
           ...(S.legend ? [{ name: 'Legend', blurb: 'The rarest of all. Only the luckiest win it.', items: [item(S.legend, false)] }] : [])]; } };
     }
     function carBook() {                                     // Wando Motors: this week's collector cars, then every model in every paint
-      const drive = car => (car.kind === 'car' ? car.name + ' is yours! Press H (or Drive) to get in, and Space to honk. Cars go on the Village Green and Starfish Beach.' : '');
+      const drive = car => (car.kind === 'car' ? car.name + ' is yours! It is parked outside Wando Motors: walk up to it and use your key (H, or tap it). Space honks. Cars go on the Village Green and Starfish Beach.' : '');
       const item = car => {
         const owned = G.boards.some(o => o.id === car.id), using = !!G.board && G.board.id === car.id, M = CAR_MODELS[car.model];
         return { id: 'k:' + car.id, name: car.name, tag: Number.isInteger(car.kc) ? RARITIES[car.r][0] + ' · #' + car.u : '+' + Math.round((car.speed - 1) * 100) + '% speed', price: car.price, owned,
@@ -25247,11 +25339,11 @@ window.WANDO_BUILD = '1794001526';
           draw: cv => drawCarTile(cv, car),
           act: () => {
             const mine = G.boards.find(o => o.id === car.id);
-            if (mine) { if (G.riding) toggleRide(); G.board = mine; saveGame(); return mine.name + ' is your car now. Press H (or Drive) to get in.'; }
+            if (mine) { if (G.riding) toggleRide(); G.board = mine; saveGame(); return mine.name + ' is your car now. Walk up to it and use your key (H, or tap it) to start it.'; }
             if (G.coins < car.price) return 'Not enough Coins.';
             if (G.riding) toggleRide();
             G.coins -= car.price; const copy = makeCar(car.model, car.paint); G.boards.push(copy); G.board = copy; sfx.coin(); saveGame();
-            return 'The keys to the ' + car.name + ' are yours! Press H (or Drive) to get in, and Space to honk. ' + M.name + 's go on the Village Green and Starfish Beach.';
+            return 'The keys to the ' + car.name + ' are yours! It is parked outside Wando Motors: walk up to it and use your key (H, or tap it). Space honks. ' + M.name + 's go on the Village Green and Starfish Beach.';
           } };
       };
       const collItem = (d, onSale) => {                      // a collector car: this week's are for sale; last week's have retired
@@ -25711,7 +25803,7 @@ window.WANDO_BUILD = '1794001526';
 
     socialConnect();                                        // friends and messages, once there is an account to hold them
     const hot = window.claude && window.claude.hot;
-    if (hot && hot.snapshot) hot.snapshot(() => { const s = scene(); return s ? { player: { x: s.pz.x, y: s.pz.y, look: G.look }, loc: s.loc, coins: G.coins, digsLeft: G.digsLeft, equipped: G.equipped, shells: G.shells, boards: G.boards, board: G.board ? G.board.id : null, riding: G.riding, outfits: G.outfits, cakeBest: G.cakeBest, gear: G.gear, cooler: G.cooler, log: G.log, quests: G.quests } : {}; });
+    if (hot && hot.snapshot) hot.snapshot(() => { const s = scene(); return s ? { player: { x: s.pz.x, y: s.pz.y, look: G.look }, loc: s.loc, coins: G.coins, digsLeft: G.digsLeft, equipped: G.equipped, shells: G.shells, boards: G.boards, board: G.board ? G.board.id : null, park: G.park, riding: G.riding, outfits: G.outfits, cakeBest: G.cakeBest, gear: G.gear, cooler: G.cooler, log: G.log, quests: G.quests } : {}; });
     try { window.focus(); } catch (e) { /* keyboard focus arrives with the first click instead */ }
   }
 
