@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1793998255';
+window.WANDO_BUILD = '1794000539';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -16641,7 +16641,7 @@ window.WANDO_BUILD = '1793998255';
     // Harvest Stand, leaves drifting down, and today's acorns hidden about (the same dozen spots for everyone, all day).
     festiveHarvest() {
       if (!this.textures.exists('haybale')) makeHarvestTextures(this);
-      (this.doorSpots || []).forEach(([x, y]) => { this.add.image(x - 66, y + 92, 'haybale').setOrigin(0.5, 0.92).setScale(0.75 / TEX).setDepth(y + 92); this.add.image(x + 62, y + 88, 'cornsheaf').setOrigin(0.5, 0.95).setScale(0.7 / TEX).setDepth(y + 88); });
+      (this.doorSpots || []).forEach(([x, y]) => { this.add.image(x - 184, y + 4, 'haybale').setOrigin(0.5, 0.92).setScale(0.72 / TEX).setDepth(y + 4); this.add.image(x + 180, y + 2, 'cornsheaf').setOrigin(0.5, 0.95).setScale(0.7 / TEX).setDepth(y + 2); });
       [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sy]) => { const x = PLAZA.x + sx * 163 + sx * 26, y = PLAZA.y + sy * 163 + 4; this.add.image(x, y, 'cornsheaf').setOrigin(0.5, 0.95).setScale(0.8 / TEX).setDepth(y); });
       let at = null;
       { let bd = 1e9; for (let x = PLAZA.x - 800; x <= PLAZA.x + 800; x += 40) for (let y = PLAZA.y - 560; y <= PLAZA.y + 560; y += 40) { const d = Math.hypot(x - PLAZA.x, (y - PLAZA.y) * 1.2); if (d < bd && d > 300 && this.free(x, y, 60) && this.free(x - 70, y, 45) && this.free(x + 70, y, 45) && this.free(x, y - 70, 26)) { bd = d; at = [x, y]; } } }     // the first clear spot round the plaza
@@ -16974,10 +16974,7 @@ window.WANDO_BUILD = '1793998255';
       this.lanterns(1210, 800, 1600, 790, 6);
       this.lanterns(1150, 1200, 1650, 1190, 7);
       const prices = [120, 80, 300, 45, 150, 60, 500, 90, 200, 35, 75, 240];
-      for (let i = 0; i < 12; i++) {                           // wherever a path does not run
-        const a = (i * TAU) / 12 + 0.26;
-        this.stall(P.x + Math.cos(a) * 252, P.y + Math.sin(a) * 252, i, prices[i]);
-      }
+      [[-2.36, 0], [-0.8, 2], [2.4, 4], [1.55, 6]].forEach(([a, i]) => this.stall(P.x + Math.cos(a) * 250, P.y + Math.sin(a) * 230, i, prices[i]));   // four market stalls, between the paths
       const names = ['Juniper', 'Bram', 'Tansy', 'Oakley', 'Wren', 'Fern', 'Moss', 'Pip'];
       for (let i = 0, k = 0; i < 60 && k < names.length; i++) {
         const a = R() * TAU, d = 210 + R() * 230;
@@ -16985,17 +16982,18 @@ window.WANDO_BUILD = '1793998255';
       }
       this.chatter(CHAT.green);
     }
-    // Along the cobbled paths: a lamp every so often (one side, then the other) and a park bench now and then, where there is room.
+    // Along the cobbled paths: lamps in matching pairs, one each side, at even steps; beside every other pair, a park
+    // bench on the same side, facing the path (where there is room).
     pathFurniture(pathPts) {
       pathPts.forEach((pts, pi) => {
-        for (let i = 4; i < pts.length - 2; i += 7) {
-          const a = pts[i - 1], b = pts[i + 1], ang = Math.atan2(b.y - a.y, b.x - a.x), nx = -Math.sin(ang), ny = Math.cos(ang), side = (i + pi) % 2 ? 1 : -1, p = pts[i];
-          if (Math.hypot(p.x - PLAZA.x, p.y - PLAZA.y) < PLAZA.r + 120) continue;
-          const lx = p.x + nx * 82 * side, ly = p.y + ny * 82 * side;
-          if (lx > 60 && lx < W - 60 && ly > 220 && ly < H - 60) this.lamp(lx, ly);
-          if ((i / 7 | 0) % 2 === 0) {
-            const bx = p.x - nx * 100 * side, by = p.y - ny * 100 * side;
-            if (bx > 90 && bx < W - 90 && by > 240 && by < H - 80 && this.free(bx, by, 34)) this.parkBench(bx, by);
+        let pair = 0;
+        for (let i = 6; i < pts.length - 3; i += 11) {
+          const a = pts[i - 1], b = pts[i + 1], ang = Math.atan2(b.y - a.y, b.x - a.x), nx = -Math.sin(ang), ny = Math.cos(ang), p = pts[i];
+          if (Math.hypot(p.x - PLAZA.x, p.y - PLAZA.y) < PLAZA.r + 140) continue;
+          [-1, 1].forEach(side => { const lx = p.x + nx * 94 * side, ly = p.y + ny * 94 * side; if (lx > 120 && lx < W - 120 && ly > 230 && ly < H - 100) this.lamp(lx, ly); });
+          if (pair++ % 2 === 0) {
+            const side = pi % 2 ? 1 : -1, tx = Math.cos(ang), ty = Math.sin(ang), bx = p.x + nx * 120 * side + tx * 80, by = p.y + ny * 120 * side + ty * 80;
+            if (bx > 140 && bx < W - 140 && by > 250 && by < H - 120 && this.free(bx, by, 40)) this.parkBench(bx, by);
           }
         }
       });
@@ -17121,27 +17119,20 @@ window.WANDO_BUILD = '1793998255';
       }
       const inside = (x, y, m) => x > 190 + m && x < W - 190 - m && y > 250 + m && y < H - 170 - m;
       const groveKinds = ['tree_oak', 'tree_oak', 'tree_lime', 'tree_pine', 'tree_blossom', 'tree_blossom'];
-      for (let g = 0; g < 13; g++) {
-        const gx = 260 + R() * (W - 520), gy = 320 + R() * (H - 600), n = 3 + Math.floor(R() * 4);
-        const kind = groveKinds[Math.floor(R() * groveKinds.length)];
-        for (let i = 0; i < n; i++) {
-          for (let tries = 0; tries < 8; tries++) {
-            const a = R() * TAU, d = 30 + R() * 170;
-            const x = gx + Math.cos(a) * d, y = gy + Math.sin(a) * d * 0.8;
-            if (inside(x, y, 0) && free(x, y, 64)) {
-              addTree(x, y, R() < 0.8 ? kind : groveKinds[Math.floor(R() * groveKinds.length)]);
-              reserve(x, y, 46);
-              break;
-            }
-          }
-        }
+      // a few tidy clumps of trees in the open grass, each one kind, in a little triangle (where the whole clump fits)
+      for (let g = 0, made = 0; g < 60 && made < 6; g++) {
+        const gx = 300 + R() * (W - 600), gy = 340 + R() * (H - 640), kind = groveKinds[Math.floor(R() * groveKinds.length)];
+        const spots = [[0, 0], [-78, 54], [78, 54]].map(([dx, dy]) => [gx + dx, gy + dy]);
+        if (!spots.every(([x, y]) => inside(x, y, 0) && free(x, y, 70))) continue;
+        spots.forEach(([x, y], i) => { addTree(x, y, kind, { scale: i ? 0.92 : 1.06 }); reserve(x, y, 50); });
+        made++;
       }
 
       // bushes and rocks
       const bushKeys = ['bush', 'bush', 'bush_berry', 'bush_flower'];
       const byTree = (lo, hi) => { const t = this.trees[Math.floor(R() * this.trees.length)], a = R() * TAU, d = lo + R() * (hi - lo); return t ? [t.img.x + Math.cos(a) * d, t.img.y + Math.sin(a) * d * 0.6] : [-999, -999]; };   // (nature keeps together: at the woods' edge and round the groves)
-      for (let i = 0, placed = 0; i < 400 && placed < 30; i++) {
-        const [x, y] = byTree(60, 110);
+      for (let i = 0, placed = 0; i < 400 && placed < 16; i++) {
+        const [x, y] = byTree(56, 70);
         if (x < 150 || x > W - 150 || y < 220 || y > H - 140 || !free(x, y, 38)) continue;
         const s = 0.9 + R() * 0.35;
         groundShadow(x + 9 * s, y - 5, 92 * s, 36 * s);
@@ -17149,8 +17140,8 @@ window.WANDO_BUILD = '1793998255';
         solid(x, y - 13 * s, 21 * s);
         reserve(x, y, 32); placed++;
       }
-      for (let i = 0, placed = 0; i < 300 && placed < 8; i++) {
-        const [x, y] = byTree(70, 120);
+      for (let i = 0, placed = 0; i < 300 && placed < 4; i++) {
+        const a = Math.PI * (0.9 + R() * 1.2), x = POND.x + Math.cos(a) * 300, y = POND.y + Math.sin(a) * 190;     // round the pond's near side
         if (x < 170 || x > W - 170 || y < 240 || y > H - 160 || !free(x, y, 40)) continue;
         const s = 0.8 + R() * 0.5;
         groundShadow(x + 8 * s, y - 5, 84 * s, 32 * s);
@@ -17205,7 +17196,6 @@ window.WANDO_BUILD = '1793998255';
       this.prop('barrel', shop.x + 146, shop.y + 2, 52 / 56, { shadow: [5, -3, 50, 20], solids: [[0, -12, 17]], reserve: 30 });
       this.prop('barrel', shop.x + 188, shop.y + 22, 52 / 56, { shadow: [5, -3, 50, 20], solids: [[0, -12, 17]], reserve: 30 });
       this.lanterns(shop.x - 230, shop.y + 110, shop.x + 250, shop.y + 110, 6);
-      this.stall(shop.x + 330, shop.y + 20, 1, 8); this.stall(shop.x + 440, shop.y + 40, 2, 6); this.stall(shop.x - 300, shop.y + 60, 5, 15);
       this.prop('boat', 640, 930, 72 / 84, { shadow: [10, -2, 180, 44], solids: [[-48, -22, 22], [0, -26, 26], [48, -22, 22]], reserve: 110 });
       [[980, 720], [1330, 560], [300, 600], [1560, 860]].forEach(([x, y]) => {
         if (this.free(x, y, 40)) this.prop('castle', x, y, 48 / 52, { shadow: [5, -3, 66, 22], solids: [[0, -10, 20]], reserve: 42 });
