@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794049331';
+window.WANDO_BUILD = '1794049629';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -4276,7 +4276,7 @@ window.WANDO_BUILD = '1794049331';
   // shovel: you own one that still works. digsLeft: its remaining uses. equipped: it is out, so clicking sand digs.
   // boards: hoverboards owned (full copies, so they outlive the week they were sold). board: the one selected. riding: on it now.
   const G = { name: '', look: null, loc: 'green', coins: 100, shovel: false, digsLeft: 0, equipped: false, shells: { common: 0, rare: 0, legendary: 0 },
-              boards: [], board: null, riding: false, park: null,   // park: where your car was left ({ id, loc, x, y, f }); none: at Wando Motors' lot
+              boards: [], board: null, riding: false, park: null, shine: -1,   // park: where your car was left ({ id, loc, x, y, f }); none: at Wando Motors' lot
               owned: { hat: [], eyes: [], neck: [], pack: [] },            // bought at the mall: positions in HATS, EYEWEAR, NECKWEAR and BACKWEAR
               found: { o: [], b: [], f: [], c: [] }, cards: [], card: null,     // cards: the player cards you own; card: the serial of the one you show                                // the Collections book: Wardrobe, Garage and furniture designs ever owned
               outfits: [], cakeBest: 0, cakeStars: [], cakeTut: false,     // Cupcake Chaos: best points in a shift, the stars (1 or 2) for each level passed, in order, and whether the training is done
@@ -4477,6 +4477,8 @@ window.WANDO_BUILD = '1794049331';
   const CAR_PAINTS = [['Cherry', '#e8323c'], ['Sunny', '#ffcf2e'], ['Sky', '#3fa7f5'], ['Lime', '#7ed957'], ['Bubblegum', '#ff6fb5'], ['Grape', '#8b5cf6'],
     ['Tangerine', '#ff8a2a'], ['Mint', '#5ee8c0'], ['Midnight', '#2b2f6a'], ['Pearl', '#f4f2ea']];
   const CAR_LOCS = ['green', 'beach', 'neon'];
+  const CAR_WASH = 75;                                         // Wando Motors' wash and wax: your cars sparkle for the rest of the day
+  const shineOn = () => G.shine === dayNumber();
   const CAR_INK = '#1d1a2e';
   function makeCar(model, paint) {
     const M = CAR_MODELS[model], P = CAR_PAINTS[paint];
@@ -5007,7 +5009,7 @@ window.WANDO_BUILD = '1794049331';
   function saveData() {
     return {
       made: account.made, name: G.name, coins: G.coins, digsLeft: G.digsLeft, equipped: G.equipped, shells: G.shells,
-      boards: G.boards, board: G.board ? G.board.id : null, park: G.park, outfits: G.outfits, cards: G.cards, card: G.card, found: G.found, owned: G.owned, look: G.look, cakeBest: G.cakeBest, cakeStars: G.cakeStars, cakeTut: G.cakeTut, arcade: G.arcade, friends: G.friends, seen: G.seen, home: G.home, errands: G.errands, mine: G.mine, dun: G.dun, pet: G.pet, petMemory: G.petMemory, petBag: G.petBag,
+      boards: G.boards, board: G.board ? G.board.id : null, park: G.park, shine: G.shine, outfits: G.outfits, cards: G.cards, card: G.card, found: G.found, owned: G.owned, look: G.look, cakeBest: G.cakeBest, cakeStars: G.cakeStars, cakeTut: G.cakeTut, arcade: G.arcade, friends: G.friends, seen: G.seen, home: G.home, errands: G.errands, mine: G.mine, dun: G.dun, pet: G.pet, petMemory: G.petMemory, petBag: G.petBag,
       gear: G.gear, cooler: G.cooler, log: G.log, quests: G.quests, login: G.login, title: G.title, angler: G.angler, fan: G.fan, pj: G.pj || {}, muted: AUDIO.muted, music: AUDIO.music, fx: AUDIO.fx, mvol: AUDIO.mvol, fvol: AUDIO.fvol
     };
   }
@@ -12551,7 +12553,8 @@ window.WANDO_BUILD = '1794049331';
       pk: Array.isArray(q.pk) && q.pk.length === 5 && carUncode(q.pk[0]) && CAR_LOCS.includes(q.pk[1]) && Number.isFinite(q.pk[2]) && Number.isFinite(q.pk[3]) ? [q.pk[0], q.pk[1], Math.round(q.pk[2]), Math.round(q.pk[3]), q.pk[4] < 0 ? -1 : 1] : null,   // their parked car: [car, place, x, y, facing]
       party: q.loc === 'home' && q.party === 1 ? 1 : 0,                  // a party on at their house
       gr: Number.isInteger(q.gr) ? clamp(q.gr, 0, 999) : 0,              // their count in a Gem Rush
-      hk: Number.isInteger(q.hk) ? clamp(q.hk, 0, 999) : 0,             // how many times they have honked (a change: they just did)
+      hk: Number.isInteger(q.hk) ? clamp(q.hk, 0, 999) : 0,
+      sh: q.sh === 1 ? 1 : 0,                                        // their car is fresh from the wash: it sparkles             // how many times they have honked (a change: they just did)
       kb: Array.isArray(q.kb) && q.kb.length === 7 && q.kb.every(Number.isFinite) ? q.kb.map(v => Math.round(v)) : null,     // their last kick of a ball: [ball, x, y, vx, vy, vz, count]
       fi: q.fi === 1 || q.fi === 2 ? q.fi : 0,                           // their line is down through the ice (2: reeling a fish in)
       ic: Number.isInteger(q.ic) && q.ic >= 1 && q.ic <= ICE_CREAMS.length ? q.ic : 0,     // the ice cream in their hand (1 + which)
@@ -18647,6 +18650,17 @@ window.WANDO_BUILD = '1794049331';
       sfx.humOnly(keep);
     }
 
+    carShine(time) {                                          // a car fresh from the wash and wax twinkles as it goes
+      if (time < (this.shineAt || 0)) return; this.shineAt = time + 160;
+      const at = [];
+      if (this.inCar && this.pz && !this.boating && shineOn()) at.push([this.pz.x, this.pz.y + FOOT]);
+      this.others.forEach(o => { if (o.sh && o.carModel >= 0 && at.length < 6) at.push([o.x, o.y]); });
+      if (!at.length) return;
+      if (!this.shineFx) this.shineFx = this.add.particles(0, 0, 'dust', { lifespan: { min: 380, max: 640 }, speed: { min: 4, max: 18 }, angle: { min: 250, max: 290 },
+        scale: { start: 0.28, end: 0 }, alpha: { start: 1, end: 0 }, tint: [0xffffff, 0xfff3a0, 0xbff4ff], blendMode: 'ADD', emitting: false }).setDepth(6896);
+      at.forEach(([x, y]) => this.shineFx.emitParticleAt(x + (Math.random() - 0.5) * 110, y - 14 - Math.random() * 46, 1));
+    }
+
     carLights() {                                             // after dark, cars have their lights on: headlamps ahead, red lamps behind
       const night = daylight(clockHour()).night, want = [];
       if (night > 0.25 || this.beams) {
@@ -19630,7 +19644,7 @@ window.WANDO_BUILD = '1794049331';
         }
         if (car && Math.abs(p.x - o.x) > 2) o.carFace = p.x < o.x ? -1 : 1;     // a car faces the way it is going
         if (car && o.hk !== undefined && p.hk !== o.hk && this.pz && Math.hypot(o.x - this.pz.x, o.y - this.pz.y) < 700) sfx.horn(car.model || 0, 0.75 * (1 - Math.hypot(o.x - this.pz.x, o.y - this.pz.y) / 900));   // they honked, close by
-        o.hk = p.hk;
+        o.hk = p.hk; o.sh = !!(car && p.sh);
         o.carModel = car ? car.model : -1; o.carSp = car ? clamp(Math.hypot(p.x - o.x, p.y - o.y) / 160, 0, 1) : 0;   // (for its engine's hum)
         const shown = (p.afk ? '💤 ' : '') + (p.dv === 'm' ? '📱 ' : '') + p.name + (this.loc === 'dungeon' && p.lv ? ' (' + p.lv + ')' : '') + (p.ti ? ' · ' + PLAYER_TITLES[p.ti].name : '');
         if (o.name !== shown) { o.name = shown; o.tag.setText(shown); this.pillFit(o.tag); }
@@ -20263,7 +20277,7 @@ window.WANDO_BUILD = '1794049331';
       if (this.seats.length) this.seatUpdate();
       if (this.askers.length) this.errandMarks();
       this.syncOthers(dt, time);                               // other players in this place
-      this.rideTick(time); this.carParkedShow(); this.carHum(); this.carLights(); if (time > (this.pkAt || 0)) { this.pkAt = time + 500; this.othersParked(); }
+      this.rideTick(time); this.carParkedShow(); this.carHum(); this.carLights(); this.carShine(time); if (time > (this.pkAt || 0)) { this.pkAt = time + 500; this.othersParked(); }
       if (time > (this.whereAt || 0)) { this.whereAt = time + 3000; whereKeep(this); }
       if (this.carWalk && (time > this.carWalk || G.riding)) this.carWalk = 0; else if (this.carWalk && this.carNear()) { this.carWalk = 0; this.carKey(); }   // walked up to your car: start it
 
@@ -20308,6 +20322,7 @@ window.WANDO_BUILD = '1794049331';
       G.board = G.boards.find(b => b.id === st.board) || null;
       G.riding = !!st.riding && !!G.board;
       G.park = cleanPark(st.park);
+      G.shine = Number.isInteger(st.shine) ? st.shine : -1;            // the day your car last had a wash and wax
       AUDIO.muted = !!st.muted; AUDIO.music = st.music !== false; AUDIO.fx = st.fx !== false; AUDIO.mvol = Number.isFinite(st.mvol) ? clamp(st.mvol, 0, 1) : 0.6; AUDIO.fvol = Number.isFinite(st.fvol) ? clamp(st.fvol, 0, 1) : 0.7;
       if (AUDIO.muted) { AUDIO.muted = false; AUDIO.music = false; AUDIO.fx = false; }      // (the old all-off setting: both switches off)
       music.setVolume(AUDIO.mvol);
@@ -24777,7 +24792,7 @@ window.WANDO_BUILD = '1794049331';
       const s = scene();
       if (!s || !s.pz) return null;
       return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
-        boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
+        boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, sh: G.riding && !s.boating && shineOn() ? 1 : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
         kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
     }
     function netPush() {                                    // called ten times a second; only a change is sent
@@ -25737,6 +25752,10 @@ window.WANDO_BUILD = '1794049331';
         sections: () => [{ name: 'Collector cars', blurb: 'Six new ones every Monday, each one of a kind, with its own serial number. On sale this week only: after that they retire, and trading is the only way to get one.', items: carCollWeek().map(d => collItem(d, true)) },
           { name: 'Last week\'s', blurb: 'Retired: no longer sold. Find someone who has one and trade for it.', items: carCollWeek(armoryWeek() - 1).map(d => collItem(d, false)) }]
           .concat(CAR_MODELS.map((M, m) => ({ name: M.name, blurb: M.blurb + ' ' + M.price + ' Coins in any colour. Drive with the arrow keys, honk with Space.', items: CAR_PAINTS.map((P, i) => item(makeCar(m, i))) })))
+          .concat([{ name: 'Wash & wax', blurb: 'A wash and a wax: every car of yours sparkles for the rest of the day, and everyone sees it shine.', items: [{ id: 'wash', name: 'Wash & wax', tag: shineOn() ? 'Sparkling today' : 'Lasts all day', price: CAR_WASH, owned: shineOn(),
+            btn: shineOn() ? 'Sparkling!' : 'Wash my car', disabled: shineOn() || G.coins < CAR_WASH || !G.boards.some(o => o.kind === 'car'),
+            draw: cv => { const c = cv.getContext('2d'), w = cv.width, h = cv.height, car = G.boards.find(o => o.kind === 'car') || makeCar(1, 2); drawCarTile(cv, car); c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#fffbe0'; c.strokeStyle = 'rgba(160,120,20,.55)'; c.lineWidth = 1.5; [[0.2, 0.25, 1], [0.78, 0.3, 0.8], [0.5, 0.15, 0.6], [0.86, 0.62, 0.7]].forEach(([x, y, k]) => { const r = Math.min(w, h) * 0.07 * k, X = x * w, Y = y * h; c.beginPath(); c.moveTo(X, Y - r); c.lineTo(X + r * 0.3, Y - r * 0.3); c.lineTo(X + r, Y); c.lineTo(X + r * 0.3, Y + r * 0.3); c.lineTo(X, Y + r); c.lineTo(X - r * 0.3, Y + r * 0.3); c.lineTo(X - r, Y); c.lineTo(X - r * 0.3, Y - r * 0.3); c.closePath(); c.fill(); c.stroke(); }); c.restore(); },
+            act: () => { if (shineOn()) return 'Your cars are already sparkling today.'; if (!G.boards.some(o => o.kind === 'car')) return 'You need a car first.'; if (G.coins < CAR_WASH) return 'You need ' + (CAR_WASH - G.coins) + ' more Coins.'; G.coins -= CAR_WASH; G.shine = dayNumber(); sfx.coin(); saveGame(); return 'Scrub, rinse, wax: your cars sparkle for the rest of the day!'; } }] }])
           .concat([{ name: 'Your cars', blurb: 'Pick one to drive.', items: G.boards.filter(o => o.kind === 'car').map(item), empty: 'No cars yet.' }]) };
     }
     function danceBook() {                                   // the Dance Studio: each move drawn as a little dancer, learnt for good
@@ -26428,6 +26447,7 @@ window.WANDO_BUILD = '1794049331';
       const wk = armoryWeek(), Dg = dailyDelve(dayNumber()), n = armory().list.length + ['o', 'b', 'f'].reduce((a, k) => a + collCat(k).list.length, 0);
       const page = {
         news: ['What\'s new', ['<b>Wando Motors:</b> walk into the showroom on the Village Green. Six one-of-a-kind collector cars every Monday, each with its own serial number, sold that week only. Park your car anywhere and start it with your key; it turns as you drive and hums as it goes.',
+          '<b>Wash & wax</b> at Wando Motors: 75 Coins and your cars sparkle all day. Every car has its own horn now.',
           '<b>Ride along:</b> tap a friend who is driving (or use the 🚗 button in Who\'s here) to hop in their car and go where they go, even down the roads. After dark, cars put their lights on.',
           '<b>Roads:</b> the paths lead to the other places now. Walk off the Village Green to the beach, the mall or the frozen lake, and on from there.',
           '<b>For your house:</b> almost a hundred new pieces of furniture (Space age and Holiday sections too), new wallpapers and floors, a quarter off this week\'s picks at Homestead, and furniture with real depth.',
