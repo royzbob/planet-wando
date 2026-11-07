@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794069055';
+<script>window.WANDO_BUILD = '1794069257';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -7282,13 +7282,42 @@
     }
     const lighten = (c, t) => mix(c, '#ffffff', t);
     const darken = (c, t) => mix(c, '#1a1030', t);
-    const TOON = { line: "#2a1f24", on: !window.__NOTOON, inking: 0, gloss: 0, shade: 0.7 };
+    const TOON = { line: "#2a1f24", on: !window.__NOTOON, inking: 0, gloss: 0, shade: 0.7, selout: window.__OLDINK ? null : 'rgba(34,18,30,0.72)', wobble: window.__OLDINK ? 0 : 0.35 };
     const ink = c => (TOON.inking ? mix(c, '#24181e', 0.74) : mix(c, '#2a1a3a', 0.58));
     const fitFoot = (c, w, h, k) => { c.translate(w / 2, h); c.scale(k, k); c.translate(-w / 2, -h); };
     const TOON_SKIP = /^(grass|ground|shadow|pshadow|pond|glint|dust|ring|glow|fishshadow|bfly|avatar|npc_|furn_|ppl_|planks|floor|wall|room|sky|sea|water|wave|sand|snow|ice$|iceground|tile|carpet|rug_|wash|light|beam|spark|star_|stars|cloud|fog|rain|path|cobble|road|bg|backdrop|interior|shell_|fx|halo|ripple|splash|bubble|puff|confetti|petal|leaf|fallleaf|flake|tuft)/;
     const toonable = (key, w, h, scale) => TOON.on && scale === TEX && !TOON_SKIP.test(String(key)) && w * h <= 900 * 700;
     const PROP_DEPTH = { house_0: 16, house_1: 16, house_2: 16, house_3: 16, house_4: 16, shopcounter: 8, crate: 5, booth: 10, newsstand: 8, carlot: 10, iceshack: 12, harveststand: 8, table: 5, tackle: 10,
         ticketbooth: 6, vending: 5, pastrycase: 6, oven: 5, minecounter: 6, tm_counter: 6, tm_table: 5, flowerbed: 4, planter: 4, missionboard: 4, popcorn: 4, parkbench: 5, bench: 5, sofa: 6, recyclebin: 4, wheelstand: 0 };
+    const GRADE = { on: !window.__NOGRADE, dull: 0.2, warm: 0.035, grain: 7, max: 3e6 };
+    function paintGrade(cv) {
+        if (!GRADE.on || !cv || !cv.getContext)
+            return;
+        const w = cv.width | 0, h = cv.height | 0;
+        if (!(w > 0 && h > 0) || w * h > GRADE.max)
+            return;
+        let id;
+        const c = cv.getContext('2d');
+        try {
+            id = c.getImageData(0, 0, w, h);
+        }
+        catch (e) {
+            return;
+        }
+        const px = id.data, D = GRADE.dull, W = GRADE.warm, N = GRADE.grain;
+        let seed = (w * 73856093) ^ (h * 19349663);
+        for (let i = 0; i < px.length; i += 4) {
+            if (!px[i + 3])
+                continue;
+            const r = px[i], g = px[i + 1], b = px[i + 2], l = 0.3 * r + 0.59 * g + 0.11 * b;
+            seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+            const n = ((seed >> 16) / 32768 - 0.5) * N;
+            px[i] = r + (l - r) * D + 255 * W * 0.5 + n;
+            px[i + 1] = g + (l - g) * D + n;
+            px[i + 2] = b + (l - b) * D - 255 * W + n;
+        }
+        c.putImageData(id, 0, 0);
+    }
     function bake(scene, key, w, h, draw, scale = TEX) {
         if (scene.textures.exists(key))
             return scene.textures.get(key);
@@ -7322,6 +7351,7 @@
             toonDepth(ctx.canvas, Math.round(dep * scale), scale);
         if (toon)
             toonPass(ctx.canvas, 0, 0, ctx.canvas.width, ctx.canvas.height, scale, { line: 1.15, shade: 0.8 });
+        paintGrade(ctx.canvas);
         tex.refresh();
         return tex;
     }
@@ -7418,14 +7448,24 @@
         const r = (o.line == null ? 0.85 : o.line * 0.7) * u;
         if (r > 0.2) {
             const ink1 = toonCanvas(w, h), ic = ink1.getContext('2d');
-            ic.drawImage(solid, 0, 0);
-            ic.globalCompositeOperation = 'source-in';
-            ic.fillStyle = o.ink || TOON.line;
-            ic.fillRect(0, 0, w, h);
-            const n = r > 3 ? 12 : 8;
+            if (TOON.selout && !o.ink) {
+                ic.drawImage(solid, 0, 0);
+                ic.globalCompositeOperation = 'source-in';
+                ic.drawImage(shape, 0, 0);
+                ic.globalCompositeOperation = 'source-atop';
+                ic.fillStyle = TOON.selout;
+                ic.fillRect(0, 0, w, h);
+            }
+            else {
+                ic.drawImage(solid, 0, 0);
+                ic.globalCompositeOperation = 'source-in';
+                ic.fillStyle = o.ink || TOON.line;
+                ic.fillRect(0, 0, w, h);
+            }
+            const n = r > 3 ? 12 : 8, seed = (w * 7 + h * 13) % 97;
             for (let i = 0; i < n; i++) {
-                const a = i / n * Math.PI * 2;
-                oc.drawImage(ink1, Math.cos(a) * r, Math.sin(a) * r);
+                const a = i / n * Math.PI * 2 + seed, k = 1 + TOON.wobble * Math.sin(seed + i * 2.3);
+                oc.drawImage(ink1, Math.cos(a) * r * k, Math.sin(a) * r * k);
             }
             oc.drawImage(ink1, 0, 0);
         }
@@ -7593,7 +7633,7 @@
     function makeWorldTextures(scene, pathPts) {
         bake(scene, 'grass', 512, 512, c => {
             const r = rng(11), S = 512;
-            c.fillStyle = '#63b950';
+            c.fillStyle = '#6da24f';
             c.fillRect(0, 0, S, S);
             const wrap = (x, y, m, fn) => {
                 for (const dx of [-S, 0, S])
@@ -7605,13 +7645,13 @@
             };
             for (let i = 0; i < 46; i++) {
                 const x = r() * S, y = r() * S, rx = 26 + r() * 54, ry = rx * (0.5 + r() * 0.3), rot = r() * 3;
-                c.fillStyle = r() < 0.5 ? 'rgba(126,210,96,.20)' : 'rgba(58,150,62,.16)';
+                c.fillStyle = r() < 0.5 ? 'rgba(150,196,100,.24)' : 'rgba(64,118,48,.22)';
                 wrap(x, y, 90, (px, py) => oval(c, px, py, rx, ry, rot));
             }
             c.lineWidth = 2.1;
             for (let i = 0; i < 230; i++) {
                 const x = r() * S, y = r() * S, s = 0.75 + r() * 0.6, light = r() < 0.42;
-                c.strokeStyle = light ? '#8ad66c' : '#4b9f43';
+                c.strokeStyle = light ? '#93c06a' : '#4d853b';
                 wrap(x, y, 14, (px, py) => {
                     c.beginPath();
                     c.moveTo(px - 3 * s, py);
@@ -7625,7 +7665,7 @@
             }
             for (let i = 0; i < 160; i++) {
                 const x = r() * S, y = r() * S;
-                c.fillStyle = r() < 0.5 ? 'rgba(160,230,120,.55)' : 'rgba(52,140,60,.45)';
+                c.fillStyle = r() < 0.5 ? 'rgba(176,206,120,.5)' : 'rgba(60,110,46,.45)';
                 wrap(x, y, 4, (px, py) => disc(c, px, py, 1.1 + r() * 0.9));
             }
         });
@@ -23227,7 +23267,8 @@
         });
         bake(scene, 'glow', 64, 64, c => {
             const g = c.createRadialGradient(32, 32, 1, 32, 32, 32);
-            g.addColorStop(0, 'rgba(255,255,255,.95)');
+            g.addColorStop(0, 'rgba(255,255,255,.6)');
+            g.addColorStop(0.45, 'rgba(255,255,255,.22)');
             g.addColorStop(1, 'rgba(255,255,255,0)');
             c.fillStyle = g;
             c.fillRect(0, 0, 64, 64);
