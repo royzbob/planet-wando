@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794046492';
+window.WANDO_BUILD = '1794046753';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -2016,6 +2016,7 @@ window.WANDO_BUILD = '1794046492';
   .wmap-spot:hover .wmap-pill, .wmap-spot:focus-visible .wmap-pill { background: var(--sun); transform: scale(1.08); }
   .wmap-spot:focus-visible { outline: none; }
   .wmap-spot.here .wmap-pill { background: #ffe680; }
+  @media (max-width: 560px) { .wmap-pill { padding: 1px 6px; font-size: 10px; border-width: 1.5px; } .wmap-n { font-size: 9px; padding: 0 5px; } .wmap-spot::before { width: 80px; height: 60px; } }   /* a phone: smaller labels, so they do not sit on each other */
   .wmap-n { padding: 0 7px; border: 2px solid #120b3a; border-radius: 999px; background: #3fbf5f; color: #fff; font: 800 11px/1.45 var(--font-body); white-space: nowrap; }
   .wmap-you {
     position: absolute; left: 50%; bottom: calc(100% + 58px); padding: 2px 9px; border: 2px solid #120b3a; border-radius: 8px;
@@ -2653,6 +2654,7 @@ window.WANDO_BUILD = '1794046492';
         <button id="snd-music" type="button" aria-pressed="true">Music</button>
         <button id="snd-fx" type="button" aria-pressed="true">Sound effects</button>
         <label class="snd-vol">Music volume <input id="snd-vol" type="range" min="0" max="100" value="60"></label>
+        <label class="snd-vol">Effects volume <input id="snd-fvol" type="range" min="0" max="100" value="70"></label>
         <button id="fbk-open" class="snd-plain" type="button">✉️ Send feedback or report a bug</button>
         <b class="snd-head">Show</b>
         <button type="button" data-hud="chat" aria-pressed="true">Chat box</button>
@@ -4932,7 +4934,7 @@ window.WANDO_BUILD = '1794046492';
     return {
       made: account.made, name: G.name, coins: G.coins, digsLeft: G.digsLeft, equipped: G.equipped, shells: G.shells,
       boards: G.boards, board: G.board ? G.board.id : null, park: G.park, outfits: G.outfits, cards: G.cards, card: G.card, found: G.found, owned: G.owned, look: G.look, cakeBest: G.cakeBest, cakeStars: G.cakeStars, cakeTut: G.cakeTut, arcade: G.arcade, friends: G.friends, seen: G.seen, home: G.home, errands: G.errands, mine: G.mine, dun: G.dun, pet: G.pet, petMemory: G.petMemory, petBag: G.petBag,
-      gear: G.gear, cooler: G.cooler, log: G.log, quests: G.quests, login: G.login, title: G.title, angler: G.angler, fan: G.fan, pj: G.pj || {}, muted: AUDIO.muted, music: AUDIO.music, fx: AUDIO.fx, mvol: AUDIO.mvol
+      gear: G.gear, cooler: G.cooler, log: G.log, quests: G.quests, login: G.login, title: G.title, angler: G.angler, fan: G.fan, pj: G.pj || {}, muted: AUDIO.muted, music: AUDIO.music, fx: AUDIO.fx, mvol: AUDIO.mvol, fvol: AUDIO.fvol
     };
   }
   function saveGame() {                                         // called after anything worth keeping changes
@@ -5252,7 +5254,7 @@ window.WANDO_BUILD = '1794046492';
   // Sound effects are synthesised with Web Audio: no files. The context only starts after a click or key press.
   // The bottom bar's sound button steps through: everything on, effects only (music: false), all off (muted).
   // duck is how loud the game's own effects are: 1 normally, lower while Concert Mode has the room.
-  const AUDIO = { muted: false, music: true, fx: true, duck: 1 };      // fx: the sound effects (the music is AUDIO.music; muted: both off)
+  const AUDIO = { muted: false, music: true, fx: true, duck: 1, fvol: 0.7 };   // fvol: how loud the sound effects are (0 to 1)      // fx: the sound effects (the music is AUDIO.music; muted: both off)
   const sfx = (() => {
     let ctx = null;
     const get = () => {
@@ -5268,7 +5270,7 @@ window.WANDO_BUILD = '1794046492';
       const a = get();
       if (!a || AUDIO.muted || AUDIO.fx === false) return;
       const t = a.currentTime + (delay || 0), o = a.createOscillator(), g = a.createGain();
-      vol *= AUDIO.duck;
+      vol *= AUDIO.duck * (AUDIO.fvol ?? 0.7) * 1.4;
       o.type = type || 'sine';
       o.frequency.setValueAtTime(f0, t);
       o.frequency.exponentialRampToValueAtTime(f1, t + dur * 0.6);
@@ -5286,7 +5288,7 @@ window.WANDO_BUILD = '1794046492';
       const t = a.currentTime + (delay || 0), src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
       src.buffer = noiseBuf; f.type = 'bandpass'; f.Q.value = q || 1.2;
       f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * AUDIO.duck, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0001, vol * AUDIO.duck * (AUDIO.fvol ?? 0.7) * 1.4), t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       src.connect(f); f.connect(g); g.connect(a.destination);
       src.start(t, Math.random() * 0.5); src.stop(t + dur + 0.02);
     };
@@ -5360,7 +5362,7 @@ window.WANDO_BUILD = '1794046492';
         const fr = P[1] + (P[2] - P[1]) * clamp(amt, 0, 1);
         h.o1.frequency.setTargetAtTime(fr, t, 0.14); h.o2.frequency.setTargetAtTime(fr * P[8], t, 0.14); h.lfo.frequency.setTargetAtTime(P[4] * (1 + amt * 0.8), t, 0.2);
         h.f.frequency.setTargetAtTime(P[6] * (0.45 + amt * 0.5), t, 0.15);   // (a soft filter: a hum, not a buzz)
-        h.g.gain.setTargetAtTime(on ? Math.max(0.0001, vol * P[7] * (0.55 + 0.45 * amt) * AUDIO.duck) : 0.0001, t, on ? 0.09 : 0.12);
+        h.g.gain.setTargetAtTime(on ? Math.max(0.0001, vol * P[7] * (0.55 + 0.45 * amt) * AUDIO.duck * (AUDIO.fvol ?? 0.7) * 1.4) : 0.0001, t, on ? 0.09 : 0.12);
         if (on) { if (h.stop) { clearTimeout(h.timer); h.stop = 0; } }
         else if (!h.stop) { const hh = h; hh.stop = 1; hh.timer = setTimeout(() => hh.kill(), 700); }
       },
@@ -7158,7 +7160,7 @@ window.WANDO_BUILD = '1794046492';
   // ── The map of Planet Wando: one island in a bright sea, with a landmark for each place (drawn in a 1000 x 620 box).
   //    The places' spots on it (fractions of the box) are in WMAP_SPOTS; the map card puts a button on each. ──
   const WMAP_RAW = { trade: [0.72, 0.68], cave: [0.23, 0.2], mall: [0.73, 0.2], green: [0.47, 0.44], beach: [0.84, 0.6], dungeon: [0.22, 0.7], dance: [0.55, 0.8], ice: [0.385, 0.855] };
-  const WMAP_LABELS_RAW = { trade: [0.73, 0.775], cave: [0.23, 0.305], mall: [0.73, 0.315], green: [0.47, 0.49], beach: [0.84, 0.7], dungeon: [0.22, 0.77], dance: [0.55, 0.835], home: [0.34, 0.6], ice: [0.385, 0.935] };
+  const WMAP_LABELS_RAW = { trade: [0.9, 0.79], cave: [0.23, 0.305], mall: [0.73, 0.315], green: [0.47, 0.49], beach: [0.84, 0.7], dungeon: [0.22, 0.77], dance: [0.55, 0.815], home: [0.34, 0.6], ice: [0.385, 0.93] };
   // The island floats on a plate in the sky (the Fantage way): everything on it is drawn at WMAP_K's scale about its
   // centre, so the plate's rocky underside fits below. The buttons' spots are moved the same way.
   const WMAP_K = { k: 0.8, cx: 500, cy: 262 };
@@ -7207,9 +7209,10 @@ window.WANDO_BUILD = '1794046492';
     // the paths between places
     c.save(); c.strokeStyle = '#f6e3a8'; c.lineWidth = 12; c.lineCap = 'round';
     const path = (a, b) => { const [x0, y0] = [WMAP_RAW[a][0] * W, WMAP_RAW[a][1] * H], [x1, y1] = [WMAP_RAW[b][0] * W, WMAP_RAW[b][1] * H]; c.beginPath(); c.moveTo(x0, y0 + 30); c.quadraticCurveTo((x0 + x1) / 2 + 30, (y0 + y1) / 2 + 20, x1, y1 + 30); c.stroke(); };
-    [['green', 'cave'], ['green', 'mall'], ['green', 'beach'], ['green', 'dungeon'], ['green', 'dance'], ['green', 'trade'], ['green', 'ice']].forEach(([a, b]) => path(a, b));
+    const roadPairs = []; Object.keys(ROADS).forEach(a => ROADS[a].forEach(r => { if (WMAP_RAW[a] && WMAP_RAW[r.to] && !roadPairs.some(p => p.includes(a) && p.includes(r.to))) roadPairs.push([a, r.to]); }));   // the roads between places, as they run
+    roadPairs.forEach(([a, b]) => path(a, b));
     c.strokeStyle = '#d8b878'; c.lineWidth = 2; c.setLineDash ? c.setLineDash([6, 8]) : 0;
-    [['green', 'cave'], ['green', 'mall'], ['green', 'beach'], ['green', 'dungeon'], ['green', 'dance']].forEach(([a, b]) => path(a, b));
+    roadPairs.forEach(([a, b]) => path(a, b));
     if (c.setLineDash) c.setLineDash([]);
     c.restore();
     // ── the landmarks, drawn with light and shade: a soft ground shadow, walls lit from the upper left with the side wall
@@ -20079,7 +20082,7 @@ window.WANDO_BUILD = '1794046492';
       G.board = G.boards.find(b => b.id === st.board) || null;
       G.riding = !!st.riding && !!G.board;
       G.park = cleanPark(st.park);
-      AUDIO.muted = !!st.muted; AUDIO.music = st.music !== false; AUDIO.fx = st.fx !== false; AUDIO.mvol = Number.isFinite(st.mvol) ? clamp(st.mvol, 0, 1) : 0.6;
+      AUDIO.muted = !!st.muted; AUDIO.music = st.music !== false; AUDIO.fx = st.fx !== false; AUDIO.mvol = Number.isFinite(st.mvol) ? clamp(st.mvol, 0, 1) : 0.6; AUDIO.fvol = Number.isFinite(st.fvol) ? clamp(st.fvol, 0, 1) : 0.7;
       if (AUDIO.muted) { AUDIO.muted = false; AUDIO.music = false; AUDIO.fx = false; }      // (the old all-off setting: both switches off)
       music.setVolume(AUDIO.mvol);
       G.name = cleanText(st.name, 16);
@@ -23131,8 +23134,8 @@ window.WANDO_BUILD = '1794046492';
       soundTag.hidden = off || (AUDIO.music && AUDIO.fx !== false); soundTag.textContent = AUDIO.music ? '♪' : 'FX';
     };
     // The sound button opens two switches, the place music and the sound effects (each on or off by itself), and the music's volume.
-    const soundPop = document.getElementById('sound-pop'), sndMusic = document.getElementById('snd-music'), sndFx = document.getElementById('snd-fx'), sndVol = document.getElementById('snd-vol');
-    const paintSoundPop = () => { sndMusic.setAttribute('aria-pressed', String(AUDIO.music)); sndFx.setAttribute('aria-pressed', String(AUDIO.fx !== false)); sndVol.value = Math.round((AUDIO.mvol ?? 0.6) * 100); };
+    const soundPop = document.getElementById('sound-pop'), sndMusic = document.getElementById('snd-music'), sndFx = document.getElementById('snd-fx'), sndVol = document.getElementById('snd-vol'), sndFvol = document.getElementById('snd-fvol');
+    const paintSoundPop = () => { sndMusic.setAttribute('aria-pressed', String(AUDIO.music)); sndFx.setAttribute('aria-pressed', String(AUDIO.fx !== false)); sndVol.value = Math.round((AUDIO.mvol ?? 0.6) * 100); sndFvol.value = Math.round((AUDIO.fvol ?? 0.7) * 100); };
     soundBtn.addEventListener('click', e => {
       soundPop.hidden = !soundPop.hidden; soundBtn.setAttribute('aria-expanded', String(!soundPop.hidden)); paintSoundPop();
       if (e.detail > 0) soundBtn.blur();
@@ -23141,6 +23144,8 @@ window.WANDO_BUILD = '1794046492';
     sndFx.addEventListener('click', () => { AUDIO.fx = AUDIO.fx === false; paintSound(); paintSoundPop(); saveGame(); if (AUDIO.fx) sfx.pop(); });
     sndVol.addEventListener('input', () => { AUDIO.mvol = sndVol.value / 100; music.setVolume(AUDIO.mvol); });
     sndVol.addEventListener('change', () => saveGame());
+    sndFvol.addEventListener('input', () => { AUDIO.fvol = sndFvol.value / 100; });
+    sndFvol.addEventListener('change', () => { saveGame(); sfx.pop(); });
     document.addEventListener('pointerdown', e => { if (!soundPop.hidden && !soundPop.contains(e.target) && !soundBtn.contains(e.target)) { soundPop.hidden = true; soundBtn.setAttribute('aria-expanded', 'false'); } });
     paintSound(); paintHub();
     let questDay = '';
