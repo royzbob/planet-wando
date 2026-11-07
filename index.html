@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794049768';
+window.WANDO_BUILD = '1794050012';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -4276,7 +4276,7 @@ window.WANDO_BUILD = '1794049768';
   // shovel: you own one that still works. digsLeft: its remaining uses. equipped: it is out, so clicking sand digs.
   // boards: hoverboards owned (full copies, so they outlive the week they were sold). board: the one selected. riding: on it now.
   const G = { name: '', look: null, loc: 'green', coins: 100, shovel: false, digsLeft: 0, equipped: false, shells: { common: 0, rare: 0, legendary: 0 },
-              boards: [], board: null, riding: false, park: null, shine: -1,   // park: where your car was left ({ id, loc, x, y, f }); none: at Wando Motors' lot
+              boards: [], board: null, riding: false, park: null, shine: -1, taxi: null,   // park: where your car was left ({ id, loc, x, y, f }); none: at Wando Motors' lot
               owned: { hat: [], eyes: [], neck: [], pack: [] },            // bought at the mall: positions in HATS, EYEWEAR, NECKWEAR and BACKWEAR
               found: { o: [], b: [], f: [], c: [] }, cards: [], card: null,     // cards: the player cards you own; card: the serial of the one you show                                // the Collections book: Wardrobe, Garage and furniture designs ever owned
               outfits: [], cakeBest: 0, cakeStars: [], cakeTut: false,     // Cupcake Chaos: best points in a shift, the stars (1 or 2) for each level passed, in order, and whether the training is done
@@ -4479,6 +4479,7 @@ window.WANDO_BUILD = '1794049768';
   const CAR_LOCS = ['green', 'beach', 'neon'];
   const CAR_WASH = 75;                                         // Wando Motors' wash and wax: your cars sparkle for the rest of the day
   const shineOn = () => G.shine === dayNumber();
+  const TAXI = { max: 6, base: 14, per: 2 };                   // taxi fares on the Village Green: a few a day, a little more for a longer ride
   const CAR_INK = '#1d1a2e';
   function makeCar(model, paint) {
     const M = CAR_MODELS[model], P = CAR_PAINTS[paint];
@@ -5009,7 +5010,7 @@ window.WANDO_BUILD = '1794049768';
   function saveData() {
     return {
       made: account.made, name: G.name, coins: G.coins, digsLeft: G.digsLeft, equipped: G.equipped, shells: G.shells,
-      boards: G.boards, board: G.board ? G.board.id : null, park: G.park, shine: G.shine, outfits: G.outfits, cards: G.cards, card: G.card, found: G.found, owned: G.owned, look: G.look, cakeBest: G.cakeBest, cakeStars: G.cakeStars, cakeTut: G.cakeTut, arcade: G.arcade, friends: G.friends, seen: G.seen, home: G.home, errands: G.errands, mine: G.mine, dun: G.dun, pet: G.pet, petMemory: G.petMemory, petBag: G.petBag,
+      boards: G.boards, board: G.board ? G.board.id : null, park: G.park, shine: G.shine, taxi: G.taxi, outfits: G.outfits, cards: G.cards, card: G.card, found: G.found, owned: G.owned, look: G.look, cakeBest: G.cakeBest, cakeStars: G.cakeStars, cakeTut: G.cakeTut, arcade: G.arcade, friends: G.friends, seen: G.seen, home: G.home, errands: G.errands, mine: G.mine, dun: G.dun, pet: G.pet, petMemory: G.petMemory, petBag: G.petBag,
       gear: G.gear, cooler: G.cooler, log: G.log, quests: G.quests, login: G.login, title: G.title, angler: G.angler, fan: G.fan, pj: G.pj || {}, muted: AUDIO.muted, music: AUDIO.music, fx: AUDIO.fx, mvol: AUDIO.mvol, fvol: AUDIO.fvol
     };
   }
@@ -17999,7 +18000,7 @@ window.WANDO_BUILD = '1794049768';
     // Shared by every location: player, camera, input and lifecycle.
     finishCreate() {
       const D = this.D;
-      SCENE_NOW = this; this.parkFor = null; this.parkImg = null; this.carWalk = 0; this.ride = RIDE_WITH ? { id: RIDE_WITH, wait: 0 } : null;
+      SCENE_NOW = this; this.parkFor = null; this.parkImg = null; this.carWalk = 0; this.ride = RIDE_WITH ? { id: RIDE_WITH, wait: 0 } : null; this.taxi = null; this.taxiAt = 0;
       if (G.riding && G.board && G.board.kind === 'car' && !CAR_LOCS.includes(this.loc)) { G.riding = false; G.park = null; }   // (no driving in here: it went back to the lot)
       this.buildPlayer();
 
@@ -18654,6 +18655,46 @@ window.WANDO_BUILD = '1794049768';
       if (this.pz) [...this.others.entries()].filter(([, o]) => o.carModel >= 0).map(([id, o]) => [id, o, Math.hypot(o.x - this.pz.x, o.y - this.pz.y)]).filter(e => e[2] < 600).sort((a, b) => a[2] - b[2]).slice(0, 3)
         .forEach(([id, o, d]) => { const k = 'p:' + id; sfx.hum(k, o.carModel, o.carSp || 0, 0.02 * 0.4 * (1 - d / 600)); keep.add(k); });
       sfx.humOnly(keep);
+    }
+
+    // ── taxi: driving on the Village Green, now and then someone by a shop door waves you down; drive them to another door for a fare ──
+    taxiMark(x, y, text) {
+      if (this.taxiTag) { this.taxiTag.destroy(); this.taxiGlow.destroy(); }
+      this.taxiGlow = this.add.image(x, y, 'glow').setDisplaySize(130, 60).setTint(0xffd84d).setBlendMode(Phaser.BlendModes.ADD).setDepth(6897).setAlpha(0.6);
+      this.taxiTag = this.tag(x, y - 70, text, 6898, 15).setColor('#ffe066'); this.taxiTag.baseY = y - 70;
+    }
+    taxiDrop(msg) {
+      if (this.taxiTag) { this.taxiTag.destroy(); this.taxiGlow.destroy(); this.taxiTag = this.taxiGlow = null; }
+      this.taxi = null; if (msg) this.note(msg, '#ffe9a8');
+    }
+    taxiTick(time) {
+      if (this.loc !== 'green' || !this.pz || this.leaving) return;
+      const T = this.taxi;
+      if (!(this.inCar && !this.boating)) { if (T) this.taxiDrop(T.stage === 'ride' ? 'Your passenger got out when you parked.' : null); return; }
+      const day = dayNumber(); if (!Array.isArray(G.taxi) || G.taxi[0] !== day) G.taxi = [day, 0];
+      const spots = this.hotspots.filter(h => h.door && !h.road && LOCS[h.door] && h.door !== 'home'), any = a => a[Math.floor(Math.random() * a.length)];
+      if (spots.length < 2) return;
+      const fx = this.pz.x, fy = this.pz.y + FOOT;
+      if (this.taxiTag) { this.taxiTag.y = this.taxiTag.baseY - Math.abs(Math.sin(time * 0.005)) * 8; this.taxiGlow.setAlpha(0.45 + 0.2 * Math.sin(time * 0.008)); }
+      if (!T) {
+        if (!this.taxiAt) this.taxiAt = time + 9000;
+        if (G.taxi[1] >= TAXI.max || time < this.taxiAt) return;
+        const far = spots.filter(h => Math.hypot(h.x - fx, h.y - fy) > 450), from = any(far.length ? far : spots);
+        this.taxi = { stage: 'wait', from, to: null, dist: 0 }; this.taxiMark(from.x, from.y + 60, '🙋 Taxi!');
+        this.note('🚕 Someone by ' + LOCS[from.door].name + ' wants a ride! Drive over to pick them up.', '#ffe9a8'); return;
+      }
+      const at = T.stage === 'wait' ? T.from : T.to;
+      if (Math.hypot(at.x - fx, at.y + 60 - fy) > 130) return;
+      if (T.stage === 'wait') {
+        const opts = spots.filter(h => h !== T.from && Math.hypot(h.x - T.from.x, h.y - T.from.y) > 350);
+        T.to = any(opts.length ? opts : spots.filter(h => h !== T.from)); T.stage = 'ride'; T.dist = Math.hypot(T.to.x - T.from.x, T.to.y - T.from.y);
+        sfx.thud(); this.taxiMark(T.to.x, T.to.y + 60, '📍 ' + LOCS[T.to.door].name);
+        this.noteUntil = 0; this.note('They hop in. "To ' + LOCS[T.to.door].name + ', please!" Follow the 📍.', '#ffe9a8'); return;
+      }
+      const pay = TAXI.base + Math.round(T.dist / 100) * TAXI.per; G.coins += pay; G.taxi[1]++; sfx.coin(); saveGame();
+      this.taxiAt = time + 7000; this.taxiDrop(null); this.noteUntil = 0;
+      this.note('"Thanks for the lift!" +' + pay + ' Coins. ' + (G.taxi[1] >= TAXI.max ? 'That is all the fares for today.' : (TAXI.max - G.taxi[1]) + ' more fares today.'), '#ffe066');
+      if (ui.onEvent) ui.onEvent('taxi', { pay });
     }
 
     carShine(time) {                                          // a car fresh from the wash and wax twinkles as it goes
@@ -20283,7 +20324,7 @@ window.WANDO_BUILD = '1794049768';
       if (this.seats.length) this.seatUpdate();
       if (this.askers.length) this.errandMarks();
       this.syncOthers(dt, time);                               // other players in this place
-      this.rideTick(time); this.carParkedShow(); this.carHum(); this.carLights(); this.carShine(time); if (time > (this.pkAt || 0)) { this.pkAt = time + 500; this.othersParked(); }
+      this.rideTick(time); this.carParkedShow(); this.carHum(); this.carLights(); this.carShine(time); this.taxiTick(time); if (time > (this.pkAt || 0)) { this.pkAt = time + 500; this.othersParked(); }
       if (time > (this.whereAt || 0)) { this.whereAt = time + 3000; whereKeep(this); }
       if (this.carWalk && (time > this.carWalk || G.riding)) this.carWalk = 0; else if (this.carWalk && this.carNear()) { this.carWalk = 0; this.carKey(); }   // walked up to your car: start it
 
@@ -20328,6 +20369,7 @@ window.WANDO_BUILD = '1794049768';
       G.board = G.boards.find(b => b.id === st.board) || null;
       G.riding = !!st.riding && !!G.board;
       G.park = cleanPark(st.park);
+      G.taxi = Array.isArray(st.taxi) && Number.isInteger(st.taxi[0]) && Number.isInteger(st.taxi[1]) ? [st.taxi[0], clamp(st.taxi[1], 0, 99)] : null;   // [day, taxi fares driven that day]
       G.shine = Number.isInteger(st.shine) ? st.shine : -1;            // the day your car last had a wash and wax
       AUDIO.muted = !!st.muted; AUDIO.music = st.music !== false; AUDIO.fx = st.fx !== false; AUDIO.mvol = Number.isFinite(st.mvol) ? clamp(st.mvol, 0, 1) : 0.6; AUDIO.fvol = Number.isFinite(st.fvol) ? clamp(st.fvol, 0, 1) : 0.7;
       if (AUDIO.muted) { AUDIO.muted = false; AUDIO.music = false; AUDIO.fx = false; }      // (the old all-off setting: both switches off)
@@ -26453,6 +26495,7 @@ window.WANDO_BUILD = '1794049768';
       const wk = armoryWeek(), Dg = dailyDelve(dayNumber()), n = armory().list.length + ['o', 'b', 'f'].reduce((a, k) => a + collCat(k).list.length, 0);
       const page = {
         news: ['What\'s new', ['<b>Wando Motors:</b> walk into the showroom on the Village Green. Six one-of-a-kind collector cars every Monday, each with its own serial number, sold that week only. Park your car anywhere and start it with your key; it turns as you drive and hums as it goes.',
+          '<b>Taxi!</b> Drive on the Village Green and townsfolk wave you down: take them to the shop they want for a fare (six a day).',
           '<b>Wash & wax</b> at Wando Motors: 75 Coins and your cars sparkle all day. Every car has its own horn now, and the radio plays Wando FM while you drive.',
           '<b>Ride along:</b> tap a friend who is driving (or use the 🚗 button in Who\'s here) to hop in their car and go where they go, even down the roads. After dark, cars put their lights on.',
           '<b>Roads:</b> the paths lead to the other places now. Walk off the Village Green to the beach, the mall or the frozen lake, and on from there.',
