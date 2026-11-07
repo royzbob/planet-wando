@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794046975';
+window.WANDO_BUILD = '1794047178';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -4748,6 +4748,20 @@ window.WANDO_BUILD = '1794046975';
     }
     if (m !== 0 && m !== 8 && m !== 1) inked(c, '#c8ccd8', CAR_INK, 1.2, k => rr(k, X - hw - 1, bot - 4, hw * 2 + 2, 6, 3));                                 // the bumper
     CAR_LIV = null;
+  }
+  // A car seen end on with someone in it, in the same 130 x 150 cell as drawCarWith: from the front (they face you) or behind.
+  function drawCarEndWith(c, b, L, end) {
+    const M = CAR_MODELS[b.model] || CAR_MODELS[0], lift = b.model === 8 ? 6 : 0, view = end === 'rear' ? 'back' : 'front';
+    c.save(); c.translate(5, 72 - lift); drawCarEnd(c, b, end, 'back'); c.restore();
+    if (L) {
+      c.save(); c.translate(65 - 48, 140 - FEET_Y - M.seat - lift);
+      const layer = name => { c.save(); drawAvatarLayer(c, name, view, L); c.restore(); };
+      if (view === 'front') { layer('pack'); layer('hairBack'); } else layer('hairBack');
+      layer('torso'); layer('neck'); ['head', 'face', 'hairFront', 'eyes', 'hat'].forEach(n => { if (view === 'back' && (n === 'face' || n === 'eyes')) return; layer(n); });
+      if (view === 'back') layer('pack');
+      c.restore();
+    }
+    c.save(); c.translate(5, 72 - lift); drawCarEnd(c, b, end, 'front'); c.restore();
   }
   function drawCarTile(cv, b) {                               // a car on its own, filling a square: the catalog's picture
     const c = cv.getContext('2d'); if (!c) return;
@@ -12485,6 +12499,7 @@ window.WANDO_BUILD = '1794046975';
       pk: Array.isArray(q.pk) && q.pk.length === 5 && carUncode(q.pk[0]) && CAR_LOCS.includes(q.pk[1]) && Number.isFinite(q.pk[2]) && Number.isFinite(q.pk[3]) ? [q.pk[0], q.pk[1], Math.round(q.pk[2]), Math.round(q.pk[3]), q.pk[4] < 0 ? -1 : 1] : null,   // their parked car: [car, place, x, y, facing]
       party: q.loc === 'home' && q.party === 1 ? 1 : 0,                  // a party on at their house
       gr: Number.isInteger(q.gr) ? clamp(q.gr, 0, 999) : 0,              // their count in a Gem Rush
+      hk: Number.isInteger(q.hk) ? clamp(q.hk, 0, 999) : 0,             // how many times they have honked (a change: they just did)
       kb: Array.isArray(q.kb) && q.kb.length === 7 && q.kb.every(Number.isFinite) ? q.kb.map(v => Math.round(v)) : null,     // their last kick of a ball: [ball, x, y, vx, vy, vz, count]
       fi: q.fi === 1 || q.fi === 2 ? q.fi : 0,                           // their line is down through the ice (2: reeling a fish in)
       ic: Number.isInteger(q.ic) && q.ic >= 1 && q.ic <= ICE_CREAMS.length ? q.ic : 0,     // the ice cream in their hand (1 + which)
@@ -12529,7 +12544,9 @@ window.WANDO_BUILD = '1794046975';
     candy:  { on: 'candy', text: q => 'Trick-or-treat: get ' + q.n + ' candies from the townsfolk', season: 'halloween' },
     acorn:  { on: 'acorn', text: q => 'Find ' + q.n + ' acorns on the Village Green', season: 'harvest' },
     present: { on: 'present', text: q => 'Deliver ' + q.n + ' presents for Holly', season: 'winter' },
-    wave:   { on: 'wave',  text: () => 'Wave to one of the townsfolk' }
+    wave:   { on: 'wave',  text: () => 'Wave to one of the townsfolk' },
+    road:   { on: 'road',  text: q => (q.n > 1 ? 'Walk down ' + q.n + ' roads' : 'Walk down a road') + ' to another place' },
+    feast:  { on: 'feast', text: () => 'Grab a plate at the Harvest Feast on the Village Green', season: 'harvest' }
   };
   const QUEST_BONUS = 40;                                      // extra Coins for claiming all three in one day
   // One fishing quest, one job, one easy errand. boat = the player's boat, so nothing asks for water they cannot reach.
@@ -12555,7 +12572,8 @@ window.WANDO_BUILD = '1794046975';
       () => { const n = pick([40, 60, 100, 150]); return q('sell', n, Math.round((n * 0.4) / 5) * 5); }
     ];
     const errands = [
-      () => q('visit', 1, 15, pick(['dance', 'mall', 'tailor', 'bakery', 'florist', 'tackleshop', 'cave', 'dungeon'])),
+      () => q('visit', 1, 15, pick(['dance', 'mall', 'tailor', 'bakery', 'florist', 'tackleshop', 'cave', 'dungeon', 'motors', 'furnish'])),
+      () => q('road', pick([1, 2, 3]), 20),
       () => q('chat', 1, 10),
       () => q('cakes', 4, 20),
       () => q('goal', pick([1, 2, 3]), 20),
@@ -12571,6 +12589,7 @@ window.WANDO_BUILD = '1794046975';
     ];
     if (trickOn()) errands.push(() => q('candy', 5, 30), () => q('candy', 8, 45));
     if (harvestOn()) errands.push(() => q('acorn', 4, 30), () => q('acorn', 7, 45));
+    if (feastOn(new Date(day * 86400000 + 43200000))) errands.push(() => q('feast', 1, 25), () => q('feast', 1, 25));
     if (winterOn()) errands.push(() => q('present', 3, 30), () => q('present', 5, 45));
     const list = [pick(fishing)(), pick(jobs)(), pick(errands)()];
     if (list[2].k === list[1].k) list[2] = q('chat', 1, 10);    // never the same job twice
@@ -16947,7 +16966,7 @@ window.WANDO_BUILD = '1794046975';
     feastPlate() {                                              // a plate of food, once a day: Coins and a cheery word
       const F = G.fan, day = dayNumber();
       if (F.fp === day) { this.noteUntil = 0; this.note('You already had a plate today. So full! Come back tomorrow.', '#ffd27a'); return; }
-      F.fp = day; G.coins += FEAST.plate; sfx.coin(); sfx.chime(); saveGame(); if (ui.onState) ui.onState();
+      F.fp = day; G.coins += FEAST.plate; sfx.coin(); sfx.chime(); if (ui.onEvent) ui.onEvent('feast'); saveGame(); if (ui.onState) ui.onState();
       const dish = ['pumpkin pie', 'corn on the cob', 'cranberry jelly', 'mashed potatoes', 'apple cider', 'a warm roll'][Math.floor(Math.random() * 6)];
       this.noteUntil = 0; this.note('Yum, ' + dish + '! Happy Thanksgiving! +' + FEAST.plate + ' Coins', '#ffd27a');
       if (this.feastAt) this.dust && this.dust.emitParticleAt && this.dust.emitParticleAt(this.feastAt.x, this.feastAt.y - 40, 6);
@@ -18043,7 +18062,7 @@ window.WANDO_BUILD = '1794046975';
           return;
         }
         if (G.riding && G.board && G.board.kind === 'car' && !this.boating) {          // in a car, Space honks the horn
-          if (this.time.now - (this.hornAt || 0) > 400) { this.hornAt = this.time.now; sfx.horn(); }
+          if (this.time.now - (this.hornAt || 0) > 400) { this.hornAt = this.time.now; sfx.horn(); this.honks = ((this.honks || 0) + 1) % 1000; }   // (the others hear it too: see netMine's hk)
           return;
         }
         if (this.loc !== 'beach') return;
@@ -19460,14 +19479,17 @@ window.WANDO_BUILD = '1794046975';
           this.others.set(p.id, o);
         }
         const car = !p.boat && p.car ? carUncode(p.car) : null;
-        const key = p.boat ? BOAT_LEVELS[p.boat].tex : car ? 'peercar_' + p.lookKey + '_' + p.car : 'peer_' + p.lookKey;
+        if (car) { const mx = Math.abs(p.x - o.x), my = Math.abs(p.y - o.y); if (mx + my > 3) o.carEnd = my > mx * 1.3 ? (p.y > o.y ? 'nose' : 'rear') : ''; } else o.carEnd = '';   // a car faces the way it goes: across, toward you or away
+        const key = p.boat ? BOAT_LEVELS[p.boat].tex : car ? 'peercar_' + p.lookKey + '_' + p.car + (o.carEnd ? '_' + o.carEnd : '') : 'peer_' + p.lookKey;
         if (o.key !== key) {
           o.key = key;
-          if (car) bake(this, key, 130, 150, c => drawCarWith(c, car, palette(p.look)));
+          if (car) bake(this, key, 130, 150, c => (o.carEnd ? drawCarEndWith(c, car, palette(p.look), o.carEnd) : drawCarWith(c, car, palette(p.look))));
           else if (!p.boat) bake(this, key, CW, CHA, c => { c.translate(0, AV_TOP); drawFigure(c, palette(p.look)); });
           o.img.setTexture(key).setScale(1 / TEX).setOrigin(0.5, p.boat ? 0.8 : car ? 140 / 150 : FEET_OA);
         }
         if (car && Math.abs(p.x - o.x) > 2) o.carFace = p.x < o.x ? -1 : 1;     // a car faces the way it is going
+        if (car && o.hk !== undefined && p.hk !== o.hk && this.pz && Math.hypot(o.x - this.pz.x, o.y - this.pz.y) < 700) sfx.horn();   // they honked, close by
+        o.hk = p.hk;
         o.carModel = car ? car.model : -1; o.carSp = car ? clamp(Math.hypot(p.x - o.x, p.y - o.y) / 160, 0, 1) : 0;   // (for its engine's hum)
         const shown = (p.afk ? '💤 ' : '') + (p.dv === 'm' ? '📱 ' : '') + p.name + (this.loc === 'dungeon' && p.lv ? ' (' + p.lv + ')' : '') + (p.ti ? ' · ' + PLAYER_TITLES[p.ti].name : '');
         if (o.name !== shown) { o.name = shown; o.tag.setText(shown); this.pillFit(o.tag); }
@@ -19476,7 +19498,7 @@ window.WANDO_BUILD = '1794046975';
         const hop = REDUCED ? 0 : moving ? Math.abs(Math.sin(time * 0.014)) * 3 : ['dance', 'party', 'disco', 'floss'].includes(p.em) ? Math.abs(Math.sin(time * 0.013)) * 8 : p.em === 'jump' || p.em === 'superstar' ? Math.abs(Math.sin(time * 0.009)) * 22 : p.em === 'cheer' || p.em === 'robot' ? Math.abs(Math.sin(time * 0.012)) * 5 : p.em === 'breakdance' ? -10 : 0;
         o.img.setPosition(o.x, o.y - hop - (moving ? 0 : p.lift) + (p.em === 'sit' && !moving ? 6 : 0)).setDepth(o.y)
           .setAngle(REDUCED || moving ? 0 : p.em === 'wave' || p.em === 'cheer' ? Math.sin(time * 0.012) * 5 : p.em === 'party' || p.em === 'floss' || p.em === 'twist' ? Math.sin(time * 0.01) * 10 : p.em === 'robot' ? (Math.floor(time / 260) % 2 ? 6 : -6) : p.em === 'moonwalk' ? -8 : p.em === 'disco' ? (Math.floor(time / 420) % 2 ? -7 : 7) : 0)
-          .setScale((car ? (o.carFace || 1) : !REDUCED && (p.em === 'spin' || p.em === 'breakdance') && !moving ? Math.cos(time * (p.em === 'spin' ? 0.012 : 0.02)) || 0.01 : 1) / TEX, 1 / TEX);     // (a spin: the figure turns on the spot)
+          .setScale((car ? (o.carEnd ? 1 : o.carFace || 1) : !REDUCED && (p.em === 'spin' || p.em === 'breakdance') && !moving ? Math.cos(time * (p.em === 'spin' ? 0.012 : 0.02)) || 0.01 : 1) / TEX, 1 / TEX);     // (a spin: the figure turns on the spot)
         o.shadow.setPosition(o.x, o.y + 1).setVisible(!p.boat);
         this.pillMove(o.tag, o.x, o.y + 7);
         if (p.pet >= 0 && !p.boat) {                            // their pet, at their heels
@@ -24581,6 +24603,7 @@ window.WANDO_BUILD = '1794046975';
       homeShow(); petCheck(); paintDunHud(); paintMineHud();                                           // the Decorate button belongs to your house
       paintWater(null);                                     // the beach scene reports its own water state once it is running
       questHappened('visit', { loc });
+      if (SCENE_NOW && SCENE_NOW.loc === loc && SCENE_NOW.road) questHappened('road', { loc });   // came down a road
       music.setScene(BGM_FOR[loc]);                         // this place's loop (the booth's track and the concert stay in the Dance House)
       paintTravel(); paintState();
     };
@@ -24612,7 +24635,7 @@ window.WANDO_BUILD = '1794046975';
       const s = scene();
       if (!s || !s.pz) return null;
       return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
-        boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
+        boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
         kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
     }
     function netPush() {                                    // called ten times a second; only a change is sent
