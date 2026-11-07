@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794050457';
+window.WANDO_BUILD = '1794050529';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -3973,6 +3973,7 @@ window.WANDO_BUILD = '1794050457';
     if (Number.isInteger(v.wpd)) f.wpd = v.wpd;
     if (Number.isInteger(v.acn) && v.acn > 0) f.acn = Math.min(v.acn, 99999);
     if (Number.isInteger(v.acd)) f.acd = v.acd;
+    if (Number.isInteger(v.tx)) f.tx = clamp(v.tx, 0, 1e6);       // taxi fares driven, ever
     if (Number.isInteger(v.fp)) f.fp = v.fp;                    // the day you last had a plate at the Harvest Feast
     if (Number.isInteger(v.dw) && v.dw > 0) f.dw = Math.min(v.dw, 99999);       // Frostwood Derbies won
     // flowers and trash (see GATHER): your basket, golden flowers, flowers picked, patches regrowing, bouquet orders filled; trash in your bag, turned in, paid today
@@ -4038,7 +4039,9 @@ window.WANDO_BUILD = '1794050457';
     { id: 'helper', name: 'Holiday Helper', icon: '🎁', how: 'Deliver 30 presents in Winter Fest', got: G => (G.fan.wp || 0) >= 30 },
     { id: 'derby', name: 'Derby Champ', icon: '🏆', how: 'Win a Frostwood Derby at Frostwood Lake', got: G => (G.fan.dw || 0) >= 1 },
     { id: 'flowers', name: 'Flower Picker', icon: '🌸', how: 'Pick 300 flowers on the Village Green', got: G => (G.fan.gfn || 0) >= 300 },
-    { id: 'eco', name: 'Eco Hero', icon: '♻️', how: 'Put 200 pieces of trash in the recycling bins', got: G => (G.fan.gtn || 0) >= 200 }
+    { id: 'eco', name: 'Eco Hero', icon: '♻️', how: 'Put 200 pieces of trash in the recycling bins', got: G => (G.fan.gtn || 0) >= 200 },
+    { id: 'cabbie', name: 'Cabbie', icon: '🚕', how: 'Drive 25 taxi fares on the Village Green', got: G => (G.fan.tx || 0) >= 25 },
+    { id: 'garage', name: 'Car Collector', icon: '🚗', how: 'Own 5 cars', got: G => G.boards.filter(o => o.kind === 'car').length >= 5 }
   ];
   const titleIdx = id => Math.max(0, PLAYER_TITLES.findIndex(t => t.id === id));
   const titleGot = (G, t) => { try { return !!t.got && t.got(G); } catch (e) { return false; } };
@@ -18694,7 +18697,7 @@ window.WANDO_BUILD = '1794050457';
         this.noteUntil = 0; this.note('They hop in. "To ' + LOCS[T.to.door].name + ', please!" Follow the 📍.', '#ffe9a8'); return;
       }
       const wet = weatherNow() === 'rain', pay = Math.round((TAXI.base + Math.round(T.dist / 100) * TAXI.per) * (wet ? 1.5 : 1));   // (nobody wants to walk in the rain: wet fares tip more)
-      G.coins += pay; G.taxi[1]++; sfx.coin(); saveGame();
+      G.coins += pay; G.taxi[1]++; G.fan.tx = (G.fan.tx || 0) + 1; sfx.coin(); saveGame();
       this.taxiAt = time + 7000; this.taxiDrop(null); this.noteUntil = 0;
       this.note((wet ? '"Thanks for keeping me dry!" +' : '"Thanks for the lift!" +') + pay + ' Coins. ' + (G.taxi[1] >= TAXI.max ? 'That is all the fares for today.' : (TAXI.max - G.taxi[1]) + ' more fares today.'), '#ffe066');
       if (ui.onEvent) ui.onEvent('taxi', { pay });
