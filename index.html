@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794047556';
+window.WANDO_BUILD = '1794047710';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -5813,16 +5813,22 @@ window.WANDO_BUILD = '1794047556';
   // tiling floors and walls, whole-room backdrops, or what already had it (avatars, townsfolk, furniture).
   const TOON_SKIP = /^(grass|ground|shadow|pshadow|pond|glint|dust|ring|glow|fishshadow|bfly|avatar|npc_|furn_|ppl_|planks|floor|wall|room|sky|sea|water|wave|sand|snow|ice$|iceground|tile|carpet|rug_|wash|light|beam|spark|star_|stars|cloud|fog|rain|path|cobble|road|bg|backdrop|interior|shell_|fx|halo|ripple|splash|bubble|puff|confetti|petal|leaf|fallleaf|flake|tuft)/;
   const toonable = (key, w, h, scale) => TOON.on && scale === TEX && !TOON_SKIP.test(String(key)) && w * h <= 900 * 700;
+  // Props drawn in three-quarter view (see toonDepth): how deep each looks, in world units.
+  const PROP_DEPTH = { house_0: 16, house_1: 16, house_2: 16, house_3: 16, house_4: 16, shopcounter: 8, crate: 5, booth: 10, newsstand: 8, carlot: 10, iceshack: 12, harveststand: 8, table: 5, tackle: 10,
+    ticketbooth: 6, vending: 5, pastrycase: 6, oven: 5, minecounter: 6, tm_counter: 6, flowerbed: 4, planter: 4 };
   function bake(scene, key, w, h, draw, scale = TEX) {
     if (scene.textures.exists(key)) return scene.textures.get(key);     // textures outlive scenes: bake each one once
     const tex = scene.textures.createCanvas(key, Math.ceil(w * scale), Math.ceil(h * scale));
     const ctx = tex.getContext();
     const toon = toonable(key, w, h, scale);
+    const dep = toon && !window.__FLATFURN ? PROP_DEPTH[key] || 0 : 0, dk = dep ? Math.min((h - dep) / h, (w - dep * 0.8) / w) : 1;     // a prop drawn with depth: a little smaller, to leave room for it
     ctx.save(); ctx.scale(scale, scale);
+    if (dep) { ctx.translate(w / 2 - dep * 0.35, h); ctx.scale(dk, dk); ctx.translate(-w / 2, -h); }     // (about its foot, nudged left so the depth fits on the right)
     ctx.lineJoin = ctx.lineCap = 'round';
     if (toon) { TOON.inking++; ctx.__toon = true; }
     try { draw(ctx, w, h); } finally { if (toon) { TOON.inking--; ctx.__toon = false; } }
     ctx.restore();
+    if (dep) toonDepth(ctx.canvas, Math.round(dep * scale), scale);
     if (toon) toonPass(ctx.canvas, 0, 0, ctx.canvas.width, ctx.canvas.height, scale, { line: 1.15, shade: 0.8 });   // the Cazmo look: an ink outline and soft shading
     tex.refresh();
     return tex;
@@ -5892,6 +5898,28 @@ window.WANDO_BUILD = '1794047556';
   }
   // Draw fn on c as one toon-passed part: drawn alone on its own canvas, passed, then laid onto c. box: [x, y, w, h], the
   // part's extent in c's drawing units (so the spare canvas is only as big as the part); without it, all of c.
+  // Three-quarter depth for a finished drawing on canvas cv: the shape pushed back (up and to the right) by D pixels; the
+  // top it then shows is lit (the colour just under its top edge), the far side in shade (the colour just inside its right edge).
+  function toonDepth(cv, D, u) {
+    const w = cv.width, h = cv.height, pc = cv.getContext('2d'), copy = toonCanvas(w, h), cc = copy.getContext('2d');
+    if (!pc || !cc || typeof pc.getImageData !== 'function' || !(D > 0)) return;
+    cc.drawImage(cv, 0, 0); pc.save(); pc.setTransform(1, 0, 0, 1, 0, 0); pc.clearRect(0, 0, w, h);
+    for (let k = D; k >= 1; k--) pc.drawImage(copy, Math.round(k * 0.7), -k);
+    try {
+      const E = pc.getImageData(0, 0, w, h), O = cc.getImageData(0, 0, w, h), e = E.data, od = O.data, top = new Int32Array(w).fill(h), right = new Int32Array(h).fill(-1), ins = Math.max(2, Math.round(3.2 * u));
+      const solid = (x, y) => x >= 0 && y >= 0 && x < w && y < h && od[(y * w + x) * 4 + 3] > 128;
+      for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) if (solid(x, y)) { top[x] = y; break; }
+      for (let y = 0; y < h; y++) for (let x = w - 1; x >= 0; x--) if (solid(x, y)) { right[y] = x; break; }
+      const paint = (i, j, k) => { e[i] = Math.min(255, od[j] * k[0] + k[1]); e[i + 1] = Math.min(255, od[j + 1] * k[0] + k[1]); e[i + 2] = Math.min(255, od[j + 2] * k[0] + k[1]); };
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4; if (!e[i + 3] || od[i + 3] > 128) continue;
+        if (y < top[x]) { const sy = Math.min(h - 1, top[x] + ins); if (solid(x, sy)) paint(i, (sy * w + x) * 4, [1.06, 22]); }
+        else { let yy = y; while (yy < h && right[yy] < 0) yy++; if (yy < h) { const sx = Math.max(0, right[yy] - ins); if (solid(sx, yy)) paint(i, (yy * w + sx) * 4, [0.66, 0]); } }
+      }
+      pc.putImageData(E, 0, 0);
+    } catch (x) { /* (a canvas that cannot be read: the depth stays as drawn) */ }
+    pc.drawImage(copy, 0, 0); pc.restore();
+  }
   function toonPart(c, fn, o, box) {
     const cv = c && c.canvas; if (!TOON.on || !cv || !(cv.width > 0) || typeof c.getTransform !== 'function') { fn(c); return; }
     const T = c.getTransform(), u = Math.hypot(T.a, T.b), pad = Math.ceil(3 * u) + 2;
@@ -5908,28 +5936,7 @@ window.WANDO_BUILD = '1794047556';
     pc.globalAlpha = 1;
     TOON.inking = (TOON.inking || 0) + 1;
     try { fn(pc); } finally { TOON.inking--; }
-    if (o && o.extrude > 0) {                                  // three-quarter depth: the shape pushed back and up; the top it shows is lit, the far side in shade
-      const copy = toonCanvas(w, h), cc = copy.getContext('2d');
-      if (cc && typeof pc.getImageData === 'function') {
-        cc.drawImage(part, 0, 0); pc.setTransform(1, 0, 0, 1, 0, 0); pc.clearRect(0, 0, w, h);
-        const D = Math.round(o.extrude * u);
-        for (let k = D; k >= 1; k--) pc.drawImage(copy, Math.round(k * 0.7), -k);
-        try {
-          const E = pc.getImageData(0, 0, w, h), O = cc.getImageData(0, 0, w, h), e = E.data, od = O.data, top = new Int32Array(w).fill(h), right = new Int32Array(h).fill(-1), ins = Math.max(2, Math.round(3.2 * u));
-          const solid = (x, y) => x >= 0 && y >= 0 && x < w && y < h && od[(y * w + x) * 4 + 3] > 128;
-          for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) if (solid(x, y)) { top[x] = y; break; }
-          for (let y = 0; y < h; y++) for (let x = w - 1; x >= 0; x--) if (solid(x, y)) { right[y] = x; break; }
-          const paint = (i, j, k) => { e[i] = Math.min(255, od[j] * k[0] + k[1]); e[i + 1] = Math.min(255, od[j + 1] * k[0] + k[1]); e[i + 2] = Math.min(255, od[j + 2] * k[0] + k[1]); };
-          for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-            const i = (y * w + x) * 4; if (!e[i + 3] || od[i + 3] > 128) continue;
-            if (y < top[x]) { const sx = x, sy = Math.min(h - 1, top[x] + ins), j = (sy * w + sx) * 4; if (solid(sx, sy)) paint(i, j, [1.06, 22]); }          // the top: the colour just under the edge, lit
-            else { let yy = y; while (yy < h && right[yy] < 0) yy++; const sx = yy < h ? Math.max(0, right[yy] - ins) : x, j = (Math.min(yy, h - 1) * w + sx) * 4; if (yy < h && solid(sx, yy)) paint(i, j, [0.66, 0]); }   // the far side: the colour just inside the edge, in shade
-          }
-          pc.putImageData(E, 0, 0);
-        } catch (x) { /* (a canvas that cannot be read: the depth stays as drawn) */ }
-        pc.drawImage(copy, 0, 0);
-      }
-    }
+    if (o && o.extrude > 0) toonDepth(part, Math.round(o.extrude * u), u);
     toonPass(part, 0, 0, w, h, u, o);
     c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(part, x0, y0); c.restore();
   }
@@ -14574,7 +14581,7 @@ window.WANDO_BUILD = '1794047556';
     }
     house(x, y, v, name, door) {
       this.prop('house_' + v, x, y, 228 / 236, { shadow: [16, -6, 290, 80], solids: [[-84, -50, 52], [-28, -50, 52], [28, -50, 52], [84, -50, 52]], reserve: 170 });
-      const sign = this.tag(x, y - 106, name, y + 0.1, 12);   // written on the sign board over the door
+      const sign = this.tag(x - (window.__FLATFURN ? 0 : 6), y - (window.__FLATFURN ? 106 : 100), name, y + 0.1, 12);   // written on the sign board over the door (which sits a touch lower and left, the house being drawn in depth)
       [-92, 92].forEach(dx => this.prop('flowerbed', x + dx, y + 44, 58 / 64, { shadow: [5, -3, 156, 30], solids: [[-45, -14, 20], [0, -14, 20], [45, -14, 20]], reserve: 70 }));
       this.prop('barrel', x + 132, y - 4, 52 / 56, { shadow: [5, -3, 50, 20], solids: [[0, -12, 17]], reserve: 26 });
       this.prop('crate', x - 134, y - 2, 46 / 50, { shadow: [5, -3, 56, 20], solids: [[0, -14, 20]], reserve: 28 });
