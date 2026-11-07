@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794050529';
+window.WANDO_BUILD = '1794050983';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -18166,7 +18166,7 @@ window.WANDO_BUILD = '1794050529';
           return;
         }
         if (G.riding && G.board && G.board.kind === 'car' && !this.boating) {          // in a car, Space honks the horn
-          if (this.time.now - (this.hornAt || 0) > 400) { this.hornAt = this.time.now; sfx.horn(G.board.model || 0); this.honks = ((this.honks || 0) + 1) % 1000; }   // (the others hear it too: see netMine's hk)
+          if (this.time.now - (this.hornAt || 0) > 400) { this.hornAt = this.time.now; sfx.horn(G.board.model || 0); this.honkHi(); this.honks = ((this.honks || 0) + 1) % 1000; }   // (the others hear it too: see netMine's hk)
           return;
         }
         if (this.loc !== 'beach') return;
@@ -18701,6 +18701,15 @@ window.WANDO_BUILD = '1794050529';
       this.taxiAt = time + 7000; this.taxiDrop(null); this.noteUntil = 0;
       this.note((wet ? '"Thanks for keeping me dry!" +' : '"Thanks for the lift!" +') + pay + ' Coins. ' + (G.taxi[1] >= TAXI.max ? 'That is all the fares for today.' : (TAXI.max - G.taxi[1]) + ' more fares today.'), '#ffe066');
       if (ui.onEvent) ui.onEvent('taxi', { pay });
+    }
+
+    honkHi() {                                                // honk by the townsfolk and the nearest one calls back
+      if (!this.pz || !this.npcs.length || this.time.now < (this.honkHiAt || 0)) return;
+      const fy = this.pz.y + FOOT, n = this.npcs.map(n => [n, Math.hypot(n.x - this.pz.x, n.y - fy)]).filter(e => e[1] < 280).sort((a, b) => a[1] - b[1])[0];
+      if (!n) return; this.honkHiAt = this.time.now + 3500;
+      const lines = ['Beep beep!', 'Nice car!', 'Hey, watch it!', 'Vroom vroom!', 'Love the paint!', 'Give me a lift?', 'Honk honk!'].concat(shineOn() ? ['Ooh, so shiny!'] : []);
+      const b = this.makeBubble(lines[Math.floor(Math.random() * lines.length)]).setPosition(n[0].x, n[0].y - 92).setDepth(9550);
+      this.tweens.add({ targets: b, alpha: 0, delay: 1800, duration: 400, ease: 'Sine.in', onComplete: () => b.destroy() });
     }
 
     carShine(time) {                                          // a car fresh from the wash and wax twinkles as it goes
