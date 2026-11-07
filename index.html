@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794046753';
+window.WANDO_BUILD = '1794046975';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -4691,6 +4691,64 @@ window.WANDO_BUILD = '1794046753';
     ['head', 'face', 'hairFront', 'eyes', 'hat'].forEach(layer);
   }
   // A whole car with someone in it (L, a palette; or nobody), in a 130 x 150 cell with the ground at y 140, facing right.
+  // ── a car seen from the front (end 'nose': driving toward you) or from behind (end 'rear': driving away), in the same
+  //    120 x 72 cell as the side view (ground at y 68), centred on x 60. part 'back' is what is behind the driver (the
+  //    seat, a roll bar), 'front' the body in front of them. Each model keeps its look: the kart's open wheels, the buggy's
+  //    bubble, the jeep's roll bar and spare, the truck's hay, the convertible's fins, the roadster's chrome, the
+  //    speedster's spoiler, the monster truck's tyres and the hover car's glow. ──
+  const CAR_ENDS = [   // half width, body top, body bottom, wheel height, wheel width, windscreen height (0: none)
+    { hw: 22, top: 50, bot: 62, wh: 18, ww: 12, ws: 0, track: 32 }, { hw: 34, top: 40, bot: 62, wh: 16, ww: 11, ws: 0 }, { hw: 40, top: 38, bot: 60, wh: 22, ww: 14, ws: 20 },
+    { hw: 42, top: 34, bot: 60, wh: 20, ww: 13, ws: 22 }, { hw: 42, top: 42, bot: 62, wh: 16, ww: 12, ws: 12 }, { hw: 36, top: 40, bot: 62, wh: 18, ww: 10, ws: 14 },
+    { hw: 46, top: 46, bot: 62, wh: 16, ww: 14, ws: 10 }, { hw: 44, top: 18, bot: 40, wh: 42, ww: 22, ws: 16, track: 46 }, { hw: 40, top: 40, bot: 60, wh: 0, ww: 0, ws: 16 }];
+  function drawCarEnd(c, b, end, part) {
+    CAR_LIV = b.liv || null;
+    const m = b.model || 0, E = CAR_ENDS[m] || CAR_ENDS[0], col = b.deck, dark = mix(col, '#1a1030', 0.4), lite = mix(col, '#ffffff', 0.45), X = 60, nose = end === 'nose';
+    const back = part !== 'front', front = part !== 'back', hw = E.hw, top = E.top, bot = E.bot;
+    c.lineJoin = c.lineCap = 'round';
+    if (back) {                                                // behind the driver
+      if (nose) inked(c, '#3a3446', CAR_INK, 1.2, k => rr(k, X - 14, top - 26 - (m === 7 ? 2 : 0), 28, 26, 7));     // the seat's back
+      if (m === 2 && nose) { c.strokeStyle = '#3a3446'; c.lineWidth = 5; c.beginPath(); c.moveTo(X - hw + 6, top); c.lineTo(X - hw + 8, top - 30); c.lineTo(X + hw - 8, top - 30); c.lineTo(X + hw - 6, top); c.stroke(); }
+      if (m === 6 && nose) { inked(c, '#1d1a2e', CAR_INK, 1.2, k => rr(k, X - hw - 2, top - 22, hw * 2 + 4, 6, 3)); }
+      if (!front) return;
+    }
+    // the wheels (or the hover car's glow), at the two sides
+    if (m === 8) { c.fillStyle = b.glow || '#5ef2ff'; c.globalAlpha = 0.5; oval(c, X, 66, hw + 6, 5); c.globalAlpha = 1; }
+    else { const tx = E.track || hw - E.ww / 2 + 2; [-1, 1].forEach(s => { inked(c, '#2a2833', CAR_INK, 1.4, k => rr(k, X + s * tx - E.ww / 2, 68 - E.wh, E.ww, E.wh, Math.min(5, E.ww / 2))); c.fillStyle = 'rgba(255,255,255,.18)'; c.fillRect(X + s * tx - E.ww / 2 + 2, 68 - E.wh + 3, 2.5, E.wh - 6); }); }
+    if (m === 7) { [-1, 1].forEach(s => { c.strokeStyle = '#8f96a8'; c.lineWidth = 4; c.beginPath(); c.moveTo(X + s * 14, bot + 2); c.lineTo(X + s * (E.track - 8), 56); c.stroke(); }); }   // the monster truck's struts
+    if (m === 0) { c.strokeStyle = '#8f96a8'; c.lineWidth = 3; c.beginPath(); c.moveTo(X - E.track, 58); c.lineTo(X + E.track, 58); c.stroke(); }                            // the kart's axle
+    // the body
+    const body = k => {
+      if (m === 1) { k.ellipse(X, (top + bot) / 2 + 2, hw, (bot - top) / 2 + 4, 0, 0, TAU); }
+      else if (m === 8) { k.moveTo(X - hw, bot - 4); k.quadraticCurveTo(X - hw, top, X, top); k.quadraticCurveTo(X + hw, top, X + hw, bot - 4); k.quadraticCurveTo(X, bot + 4, X - hw, bot - 4); k.closePath(); }
+      else rr(k, X - hw, top, hw * 2, bot - top, m === 0 ? 6 : m === 6 ? 8 : 6);
+    };
+    if (E.ws) {                                                // the windscreen (or the back window), above the body
+      const ww = hw - (m === 3 ? 6 : 10), wt = top - E.ws;
+      if (m === 1 || m === 8) carGlass(c, k => k.ellipse(X, top + 2, hw - 6, E.ws + 6, 0, Math.PI, TAU));
+      else if (m === 3) { inked(c, col, CAR_INK, 1.4, k => rr(k, X - ww - 3, wt - 3, ww * 2 + 6, E.ws + 6, 5)); carGlass(c, k => rr(k, X - ww + 3, wt + 2, ww * 2 - 6, E.ws - 3, 3)); }
+      else carGlass(c, k => { k.moveTo(X - ww, top); k.lineTo(X - ww + 6, wt); k.lineTo(X + ww - 6, wt); k.lineTo(X + ww, top); k.closePath(); });
+    }
+    if (m === 1 && !E.ws) carGlass(c, k => k.ellipse(X, top + 2, hw - 8, 22, 0, Math.PI, TAU));                                   // the buggy's bubble
+    carPanel(c, col, top, bot, body);
+    if (m === 4 && !nose) [-1, 1].forEach(s => inked(c, col, CAR_INK, 1.2, k => { k.moveTo(X + s * (hw - 2), top + 2); k.lineTo(X + s * (hw + 1), top - 12); k.lineTo(X + s * (hw - 10), top + 2); k.closePath(); }));   // tail fins
+    if (m === 6 && !nose) { [-1, 1].forEach(s => { c.strokeStyle = '#1d1a2e'; c.lineWidth = 3; c.beginPath(); c.moveTo(X + s * (hw - 10), top); c.lineTo(X + s * (hw - 10), top - 12); c.stroke(); }); inked(c, '#1d1a2e', CAR_INK, 1.2, k => rr(k, X - hw - 2, top - 16, hw * 2 + 4, 6, 3)); }   // the spoiler
+    if (m === 2 && !nose) { c.strokeStyle = '#3a3446'; c.lineWidth = 5; c.beginPath(); c.moveTo(X - hw + 6, top); c.lineTo(X - hw + 8, top - 30); c.lineTo(X + hw - 8, top - 30); c.lineTo(X + hw - 6, top); c.stroke();
+      inked(c, '#2a2833', CAR_INK, 1.4, k => k.arc(X, (top + bot) / 2, 10, 0, TAU)); c.fillStyle = '#8f96a8'; disc(c, X, (top + bot) / 2, 4); }   // roll bar and the spare
+    if (m === 3 && !nose) { inked(c, '#e0b850', '#8a6a20', 1.2, k => rr(k, X - 18, top - 14, 36, 16, 3)); c.strokeStyle = '#b08a30'; c.lineWidth = 1; [X - 8, X + 8].forEach(x => { c.beginPath(); c.moveTo(x, top - 13); c.lineTo(x, top + 1); c.stroke(); }); }   // a hay bale in the back
+    const ly = top + (bot - top) * 0.38, lx = hw * (m === 5 ? 0.6 : 0.66), lr = m === 5 ? 5 : m === 0 ? 3 : 4;
+    if (nose) {
+      if (m !== 0 && m !== 8) inked(c, dark, CAR_INK, 1.1, k => rr(k, X - hw * 0.34, ly - 3, hw * 0.68, (bot - top) * 0.36, 3));                           // the grille
+      if (m === 5) { c.strokeStyle = '#e8ecf4'; c.lineWidth = 1.4; for (let x = X - hw * 0.28; x <= X + hw * 0.28; x += 4) { c.beginPath(); c.moveTo(x, ly - 1); c.lineTo(x, ly + (bot - top) * 0.3); c.stroke(); } }
+      [-1, 1].forEach(s => carLamp(c, X + s * lx, ly, lr, b.glow && m === 8 ? b.glow : '#fff3b0'));
+      if (m === 0) { inked(c, '#f4f2ea', CAR_INK, 1, k => k.arc(X, top + 6, 5, 0, TAU)); c.fillStyle = CAR_INK; c.font = '900 7px sans-serif'; c.textAlign = 'center'; c.fillText('7', X, top + 8.5); c.textAlign = 'left'; }
+    } else {
+      [-1, 1].forEach(s => { inked(c, '#ff3d5a', CAR_INK, 1.1, k => rr(k, X + s * lx - 5, ly - 3, 10, 6, 2)); c.fillStyle = 'rgba(255,255,255,.5)'; c.fillRect(X + s * lx - 3, ly - 2, 3, 1.6); });   // tail lights
+      if (m !== 8 && m !== 0) { inked(c, '#f4f2ea', CAR_INK, 1, k => rr(k, X - 11, bot - 11, 22, 8, 2)); c.fillStyle = CAR_INK; c.font = '800 5.5px sans-serif'; c.textAlign = 'center'; c.fillText('WANDO', X, bot - 5); c.textAlign = 'left'; }
+      if (m !== 8) inked(c, '#8f96a8', CAR_INK, 1, k => rr(k, X + hw * 0.4, bot - 2, 7, 4, 2));                                                                   // the exhaust
+    }
+    if (m !== 0 && m !== 8 && m !== 1) inked(c, '#c8ccd8', CAR_INK, 1.2, k => rr(k, X - hw - 1, bot - 4, hw * 2 + 2, 6, 3));                                 // the bumper
+    CAR_LIV = null;
+  }
   function drawCarTile(cv, b) {                               // a car on its own, filling a square: the catalog's picture
     const c = cv.getContext('2d'); if (!c) return;
     const w = cv.width, h = cv.height, col = b.r != null ? RARITIES[b.r][1] : '#ffe9a8';
@@ -19811,6 +19869,8 @@ window.WANDO_BUILD = '1794046753';
         this.boardId = sel.id;
         if (sel.kind === 'car') {
           bake(this, 'carB_' + sel.id, 120, 72, c => drawCar(c, sel, 'back')); bake(this, 'carF_' + sel.id, 120, 72, c => drawCar(c, sel, 'front'));
+          ['nose', 'rear'].forEach(e => { bake(this, 'carB_' + sel.id + '_' + e, 120, 72, c => drawCarEnd(c, sel, e, 'back')); bake(this, 'carF_' + sel.id + '_' + e, 120, 72, c => drawCarEnd(c, sel, e, 'front')); });   // seen from the front and from behind
+          this.carEndNow = '';
           this.carBack.setTexture('carB_' + sel.id).setOrigin(0.5, 68 / 72).setScale(1 / TEX); this.carFront.setTexture('carF_' + sel.id).setOrigin(0.5, 68 / 72).setScale(1 / TEX);
         }
         bakeBoard(this, sel);
@@ -19829,9 +19889,11 @@ window.WANDO_BUILD = '1794046753';
       if (driving) {                                           // a car: you sit in it, it rolls with a little bounce, puffs exhaust, and a hover car floats
         const M = CAR_MODELS[sel.model], face = this.flip < 0 ? -1 : 1, bump = lively * this.moveAmt * Math.abs(Math.sin(time * 0.02)) * 1.4, float = M.hover ? -8 + lively * Math.sin(time * 0.005) * 2.5 : 0;
         this.rig.y += -(M.seat + 0) * this.rideAmt - bump + float;
-        [this.carBack, this.carFront].forEach(im => { im.setFlipX(face < 0); im.x = 8 * face; im.y = -bump * 0.6 + float; im.rotation = lively * this.moveAmt * Math.sin(time * 0.017) * 0.012; });
+        const end = this.view === 'back' ? 'rear' : this.view === 'front' ? 'nose' : '';      // driving away from you, toward you, or across
+        if (end !== this.carEndNow) { this.carEndNow = end; const sfx2 = end ? '_' + end : ''; this.carBack.setTexture('carB_' + sel.id + sfx2); this.carFront.setTexture('carF_' + sel.id + sfx2); }
+        [this.carBack, this.carFront].forEach(im => { im.setFlipX(!end && face < 0); im.x = end ? 0 : 8 * face; im.y = -bump * 0.6 + float; im.rotation = lively * this.moveAmt * Math.sin(time * 0.017) * 0.012; });
         if (M.hover) { const pulse = lively * (0.5 + 0.5 * Math.sin(time * 0.011)); this.boardGlow.setAlpha(0.45 + pulse * 0.2).setDisplaySize(120 + pulse * 10, 26).setTint(0x5ef2ff); this.boardGlow.y = 4; }
-        if (lively && this.moveAmt > 0.3 && time > this.jetAt) { this.jetAt = time + 110; this.dust.emitParticleAt(this.pz.x - face * 58, this.pz.y + FOOT - (M.hover ? 14 : 8), 1); }
+        if (lively && this.moveAmt > 0.3 && time > this.jetAt) { this.jetAt = time + 110; this.dust.emitParticleAt(this.pz.x - (end ? 0 : face * 58), this.pz.y + FOOT - (M.hover ? 14 : 8) + (end === 'nose' ? -6 : 0), 1); }
       } else if (riding) {
         const bank = clamp(realVx / top, -1, 1) * this.moveAmt;
         if (skating) {
