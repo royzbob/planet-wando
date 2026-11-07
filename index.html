@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794081695';
+<script>window.WANDO_BUILD = '1794087713';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -3258,7 +3258,7 @@
       <div id="tray-tabs" class="seg" role="group" aria-label="What to place"></div>
       <p id="tray-note" class="tray-note" role="status"></p>
       <div class="tray-acts">
-        <button id="tray-grid" class="btn" type="button" aria-pressed="true">Grid</button>
+        <button id="tray-grid" class="btn" type="button" aria-pressed="true" title="G turns the grid on or off. Hold Shift to put something down off the grid.">Grid</button>
         <button id="tray-turn" class="btn" type="button" hidden>Turn</button>
         <button id="tray-flip" class="btn" type="button" hidden>Flip</button>
         <button id="tray-store" class="btn" type="button" hidden>Put away</button>
@@ -15543,29 +15543,32 @@
         const edge = Math.min(d && d.height ? d.top : A.bottom, hub && hub.height ? hub.top : A.bottom);
         return { bottom: Math.max(0, A.bottom - edge), top: cb && cb.height ? Math.max(0, cb.bottom - A.top) : 0 };
     }
-    const HOME_GRID = { step: 30, on: (() => { try {
+    const HOME_GRID = { step: 30, rowH: 15, free: false, on: (() => { try {
             return localStorage.getItem('meadowmere-grid') !== '0';
         }
         catch (e) {
             return true;
         } })() };
-    function homeSpot(d, x, y, r, doors, snap) {
+    function homeSpot(d, x, y, r, doors, snap, span) {
         const F = d.build ? HOME.EDGE : HOME.FLOOR, half = furnW(d, r || 0) / 2;
-        if (snap && d.kind !== 'wall') {
-            const S = HOME_GRID.step, F0 = HOME.FLOOR, w = furnSlant(d, r) ? 0 : furnW(d, r || 0);
-            x = F0.x + Math.round((x - w / 2 - F0.x) / S) * S + w / 2;
-            y = F0.y + Math.round((y - F0.y) / S) * S;
-        }
         if (d.kind === 'wall')
             return { x: clamp(Math.round(x), 44 + half, HOME.W - 44 - half), y: clamp(Math.round(y), d.h + 6, 148), ok: true };
         const top = (d.kind === 'rug' ? F.y + d.h / 2 - 20 : d.build ? F.y : F.y + 6) + (furnSlant(d, r) ? Math.round(d.w * WALL_SIDE.SB) : 0), bottom = d.kind === 'rug' ? F.y + F.h - d.h / 2 : F.y + F.h;
-        const px = clamp(Math.round(x), F.x + half, F.x + F.w - half), py = clamp(Math.round(y), top, bottom);
+        let px = clamp(Math.round(x), F.x + half, F.x + F.w - half), py = clamp(Math.round(y), top, bottom);
+        if (snap) {
+            const S = HOME_GRID.step, RH = HOME_GRID.rowH, F0 = HOME.FLOOR, L0 = furnSlant(d, r) ? 0 : span ? span[0] : -furnW(d, r || 0) / 2;
+            const gx = v => F0.x + v * S, gy = v => F0.y + v * RH;
+            const lo = Math.ceil((F.x + half + L0 - F0.x) / S - 1e-6), hi = Math.floor((F.x + F.w - half + L0 - F0.x) / S + 1e-6);
+            px = gx(clamp(Math.round((x + L0 - F0.x) / S), lo, Math.max(lo, hi))) - L0;
+            const tlo = Math.ceil((top - F0.y) / RH - 1e-6), thi = Math.floor((bottom - F0.y) / RH + 1e-6);
+            py = gy(clamp(Math.round((y - F0.y) / RH), tlo, Math.max(tlo, thi)));
+        }
         const front = py > HOME.H - 150 && Math.abs(px - HOME.W / 2) < 70 + half;
         const L = !doors || doors[0], R = !doors || doors[1], E = HOME.FLOOR;
         const sides = py > HOME.DOOR_Y - 40 && py < HOME.DOOR_Y + 76 && ((L && px - half < E.x + 64) || (R && px + half > E.x + E.w - 64));
         return { x: px, y: py, ok: d.kind !== 'floor' || !(front || sides) };
     }
-    function homeFootprint(d, x, y, r, open) {
+    function homeFootprint(d, x, y, r, open, span) {
         const S = HOME_GRID.step, F = HOME.FLOOR, z = furnSolids(d, r, open);
         let a, b, c, e;
         if (z.length) {
@@ -15587,8 +15590,13 @@
             return [x - half, y - back, x + half, y];
         }
         e = 0;
-        const sn = (v, up) => F.x + (up ? Math.ceil : Math.floor)((v - F.x) / S - (up ? 0.01 : -0.01)) * S, sy = (v, up) => F.y + (up ? Math.ceil : Math.floor)((v - F.y) / S - (up ? 0.01 : -0.01)) * S;
-        return [sn(x + a, false), sy(y + b, false), sn(x + c, true), Math.max(sy(y + e, true), sy(y + b, false) + S)];
+        if (d.kind !== 'rug') {
+            const w = furnW(d, r || 0);
+            a = span ? span[0] : -w / 2;
+            c = span ? span[1] : w / 2;
+        }
+        const RH = HOME_GRID.rowH, sn = (v, up) => F.x + (up ? Math.ceil : Math.floor)((v - F.x) / S - (up ? 0.01 : -0.01)) * S, sy = (v, up) => F.y + (up ? Math.ceil : Math.floor)((v - F.y) / RH - (up ? 0.01 : -0.01)) * RH;
+        return [sn(x + a, false), sy(y + b, false), Math.max(sn(x + c, true), sn(x + a, false) + S), Math.max(sy(y + e, true), sy(y + b, false) + RH)];
     }
     function cleanHome(h) {
         const out = { owned: false, walls: [0], floors: [0], inv: {}, rooms: [{ wall: 0, floor: 0, items: [] }] };
@@ -29770,6 +29778,40 @@
             return; if (!on)
             this.homeDrop(false); E.on = !!on && this.homeMine; if (E.on)
             this.homeStand(true); this.homeGridShow(); }
+        homeSpan(d, c, r, f) {
+            if (d.kind !== 'floor' || furnSlant(d, r))
+                return null;
+            const key = bakeFurn(this, d, c, r), flip = (f ? -1 : 1) * (r === 3 ? -1 : 1);
+            this.spans = this.spans || {};
+            let sp = this.spans[key];
+            if (sp === undefined) {
+                sp = null;
+                try {
+                    const cv = this.textures.get(key).getSourceImage(), W = cv.width | 0, H = cv.height | 0, k = cv.getContext && cv.getContext('2d');
+                    if (k && W > 4 && H > 4) {
+                        const y0 = Math.floor(H * 0.72), px = k.getImageData(0, y0, W, H - y0).data;
+                        let lo = W, hi = -1;
+                        for (let i = 3, n = 0; i < px.length; i += 4, n++)
+                            if (px[i] > 140) {
+                                const x = n % W;
+                                if (x < lo)
+                                    lo = x;
+                                if (x > hi)
+                                    hi = x;
+                            }
+                        if (hi > lo) {
+                            const u = W / d.w;
+                            sp = [lo / u - d.w / 2, (hi + 1) / u - d.w / 2];
+                        }
+                    }
+                }
+                catch (e) {
+                    sp = null;
+                }
+                this.spans[key] = sp;
+            }
+            return sp && flip < 0 ? [-sp[1], -sp[0]] : sp;
+        }
         homeGridShow() {
             const want = !!(this.homeEdit && this.homeEdit.on && HOME_GRID.on);
             if (want && !this.homeGridG) {
@@ -29782,7 +29824,7 @@
                 };
                 for (let x = F.x, i = 0; x <= F.x + F.w; x += S, i++)
                     line(x, F.y, x, F.y + F.h, i % 4 === 0);
-                for (let y = F.y, i = 0; y <= F.y + F.h; y += S, i++)
+                for (let y = F.y, i = 0; y <= F.y + F.h; y += HOME_GRID.rowH, i++)
                     line(F.x, y, F.x + F.w, y, i % 4 === 0);
                 this.homeGridG = g;
             }
@@ -29837,9 +29879,9 @@
         homeUpdate() {
             const E = this.homeEdit;
             if (E.held && E.ghost) {
-                const p = this.input.activePointer, wp = this.cameras.main.getWorldPoint(p.x, p.y), s = homeSpot(E.held.d, wp.x, wp.y, E.held.it.r, this.homeSides(), HOME_GRID.on);
+                const p = this.input.activePointer, wp = this.cameras.main.getWorldPoint(p.x, p.y), sp = this.homeSpan(E.held.d, E.held.it.c, E.held.it.r || 0, E.held.it.f), s = homeSpot(E.held.d, wp.x, wp.y, E.held.it.r, this.homeSides(), HOME_GRID.on && !HOME_GRID.free, sp);
                 E.ghost.setPosition(s.x, s.y).setTint(s.ok ? 0xffffff : 0xff7070);
-                const fp = homeFootprint(E.held.d, s.x, s.y, E.held.it.r || 0);
+                const fp = homeFootprint(E.held.d, s.x, s.y, E.held.it.r || 0, 0, sp);
                 if (!this.homeFoot)
                     this.homeFoot = this.add.graphics().setDepth(-854);
                 const g = this.homeFoot, key = fp ? fp.join(',') + (s.ok ? 'y' : 'n') : '';
@@ -29855,7 +29897,7 @@
                         g.lineStyle(1, col, 0.45);
                         for (let x = fp[0] + S; x < fp[2]; x += S)
                             g.lineBetween(x, fp[1], x, fp[3]);
-                        for (let y = fp[1] + S; y < fp[3]; y += S)
+                        for (let y = fp[1] + HOME_GRID.rowH; y < fp[3]; y += HOME_GRID.rowH)
                             g.lineBetween(fp[0], y, fp[2], y);
                     }
                 }
@@ -29877,7 +29919,7 @@
         homeClick(x, y) {
             const E = this.homeEdit, Hm = G.home, items = this.homeRoom().items;
             if (E.held) {
-                const h = E.held, r = h.it.r || 0, s = homeSpot(h.d, x, y, r, this.homeSides(), HOME_GRID.on), fx = this.pz.x, fy = this.pz.y + FOOT;
+                const h = E.held, r = h.it.r || 0, s = homeSpot(h.d, x, y, r, this.homeSides(), HOME_GRID.on && !HOME_GRID.free, this.homeSpan(h.d, h.it.c, r, h.it.f)), fx = this.pz.x, fy = this.pz.y + FOOT;
                 const onYou = h.d.kind === 'floor' && furnSolids(h.d, r).some(([dx, dy, rad]) => Math.hypot(s.x + dx - fx, s.y + dy - fy) < rad + 16);
                 if (!s.ok || onYou) {
                     this.note(onYou ? 'Step aside first: that would land on you.' : 'Keep the doorways clear.', '#ffe066');
@@ -31640,6 +31682,7 @@
             this.taxiAt = 0;
             this.taxiTag = this.taxiGlow = this.taxiRider = null;
             this.homeGridG = null;
+            this.spans = null;
             this.homeFoot = null;
             this.homeFootKey = '';
             this.beams = null;
@@ -38691,7 +38734,7 @@
                 : hm.tab === 'rooms' ? hm.note || 'Your ' + HOME.SIZES[Hm.rooms.length - 1].toLowerCase() + ' has ' + Hm.rooms.length + (Hm.rooms.length > 1 ? ' rooms' : ' room') + '. Click a room to go there, or walk through the doors in the side walls. '
                     + (more ? 'Another room costs ' + HOME.ROOMS[Hm.rooms.length] + ' Coins and makes it a ' + HOME.SIZES[Hm.rooms.length].toLowerCase() + '.' : 'A manor is as big as a house gets.')
                     : hm.tab === 'build' ? (hm.ask ? 'What colour should the ' + FURN_BY[hm.ask].name.toLowerCase() + ' be?' : 'Walls and doors are free! Pick one, pick a colour, click to place.')
-                        : hm.tab !== 'furn' ? 'Click one to place it.'
+                        : hm.tab !== 'furn' ? 'Click one to place it. Hold Shift to place it off the grid.'
                             : (hm.list.length ? 'Click a piece below, then click in the room. ' : 'Nothing in storage! Get furniture at Homestead. ') + 'Click a piece in the room to move it. ' + R.items.length + ' of ' + HOME.MAX + ' placed in this room.';
         }
         function homeEdit(on) {
@@ -38825,6 +38868,9 @@
             saveGame();
         } if (e.detail > 0)
             trayStore.blur(); });
+        const shiftWatch = e => { HOME_GRID.free = !!e.shiftKey; };
+        ['keydown', 'keyup', 'pointermove', 'pointerdown'].forEach(t => window.addEventListener(t, shiftWatch, true));
+        window.addEventListener('blur', () => { HOME_GRID.free = false; });
         window.addEventListener('keydown', e => {
             if (!hm.edit || isTyping() || e.ctrlKey || e.metaKey || e.altKey)
                 return;
