@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794047337';
+window.WANDO_BUILD = '1794047556';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -5908,6 +5908,28 @@ window.WANDO_BUILD = '1794047337';
     pc.globalAlpha = 1;
     TOON.inking = (TOON.inking || 0) + 1;
     try { fn(pc); } finally { TOON.inking--; }
+    if (o && o.extrude > 0) {                                  // three-quarter depth: the shape pushed back and up; the top it shows is lit, the far side in shade
+      const copy = toonCanvas(w, h), cc = copy.getContext('2d');
+      if (cc && typeof pc.getImageData === 'function') {
+        cc.drawImage(part, 0, 0); pc.setTransform(1, 0, 0, 1, 0, 0); pc.clearRect(0, 0, w, h);
+        const D = Math.round(o.extrude * u);
+        for (let k = D; k >= 1; k--) pc.drawImage(copy, Math.round(k * 0.7), -k);
+        try {
+          const E = pc.getImageData(0, 0, w, h), O = cc.getImageData(0, 0, w, h), e = E.data, od = O.data, top = new Int32Array(w).fill(h), right = new Int32Array(h).fill(-1), ins = Math.max(2, Math.round(3.2 * u));
+          const solid = (x, y) => x >= 0 && y >= 0 && x < w && y < h && od[(y * w + x) * 4 + 3] > 128;
+          for (let x = 0; x < w; x++) for (let y = 0; y < h; y++) if (solid(x, y)) { top[x] = y; break; }
+          for (let y = 0; y < h; y++) for (let x = w - 1; x >= 0; x--) if (solid(x, y)) { right[y] = x; break; }
+          const paint = (i, j, k) => { e[i] = Math.min(255, od[j] * k[0] + k[1]); e[i + 1] = Math.min(255, od[j + 1] * k[0] + k[1]); e[i + 2] = Math.min(255, od[j + 2] * k[0] + k[1]); };
+          for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+            const i = (y * w + x) * 4; if (!e[i + 3] || od[i + 3] > 128) continue;
+            if (y < top[x]) { const sx = x, sy = Math.min(h - 1, top[x] + ins), j = (sy * w + sx) * 4; if (solid(sx, sy)) paint(i, j, [1.06, 22]); }          // the top: the colour just under the edge, lit
+            else { let yy = y; while (yy < h && right[yy] < 0) yy++; const sx = yy < h ? Math.max(0, right[yy] - ins) : x, j = (Math.min(yy, h - 1) * w + sx) * 4; if (yy < h && solid(sx, yy)) paint(i, j, [0.66, 0]); }   // the far side: the colour just inside the edge, in shade
+          }
+          pc.putImageData(E, 0, 0);
+        } catch (x) { /* (a canvas that cannot be read: the depth stays as drawn) */ }
+        pc.drawImage(copy, 0, 0);
+      }
+    }
     toonPass(part, 0, 0, w, h, u, o);
     c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(part, x0, y0); c.restore();
   }
@@ -8967,8 +8989,12 @@ window.WANDO_BUILD = '1794047337';
     const w = FURN_WOODS[d.pal === 'wood' ? ci : 0] || FURN_WOODS[0], f = (FURN_FABRICS[d.pal === 'fabric' ? ci : 0] || FURN_FABRICS[0])[1];
     return { a: w[1], b: w[2], c: w[3], f, fd: darken(f, 0.24), fl: lighten(f, 0.38) };
   }
+  // How deep a piece looks (the three-quarter view): boxy things get depth; round things, plants and thin things do not.
+  const FURN_FLAT = new Set(['lamp', 'plant', 'cactus', 'tree', 'vase', 'globe', 'trophy', 'easel', 'guitar', 'teddy', 'hammock', 'lavalamp', 'shroomlamp', 'candles', 'fan', 'discolight', 'bonsai', 'sunflowers', 'palm', 'fern', 'glowshroom',
+    'coatrack', 'towelrack', 'alienplush', 'planetlamp', 'rocketlamp', 'telescope', 'crystal', 'xmastree', 'snowman', 'pumpkin', 'skeleton', 'eggchair', 'gamerchair', 'deskchair', 'barstool', 'stool', 'hoop', 'cattree', 'fishbowl', 'robot', 'rockhorse', 'pouf', 'beanbag', 'cushions', 'petbed', 'gifts', 'rocker', 'chair', 'porchswing', 'speaker', 'cooler', 'bin', 'toilet', 'basin', 'dollhouse']);
+  const furnDepth = d => (window.__FLATFURN || d.kind !== 'floor' || d.build || FURN_FLAT.has(d.id) || d.id.startsWith('mount-') || d.prize ? 0 : clamp(Math.round(d.w * 0.08), 4, 9));
   function drawFurn(c, d, ci, open) {
-    if (TOON.on && !c.__toon) { toonPart(c, k => { k.__toon = true; drawFurn(k, d, ci, open); }, d.kind === 'rug' ? { shade: 0.5, line: 0.9 } : { line: 1.1 }, [-4, -4, d.w + 8, d.h + 8]); return; }   // the Cazmo look: ink outline, soft shading
+    if (TOON.on && !c.__toon) { const ex = furnDepth(d); toonPart(c, k => { k.__toon = true; drawFurn(k, d, ci, open); }, d.kind === 'rug' ? { shade: 0.5, line: 0.9 } : { line: 1.1, extrude: ex }, [-4, -4 - ex, d.w + 8 + ex, d.h + 8 + ex]); return; }   // the Cazmo look: ink outline, soft shading
     const cd = ci >= 100 ? furnCollOf(ci) : null;
     c.save(); c.lineJoin = c.lineCap = 'round';
     if (cd && cd.flair === 3) { c.shadowColor = COLORWAYS[cd.cw][4]; c.shadowBlur = 8; }     // a glowing finish
@@ -9008,14 +9034,15 @@ window.WANDO_BUILD = '1794047337';
   }
   function bakeFurn(scene, d, ci, r, open) {                          // the texture for a piece turned r (the two sides share one, mirrored)
     const v = !r || !furnTurns(d) ? 0 : r === 2 ? 2 : 1, o = open && d.opens ? 1 : 0, key = 'furn_' + d.id + '_' + ci + '_' + v + (o ? '_o' : '');
-    bake(scene, key, d.w, d.h, c => { c.translate(d.w / 2, d.h - 1.5); c.scale(0.93, 0.93); c.translate(-d.w / 2, -d.h); drawFurnView(c, d, ci, v, o); });     // (a hair smaller, about its foot, so the outline at the sides is not cut off)
+    const ex = furnDepth(d), k = ex ? Math.min(0.93, (d.h - 2) / (d.h + ex), d.w / (d.w + 1.5 * ex)) : 0.93;     // (room for the depth above and to the right)
+    bake(scene, key, d.w, d.h, c => { c.translate(d.w / 2, d.h - 1.5); c.scale(k, k); c.translate(-d.w / 2, -d.h); drawFurnView(c, d, ci, v, o); });     // (a hair smaller, about its foot, so the outline at the sides is not cut off)
     return key;
   }
   // A piece on a plain canvas, as big as fits: the tiles of the store and of the decorating tray.
   function drawFurnTile(cv, d, ci) {
-    const c = cv.getContext('2d'), k = Math.min((cv.width - 12) / d.w, (cv.height - 12) / d.h);
+    const ex = furnDepth(d), W2 = d.w + ex * 0.7, H2 = d.h + ex, c = cv.getContext('2d'), k = Math.min((cv.width - 12) / W2, (cv.height - 12) / H2);
     c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, cv.width, cv.height);
-    c.setTransform(k, 0, 0, k, (cv.width - d.w * k) / 2, (cv.height - d.h * k) / 2);
+    c.setTransform(k, 0, 0, k, (cv.width - W2 * k) / 2, (cv.height - H2 * k) / 2 + ex * k);
     drawFurn(c, d, ci);
   }
   // Where a piece blocks the floor: circles ([dx, dy, r], from its front-centre). Rugs and wall pieces block nothing.
