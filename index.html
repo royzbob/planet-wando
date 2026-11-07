@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794048123';
+window.WANDO_BUILD = '1794048400';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -26360,7 +26360,10 @@ window.WANDO_BUILD = '1794048123';
       if (which === 'home') return;
       const wk = armoryWeek(), Dg = dailyDelve(dayNumber()), n = armory().list.length + ['o', 'b', 'f'].reduce((a, k) => a + collCat(k).list.length, 0);
       const page = {
-        news: ['What\'s new', [...(ONLINE_OWN() ? ['<b>Open beta:</b> servers (Wando Main, Starfall, Moonbeam), email sign-in to keep your player, and the game updates itself.',
+        news: ['What\'s new', ['<b>Wando Motors:</b> walk into the showroom on the Village Green. Six one-of-a-kind collector cars every Monday, each with its own serial number, sold that week only. Park your car anywhere and start it with your key; it turns as you drive and hums as it goes.',
+          '<b>Roads:</b> the paths lead to the other places now. Walk off the Village Green to the beach, the mall or the frozen lake, and on from there.',
+          '<b>For your house:</b> almost a hundred new pieces of furniture (Space age and Holiday sections too), new wallpapers and floors, a quarter off this week\'s picks at Homestead, and furniture with real depth.',
+          ...(feastOn() ? ['<b>The Harvest Feast:</b> Happy Thanksgiving! Grab a free plate by the plaza once a day.'] : []), ...(ONLINE_OWN() ? ['<b>Open beta:</b> servers (Wando Main, Starfall, Moonbeam), email sign-in to keep your player, and the game updates itself.',
           '<b>Trading:</b> trade outfits, furniture, tools and more, with 10 seconds to back out. Your last trades are in your phone\'s Inbox.',
           '<b>Chat:</b> type <b>/help</b> for commands like /wave, /who, /go beach and /server. Mute or report anyone from their player card.',
           '<b>Phones and tablets:</b> pick "Playing on: Phone / tablet" for big tap buttons and a layout that fits.'] : []), '<b>Ice fishing</b> at Frostwood Lake: drill a hole, wait for the bite, and reel in rare fish. Level up your Fishing Rank for better gear.', '<b>New in town:</b> the ice cream truck, the Wishing Fountain, a kickabout pitch, a playground, the daily Hedge Maze and the Green Grand Prix on the Village Green. The Big Wheel and sandcastles at the beach. A Claw Machine at the mall, and Freeze Dance at the Neon Dance House.',
@@ -26387,7 +26390,7 @@ window.WANDO_BUILD = '1794048123';
     });
     try {                                                   // the ticker and the Delve panel
       const wk = armoryWeek(), Dg = dailyDelve(dayNumber());
-      $('gate-ticker-text').textContent = ['Welcome to Planet Wando!', 'NEW: the Big Wheel, the Hedge Maze, the ice cream truck and more!', ...(trickOn() ? ['Trick or treat! Collect candy from the townsfolk'] : []), 'New this week: ' + armoryTheme(wk).name, 'Today\'s Daily Delve: ' + Dg.name, 'Win the new weekly sets in the crypt, the cave, the sea and the arcade',
+      $('gate-ticker-text').textContent = ['Welcome to Planet Wando!', 'NEW: Wando Motors collector cars, roads to every place, and a hundred new pieces for your house!', ...(trickOn() ? ['Trick or treat! Collect candy from the townsfolk'] : []), 'New this week: ' + armoryTheme(wk).name, 'Today\'s Daily Delve: ' + Dg.name, 'Win the new weekly sets in the crypt, the cave, the sea and the arcade',
         'Trade with your friends', 'Build a house and fill it with Collector\'s pieces', 'Adopt a pet on the Green'].join('   ★   ');
       $('gate-delve').textContent = Dg.name;
     } catch (e) { /* the news can wait */ }
