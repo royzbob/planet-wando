@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794049181';
+window.WANDO_BUILD = '1794049331';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -5411,7 +5411,15 @@ window.WANDO_BUILD = '1794049181';
       zap: () => { blip(2200, 300, 0.16, 0.08, 'sawtooth'); blip(140, 60, 0.3, 0.2, 'sine', 0.02); blip(1600, 900, 0.06, 0.05, 'square', 0.05); },   // a crack of lightning and its rumble                // knuckles on a wooden signpost
       clack: () => { blip(560, 230, 0.05, 0.13, 'square'); blip(150, 90, 0.09, 0.15, 'triangle', 0.035); },      // a skateboard dropped onto its wheels
       engine: () => { blip(70, 150, 0.35, 0.1, 'sawtooth'); blip(150, 110, 0.4, 0.07, 'sawtooth', 0.3); blip(110, 120, 0.3, 0.05, 'sawtooth', 0.65); },   // a car starting up
-      horn: () => { blip(415, 415, 0.26, 0.07, 'square'); blip(523, 523, 0.26, 0.05, 'square'); },
+      horn: (model, k = 1) => {                              // each car has its own horn: a kart beeps, a truck blares, the Roadster goes ah-oo-ga, the Hover Car warbles
+        const H = [[740, 880, 0.12, 'square', 2], [660, 784, 0.2, 'triangle'], [392, 494, 0.26, 'square'], [330, 415, 0.3, 'sawtooth'], [415, 523, 0.26, 'square'],
+          null, [523, 659, 0.18, 'square', 2], [147, 185, 0.42, 'sawtooth'], null][model] || [415, 523, 0.26, 'square'];
+        if (k <= 0.02) return;
+        if (model === 5) { blip(300, 520, 0.42, 0.07 * k, 'sawtooth'); blip(520, 300, 0.3, 0.06 * k, 'sawtooth', 0.42); return; }
+        if (model === 8) { blip(880, 1320, 0.16, 0.05 * k, 'sine'); blip(1320, 880, 0.16, 0.05 * k, 'sine', 0.16); blip(880, 1320, 0.16, 0.04 * k, 'sine', 0.32); return; }
+        const [f0, f1, d, ty, n] = H;
+        for (let i = 0; i < (n || 1); i++) { blip(f0, f0, d, 0.07 * k, ty, i * d * 1.5); blip(f1, f1, d, 0.05 * k, ty, i * d * 1.5); }
+      },
       key: () => { blip(2400, 1900, 0.03, 0.05, 'square'); blip(1300, 1000, 0.05, 0.05, 'square', 0.07); blip(600, 420, 0.06, 0.05, 'triangle', 0.14); },   // a key turning in the ignition
       hoverUp: () => { blip(180, 900, 0.6, 0.06, 'sine'); blip(360, 1400, 0.5, 0.03, 'triangle', 0.1); },   // a hover car waking up: no engine, a rising whir
       // The engine's hum while you drive: higher as you speed up, an idle when you stop, a sound for each model. key:
@@ -18143,7 +18151,7 @@ window.WANDO_BUILD = '1794049181';
           return;
         }
         if (G.riding && G.board && G.board.kind === 'car' && !this.boating) {          // in a car, Space honks the horn
-          if (this.time.now - (this.hornAt || 0) > 400) { this.hornAt = this.time.now; sfx.horn(); this.honks = ((this.honks || 0) + 1) % 1000; }   // (the others hear it too: see netMine's hk)
+          if (this.time.now - (this.hornAt || 0) > 400) { this.hornAt = this.time.now; sfx.horn(G.board.model || 0); this.honks = ((this.honks || 0) + 1) % 1000; }   // (the others hear it too: see netMine's hk)
           return;
         }
         if (this.loc !== 'beach') return;
@@ -19621,7 +19629,7 @@ window.WANDO_BUILD = '1794049181';
           o.img.setTexture(key).setScale(1 / TEX).setOrigin(0.5, p.boat ? 0.8 : car ? 140 / 150 : FEET_OA);
         }
         if (car && Math.abs(p.x - o.x) > 2) o.carFace = p.x < o.x ? -1 : 1;     // a car faces the way it is going
-        if (car && o.hk !== undefined && p.hk !== o.hk && this.pz && Math.hypot(o.x - this.pz.x, o.y - this.pz.y) < 700) sfx.horn();   // they honked, close by
+        if (car && o.hk !== undefined && p.hk !== o.hk && this.pz && Math.hypot(o.x - this.pz.x, o.y - this.pz.y) < 700) sfx.horn(car.model || 0, 0.75 * (1 - Math.hypot(o.x - this.pz.x, o.y - this.pz.y) / 900));   // they honked, close by
         o.hk = p.hk;
         o.carModel = car ? car.model : -1; o.carSp = car ? clamp(Math.hypot(p.x - o.x, p.y - o.y) / 160, 0, 1) : 0;   // (for its engine's hum)
         const shown = (p.afk ? '💤 ' : '') + (p.dv === 'm' ? '📱 ' : '') + p.name + (this.loc === 'dungeon' && p.lv ? ' (' + p.lv + ')' : '') + (p.ti ? ' · ' + PLAYER_TITLES[p.ti].name : '');
@@ -26420,6 +26428,7 @@ window.WANDO_BUILD = '1794049181';
       const wk = armoryWeek(), Dg = dailyDelve(dayNumber()), n = armory().list.length + ['o', 'b', 'f'].reduce((a, k) => a + collCat(k).list.length, 0);
       const page = {
         news: ['What\'s new', ['<b>Wando Motors:</b> walk into the showroom on the Village Green. Six one-of-a-kind collector cars every Monday, each with its own serial number, sold that week only. Park your car anywhere and start it with your key; it turns as you drive and hums as it goes.',
+          '<b>Ride along:</b> tap a friend who is driving (or use the 🚗 button in Who\'s here) to hop in their car and go where they go, even down the roads. After dark, cars put their lights on.',
           '<b>Roads:</b> the paths lead to the other places now. Walk off the Village Green to the beach, the mall or the frozen lake, and on from there.',
           '<b>For your house:</b> almost a hundred new pieces of furniture (Space age and Holiday sections too), new wallpapers and floors, a quarter off this week\'s picks at Homestead, and furniture with real depth.',
           ...(feastOn() ? ['<b>The Harvest Feast:</b> Happy Thanksgiving! Grab a free plate by the plaza once a day.'] : []), ...(ONLINE_OWN() ? ['<b>Open beta:</b> servers (Wando Main, Starfall, Moonbeam), email sign-in to keep your player, and the game updates itself.',
