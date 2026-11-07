@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794087713';
+<script>window.WANDO_BUILD = '1794090731';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -7286,7 +7286,7 @@
     const TOON = { line: "#2a1f24", on: !window.__NOTOON, inking: 0, gloss: 0, shade: 0.7, selout: window.__OLDINK ? null : 'rgba(34,18,30,0.72)', wobble: window.__OLDINK ? 0 : 0.35 };
     const ink = c => (TOON.inking ? mix(c, '#24181e', 0.74) : mix(c, '#2a1a3a', 0.58));
     const fitFoot = (c, w, h, k) => { c.translate(w / 2, h); c.scale(k, k); c.translate(-w / 2, -h); };
-    const TOON_SKIP = /^(grass|ground|shadow|pshadow|pond|glint|dust|ring|glow|fishshadow|bfly|avatar|npc_|furn_|ppl_|planks|floor|wall|room|sky|sea|water|wave|sand|snow|ice$|iceground|tile|carpet|rug_|wash|light|beam|spark|star_|stars|cloud|fog|rain|path|cobble|road|bg|backdrop|interior|shell_|fx|halo|ripple|splash|bubble|puff|confetti|petal|leaf|fallleaf|flake|tuft)/;
+    const TOON_SKIP = /^(hfloor_|hwall_|yground_|yback_|grass|ground|shadow|pshadow|pond|glint|dust|ring|glow|fishshadow|bfly|avatar|npc_|furn_|ppl_|planks|floor|wall|room|sky|sea|water|wave|sand|snow|ice$|iceground|tile|carpet|rug_|wash|light|beam|spark|star_|stars|cloud|fog|rain|path|cobble|road|bg|backdrop|interior|shell_|fx|halo|ripple|splash|bubble|puff|confetti|petal|leaf|fallleaf|flake|tuft)/;
     const toonable = (key, w, h, scale) => TOON.on && scale === TEX && !TOON_SKIP.test(String(key)) && w * h <= 900 * 700;
     const PROP_DEPTH = { house_0: 16, house_1: 16, house_2: 16, house_3: 16, house_4: 16, shop_bakery: 14, shop_florist: 12, shop_tailor: 14, shop_furnish: 16, shop_petshop: 14, shopcounter: 8, crate: 5, booth: 10, newsstand: 8, carlot: 10, iceshack: 12, harveststand: 8, table: 5, tackle: 10,
         ticketbooth: 6, vending: 5, pastrycase: 6, oven: 5, minecounter: 6, tm_counter: 6, tm_table: 5, flowerbed: 4, planter: 4, missionboard: 4, popcorn: 4, parkbench: 5, bench: 5, sofa: 6, recyclebin: 4, wheelstand: 0 };
@@ -13091,7 +13091,7 @@
     const FURN_WOODS = [['Oak', '#c98b4a', '#8a5a34', '#e6ad6a'], ['Walnut', '#7a4a2e', '#4a2a18', '#9a6a44'], ['White', '#f3efe6', '#b9b2a4', '#ffffff'], ['Black', '#3a3540', '#17131c', '#5a5462'],
         ['Pine', '#e6c58a', '#b08a4a', '#f6dfae'], ['Cherry', '#b5533c', '#7a2f20', '#d0705a']];
     const FURN_FABRICS = [['Coral', '#ff6b5e'], ['Sky', '#3fa7f5'], ['Mint', '#2fbf8f'], ['Sunny', '#ffc93c'], ['Violet', '#8b5cf6'], ['Pink', '#ff8fb8'], ['Navy', '#2f3a55'], ['Cream', '#f6f1e4']];
-    const FURN_CATS = [['seat', 'Seating'], ['table', 'Tables'], ['bed', 'Beds'], ['store', 'Storage'], ['kitchen', 'Kitchen and bath'], ['tech', 'Lights and tech'], ['plant', 'Plants'], ['fun', 'Fun'], ['space', 'Space age'], ['holiday', 'Holiday'], ['rug', 'Rugs'], ['wall', 'On the wall'], ['build', 'Walls and doors']];
+    const FURN_CATS = [['seat', 'Seating'], ['table', 'Tables'], ['bed', 'Beds'], ['store', 'Storage'], ['kitchen', 'Kitchen and bath'], ['tech', 'Lights and tech'], ['plant', 'Plants'], ['fun', 'Fun'], ['space', 'Space age'], ['holiday', 'Holiday'], ['yard', 'Garden & yard'], ['rug', 'Rugs'], ['wall', 'On the wall'], ['build', 'Walls and doors']];
     const FL = '#3a2a22';
     const fbox = (c, x, y, w, h, r, fill, lw) => inked(c, fill, FL, lw || 2, k => rr(k, x, y, w, h, r));
     const fdisc = (c, x, y, r, fill, lw) => inked(c, fill, FL, lw || 2, k => k.arc(x, y, r, 0, TAU));
@@ -14118,6 +14118,246 @@
             } }
     ];
     FURN_MORE.forEach(d => { d.nu = true; });
+    const FURN_YARD = [
+        { id: 'fence', name: 'Picket fence', cat: 'build', build: true, price: 60, w: 120, h: 64, pal: 'wood', draw(c, P) {
+                fbox(c, 2, 30, 116, 7, 1.5, P.b);
+                fbox(c, 2, 48, 116, 7, 1.5, P.b);
+                for (let x = 4; x < 116; x += 14)
+                    fpoly(c, [[x, 62], [x, 10], [x + 5, 3], [x + 10, 10], [x + 10, 62]], P.c, 1.6);
+            } },
+        { id: 'fencegate', name: 'Garden gate', cat: 'build', build: true, walk: true, price: 80, w: 120, h: 64, pal: 'wood', draw(c, P) {
+                [4, 102].forEach(x => fbox(c, x, 4, 14, 58, 2, P.a));
+                fdisc(c, 11, 6, 6, P.c, 1.6);
+                fdisc(c, 109, 6, 6, P.c, 1.6);
+                c.strokeStyle = P.b;
+                c.lineWidth = 3;
+                c.beginPath();
+                c.moveTo(18, 20);
+                c.quadraticCurveTo(60, 2, 102, 20);
+                c.stroke();
+            } },
+        { id: 'hedge', name: 'Hedge', cat: 'yard', price: 150, w: 120, h: 60, pal: '', deep: true, draw(c) {
+                fbox(c, 3, 10, 114, 48, 12, '#3f8a46');
+                c.fillStyle = '#56a85a';
+                for (let i = 0; i < 9; i++)
+                    disc(c, 12 + i * 12, 14 + (i % 2) * 4, 8);
+                c.fillStyle = '#2f6e38';
+                for (let i = 0; i < 12; i++)
+                    disc(c, 10 + (i * 37) % 100, 30 + (i * 13) % 22, 3);
+            } },
+        { id: 'bush', name: 'Round bush', cat: 'yard', price: 90, w: 64, h: 54, pal: '', draw(c) {
+                fdisc(c, 32, 32, 22, '#3f8a46');
+                fdisc(c, 18, 38, 14, '#4a9a50');
+                fdisc(c, 46, 38, 14, '#4a9a50');
+                c.fillStyle = '#6ab86a';
+                disc(c, 26, 22, 6);
+                disc(c, 40, 28, 4);
+            } },
+        { id: 'yardtree', name: 'Shade tree', cat: 'yard', price: 600, w: 130, h: 176, pal: '', draw(c) {
+                fbox(c, 56, 104, 18, 70, 4, '#7a4a2e');
+                fdisc(c, 65, 64, 44, '#3f8a46');
+                fdisc(c, 32, 84, 28, '#3a7e40');
+                fdisc(c, 98, 84, 28, '#3a7e40');
+                fdisc(c, 65, 34, 30, '#4a9a50');
+                c.fillStyle = '#6ab86a';
+                disc(c, 50, 28, 10);
+                disc(c, 84, 56, 8);
+                disc(c, 30, 76, 7);
+            } },
+        { id: 'appletree', name: 'Apple tree', cat: 'yard', price: 800, w: 120, h: 160, pal: '', draw(c) {
+                fbox(c, 52, 96, 16, 62, 4, '#7a4a2e');
+                fdisc(c, 60, 58, 42, '#4a9a50');
+                fdisc(c, 28, 76, 22, '#3f8a46');
+                fdisc(c, 92, 76, 22, '#3f8a46');
+                [[40, 44], [74, 38], [56, 70], [86, 66], [30, 78], [64, 52]].forEach(([x, y]) => fdisc(c, x, y, 5, '#e8323c', 1.2));
+            } },
+        { id: 'flowerbed', name: 'Flower bed', cat: 'yard', kind: 'rug', price: 160, w: 120, h: 56, pal: 'fabric', draw(c, P) {
+                inked(c, '#7a5032', FL, 2, k => k.ellipse(60, 28, 56, 24, 0, 0, TAU));
+                const R = rng(77);
+                for (let i = 0; i < 16; i++) {
+                    const x = 16 + R() * 88, y = 12 + R() * 30;
+                    c.fillStyle = '#3f8a46';
+                    disc(c, x, y + 4, 4);
+                    c.fillStyle = i % 3 ? P.f : '#ffffff';
+                    for (let p = 0; p < 5; p++)
+                        disc(c, x + Math.cos(p * 1.26) * 3, y + Math.sin(p * 1.26) * 3, 2.4);
+                    c.fillStyle = '#ffd84d';
+                    disc(c, x, y, 1.4);
+                }
+            } },
+        { id: 'vegpatch', name: 'Veggie patch', cat: 'yard', kind: 'rug', price: 220, w: 120, h: 70, pal: '', draw(c) {
+                fbox(c, 2, 2, 116, 66, 4, '#8a5a34');
+                c.fillStyle = '#5a3a22';
+                for (let r = 0; r < 3; r++)
+                    c.fillRect(8, 10 + r * 20, 104, 12);
+                for (let r = 0; r < 3; r++)
+                    for (let i = 0; i < 6; i++) {
+                        const x = 16 + i * 18, y = 16 + r * 20;
+                        c.fillStyle = '#4a9a50';
+                        disc(c, x, y - 2, 5);
+                        if (r === 1) {
+                            c.fillStyle = '#ff8a2a';
+                            disc(c, x, y + 3, 2.6);
+                        }
+                        if (r === 2) {
+                            c.fillStyle = '#e8323c';
+                            disc(c, x + 3, y, 2.6);
+                        }
+                    }
+            } },
+        { id: 'stonepath', name: 'Stepping stones', cat: 'yard', kind: 'rug', price: 80, w: 120, h: 44, pal: '', draw(c) {
+                [[18, 24, 14, 10], [50, 18, 15, 10], [82, 26, 14, 10], [106, 16, 11, 8]].forEach(([x, y, rx, ry]) => inked(c, '#b8b0a0', FL, 1.6, k => k.ellipse(x, y, rx, ry, 0, 0, TAU)));
+            } },
+        { id: 'patio', name: 'Patio tiles', cat: 'yard', kind: 'rug', price: 300, w: 150, h: 100, pal: '', draw(c) {
+                fbox(c, 2, 2, 146, 96, 3, '#c4bcac');
+                c.strokeStyle = '#8a8272';
+                c.lineWidth = 1.5;
+                for (let x = 2; x < 148; x += 36.5) {
+                    c.beginPath();
+                    c.moveTo(x, 2);
+                    c.lineTo(x, 98);
+                    c.stroke();
+                }
+                for (let y = 2; y < 98; y += 24) {
+                    c.beginPath();
+                    c.moveTo(2, y);
+                    c.lineTo(148, y);
+                    c.stroke();
+                }
+            } },
+        { id: 'pond', name: 'Garden pond', cat: 'yard', kind: 'rug', price: 700, w: 150, h: 84, pal: '', draw(c) {
+                inked(c, '#9c9484', FL, 2, k => k.ellipse(75, 42, 72, 40, 0, 0, TAU));
+                inked(c, '#4aa8d8', '#2a6a9a', 1.6, k => k.ellipse(75, 42, 60, 31, 0, 0, TAU));
+                c.fillStyle = 'rgba(255,255,255,.4)';
+                oval(c, 56, 32, 16, 4, -0.2);
+                fdisc(c, 100, 48, 9, '#4a9a50', 1.2);
+                c.fillStyle = '#ff8fb8';
+                disc(c, 100, 45, 3);
+                c.fillStyle = '#ff8a2a';
+                oval(c, 62, 52, 7, 3, 0.3);
+            } },
+        { id: 'kiddiepool', name: 'Paddling pool', cat: 'yard', kind: 'rug', price: 400, w: 130, h: 70, pal: 'fabric', draw(c, P) {
+                inked(c, P.f, FL, 2.2, k => k.ellipse(65, 35, 62, 32, 0, 0, TAU));
+                inked(c, '#7ad8ee', FL, 1.6, k => k.ellipse(65, 37, 50, 23, 0, 0, TAU));
+                c.fillStyle = 'rgba(255,255,255,.5)';
+                oval(c, 50, 30, 14, 4);
+                c.fillStyle = P.fl;
+                [20, 110].forEach(x => disc(c, x, 35, 4));
+            } },
+        { id: 'birdbath', name: 'Bird bath', cat: 'yard', price: 250, w: 56, h: 76, pal: '', draw(c) {
+                fbox(c, 16, 66, 24, 8, 2, '#a8a090');
+                fbox(c, 23, 30, 10, 38, 3, '#b8b0a0');
+                inked(c, '#c4bcac', FL, 2, k => k.ellipse(28, 26, 26, 9, 0, 0, TAU));
+                c.fillStyle = '#7ad8ee';
+                oval(c, 28, 24, 20, 5);
+                fdisc(c, 40, 16, 5, '#3fa7f5', 1.2);
+                c.fillStyle = '#ffb84d';
+                c.beginPath();
+                c.moveTo(45, 15);
+                c.lineTo(50, 17);
+                c.lineTo(45, 18);
+                c.fill();
+            } },
+        { id: 'gnome', name: 'Garden gnome', cat: 'yard', price: 120, w: 26, h: 54, pal: 'fabric', draw(c, P) {
+                c.translate(-5, 0);
+                fbox(c, 8, 34, 20, 18, 5, '#3f6fb8');
+                fdisc(c, 18, 28, 8, '#f2c9a0', 1.6);
+                fpoly(c, [[8, 28], [18, 2], [28, 28]], P.f);
+                fpoly(c, [[12, 32], [18, 44], [24, 32]], '#ffffff', 1.4);
+            } },
+        { id: 'mailbox', name: 'Mailbox', cat: 'yard', price: 150, w: 44, h: 82, pal: 'fabric', draw(c, P) {
+                fbox(c, 18, 36, 8, 44, 2, '#7a4a2e');
+                inked(c, P.f, FL, 2, k => { k.moveTo(4, 40); k.lineTo(4, 20); k.quadraticCurveTo(4, 8, 22, 8); k.quadraticCurveTo(40, 8, 40, 20); k.lineTo(40, 40); k.closePath(); });
+                fbox(c, 32, 10, 4, 16, 1, '#e8323c', 1.2);
+                fbox(c, 28, 8, 10, 6, 1, '#e8323c', 1.2);
+            } },
+        { id: 'gardenlamp', name: 'Garden lamp', cat: 'yard', price: 200, w: 34, h: 116, pal: '', draw(c) {
+                fbox(c, 8, 106, 18, 8, 2, '#3a3540');
+                fbox(c, 14, 30, 6, 78, 2, '#3a3540');
+                fbox(c, 6, 6, 22, 28, 4, '#fff3b0');
+                fbox(c, 4, 2, 26, 6, 2, '#3a3540');
+                fbox(c, 4, 32, 26, 4, 1, '#3a3540', 1.4);
+            } },
+        { id: 'gardenbench', name: 'Garden bench', cat: 'yard', price: 300, w: 110, h: 66, pal: 'wood', draw(c, P) {
+                fbox(c, 8, 44, 8, 20, 2, '#3a3540');
+                fbox(c, 94, 44, 8, 20, 2, '#3a3540');
+                fbox(c, 4, 38, 102, 9, 2, P.a);
+                [6, 18].forEach(y => fbox(c, 6, y, 98, 9, 2, P.c));
+            } },
+        { id: 'lounger', name: 'Sun lounger', cat: 'yard', price: 350, w: 116, h: 56, pal: 'fabric', draw(c, P) {
+                fbox(c, 12, 44, 6, 10, 1, '#d8d0c0');
+                fbox(c, 96, 44, 6, 10, 1, '#d8d0c0');
+                fpoly(c, [[6, 44], [76, 44], [110, 12], [104, 8], [72, 36], [6, 36]], P.f);
+                c.fillStyle = '#ffffff';
+                for (let x = 12; x < 70; x += 14)
+                    c.fillRect(x, 37, 6, 6);
+            } },
+        { id: 'parasol', name: 'Parasol table', cat: 'yard', price: 500, w: 110, h: 120, pal: 'fabric', draw(c, P) {
+                fbox(c, 53, 30, 4, 80, 1, '#8a8272', 1.2);
+                inked(c, '#f3efe6', FL, 2, k => k.ellipse(55, 104, 34, 9, 0, 0, TAU));
+                fbox(c, 51, 104, 8, 14, 2, '#8a8272');
+                inked(c, P.f, FL, 2.2, k => { k.moveTo(4, 36); k.quadraticCurveTo(55, -4, 106, 36); k.closePath(); });
+                c.fillStyle = '#ffffff';
+                for (let i = 0; i < 3; i++) {
+                    c.beginPath();
+                    c.moveTo(55, 6);
+                    c.lineTo(18 + i * 37, 36);
+                    c.lineTo(30 + i * 37, 36);
+                    c.closePath();
+                    c.fill();
+                }
+            } },
+        { id: 'bbq', name: 'Barbecue', cat: 'yard', price: 400, w: 64, h: 76, pal: '', draw(c) {
+                fline(c, [[16, 46], [8, 74]], '#3a3540', 3);
+                fline(c, [[48, 46], [56, 74]], '#3a3540', 3);
+                inked(c, '#2a2a30', FL, 2, k => { k.moveTo(6, 30); k.lineTo(58, 30); k.quadraticCurveTo(56, 52, 32, 52); k.quadraticCurveTo(8, 52, 6, 30); k.closePath(); });
+                c.strokeStyle = '#8a8fa3';
+                c.lineWidth = 2;
+                c.beginPath();
+                c.moveTo(8, 30);
+                c.lineTo(56, 30);
+                c.stroke();
+                c.fillStyle = '#c8573c';
+                [[20, 26], [34, 26], [46, 26]].forEach(([x, y]) => oval(c, x, y, 5, 3));
+                c.strokeStyle = 'rgba(200,200,210,.6)';
+                c.lineWidth = 2;
+                [24, 40].forEach(x => { c.beginPath(); c.moveTo(x, 20); c.quadraticCurveTo(x - 6, 12, x, 4); c.stroke(); });
+            } },
+        { id: 'firepit', name: 'Fire pit', cat: 'yard', price: 350, w: 74, h: 52, pal: '', draw(c) {
+                inked(c, '#8a8272', FL, 2, k => k.ellipse(37, 38, 34, 12, 0, 0, TAU));
+                c.fillStyle = '#2a1a12';
+                oval(c, 37, 36, 24, 7);
+                fpoly(c, [[24, 36], [30, 14], [36, 26], [42, 8], [48, 24], [52, 36]], '#ff8a2a', 1.4);
+                fpoly(c, [[32, 36], [37, 20], [44, 36]], '#ffd84d', 1);
+            } },
+        { id: 'swingset', name: 'Swing set', cat: 'yard', price: 900, w: 150, h: 120, pal: 'fabric', draw(c, P) {
+                fline(c, [[14, 118], [30, 8]], '#8a8fa3', 5);
+                fline(c, [[46, 118], [30, 8]], '#8a8fa3', 5);
+                fline(c, [[104, 118], [120, 8]], '#8a8fa3', 5);
+                fline(c, [[136, 118], [120, 8]], '#8a8fa3', 5);
+                fbox(c, 26, 4, 98, 8, 3, P.f);
+                [[56, 86], [92, 86]].forEach(([x, y]) => { fline(c, [[x - 8, 12], [x - 8, y]], '#5a5462', 1.6); fline(c, [[x + 8, 12], [x + 8, y]], '#5a5462', 1.6); fbox(c, x - 12, y, 24, 6, 2, P.fd, 1.6); });
+            } },
+        { id: 'trampoline', name: 'Trampoline', cat: 'yard', price: 700, w: 130, h: 60, pal: 'fabric', draw(c, P) {
+                [16, 44, 86, 114].forEach(x => fline(c, [[x, 30], [x, 58]], '#5a5462', 3));
+                inked(c, P.f, FL, 2.2, k => k.ellipse(65, 26, 62, 20, 0, 0, TAU));
+                inked(c, '#2a2a30', FL, 1.4, k => k.ellipse(65, 26, 50, 14, 0, 0, TAU));
+            } },
+        { id: 'doghouse', name: 'Dog house', cat: 'yard', price: 450, w: 84, h: 80, pal: 'wood', deep: true, draw(c, P) {
+                fbox(c, 8, 34, 68, 44, 2, P.a);
+                fpoly(c, [[2, 38], [42, 4], [82, 38], [76, 42], [42, 14], [8, 42]], P.b);
+                inked(c, '#1a1210', FL, 2, k => { k.moveTo(28, 78); k.lineTo(28, 58); k.arc(42, 58, 14, Math.PI, 0); k.lineTo(56, 78); k.closePath(); });
+                fbox(c, 30, 40, 24, 8, 2, '#f3efe6', 1.2);
+            } },
+        { id: 'birdhouse', name: 'Bird house', cat: 'yard', price: 180, w: 40, h: 110, pal: 'wood', draw(c, P) {
+                fbox(c, 17, 44, 6, 64, 2, P.b);
+                fbox(c, 6, 18, 28, 28, 2, P.a);
+                fpoly(c, [[2, 20], [20, 2], [38, 20]], P.c);
+                fdisc(c, 20, 30, 5, '#1a1210', 1.2);
+                fbox(c, 16, 38, 8, 3, 1, P.b, 1);
+            } },
+    ];
+    FURN_YARD.forEach(d => { d.nu = true; d.yard = true; });
     const FURN = [
         { id: 'chair', name: 'Dining chair', cat: 'seat', price: 80, w: 44, h: 66, pal: 'wood', draw(c, P) {
                 fbox(c, 8, 40, 5, 24, 1.5, P.b);
@@ -14944,6 +15184,7 @@
                 }
             } },
         ...FURN_MORE,
+        ...FURN_YARD,
         ...['minnow', 'perch', 'trout', 'eel', 'pike', 'moonfin', 'koi', 'levi'].map((fid, fi) => ({ id: 'mount-' + fid, name: 'Mounted ' + ['Frost Minnow', 'Snow Perch', 'Glacier Trout', 'Aurora Eel', 'Crystal Pike', 'Moonfin', 'Starlight Koi', 'Polar Leviathan'][fi],
             cat: 'wall', kind: 'wall', price: 0, prize: true, w: 66, h: 48, pal: '', draw(c) {
                 inked(c, '#8a5a34', FL, 2, k => k.ellipse(33, 24, 31, 21, 0, 0, TAU));
@@ -15518,6 +15759,40 @@
             for (let x = 500; x < 604; x += 16)
                 c.fillRect(x, h - 84, 6, 36);
         }, 1);
+        bake(scene, 'ground_yard', HOME.W, HOME.H, (c, w, h) => {
+            c.fillStyle = 'rgba(30,60,20,.25)';
+            c.fillRect(40, 168, w - 80, 10);
+            const hedge = (x, y, ww, hh) => { inked(c, '#3f7a42', '#2a4a24', 2.4, k => rr(k, x, y, ww, hh, 12)); c.fillStyle = '#4f8f50'; for (let i = 0; i < ww / 16; i++)
+                disc(c, x + 8 + i * 16, y + 8 + (i % 2) * 3, 9); c.fillStyle = '#2f6a38'; for (let i = 0; i < ww * hh / 900; i++)
+                disc(c, x + 6 + (i * 37) % (ww - 12), y + 14 + (i * 23) % Math.max(1, hh - 20), 2.6); };
+            hedge(-6, 160, 48, h - 150);
+            hedge(w - 42, 160, 48, h - 150);
+            hedge(-6, h - 40, 500, 46);
+            hedge(606, h - 40, w - 600, 46);
+            c.fillStyle = '#b8b0a0';
+            c.beginPath();
+            rr(c, 496, h - 44, 108, 44, 6);
+            c.fill();
+            c.fillStyle = '#a8a090';
+            [[506, h - 36], [540, h - 26], [574, h - 38]].forEach(([x, y]) => { c.beginPath(); rr(c, x, y, 24, 14, 5); c.fill(); });
+        }, 1);
+        bake(scene, 'backdoor', 96, 134, c => {
+            inked(c, '#f3efe6', '#3a2a22', 2.4, k => rr(k, 4, 6, 88, 128, 6));
+            inked(c, '#7a4a2e', '#3a2a22', 2.2, k => rr(k, 14, 16, 68, 118, 4));
+            inked(c, '#bfe8f7', '#3a2a22', 1.8, k => rr(k, 24, 26, 48, 34, 3));
+            c.strokeStyle = '#3a2a22';
+            c.lineWidth = 1.6;
+            c.beginPath();
+            c.moveTo(48, 26);
+            c.lineTo(48, 60);
+            c.moveTo(24, 43);
+            c.lineTo(72, 43);
+            c.stroke();
+            c.strokeStyle = 'rgba(30,15,8,.45)';
+            c.lineWidth = 1.4;
+            c.strokeRect(24, 70, 48, 54);
+            fdisc(c, 72, 92, 3.2, '#ffc93c', 1.2);
+        });
         bake(scene, 'sidedoor', 64, 128, c => {
             c.fillStyle = '#8a5a34';
             c.beginPath();
@@ -15531,6 +15806,155 @@
             c.fillRect(34, 40, 30, 76);
             inked(c, '#f3efe6', '#3a2a22', 2, k => rr(k, 26, 4, 8, 120, 3));
         });
+    }
+    const YARD_BACKS = [{ name: 'White picket' }, { name: 'Wood fence' }, { name: 'Tall hedge' }, { name: 'Stone wall' }];
+    const YARD_GROUNDS = [{ name: 'Lawn' }, { name: 'Daisy lawn' }, { name: 'Sandy' }, { name: 'Gravel' }];
+    function drawYardBack(c, i) {
+        const g = c.createLinearGradient(0, 0, 0, 110);
+        g.addColorStop(0, '#9fd2ec');
+        g.addColorStop(1, '#d8eef4');
+        c.fillStyle = g;
+        c.fillRect(0, 0, 128, 170);
+        c.fillStyle = 'rgba(255,255,255,.75)';
+        oval(c, 30, 26, 22, 7);
+        oval(c, 46, 22, 14, 7);
+        c.fillStyle = '#5f8f5a';
+        for (let x = -10; x < 140; x += 26)
+            disc(c, x, 92 + (x % 3) * 3, 22);
+        c.fillStyle = '#4f7f4c';
+        for (let x = 3; x < 140; x += 26)
+            disc(c, x, 104, 18);
+        c.fillStyle = '#6da24f';
+        c.fillRect(0, 150, 128, 20);
+        if (i === 2) {
+            inked(c, '#3f7a42', FL, 2, k => rr(k, -4, 70, 136, 92, 14));
+            c.fillStyle = '#4f8f50';
+            for (let n = 0; n < 9; n++)
+                disc(c, 8 + n * 14, 76 + (n % 2) * 5, 10);
+            c.fillStyle = '#2f6a38';
+            for (let n = 0; n < 14; n++)
+                disc(c, (n * 37) % 128, 96 + (n * 17) % 56, 3);
+        }
+        else if (i === 3) {
+            c.fillStyle = '#9c9484';
+            c.fillRect(0, 108, 128, 56);
+            const st = ['#b8b0a0', '#a8a090', '#c4bcac'];
+            for (let r = 0; r < 4; r++)
+                for (let x = (r % 2) * -16; x < 128; x += 32) {
+                    c.fillStyle = st[(r + x / 16 + 3) % 3 | 0];
+                    c.beginPath();
+                    rr(c, x + 1, 110 + r * 14, 30, 12, 3);
+                    c.fill();
+                }
+            c.fillStyle = '#8a8272';
+            c.fillRect(0, 104, 128, 6);
+        }
+        else if (i === 1) {
+            for (let x = 0; x < 128; x += 16) {
+                c.fillStyle = x % 32 ? '#a8723e' : '#9a6636';
+                c.fillRect(x, 96, 15, 64);
+                c.fillStyle = 'rgba(60,30,10,.35)';
+                c.fillRect(x + 15, 96, 1, 64);
+            }
+            c.fillStyle = '#7a4a2e';
+            c.fillRect(0, 108, 128, 5);
+            c.fillRect(0, 140, 128, 5);
+        }
+        else {
+            c.fillStyle = '#e8e2d2';
+            c.fillRect(0, 122, 128, 5);
+            c.fillRect(0, 142, 128, 5);
+            for (let x = 2; x < 128; x += 16) {
+                c.fillStyle = '#fbf8f0';
+                c.beginPath();
+                c.moveTo(x, 162);
+                c.lineTo(x, 112);
+                c.lineTo(x + 5, 104);
+                c.lineTo(x + 10, 112);
+                c.lineTo(x + 10, 162);
+                c.closePath();
+                c.fill();
+                c.strokeStyle = 'rgba(90,80,70,.5)';
+                c.lineWidth = 1;
+                c.stroke();
+            }
+        }
+    }
+    function drawYardGround(c, i) {
+        const R = rng(900 + i);
+        if (i === 2) {
+            c.fillStyle = '#e8d49a';
+            c.fillRect(0, 0, 128, 128);
+            for (let n = 0; n < 220; n++) {
+                c.fillStyle = n % 2 ? 'rgba(190,150,80,.35)' : 'rgba(255,250,220,.6)';
+                disc(c, R() * 128, R() * 128, 0.8 + R());
+            }
+            return;
+        }
+        if (i === 3) {
+            c.fillStyle = '#a8a294';
+            c.fillRect(0, 0, 128, 128);
+            for (let n = 0; n < 340; n++) {
+                c.fillStyle = ['#8a8476', '#c4beb0', '#9c9686', '#b8b2a4'][n % 4];
+                disc(c, R() * 128, R() * 128, 1 + R() * 1.6);
+            }
+            return;
+        }
+        c.fillStyle = '#6da24f';
+        c.fillRect(0, 0, 128, 128);
+        for (let n = 0; n < 10; n++) {
+            c.fillStyle = n % 2 ? 'rgba(150,196,100,.22)' : 'rgba(64,118,48,.16)';
+            const x = R() * 128, y = R() * 128, rx = 14 + R() * 18, ry = 8 + R() * 10;
+            for (const dx of [-128, 0, 128])
+                for (const dy of [-128, 0, 128])
+                    oval(c, x + dx, y + dy, rx, ry);
+        }
+        c.strokeStyle = '#4d853b';
+        c.lineWidth = 1.6;
+        for (let n = 0; n < 40; n++) {
+            const x = R() * 124 + 2, y = R() * 124 + 2;
+            c.beginPath();
+            c.moveTo(x - 2, y);
+            c.lineTo(x - 3, y - 5);
+            c.moveTo(x, y);
+            c.lineTo(x, y - 6);
+            c.moveTo(x + 2, y);
+            c.lineTo(x + 3, y - 5);
+            c.stroke();
+        }
+        if (i === 1)
+            for (let n = 0; n < 12; n++) {
+                const x = 6 + R() * 116, y = 6 + R() * 116;
+                c.fillStyle = '#ffffff';
+                for (let p = 0; p < 5; p++)
+                    disc(c, x + Math.cos(p * 1.26) * 2.6, y + Math.sin(p * 1.26) * 2.6, 1.8);
+                c.fillStyle = '#ffd84d';
+                disc(c, x, y, 1.3);
+            }
+    }
+    const bakeYardBack = (scene, i) => { bake(scene, 'yback_' + i, 128, 170, c => drawYardBack(c, i)); return 'yback_' + i; };
+    const bakeYardGround = (scene, i) => { bake(scene, 'yground_' + i, 128, 128, c => drawYardGround(c, i)); return 'yground_' + i; };
+    function drawYardTile(cv, Y) {
+        const c = cv.getContext('2d'), k = cv.width / 256;
+        c.setTransform(1, 0, 0, 1, 0, 0);
+        c.clearRect(0, 0, cv.width, cv.height);
+        [0, 128].forEach(x => {
+            c.setTransform(k, 0, 0, k, x * k, -90 * k);
+            c.save();
+            c.beginPath();
+            c.rect(0, 90, 128, 80);
+            c.clip();
+            drawYardBack(c, Y.wall);
+            c.restore();
+            c.setTransform(k, 0, 0, k, x * k, 80 * k);
+            c.save();
+            c.beginPath();
+            c.rect(0, 0, 128, 128);
+            c.clip();
+            drawYardGround(c, Y.floor);
+            c.restore();
+        });
+        c.setTransform(1, 0, 0, 1, 0, 0);
     }
     const bakeHomeWall = (scene, i) => { bake(scene, 'hwall_' + i, 128, 170, c => drawHomeWall(c, i)); return 'hwall_' + i; };
     const bakeHomeFloor = (scene, i) => { bake(scene, 'hfloor_' + i, 128, 128, c => drawHomeFloor(c, i)); return 'hfloor_' + i; };
@@ -15566,7 +15990,8 @@
         const front = py > HOME.H - 150 && Math.abs(px - HOME.W / 2) < 70 + half;
         const L = !doors || doors[0], R = !doors || doors[1], E = HOME.FLOOR;
         const sides = py > HOME.DOOR_Y - 40 && py < HOME.DOOR_Y + 76 && ((L && px - half < E.x + 64) || (R && px + half > E.x + E.w - 64));
-        return { x: px, y: py, ok: d.kind !== 'floor' || !(front || sides) };
+        const back = (!doors || doors[2]) && py < E.y + 76 && Math.abs(px - HOME.W / 2) < 52 + half;
+        return { x: px, y: py, ok: d.kind !== 'floor' || !(front || sides || back) };
     }
     function homeFootprint(d, x, y, r, open, span) {
         const S = HOME_GRID.step, F = HOME.FLOOR, z = furnSolids(d, r, open);
@@ -15599,7 +16024,7 @@
         return [sn(x + a, false), sy(y + b, false), Math.max(sn(x + c, true), sn(x + a, false) + S), Math.max(sy(y + e, true), sy(y + b, false) + RH)];
     }
     function cleanHome(h) {
-        const out = { owned: false, walls: [0], floors: [0], inv: {}, rooms: [{ wall: 0, floor: 0, items: [] }] };
+        const out = { owned: false, walls: [0], floors: [0], inv: {}, rooms: [{ wall: 0, floor: 0, items: [] }], yard: { wall: 0, floor: 0, items: [] } };
         if (!h || typeof h !== 'object')
             return out;
         out.owned = !!h.owned;
@@ -15622,6 +16047,19 @@
             });
             return room;
         });
+        {
+            const Y = h.yard && typeof h.yard === 'object' ? h.yard : {};
+            if (Number.isInteger(Y.wall) && Y.wall >= 0 && Y.wall < YARD_BACKS.length)
+                out.yard.wall = Y.wall;
+            if (Number.isInteger(Y.floor) && Y.floor >= 0 && Y.floor < YARD_GROUNDS.length)
+                out.yard.floor = Y.floor;
+            (Array.isArray(Y.items) ? Y.items : []).slice(0, HOME.MAX).forEach(it => {
+                if (!it || !good(it.t, it.c) || !Number.isFinite(it.x) || !Number.isFinite(it.y))
+                    return;
+                const d = FURN_BY[it.t], r = furnTurns(d) && Number.isInteger(it.r) && it.r >= 0 && it.r < 4 ? it.r : 0, s = homeSpot(d, it.x, it.y, r);
+                out.yard.items.push({ t: it.t, c: it.c, x: s.x, y: s.y, r, f: it.f ? 1 : 0, on: it.on ? 1 : 0 });
+            });
+        }
         out.walls = list((Array.isArray(h.walls) ? h.walls : []).concat(out.rooms.map(R => R.wall)), HOME_WALLS.length);
         out.floors = list((Array.isArray(h.floors) ? h.floors : []).concat(out.rooms.map(R => R.floor)), HOME_FLOORS.length);
         if (h.inv && typeof h.inv === 'object')
@@ -29567,8 +30005,12 @@
             this.homeAt = 0;
             this.homeFloor = this.add.tileSprite(0, 0, D.w, D.h, bakeHomeFloor(this, 0)).setOrigin(0).setTileScale(1 / TEX).setDepth(-1000);
             this.homeWall = this.add.tileSprite(0, 0, D.w, HOME.WALL, bakeHomeWall(this, 0)).setOrigin(0).setTileScale(1 / TEX).setDepth(-950);
-            this.add.image(0, 0, 'ground_home').setOrigin(0).setDepth(-900);
+            this.homeFrame = this.add.image(0, 0, 'ground_home').setOrigin(0).setDepth(-900);
             this.tag(cx, D.h - 76, 'Exit', -400, 12);
+            this.homeBack = { img: this.add.image(cx, HOME.WALL + 6, 'backdoor').setOrigin(0.5, 1).setScale(1 / TEX).setDepth(-885), tag: this.tag(cx, HOME.WALL + 10, 'Back yard', -400, 11).setColor('#ffe9a8') };
+            this.hotspot('room', cx, HOME.WALL + 34, 26, new Phaser.Geom.Rectangle(cx - 48, HOME.WALL - 128, 96, 140), { room: 'yard' });
+            this.homeBack.spot = this.hotspots[this.hotspots.length - 1];
+            this.homeBack.hit = this.homeBack.spot.hit;
             this.hotspot('door', cx, D.h - 50, 26, new Phaser.Geom.Rectangle(cx - 60, D.h - 92, 120, 92), { door: D.home });
             this.homeDoors = [-1, 1].map(dir => {
                 const x = dir > 0 ? F.x + F.w - 10 : F.x + 10, img = this.add.image(dir > 0 ? D.w - 70 : 70, Y, 'sidedoor').setOrigin(0, 0.5).setScale(dir / TEX, 1 / TEX).setDepth(-890);
@@ -29584,25 +30026,42 @@
             this.homeHintText = '';
             this.homeShowRoom(0);
         }
-        homeRoom() { return this.homeOf.rooms[this.homeAt] || this.homeOf.rooms[0]; }
-        homeSides() { return [this.homeAt > 0, this.homeAt < this.homeOf.rooms.length - 1]; }
+        homeRoom() { if (this.homeAt === -1) {
+            if (!this.homeOf.yard)
+                this.homeOf.yard = { wall: 0, floor: 0, items: [] };
+            return this.homeOf.yard;
+        } return this.homeOf.rooms[this.homeAt] || this.homeOf.rooms[0]; }
+        homeSides() { return this.homeAt === -1 ? [false, false, true] : [this.homeAt > 0, this.homeAt < this.homeOf.rooms.length - 1, this.homeAt === 0]; }
         homeShowRoom(n, from) {
             const rooms = this.homeOf.rooms, F = HOME.FLOOR;
             this.homeDrop(false);
             this.homeStand(true);
-            this.homeAt = clamp(n, 0, rooms.length - 1);
+            this.homeAt = n === -1 ? -1 : clamp(n, 0, rooms.length - 1);
             this.homeRecs.slice().forEach(rec => this.homeTake(rec));
             this.homeStyle();
             this.homeRoom().items.forEach(it => this.homePut(it));
             this.homeDoors.forEach(dr => {
-                const to = this.homeAt + dr.dir, there = to >= 0 && to < rooms.length;
+                const to = this.homeAt + dr.dir, there = this.homeAt >= 0 && to >= 0 && to < rooms.length;
                 dr.img.setVisible(there);
                 dr.tag.setVisible(there).setText(there ? 'Room ' + (to + 1) : '');
                 dr.spot.r = there ? 24 : 0;
                 dr.spot.hit = there ? dr.hit : new Phaser.Geom.Rectangle(0, 0, 0, 0);
                 dr.spot.inside = null;
             });
-            if (from !== undefined && this.pz) {
+            {
+                const B = this.homeBack, on = this.homeAt <= 0;
+                B.img.setVisible(on);
+                B.tag.setVisible(on).setText(this.homeAt === -1 ? 'Go inside' : 'Back yard');
+                B.spot.room = this.homeAt === -1 ? 'in' : 'yard';
+                B.spot.r = on ? 26 : 0;
+                B.spot.hit = on ? B.hit : new Phaser.Geom.Rectangle(0, 0, 0, 0);
+                B.spot.inside = null;
+            }
+            if (from === 'back' && this.pz) {
+                this.clearTarget();
+                this.pz.body.reset(this.D.w / 2, HOME.WALL + 110 - FOOT);
+            }
+            else if (from !== undefined && this.pz) {
                 this.clearTarget();
                 if (from)
                     this.pz.body.reset(from > 0 ? F.x + 96 : F.x + F.w - 96, HOME.DOOR_Y - FOOT);
@@ -29612,7 +30071,11 @@
             if (ui.onHome)
                 ui.onHome();
         }
-        homeGo(dir) { const n = this.homeAt + dir; if (n >= 0 && n < this.homeOf.rooms.length) {
+        homeGo(dir) { if (dir === 'yard' || dir === 'in') {
+            sfx.pop();
+            this.homeShowRoom(dir === 'yard' ? -1 : 0, 'back');
+            return;
+        } const n = this.homeAt + dir; if (n >= 0 && n < this.homeOf.rooms.length) {
             sfx.pop();
             this.homeShowRoom(n, dir);
         } }
@@ -29875,7 +30338,13 @@
         }
         homeFlip() { const h = this.homeEdit && this.homeEdit.held; if (!h)
             return; h.it.f = h.it.f ? 0 : 1; this.homeGhost(); sfx.tick(); }
-        homeStyle() { const R = this.homeRoom(); this.homeFloor.setTexture(bakeHomeFloor(this, R.floor)); this.homeWall.setTexture(bakeHomeWall(this, R.wall)); }
+        homeStyle() {
+            const R = this.homeRoom(), yard = this.homeAt === -1;
+            this.homeFloor.setTexture(yard ? bakeYardGround(this, R.floor) : bakeHomeFloor(this, R.floor));
+            this.homeWall.setTexture(yard ? bakeYardBack(this, R.wall) : bakeHomeWall(this, R.wall));
+            if (this.homeFrame)
+                this.homeFrame.setTexture(yard ? 'ground_yard' : 'ground_home');
+        }
         homeUpdate() {
             const E = this.homeEdit;
             if (E.held && E.ghost) {
@@ -38515,7 +38984,7 @@
             }
             return FURN.filter(d => d.cat === fs.cat && !d.prize).map(d => ({ id: d.id, d, c: fsColor(d), name: d.name, price: d.price }));
         }
-        function drawStyleTile(cv, walls, i) {
+        function drawStyleTile(cv, walls, i, yard) {
             const c = cv.getContext('2d'), k = cv.height / (walls ? 170 : 128);
             c.setTransform(1, 0, 0, 1, 0, 0);
             c.clearRect(0, 0, cv.width, cv.height);
@@ -38525,7 +38994,7 @@
                 c.beginPath();
                 c.rect(0, 0, 128, walls ? 170 : 128);
                 c.clip();
-                (walls ? drawHomeWall : drawHomeFloor)(c, i);
+                (yard ? (walls ? drawYardBack : drawYardGround) : walls ? drawHomeWall : drawHomeFloor)(c, i);
                 c.restore();
             }
         }
@@ -38668,14 +39137,16 @@
         }
         function paintHomeInfo() {
             const s = scene(), H = s && s.homeOf ? s.homeOf : hv.visit ? hv.visit.home : G.home, n = H.rooms.length, at = s && s.homeOf ? s.homeAt : 0;
-            homeInfo.textContent = (hv.visit ? 'Visiting ' + hv.visit.name : 'My ' + HOME.SIZES[n - 1]) + ' · room ' + (at + 1) + ' of ' + n;
+            homeInfo.textContent = (hv.visit ? 'Visiting ' + hv.visit.name : 'My ' + HOME.SIZES[n - 1]) + (at === -1 ? ' · back yard' : ' · room ' + (at + 1) + ' of ' + n);
         }
         function paintTray() {
             paintHomeInfo();
             if (!hm.edit)
                 return;
-            const s = scene(), held = s && s.homeEdit ? s.homeEdit.held : null, Hm = G.home, at = roomAt(), R = Hm.rooms[at] || Hm.rooms[0], more = Hm.rooms.length < HOME.ROOMS.length;
-            trayBtns.forEach((b, i) => b.setAttribute('aria-pressed', String(TRAY_TABS[i][0] === hm.tab)));
+            const s = scene(), held = s && s.homeEdit ? s.homeEdit.held : null, Hm = G.home, at = roomAt(), yard = at === -1, R = yard ? (Hm.yard || (Hm.yard = { wall: 0, floor: 0, items: [] })) : Hm.rooms[at] || Hm.rooms[0], more = Hm.rooms.length < HOME.ROOMS.length;
+            trayBtns.forEach((b, i) => { b.setAttribute('aria-pressed', String(TRAY_TABS[i][0] === hm.tab)); if (TRAY_TABS[i][0] === 'walls')
+                b.textContent = yard ? 'Fence' : 'Wallpaper'; if (TRAY_TABS[i][0] === 'floors')
+                b.textContent = yard ? 'Ground' : 'Floors'; });
             if (hm.tab === 'furn') {
                 hm.list = Object.keys(Hm.inv).map(key => { const [t, c] = key.split(':'); return { t, c: Number(c), d: FURN_BY[t], n: Hm.inv[key] }; }).filter(x => x.d && x.n > 0)
                     .sort((a, b) => FURN.indexOf(a.d) - FURN.indexOf(b.d) || a.c - b.c);
@@ -38689,11 +39160,13 @@
                     hm.list = FURN.filter(d => d.build).map(d => ({ t: d.id, c: d.pal === 'wood' ? hm.wood : hm.paint, d, n: 0, free: true }));
             }
             else if (hm.tab === 'rooms')
-                hm.list = Hm.rooms.map((room, i) => ({ room: i, R: room, on: i === at })).concat(more ? [{ add: HOME.ROOMS[Hm.rooms.length] }] : []);
+                hm.list = Hm.rooms.map((room, i) => ({ room: i, R: room, on: i === at })).concat(more ? [{ add: HOME.ROOMS[Hm.rooms.length] }] : [], [{ yardTile: true, on: yard }]);
+            else if (yard)
+                hm.list = (hm.tab === 'walls' ? YARD_BACKS : YARD_GROUNDS).map((x, i) => ({ style: i, yardStyle: true, on: (hm.tab === 'walls' ? R.wall : R.floor) === i }));
             else
                 hm.list = (hm.tab === 'walls' ? Hm.walls : Hm.floors).map(i => ({ style: i, on: (hm.tab === 'walls' ? R.wall : R.floor) === i }));
             trayList.replaceChildren(...hm.list.map((x, i) => {
-                const name = x.back ? 'Back' : x.sw ? x.name : x.d ? cap(furnName(x.d, x.c)) : x.add ? 'Add a room for ' + x.add + ' Coins' : x.R ? 'Room ' + (x.room + 1) : (hm.tab === 'walls' ? HOME_WALLS : HOME_FLOORS)[x.style].name;
+                const name = x.back ? 'Back' : x.sw ? x.name : x.d ? cap(furnName(x.d, x.c)) : x.add ? 'Add a room for ' + x.add + ' Coins' : x.R ? 'Room ' + (x.room + 1) : x.yardTile ? 'Back yard' : x.yardStyle ? (hm.tab === 'walls' ? YARD_BACKS : YARD_GROUNDS)[x.style].name : (hm.tab === 'walls' ? HOME_WALLS : HOME_FLOORS)[x.style].name;
                 const b = el('button', 'tray-tile' + (x.add ? ' tray-add' : ''), { type: 'button', 'data-i': i, title: name, 'aria-label': name + (x.free ? ', free' : x.d ? ', ' + x.n + ' in storage' : ''), 'aria-pressed': String(x.d ? !!held && !held.from && held.it.t === x.t && held.it.c === x.c : !!x.on) });
                 if (x.add) {
                     b.append(node('b', '', hm.sure ? 'Sure?' : '+ Room'), node('small', '', x.add + 'c'));
@@ -38719,11 +39192,15 @@
                     drawFurnTile(cv, x.d, x.c);
                 else if (x.R)
                     drawRoomTile(cv, x.R);
+                else if (x.yardTile)
+                    drawYardTile(cv, Hm.yard || { wall: 0, floor: 0 });
                 else
-                    drawStyleTile(cv, hm.tab === 'walls', x.style);
+                    drawStyleTile(cv, hm.tab === 'walls', x.style, x.yardStyle);
                 b.appendChild(cv);
                 if (x.R)
                     b.appendChild(node('span', '', 'Room ' + (x.room + 1)));
+                if (x.yardTile)
+                    b.appendChild(node('span', '', 'Back yard'));
                 if (x.d && x.n > 1)
                     b.appendChild(node('em', '', '×' + x.n));
                 return b;
@@ -38834,6 +39311,14 @@
                     s.homeShowRoom(x.room, 0);
                 }
             }
+            else if (x.yardTile) {
+                hm.sure = false;
+                hm.note = '';
+                if (s.homeAt !== -1) {
+                    sfx.pop();
+                    s.homeShowRoom(-1, 'back');
+                }
+            }
             else {
                 const R = s.homeRoom();
                 if (hm.tab === 'walls')
@@ -38895,13 +39380,19 @@
             }
         });
         const HOUSE_WAIT = 3000, HOUSE_MAX = 60000;
-        const housePack = h => JSON.stringify(h.rooms.map(R => [R.wall, R.floor, R.items.map(it => [it.t, it.c, it.x, it.y, it.r || 0, it.f ? 1 : 0, it.on ? 1 : 0])]));
+        const packRoom = R => [R.wall, R.floor, R.items.map(it => [it.t, it.c, it.x, it.y, it.r || 0, it.f ? 1 : 0, it.on ? 1 : 0])];
+        const housePack = h => JSON.stringify(h.rooms.map(packRoom).concat(h.yard ? [['Y'].concat(packRoom(h.yard))] : []));
         function houseUnpack(text) {
             try {
                 const a = JSON.parse(text);
                 if (!Array.isArray(a) || !a.length)
                     return null;
-                return a.map(R => (Array.isArray(R) ? { wall: R[0], floor: R[1], items: (Array.isArray(R[2]) ? R[2] : []).map(q => (Array.isArray(q) ? { t: q[0], c: q[1], x: q[2], y: q[3], r: q[4], f: q[5], on: q[6] } : null)) } : null));
+                const room = R => (Array.isArray(R) ? { wall: R[0], floor: R[1], items: (Array.isArray(R[2]) ? R[2] : []).map(q => (Array.isArray(q) ? { t: q[0], c: q[1], x: q[2], y: q[3], r: q[4], f: q[5], on: q[6] } : null)) } : null);
+                const y = a.length > 1 && Array.isArray(a[a.length - 1]) && a[a.length - 1][0] === 'Y' ? a.pop().slice(1) : null;
+                const rooms = a.map(room);
+                if (y)
+                    rooms.yard = room(y);
+                return rooms;
             }
             catch (e) {
                 return null;
@@ -38946,7 +39437,7 @@
             if (!s || s.leaving || busy())
                 return '';
             const was = hv.visit;
-            hv.visit = { id, name: f.name, home: cleanHome({ owned: true, rooms }) };
+            hv.visit = { id, name: f.name, home: cleanHome({ owned: true, rooms, yard: rooms.yard }) };
             s.travelTo('home', true);
             if (!s.leaving) {
                 hv.visit = was;
@@ -45682,6 +46173,7 @@
             const wk = armoryWeek(), Dg = dailyDelve(dayNumber()), n = armory().list.length + ['o', 'b', 'f'].reduce((a, k) => a + collCat(k).list.length, 0);
             const page = {
                 news: ['What\'s new', ['<b>NEW!</b> Wando Motors is open on the Village Green. 6 collector cars every Monday!',
+                        '<b>Back yards!</b> Go out your back door and decorate outside. Trees, pools, swings and more at Homestead!',
                         '<b>Taxi!</b> Drive around the Green and pick people up for Coins.',
                         '<b>Wash & Wax</b> makes your car sparkle all day. Every car has its own horn too.',
                         '<b>Ride along</b> with your friends. Tap them while they drive!',
