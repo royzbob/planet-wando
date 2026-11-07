@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794046328';
+window.WANDO_BUILD = '1794046492';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -8878,6 +8878,12 @@ window.WANDO_BUILD = '1794046328';
   FURN.forEach(d => { d.kind = d.kind || 'floor'; FURN_BY[d.id] = d; });
   const furnColors = d => (d.pal === 'wood' ? FURN_WOODS.length : d.pal === 'fabric' ? FURN_FABRICS.length : 1);
   const furnKey = (id, c) => id + ':' + c;
+  // This week's picks at Homestead: six pieces, a quarter off, new every Monday (the same for everyone that week)
+  function furnWeekPicks(w = armoryWeek()) {
+    const R = rng(dunHash(w, 4242)), pool = FURN.filter(d => !d.prize && !d.build && d.kind === 'floor'), out = [];
+    for (let t = 0; t < 200 && out.length < 6; t++) { const d = pool[Math.floor(R() * pool.length)]; if (out.some(p => p.d === d)) continue; const c = Math.floor(R() * furnColors(d)); out.push({ d, c, price: Math.max(5, Math.round(d.price * 0.75 / 5) * 5) }); }
+    return out;
+  }
   const furnName = (d, c) => (c >= 100 && furnCollOf(c) ? furnCollOf(c).name : d.pal === 'wood' ? FURN_WOODS[c][0] + ' ' : d.pal === 'fabric' ? FURN_FABRICS[c][0] + ' ' : '') + d.name.charAt(0).toLowerCase() + d.name.slice(1);
   // The colours a design is drawn in: a/b/c = the wood (main, dark, light), f/fd/fl = the fabric.
   function furnPalette(d, ci) {
@@ -16582,8 +16588,10 @@ window.WANDO_BUILD = '1794046328';
         this.displays.push({ x, y: y + 22, id: furnKey(id, c), kind: 'furn', near: true, tag, hit: new Phaser.Geom.Rectangle(x - d.w / 2, y - d.h, d.w, d.h + 8) });
       };
       [['rug-rect', 1, 250, 560], ['sofa', 1, 250, 520], ['coffee', 0, 250, 590], ['armchair', 3, 120, 640], ['lamp', 3, 360, 500], ['bookshelf', 1, 130, 330], ['wardrobe', 2, 250, 330], ['plant', 2, 350, 330],
-        ['fireplace', 0, 740, 330], ['tv', 0, 880, 330], ['rug-round', 5, 860, 540], ['double', 4, 880, 540], ['side', 0, 985, 500], ['piano', 3, 880, 700], ['dining', 0, 620, 600], ['chair', 0, 545, 600], ['chair', 0, 695, 600], ['aquarium', 4, 420, 670]]
+        ['fireplace', 0, 740, 330], ['tv', 0, 880, 330], ['rug-round', 5, 860, 540], ['double', 4, 880, 540], ['side', 0, 985, 500], ['dining', 0, 620, 600], ['chair', 0, 545, 600], ['chair', 0, 695, 600]]
         .forEach(a => show(a[0], a[1], a[2], a[3]));
+      furnWeekPicks().slice(0, 4).forEach((p, i) => { const x = [250, 400, 700, 850][i], y = 712; this.add.image(x, y - 4, 'glow').setDisplaySize(150, 46).setTint(0xffe9a8).setAlpha(0.45).setDepth(-870); show(p.d.id, p.c, x, y); });   // this week's picks, by the door
+      this.tag(325, 724, '★ This week\'s picks: 25% off', -400, 11).setColor('#ffe066'); this.tag(775, 724, '★ New picks every Monday', -400, 11).setColor('#ffe066');
       this.npc(480, 470, 2, 'Fern');
     }
     // Star Arcade: four cabinets along the back wall, each one a game, in a dim room lit by its screens and neon.
@@ -25423,7 +25431,8 @@ window.WANDO_BUILD = '1794046328';
         } };
       return { id: 'furn', title: 'Homestead', sub: 'Furniture catalog', color: '#7fd06a', burst: 'Everything for your home!', per: 6,
         keeper: keeperLook({ body: 1, fringe: 2, back: 2, top: 1, topStyle: 2 }),
-        sections: () => FS_CATS.map(([cat, name]) => { const keepCat = fs.cat; fs.cat = cat; const list = furnItems(); fs.cat = keepCat; return { name, items: list.map(item) }; }) };
+        sections: () => [{ name: 'This week\'s picks', blurb: 'A quarter off, this week only. New picks every Monday.', items: furnWeekPicks().map(p => Object.assign(item({ id: 'pick:' + p.d.id + ':' + p.c, d: p.d, c: p.c, name: cap(furnName(p.d, p.c)), price: p.price }), { tag: '25% off · was ' + p.d.price })) }]
+          .concat(FS_CATS.map(([cat, name]) => { const keepCat = fs.cat; fs.cat = cat; const list = furnItems(); fs.cat = keepCat; return { name, items: list.map(item) }; })) };
     }
     function storeBook(shop) {                               // a hat or accessory store: everything it sells, drawn on you
       const cats = CLOSET_CATS.filter(C => C.store === shop);
@@ -25826,6 +25835,10 @@ window.WANDO_BUILD = '1794046328';
         art('Weather', weatherNow() === 'rain' ? 'RAIN over the Village Green and Starfish Beach this hour. Anglers rejoice: fish bite faster in the rain!' : 'Clear skies this hour. When it rains, fish bite faster.'),
         (() => { const ads = []; net.peers.forEach(p => { if (!p.mine && p.ad) ads.push(p.name + ': "' + p.ad + '"'); }); return ads.length ? art('Classifieds', ...ads.slice(0, 6), 'Find them at the Trading Manor.') : null; })(),
         trickOn() ? art('Trick or Treat!', 'It is Halloween on Planet Wando! Walk up to any of the townsfolk, in every place, and they give you a candy (once each a day). Swap your candies at the bubbling cauldron for Coins, a Spooky Violet teddy, or the Friendly Ghost and Pumpkin Patch costumes. You have ' + (G.fan.cy || 0) + ' candies.') : null,
+        art('Wando Motors', 'This week\'s collector cars: ' + carCollWeek().map(d => d.name + ' (' + RARITIES[d.r][0] + ')').join(', ') + '. Sold this week only, each with its own serial number. Walk into the showroom on the Village Green!'),
+        art('Homestead Picks', 'A quarter off this week: ' + furnWeekPicks().map(p => cap(furnName(p.d, p.c))).join(', ') + '. New picks every Monday.'),
+        feastOn() ? art('The Harvest Feast', 'Happy Thanksgiving! A table of food is laid out on the Village Green all week: grab a free plate once a day, and look out for twice the acorns.') : null,
+        art('Roads Open', 'The paths now lead somewhere! Walk off the Village Green to Starfish Beach, Cosmo Mall or Frostwood Lake, and on from there to the Trading Manor, the Neon Dance House, the Crystal Cave and the Hollow Crypt.'),
         art('Frostwood Lake', 'Fish of the Week: the ' + ICE_FISH[iceWeekFish()][1] + ' (' + ICE_TIERS[ICE_FISH[iceWeekFish()][2]] + '). Catch one this week for double fishing XP; Captain Floe pays double for it too. Catch enough of any kind and you earn its mounted trophy for your wall (and trophies can be traded). The Frostwood Derby starts on the hour and every 20 minutes after: most pounds in 4 minutes wins.'),
         art('New in Town', 'The ice cream truck now drives out of the plaza: catch it when it stops for a cone and a sugar rush. Toss a coin in the Wishing Fountain. Kick a ball into a goal on the pitch, push the swings at the playground, race the Green Grand Prix, and find the chest in the Hedge Maze (a new maze every day!). After dark, click a shooting star to make a wish. At Starfish Beach, ride the Big Wheel, build a sandcastle and watch the crabs. The mall has a Claw Machine full of teddies, and the Neon Dance House plays Freeze Dance!'),
         art('Rare of the Day', 'Today only at the Tailor: the ' + rareToday().name + ', 1,500 Coins. Tomorrow it is gone, and a different rare takes its place.'),
