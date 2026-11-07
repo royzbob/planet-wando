@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794048654';
+window.WANDO_BUILD = '1794048987';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -11277,7 +11277,7 @@ window.WANDO_BUILD = '1794048654';
     const rr = rand || Math.random;
     if (CAR_PRIZE[src] && rr() < CAR_PRIZE[src]) {
       const wk = armoryWeek(), pool = [1, 2, 3, 4].flatMap(k => carCollWeek(wk - k)).filter(d => d && d.r <= 3), d = pool.length ? pool[Math.floor(rr() * pool.length)] : null;
-      if (d) { const car = collCar(d); G.boards.push(car); saveGame(); const p = { kind: 'k', d, car }; if (ui.onPrize) ui.onPrize(p); return p; }
+      if (d) { const car = collCar(d); G.boards.push(car); saveGame(); const p = { kind: 'k', d, car }; if (ui.onPrize) ui.onPrize(p); if (ui.onEvent) ui.onEvent('prize', { kind: 'k', id: d.id }); return p; }
     }
     const p = collPrize(src, rr);
     if (!p) return null;
@@ -24839,6 +24839,7 @@ window.WANDO_BUILD = '1794048654';
         const acts = node('span', 'net-acts'), f = p.uid ? friendOf(p.uid) : null;
         if (!p.mine && p.uid && socialOn() && !f) { const add = el('button', 'btn', { type: 'button', 'data-add': p.uid }); add.textContent = soc.reqs.some(r => r.from === p.uid) ? 'Accept friend' : 'Add friend'; acts.appendChild(add); }
         if (!p.mine && p.uid && socialOn() && p.loc === here) { const tb = el('button', 'btn', { type: 'button', 'data-trade': p.uid }); tb.textContent = 'Trade'; acts.appendChild(tb); }
+        if (!p.mine && p.car && p.loc === here) { const sc = scene(), on = sc && sc.ride && sc.ride.id === String(p.id), rb = el('button', 'btn', { type: 'button', 'data-ride': String(p.id) }); rb.textContent = on ? 'Hop out' : '🚗 Ride along'; acts.appendChild(rb); }
         if (p.loc !== here && p.loc !== 'home') { const go = el('button', 'btn', { type: 'button', 'data-go': p.loc }); go.textContent = 'Go there'; acts.appendChild(go); }
         if (!p.mine) { const mk = p.uid || 'tab:' + p.id, mb = el('button', 'btn' + (isMuted(mk) ? ' muted' : ''), { type: 'button', 'data-mute': mk, title: isMuted(mk) ? 'Show what ' + p.name + ' says again' : 'Hide everything ' + p.name + ' says or sends you' }); mb.textContent = isMuted(mk) ? 'Unmute' : 'Mute'; acts.appendChild(mb); }
         if (p.party && p.uid && !p.mine) { const pb = el('button', 'btn', { type: 'button', 'data-party': p.uid }); pb.textContent = f && f.ok ? 'Join party!' : 'Party! (friends only)'; pb.disabled = !(f && f.ok); acts.appendChild(pb); }
@@ -24867,6 +24868,8 @@ window.WANDO_BUILD = '1794048654';
       if (add) { const p = peerOf(add.dataset.add), line = friendAsk(add.dataset.add, p ? p.name : 'Player'), sc = scene(); if (sc && line) sc.note(line, '#ffd0f0'); paintNet(); return; }
       const tb = e.target.closest('[data-trade]');
       if (tb) { const p = peerOf(tb.dataset.trade), line = tradeAsk(tb.dataset.trade, p ? p.name : 'Player'), sc = scene(); netPop.hidden = true; netBtn.setAttribute('aria-expanded', 'false'); if (sc && line) { sc.noteUntil = 0; sc.note(line, '#ffe9a8'); } return; }
+      const rd = e.target.closest('[data-ride]');
+      if (rd) { const sc = scene(); if (!sc) return; netPop.hidden = true; netBtn.setAttribute('aria-expanded', 'false'); if (sc.ride && sc.ride.id === rd.dataset.ride) sc.rideEnd('You hopped out.'); else sc.rideAlong(rd.dataset.ride); return; }
       const pj = e.target.closest('[data-party]');
       if (pj) { netPop.hidden = true; netBtn.setAttribute('aria-expanded', 'false'); houseVisit(pj.dataset.party).then(line => { const sc = scene(); if (line && sc) sc.note(line, '#ffd0f0'); }); return; }
       const b = e.target.closest('[data-go]'), s = scene();
