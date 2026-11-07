@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794050983';
+window.WANDO_BUILD = '1794051081';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -18005,7 +18005,7 @@ window.WANDO_BUILD = '1794050983';
     // Shared by every location: player, camera, input and lifecycle.
     finishCreate() {
       const D = this.D;
-      SCENE_NOW = this; this.parkFor = null; this.parkImg = null; this.carWalk = 0; this.ride = RIDE_WITH ? { id: RIDE_WITH, wait: 0 } : null; this.taxi = null; this.taxiAt = 0;
+      SCENE_NOW = this; this.parkFor = null; this.parkImg = null; this.carWalk = 0; this.ride = RIDE_WITH ? { id: RIDE_WITH, wait: 0 } : null; this.taxi = null; this.taxiAt = 0; this.taxiTag = this.taxiGlow = this.taxiRider = null; this.beams = null; this.shineFx = null;
       if (G.riding && G.board && G.board.kind === 'car' && !CAR_LOCS.includes(this.loc)) { G.riding = false; G.park = null; }   // (no driving in here: it went back to the lot)
       this.buildPlayer();
 
@@ -18670,6 +18670,7 @@ window.WANDO_BUILD = '1794050983';
     }
     taxiDrop(msg) {
       if (this.taxiTag) { this.taxiTag.destroy(); this.taxiGlow.destroy(); this.taxiTag = this.taxiGlow = null; }
+      if (this.taxiRider) { this.taxiRider.destroy(); this.taxiRider = null; }
       this.taxi = null; if (msg) this.note(msg, '#ffe9a8');
     }
     taxiTick(time) {
@@ -18681,11 +18682,15 @@ window.WANDO_BUILD = '1794050983';
       if (spots.length < 2) return;
       const fx = this.pz.x, fy = this.pz.y + FOOT;
       if (this.taxiTag) { this.taxiTag.y = this.taxiTag.baseY - Math.abs(Math.sin(time * 0.005)) * 8; this.taxiGlow.setAlpha(0.45 + 0.2 * Math.sin(time * 0.008)); }
+      if (T && T.stage === 'ride') {                         // your passenger, riding in the back
+        if (!this.taxiRider) { this.taxiRider = this.tag(0, 0, T.who, 0, 22); this.taxiRider.setStroke('#2a2233', 0); }
+        const end = this.carEndNow || '', face = this.flip < 0 ? -1 : 1; this.taxiRider.setPosition(this.pz.x + (end ? 22 : -face * 26), fy - 92).setDepth(fy + 1);
+      }
       if (!T) {
         if (!this.taxiAt) this.taxiAt = time + 9000;
         if (G.taxi[1] >= TAXI.max || time < this.taxiAt) return;
         const far = spots.filter(h => Math.hypot(h.x - fx, h.y - fy) > 450), from = any(far.length ? far : spots);
-        this.taxi = { stage: 'wait', from, to: null, dist: 0 }; this.taxiMark(from.x, from.y + 60, '🙋 Taxi!');
+        this.taxi = { stage: 'wait', from, to: null, dist: 0, who: any(['🧑', '👩', '👴', '👵', '👦', '👧', '🧔', '👱']) }; this.taxiMark(from.x, from.y + 60, this.taxi.who + ' Taxi!');
         this.note('🚕 Someone by ' + LOCS[from.door].name + ' wants a ride! Drive over to pick them up.', '#ffe9a8'); return;
       }
       const at = T.stage === 'wait' ? T.from : T.to;
