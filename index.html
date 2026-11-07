@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794077787';
+<script>window.WANDO_BUILD = '1794078230';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2943,7 +2943,7 @@
             <button type="button" data-gscreen="coll" aria-pressed="false">Collections</button>
             <button type="button" data-gscreen="help" aria-pressed="false">How to play</button>
           </nav>
-          <div class="gate-ticker" aria-hidden="true"><span id="gate-ticker-text">Welcome to Planet Wando! Open beta: thanks for playing, and tell us what you think!</span></div>
+          <div class="gate-ticker" aria-hidden="true"><span id="gate-ticker-text">Welcome to Planet Wando! Open beta. Thanks for playing!</span></div>
         </div>
         <div class="gate-login">
           <span class="gate-login-label" id="gate-login-label">Player</span>
@@ -3006,7 +3006,7 @@
           <input id="gate-up-pw" class="gate-input" type="password" autocomplete="new-password" placeholder="At least 6 characters">
           <p class="gate-foot">Sign in with these on any computer to get your player back.</p>
         </div>
-        <label id="gate-replace-row" class="gate-check" hidden><input id="gate-replace" type="checkbox"> <span>Replace my current player with a brand-new one. Its Coins, gear and progress will be gone.</span></label>
+        <label id="gate-replace-row" class="gate-check" hidden><input id="gate-replace" type="checkbox"> <span>Replace my player with a new one (you lose everything!)</span></label>
         <p id="gate-up-error" class="gate-error" role="alert"></p>
         <button id="gate-up-go" class="btn gate-go" type="submit">Next: create your character</button>
         <p id="gate-up-have" hidden>Already have an account? <button id="gate-up-signin" class="gate-linkish" type="button">Sign in with email</button></p>
@@ -3031,7 +3031,7 @@
           <div class="gate-portrait"><canvas id="gate-me" width="400" height="432" role="img" aria-label="Your character"></canvas></div>
           <div id="gate-rows" class="gate-rows"></div>
         </div>
-        <p>You can change all of this later in the Wardrobe, and add outfits from the Tailor.</p>
+        <p>You can change this later.</p>
         <div class="gate-actions">
           <button id="gate-back" class="btn plain" type="button">Back</button>
           <button id="gate-shuffle" class="btn plain" type="button">Shuffle</button>
@@ -3341,10 +3341,10 @@
             <details class="dash-help">
               <summary>Quick reminder of the job</summary>
               <ol class="dash-how">
-                <li>Drag a waiting group to a table (or click the group, then the table).</li>
-                <li>When they wave (!), click the table to take the order, then click ORDERS to hang the slip.</li>
+                <li>Drag guests to a table.</li>
+                <li>When they wave (!), take the order, then click ORDERS.</li>
                 <li>Click a cake on the counter, then the table with its number.</li>
-                <li>Click the table for the money ($), click it again to clear it, then click DISHES.</li>
+                <li>Take the money ($), clear the table, then click DISHES.</li>
               </ol>
               <p class="dash-tip">Same job in a row = combo! Matching chair colours = bonus. Run out of hearts and they leave!</p>
             </details>
@@ -3445,7 +3445,7 @@
           <button id="reel-go" class="btn" type="button">Hold to reel</button>
           <button id="fight-right" class="btn fight-steer" type="button" aria-label="Pull the rod right">Rod &#9654;</button>
         </div>
-        <p class="hover-note">Hold <b>Space</b> (or the button, or the water) to reel. <b>A</b> and <b>D</b> (or the arrows) pull the rod left and right: pull against the fish to turn it and tire it. Let go when it runs or jumps. Too tight snaps the line; too slack and it throws the hook; let it run too far and it takes all your line.</p>
+        <p class="hover-note">Hold <b>Space</b> (or the button, or the water) to reel. <b>A</b> and <b>D</b> (or arrows) pull against the fish. Let go when it runs or jumps!</p>
       </div>
       <div id="reel-result" hidden>
         <p id="reel-info" class="tailor-info" role="status"></p>
@@ -3610,13 +3610,13 @@
     };
     const PGAMES = {
         candy: { name: 'Candy Catch', how: 'Stand under the falling sweets to catch them. Dodge the sour drops!', secs: 45, pay: 1.2, col: ['#ff5a9a', '#ffffff'], sign: [1450, 700], area: { x: 1450, y: 1000, w: 640, h: 420 }, reserve: [[1450, 1000, 320]], start: 'candyStart', tick: 'candyTick' },
-        neon: { name: 'Neon Racer', how: 'Run (or drive!) through the glowing gates in order, as fast as you can.', secs: 120, race: true, col: ['#1a1038', '#ff3df2'], sign: [300, 980],
+        neon: { name: 'Neon Racer', how: 'Go through the gates as fast as you can!', secs: 120, race: true, col: ['#1a1038', '#ff3df2'], sign: [300, 980],
             gates: [[640, 1000], [1100, 920], [1500, 1020], [1780, 820], [1620, 520], [1220, 400], [820, 430], [260, 640], [520, 820], [380, 1200]], start: 'raceStart', tick: 'raceTick' },
-        ice: { name: 'Snowball Showdown', how: 'Click the snowmen to throw snowballs before they duck. Keep moving: they throw back!', secs: 60, pay: 3, col: ['#3fa7f5', '#ffffff'], sign: [1460, 560], arena: { x: 1460, y: 960, r: 300 }, reserve: [[1460, 960, 340]], start: 'snowStart', tick: 'snowTick', click: 'snowClick' },
-        green: { name: 'Green Grand Prix', how: 'Run (or drive!) through the gates round the village in order, as fast as you can.', secs: 150, race: true, col: ['#1a6a3a', '#ffe066'], sign: null,
+        ice: { name: 'Snowball Showdown', how: 'Hit the snowmen with snowballs! They throw back!', secs: 60, pay: 3, col: ['#3fa7f5', '#ffffff'], sign: [1460, 560], arena: { x: 1460, y: 960, r: 300 }, reserve: [[1460, 960, 340]], start: 'snowStart', tick: 'snowTick', click: 'snowClick' },
+        green: { name: 'Green Grand Prix', how: 'Race through the gates as fast as you can!', secs: 150, race: true, col: ['#1a6a3a', '#ffe066'], sign: null,
             gates: [[300, 1010], [640, 1120], [980, 1040], [1340, 700], [1460, 430], [1800, 950], [2150, 850], [2480, 930], [1500, 1220], [1900, 1470]], start: 'raceStart', tick: 'raceTick' },
-        dance: { name: 'Freeze Dance', how: 'Keep moving while the music plays. When it stops, FREEZE! Move while it is quiet and you lose points.', secs: 60, pay: 1.5, col: ['#1a1038', '#5ef2ff'], sign: null, start: 'freezeStart', tick: 'freezeTick' },
-        jungle: { name: 'Glow Bug Hunt', how: 'Get close to the glow bugs and click them to swing your net. The gold one is worth 5!', secs: 60, pay: 4, col: ['#2f6a3a', '#d8ff5a'], sign: [1460, 620], start: 'bugStart', tick: 'bugTick', click: 'bugClick' }
+        dance: { name: 'Freeze Dance', how: 'Dance while the music plays. When it stops, FREEZE!', secs: 60, pay: 1.5, col: ['#1a1038', '#5ef2ff'], sign: null, start: 'freezeStart', tick: 'freezeTick' },
+        jungle: { name: 'Glow Bug Hunt', how: 'Click the glow bugs to catch them. Gold ones = 5!', secs: 60, pay: 4, col: ['#2f6a3a', '#d8ff5a'], sign: [1460, 620], start: 'bugStart', tick: 'bugTick', click: 'bugClick' }
     };
     PGAMES.neon.reserve = PGAMES.neon.gates.map(([x, y]) => [x, y, 80]);
     const MISSIONS_OLD = [['candy', 'Harvest 30 crops on the Sugar Farm', 30], ['neon', 'Make 5 deliveries for Neon Express', 5], ['ice', 'Catch 8 fish ice fishing', 8],
@@ -6293,7 +6293,7 @@
             return 'Why: ' + S.auth.why;
         if (S.db && S.db.ok === false)
             return 'Why: ' + S.db.why;
-        return 'Your account did not answer in time: reload the page to try again.';
+        return 'Couldn\'t load your account. Try reloading.';
     }
     function connLines() {
         const C = window.wandoHost, S = C && C.status, out = [];
@@ -6371,7 +6371,7 @@
             catch (e) {
                 room = null;
             }
-            const off = () => { SRV.counts = false; SRV.why = (window.wandoHost && typeof window.wandoHost.why === 'string' && window.wandoHost.why) || (window.wandoHost ? 'Could not connect to the other players just now. Try again in a little while.' : ''); SRV.cbs.forEach(f => { try {
+            const off = () => { SRV.counts = false; SRV.why = (window.wandoHost && typeof window.wandoHost.why === 'string' && window.wandoHost.why) || (window.wandoHost ? 'Couldn\'t connect. Try again later.' : ''); SRV.cbs.forEach(f => { try {
                 f();
             }
             catch (e) { } }); };
@@ -6393,7 +6393,7 @@
             b.textContent = S.name;
             bl.className = 'srv-blurb';
             bl.textContent = S.blurb;
-            sm.textContent = C === null ? 'Counting players...' : C === false ? (here ? 'Offline right now: you will play alone · last played' : 'Offline right now: you will play alone') : n + ' / ' + SERVER_CAP + ' online' + (full ? ' · Full' : '') + (here ? (me ? ' · you are here' : ' · last played') : '');
+            sm.textContent = C === null ? 'Counting players...' : C === false ? (here ? 'Offline · last played' : 'Offline right now: you will play alone') : n + ' / ' + SERVER_CAP + ' online' + (full ? ' · Full' : '') + (here ? (me ? ' · you are here' : ' · last played') : '');
             bar.className = 'srv-bar';
             fill.style.setProperty('--w', (C ? Math.min(100, n / SERVER_CAP * 100) : 0) + '%');
             bar.appendChild(fill);
@@ -6497,21 +6497,21 @@
         mall: { name: 'Cosmo Mall', blurb: 'Arcade, hats, accessories, boards', w: 1800, h: 1300, bounds: { x: 70, y: 215, w: 1660, h: 1000 }, seed: 77002, bg: '#cdaaf8', fade: [60, 20, 110],
             pad: { x: 900, y: 1010 }, arrive: [0, 118], p: ['#ff9ed2', '#7b3fd1'],
             exits: { hatshop: { x: 312, y: 300 }, skateshop: { x: 652, y: 300 }, arcade: { x: 992, y: 300 }, hovershop: { x: 1332, y: 300 }, charmshop: { x: 1672, y: 300 } },
-            sign: { x: 1060, y: 1050, text: 'The stores are along the back wall: walk in through a door.\n[Up-Left] -> Top Shelf Hats, Kickflip Skate Shop | [Up] -> Star Arcade\n[Up-Right] -> Hover Hub, Charm & Shade' } },
+            sign: { x: 1060, y: 1050, text: '[Up-Left] -> Hats, Skate Shop | [Up] -> Arcade\n[Up-Right] -> Hover Hub, Charm & Shade' } },
         dance: { name: 'Neon Dance House', blurb: 'Lights, beats, dance floor', w: 1700, h: 1150, bounds: { x: 70, y: 215, w: 1560, h: 850 }, seed: 77003, bg: '#0b0718', fade: [8, 4, 24],
             pad: { x: 1520, y: 640 }, arrive: [-130, 24], floor: { x: 250, y: 250, cols: 11, rows: 7, size: 100 }, p: ['#ff3df2', '#3a1a8a'],
             sign: { x: 1440, y: 810, text: '[Left] -> Dance Floor | [Up] -> Spaceship Pad\n[Up-Left] -> DJ Booth' } },
         trade: { name: 'Trading Manor', blurb: 'Trade, show off, collect player cards', w: 1800, h: 1300, bounds: { x: 100, y: 370, w: 1600, h: 850 }, seed: 77006, bg: '#2a140c', fade: [42, 20, 12],
             pad: { x: 1560, y: 1090 }, arrive: [-150, 20], p: ['#ff5a5f', '#2f8a4a'],
-            sign: { x: 1250, y: 1150, text: 'The Trading Manor: sit at a table; whoever sits across can trade with you.\nFour rooms: see the room board | Side doors -> the Parlors | Stairs -> the Library' } },
+            sign: { x: 1250, y: 1150, text: 'Trading Manor! Sit at a table to trade.\nSide doors -> Parlors | Stairs -> Library' } },
         cave: { name: 'Crystal Cave', blurb: 'Mining, carts and gems', w: 2200, h: 1500, bounds: { x: 90, y: 268, w: 2020, h: 1152 }, seed: 77004, bg: '#120a18', fade: [18, 10, 24], under: true,
             pad: { x: 300, y: 1210 }, arrive: [0, 118], p: ['#c6f6ff', '#5a3c8a'],
             counter: { x: 860, y: 1250 },
             plant: { hx: 1470, hy: 1250, bx0: 1530, bx1: 1890, by: 1214, cx: 1990, cy: 1262 },
-            sign: { x: 540, y: 1320, text: 'Tunnel into the rock: click a block (or face it and press E).\nStrike on the green! A new seam every day.\nTip your ore in the hopper [Right] | Flint buys gems [Here]' } },
+            sign: { x: 540, y: 1320, text: 'Click a block to mine. Hit it on the green!\nHopper [Right] | Sell gems [Here]' } },
         dungeon: { name: 'Hollow Crypt', blurb: 'Goblins, ghouls and loot', w: 1800, h: 1300, bounds: { x: 90, y: 262, w: 1620, h: 950 }, seed: 77005, bg: '#0c0812', fade: [12, 8, 18], under: true,
             pad: { x: 900, y: 1080 }, arrive: [0, 118], p: ['#7ccf55', '#3a2236'],
-            sign: { x: 1060, y: 1160, text: 'The Dungeon Gate [Up] leads to the dungeons.\nClick to attack (a monster: keep at it). Hold to walk.\n1, 2, 3 are your skills. H: potion, M: mana, B: bag, stats and skills.' } },
+            sign: { x: 1060, y: 1160, text: 'Dungeon Gate [Up]\nClick to attack. 1 2 3 = skills. H = potion, M = mana, B = bag' } },
         tailor: { name: 'Tailor', interior: 'tailor', home: 'green', w: 1100, h: 800, bounds: { x: 60, y: 200, w: 980, h: 540 }, seed: 77011, bg: '#2a1a12', fade: [42, 26, 18], spawn: { x: 550, y: 664 } },
         bakery: { name: 'Bakery', interior: 'bakery', home: 'green', w: 1100, h: 800, bounds: { x: 60, y: 200, w: 980, h: 540 }, seed: 77012, bg: '#2a1a12', fade: [42, 26, 18], spawn: { x: 550, y: 664 } },
         florist: { name: 'Flower Shop', interior: 'florist', home: 'green', w: 1100, h: 800, bounds: { x: 60, y: 200, w: 980, h: 540 }, seed: 77013, bg: '#2a1a12', fade: [42, 26, 18], spawn: { x: 550, y: 664 } },
@@ -21621,30 +21621,30 @@
             return { text: 'That is the whole job. Well done!', hit: null };
         if (st.queue.length) {
             const g = st.queue[0], match = two && st.tables.find(T => T.state === 'empty' && T.seats >= g.size && g.colors.some(c => T.chairs.includes(c)));
-            return { text: two ? (match ? 'Two groups this time. Chairs keep the colour of whoever sat there last: seat guests on their own colour (table ' + match.id + ') for a bonus.' : 'Seat the next group too.')
-                    : 'Guests are waiting by the door. Drag them onto a table, or click them and then click a table.', hit: { kind: 'group', id: g.id } };
+            return { text: two ? (match ? '2 groups! Seat them on their own colour (table ' + match.id + ') for a bonus!' : 'Seat the next group too.')
+                    : 'Guests are here! Drag them to a table.', hit: { kind: 'group', id: g.id } };
         }
         if (hand('plate'))
             return { text: 'That cake is for table ' + hand('plate').table + '. Click the table to serve it.' + (two && st.hands.length === 2 ? ' Serving two tables in a row is a chain too.' : ''), hit: at(dashTable(st, hand('plate').table)) };
         if (table('check'))
-            return { text: 'They have finished and want to pay ($). Click the table to take the money.', hit: at(table('check')) };
+            return { text: 'They want to pay! Click the table.', hit: at(table('check')) };
         if (table('ready') && free)
-            return { text: two ? 'Take the order. You have two hands: take BOTH orders before going to the rail. The same job twice in a row is a chain, and pays double.'
-                    : 'They are waving (!). Click their table to take the order.', hit: at(table('ready')) };
+            return { text: two ? 'Take BOTH orders before going to the rail. Same job twice = double pay!'
+                    : 'They\'re waving! Click their table.', hit: at(table('ready')) };
         if (hand('slip') && !(two && table('reading') && free))
             return { text: 'You are holding ' + (st.hands.length > 1 ? 'the order slips' : 'the order slip') + '. Click ORDERS on the counter to hang ' + (st.hands.length > 1 ? 'them' : 'it') + ' up for the Baker.', hit: { kind: 'rail' } };
         if (st.pass.length && free)
-            return { text: 'Order up! Click the cake on the counter to pick it up.' + (two && st.pass.length > 1 ? ' Take both: one in each hand.' : ''), hit: { kind: 'pass', table: st.pass[0] } };
+            return { text: 'Order up! Grab the cake.' + (two && st.pass.length > 1 ? ' Take both: one in each hand.' : ''), hit: { kind: 'pass', table: st.pass[0] } };
         if (table('dirty') && free)
-            return { text: 'They have gone. Click the table to clear the plates.', hit: at(table('dirty')) };
+            return { text: 'They left! Clear the table.', hit: at(table('dirty')) };
         if (hand('dishes'))
-            return { text: 'Click DISHES to drop the plates in the sink. Then the table is free for the next guests.', hit: { kind: 'sink' } };
+            return { text: 'Click DISHES to drop the plates.', hit: { kind: 'sink' } };
         if (table('reading'))
-            return { text: 'They are reading the menu. The hearts over a table are its patience: in a real shift they drain while guests wait, and at none the guests walk out.', hit: null };
+            return { text: 'They\'re reading the menu. Hearts = patience. No hearts and they leave!', hit: null };
         if (st.baking || st.rail.length)
-            return { text: 'The Baker is at the oven. Each cake comes out with its table number on it.', hit: null };
+            return { text: 'Every cake has a table number on it.', hit: null };
         if (table('eating'))
-            return { text: 'They are eating. When they finish they will ask for the bill.', hit: null };
+            return { text: 'They\'re eating!', hit: null };
         return { text: 'More guests are on their way.', hit: null };
     }
     function peerState(p) {
@@ -21997,98 +21997,98 @@
         }
     }
     const ERRANDS = {
-        guide: { name: 'Juniper', loc: 'green', place: 'Village Green', done: 'You know Planet Wando better than I do now. Go on, enjoy it!', steps: [
-                { say: 'New to Planet Wando? The spaceship on the pad goes everywhere. Fly out to Starfish Beach, then come back and tell me what you saw.', goal: 'Visit Starfish Beach', on: 'visit', count: d => (d.loc === 'beach' ? 1 : 0), n: 1, r: 20 },
-                { say: 'Now the rest of town. Walk into four different shops or buildings: any doors you like.', goal: 'Walk into 4 different buildings', on: 'visit', uniq: d => (LOCS[d.loc] && LOCS[d.loc].interior ? d.loc : ''), n: 4, r: 40 },
-                { say: 'Everyone here loves a chat. Say something out loud three times: press Enter to type.', goal: 'Say something in chat 3 times', on: 'chat', n: 3, r: 25 },
-                { say: 'The Neon Dance House has the best floor in the galaxy. Go and dance on it!', goal: 'Dance in the Neon Dance House', on: 'emote', count: d => (d.kind === 'dance' && d.loc === 'dance' ? 1 : 0), n: 1, r: 40 },
-                { say: 'One last thing: walking is slow. Get yourself a skateboard or a hoverboard at Cosmo Mall.', goal: 'Own a skateboard or a hoverboard', have: () => G.boards.length, n: 1, r: 150 }
+        guide: { name: 'Juniper', loc: 'green', place: 'Village Green', done: 'You know this place better than me now! Have fun!', steps: [
+                { say: 'Hey, you\'re new! Go check out Starfish Beach, then come back and tell me about it.', goal: 'Visit Starfish Beach', on: 'visit', count: d => (d.loc === 'beach' ? 1 : 0), n: 1, r: 20 },
+                { say: 'Now go explore! Walk into 4 different shops.', goal: 'Walk into 4 different buildings', on: 'visit', uniq: d => (LOCS[d.loc] && LOCS[d.loc].interior ? d.loc : ''), n: 4, r: 40 },
+                { say: 'Don\'t be shy! Say something in chat 3 times. (Press Enter to type)', goal: 'Say something in chat 3 times', on: 'chat', n: 3, r: 25 },
+                { say: 'The Neon Dance House has the best dance floor ever. Go dance!', goal: 'Dance in the Neon Dance House', on: 'emote', count: d => (d.kind === 'dance' && d.loc === 'dance' ? 1 : 0), n: 1, r: 40 },
+                { say: 'Last thing! Walking is slow. Go get a skateboard or hoverboard at Cosmo Mall.', goal: 'Own a skateboard or a hoverboard', have: () => G.boards.length, n: 1, r: 150 }
             ] },
-        comber: { name: 'Coral', loc: 'beach', place: 'Starfish Beach', done: 'My shelf is full, thanks to you. I shall think of you every time I dust it.', steps: [
-                { say: 'I collect shells, but my back is not what it was. The Shovel Shop sells shovels: would you dig me up 6 shells?', goal: 'Dig up 6 shells', on: 'shell', n: 6, r: 50 },
-                { say: 'Lovely! Now the pretty ones. Find 2 that are Pink conch or better.', goal: 'Dig up 2 Pink conches or Golden nautiluses', on: 'shell', count: d => (d.kind === 'common' ? 0 : 1), n: 2, r: 120 },
-                { say: 'The Shovel Shop pays good Coins for shells. Sell 200 Coins worth: I do enjoy a good trade.', goal: 'Sell 200 Coins worth of shells', on: 'sell', count: d => (d.what === 'shells' ? d.coins : 0), n: 200, r: 120 },
-                { say: 'They say a Golden nautilus turns up once in a blue moon. Dig one up and I will make it worth your while.', goal: 'Dig up a Golden nautilus', on: 'shell', count: d => (d.kind === 'legendary' ? 1 : 0), n: 1, r: 400 }
+        comber: { name: 'Coral', loc: 'beach', place: 'Starfish Beach', done: 'My shelf is full! Thank you sooo much!', steps: [
+                { say: 'I collect shells but my back hurts. Can you dig up 6 shells for me? Shovels are at the Shovel Shop.', goal: 'Dig up 6 shells', on: 'shell', n: 6, r: 50 },
+                { say: 'Yay! Now the pretty ones. Find 2 Pink conches or better.', goal: 'Dig up 2 Pink conches or Golden nautiluses', on: 'shell', count: d => (d.kind === 'common' ? 0 : 1), n: 2, r: 120 },
+                { say: 'The Shovel Shop buys shells. Sell 200 Coins worth!', goal: 'Sell 200 Coins worth of shells', on: 'sell', count: d => (d.what === 'shells' ? d.coins : 0), n: 200, r: 120 },
+                { say: 'I heard there\'s a Golden nautilus out there somewhere. Find one and I\'ll make it worth it!', goal: 'Dig up a Golden nautilus', on: 'shell', count: d => (d.kind === 'legendary' ? 1 : 0), n: 1, r: 400 }
             ] },
-        skipper: { name: 'Skipper', loc: 'tackleshop', place: 'the Tackle Shop', done: 'You will do. Go on, the fish are waiting.', steps: [
-                { say: 'Free gear? Not so fast, landlubber. Go and say hello to Marlow, here in the shop, and to Coral out on Starfish Beach. Then the starter rod and reel are yours.', goal: 'Say hello to Marlow and Coral', on: 'talk', uniq: hello(['Marlow', 'Coral']), n: 2, r: 10, gift: 'kit' },
-                { say: 'Walk out along the pier, press 2 for your rod and click the water. Land your first fish.', goal: 'Land a fish', on: 'fish', n: 1, r: 20 },
-                { say: 'Bring it to my counter and sell it to me. I pay by the pound.', goal: 'Sell a fish at the counter', on: 'sell', count: d => (d.what === 'fish' ? 1 : 0), n: 1, r: 20 },
-                { say: 'Bamboo snaps easy. Buy yourself a better rod off my racks.', goal: 'Own a Fiberglass rod or better', have: () => (G.gear.rods.some(i => i >= 1) ? 1 : 0), n: 1, r: 80 }
+        skipper: { name: 'Skipper', loc: 'tackleshop', place: 'the Tackle Shop', done: 'You\'ll do. Go catch some fish!', steps: [
+                { say: 'Free gear? Not so fast! Go say hi to Marlow in here and Coral on the beach first.', goal: 'Say hello to Marlow and Coral', on: 'talk', uniq: hello(['Marlow', 'Coral']), n: 2, r: 10, gift: 'kit' },
+                { say: 'Walk out on the pier, press 2 for your rod, and click the water. Catch a fish!', goal: 'Land a fish', on: 'fish', n: 1, r: 20 },
+                { say: 'Bring it to my counter. I pay by the pound!', goal: 'Sell a fish at the counter', on: 'sell', count: d => (d.what === 'fish' ? 1 : 0), n: 1, r: 20 },
+                { say: 'Bamboo snaps easy. Get a better rod off my racks.', goal: 'Own a Fiberglass rod or better', have: () => (G.gear.rods.some(i => i >= 1) ? 1 : 0), n: 1, r: 80 }
             ] },
-        sailor: { name: 'Marlow', loc: 'tackleshop', place: 'the Tackle Shop', done: 'There is nothing left I can teach you. Tight lines, angler.', steps: [
-                { say: 'Once the Skipper has handed you a rod and reel (he has an errand for you first), take them out on the pier and land 5 fish.', goal: 'Land 5 fish', on: 'fish', n: 5, r: 60 },
-                { say: 'Anchovies are easy. Bring in 3 fish that are Uncommon or rarer.', goal: 'Land 3 fish that are Uncommon or rarer', on: 'fish', count: d => (d.fish && d.fish.tier !== 'common' ? 1 : 0), n: 3, r: 120 },
-                { say: 'The good fishing is out on the Reef, and that takes a boat. Land 4 fish out there.', goal: 'Land 4 fish on the Reef', on: 'fish', count: d => (d.zone === 'reef' ? 1 : 0), n: 4, r: 200 },
-                { say: 'A real angler fills the Fish Log. Get 10 different species written in yours.', goal: 'Have 10 species in your Fish Log', have: () => Object.keys(G.log).length, n: 10, r: 300 },
-                { say: 'Past the Reef is the Deep Ocean. Land 3 fish out there, if your boat is up to it.', goal: 'Land 3 fish in the Deep Ocean', on: 'fish', count: d => (d.zone === 'deep' || d.zone === 'storm' ? 1 : 0), n: 3, r: 500 }
+        sailor: { name: 'Marlow', loc: 'tackleshop', place: 'the Tackle Shop', done: 'I got nothing left to teach you. Tight lines!', steps: [
+                { say: 'Once the Skipper gives you a rod, go catch 5 fish off the pier.', goal: 'Land 5 fish', on: 'fish', n: 5, r: 60 },
+                { say: 'Anchovies are easy. Catch 3 Uncommon fish or better.', goal: 'Land 3 fish that are Uncommon or rarer', on: 'fish', count: d => (d.fish && d.fish.tier !== 'common' ? 1 : 0), n: 3, r: 120 },
+                { say: 'The good fish are out on the Reef. You\'ll need a boat. Catch 4 out there!', goal: 'Land 4 fish on the Reef', on: 'fish', count: d => (d.zone === 'reef' ? 1 : 0), n: 4, r: 200 },
+                { say: 'Real anglers fill up their Fish Log. Catch 10 different kinds.', goal: 'Have 10 species in your Fish Log', have: () => Object.keys(G.log).length, n: 10, r: 300 },
+                { say: 'Past the Reef is the Deep Ocean. Catch 3 fish out there!', goal: 'Land 3 fish in the Deep Ocean', on: 'fish', count: d => (d.zone === 'deep' || d.zone === 'storm' ? 1 : 0), n: 3, r: 500 }
             ] },
-        regular: { name: 'Hazel', loc: 'bakery', place: 'the Bakery', done: 'Best service in town. I tell everybody!', steps: [
-                { say: 'The oven at the back is Cupcake Chaos, and the Baker needs a hand. Serve 10 cakes for me.', goal: 'Serve 10 cakes in Cupcake Chaos', on: 'cake', n: 10, r: 50 },
-                { say: 'You are getting quick! Now finish 3 whole shifts.', goal: 'Finish 3 shifts of Cupcake Chaos', on: 'shift', n: 3, r: 100 },
-                { say: 'Work your way up. Pass 5 levels.', goal: 'Pass 5 levels of Cupcake Chaos', have: () => G.cakeStars.length, n: 5, r: 200 },
-                { say: 'Two stars is a shift to be proud of. Earn two stars on 3 levels.', goal: 'Earn two stars on 3 levels', have: () => G.cakeStars.filter(v => v === 2).length, n: 3, r: 350 }
+        regular: { name: 'Hazel', loc: 'bakery', place: 'the Bakery', done: 'Best service in town! I tell everyone!', steps: [
+                { say: 'The Baker needs help! Play Cupcake Chaos at the oven and serve 10 cakes.', goal: 'Serve 10 cakes in Cupcake Chaos', on: 'cake', n: 10, r: 50 },
+                { say: 'You\'re getting fast! Finish 3 whole shifts.', goal: 'Finish 3 shifts of Cupcake Chaos', on: 'shift', n: 3, r: 100 },
+                { say: 'Keep going! Pass 5 levels.', goal: 'Pass 5 levels of Cupcake Chaos', have: () => G.cakeStars.length, n: 5, r: 200 },
+                { say: 'Get 2 stars on 3 levels. You got this!', goal: 'Earn two stars on 3 levels', have: () => G.cakeStars.filter(v => v === 2).length, n: 3, r: 350 }
             ] },
-        shopper: { name: 'Nova', loc: 'mall', place: 'Cosmo Mall', done: 'Now that is a look. Shopping with you is the best.', steps: [
-                { say: 'My feet are killing me. Try one of the mall benches for me: click it, or stand by it and press E, and have a sit down.', goal: 'Sit on a bench in Cosmo Mall', on: 'sit', count: d => (d.loc === 'mall' ? 1 : 0), n: 1, r: 25 },
-                { say: 'Top Shelf Hats is the first store on the left. Buy a hat: any hat.', goal: 'Own a hat from Top Shelf Hats', have: () => G.owned.hat.length, n: 1, r: 80 },
-                { say: 'Charm & Shade, at the far end, has glasses, scarves and wings. Own 2 things from there.', goal: 'Own 2 things from Charm & Shade', have: () => G.owned.eyes.length + G.owned.neck.length + G.owned.pack.length, n: 2, r: 150 },
-                { say: 'The Tailor on Village Green has new outfits every week. Own 3 of them.', goal: 'Own 3 outfits from the Tailor', have: () => G.outfits.length, n: 3, r: 250 }
+        shopper: { name: 'Nova', loc: 'mall', place: 'Cosmo Mall', done: 'Lookin good! Shopping with you is the best.', steps: [
+                { say: 'My feet hurt sooo bad. Go sit on one of the mall benches for me!', goal: 'Sit on a bench in Cosmo Mall', on: 'sit', count: d => (d.loc === 'mall' ? 1 : 0), n: 1, r: 25 },
+                { say: 'Top Shelf Hats is the first store on the left. Buy any hat!', goal: 'Own a hat from Top Shelf Hats', have: () => G.owned.hat.length, n: 1, r: 80 },
+                { say: 'Charm & Shade has glasses, scarves and wings. Get 2 things from there.', goal: 'Own 2 things from Charm & Shade', have: () => G.owned.eyes.length + G.owned.neck.length + G.owned.pack.length, n: 2, r: 150 },
+                { say: 'The Tailor on the Green has new outfits every week. Get 3!', goal: 'Own 3 outfits from the Tailor', have: () => G.outfits.length, n: 3, r: 250 }
             ] },
-        gamer: { name: 'Blip', loc: 'arcade', place: 'Star Arcade', done: 'A regular! Your initials belong on every cabinet in here.', steps: [
-                { say: 'Five Coins a credit. Play any 3 games: I will wait right here.', goal: 'Play 3 arcade games', on: 'arcade', n: 3, r: 30 },
-                { say: 'Now win a medal on any cabinet. Bronze will do!', goal: 'Win a medal on a cabinet', have: () => medals(1), n: 1, r: 80 },
-                { say: 'A medal on every one of the four cabinets. That is the mark of an all-rounder.', goal: 'Win a medal on all 4 cabinets', have: () => medals(1), n: 4, r: 250 },
-                { say: 'Gold. On any cabinet. Then you can call yourself a regular.', goal: 'Win a gold medal', have: () => medals(3), n: 1, r: 500 }
+        gamer: { name: 'Blip', loc: 'arcade', place: 'Star Arcade', done: 'You\'re a regular now! Your name should be on every machine.', steps: [
+                { say: 'It\'s 5 Coins a play. Play any 3 games!', goal: 'Play 3 arcade games', on: 'arcade', n: 3, r: 30 },
+                { say: 'Now win a medal on any game. Bronze is fine!', goal: 'Win a medal on a cabinet', have: () => medals(1), n: 1, r: 80 },
+                { say: 'Get a medal on all 4 games!', goal: 'Win a medal on all 4 cabinets', have: () => medals(1), n: 4, r: 250 },
+                { say: 'Get a GOLD medal on any game. Then you\'re a pro.', goal: 'Win a gold medal', have: () => medals(3), n: 1, r: 500 }
             ] },
-        homemaker: { name: 'Fern', loc: 'furnish', place: 'Homestead Furniture', done: 'That is a home, not a house. Invite me round some time!', steps: [
-                { say: 'The house across the green is for sale. Buy it and you will never want for somewhere to sit.', goal: 'Buy the house on Village Green', have: () => (G.home.owned ? 1 : 0), n: 1, r: 200 },
-                { say: 'An empty house is only a box. Put 8 pieces of furniture in it.', goal: 'Place 8 pieces of furniture', have: placed, n: 8, r: 200 },
-                { say: 'Furniture is for using! Sit down on a seat in your own house.', goal: 'Sit on a seat at home', on: 'sit', count: d => (d.loc === 'home' ? 1 : 0), n: 1, r: 40 },
-                { say: 'A cottage is cosy, but a house has rooms. Add a second room: it is on the Rooms tab when you decorate.', goal: 'Add a second room to your house', have: () => G.home.rooms.length, n: 2, r: 400 },
-                { say: 'Now make it a home. Thirty pieces of furniture, across all your rooms.', goal: 'Place 30 pieces of furniture', have: placed, n: 30, r: 500 }
+        homemaker: { name: 'Fern', loc: 'furnish', place: 'Homestead Furniture', done: 'Now that\'s a home! Invite me over sometime!', steps: [
+                { say: 'The house on the Green is for sale! Go buy it!', goal: 'Buy the house on Village Green', have: () => (G.home.owned ? 1 : 0), n: 1, r: 200 },
+                { say: 'An empty house is boring. Put 8 pieces of furniture in it.', goal: 'Place 8 pieces of furniture', have: placed, n: 8, r: 200 },
+                { say: 'Furniture is for using! Sit on a chair in your house.', goal: 'Sit on a seat at home', on: 'sit', count: d => (d.loc === 'home' ? 1 : 0), n: 1, r: 40 },
+                { say: 'Add a second room! It\'s on the Rooms tab when you decorate.', goal: 'Add a second room to your house', have: () => G.home.rooms.length, n: 2, r: 400 },
+                { say: 'Now make it awesome. 30 pieces of furniture across all your rooms!', goal: 'Place 30 pieces of furniture', have: placed, n: 30, r: 500 }
             ] },
-        miner: { name: 'Pebble', loc: 'cave', place: 'the Crystal Cave', done: 'You are a real miner now. The mountain is yours!', steps: [
-                { say: 'New down here? First things first: say hello to Flint at his counter and to Garnet by the belt. Then I will find you a pickaxe.', goal: 'Say hello to Flint and Garnet', on: 'talk', uniq: hello(['Flint', 'Garnet']), n: 2, r: 10, gift: 'pick' },
-                { say: 'That pickaxe is yours. The seam is the wall of rock behind us: tunnel in and break 3 blocks of ore. Strike on the green! Your hands hold 2 chunks: tip them into the hopper by the belt.', goal: 'Break 3 blocks of ore', on: 'mine', count: d => (ROCKS[d.kind] ? 1 : 0), n: 3, r: 20, gift: 'barrow' },
-                { say: 'Take my old wheelbarrow: it holds 4. Rocks are only worth anything once the crusher has had them. Turn 8 chunks into gems.', goal: 'Turn 8 chunks into gems', on: 'gem', n: 8, r: 60 },
-                { say: 'Flint buys every gem at the counter. Sell him 150 Coins worth.', goal: 'Sell 150 Coins worth of gems', on: 'sell', count: d => (d.what === 'gems' ? d.coins : 0), n: 150, r: 80 },
-                { say: 'Rusty rock is further into the seam. You need an iron pickaxe: Flint sends you one once you have broken 40 blocks of gray stone. Then break 4 blocks of rusty rock.', goal: 'Break 4 blocks of rusty rock', on: 'mine', count: d => (d.kind === 'rust' ? 1 : 0), n: 4, r: 150 },
-                { say: 'That wheelbarrow is killing your back. Earn a proper mine cart: crush 60 chunks into gems and Flint will send one.', goal: 'Earn a mine cart or better', have: () => (G.mine.carts.some(i => i >= 1) ? 1 : 0), n: 1, r: 150 },
-                { say: 'Emeralds come out of the rusty rock now and then, and the blue veins more often. Find one.', goal: 'Find an Emerald', on: 'gem', count: d => (d.gem === 'emerald' ? 1 : 0), n: 1, r: 250 },
-                { say: 'The crystal geodes deep in the seam hide diamonds. Find me one, and I will believe you are a miner.', goal: 'Find a Diamond', on: 'gem', count: d => (d.gem === 'diamond' ? 1 : 0), n: 1, r: 600 }
+        miner: { name: 'Pebble', loc: 'cave', place: 'the Crystal Cave', done: 'You\'re a real miner now!', steps: [
+                { say: 'New down here? Say hi to Flint at the counter and Garnet by the belt first. Then I\'ll get you a pickaxe.', goal: 'Say hello to Flint and Garnet', on: 'talk', uniq: hello(['Flint', 'Garnet']), n: 2, r: 10, gift: 'pick' },
+                { say: 'The pickaxe is yours! Dig into the rock wall and break 3 blocks of ore. Hit it on the green! Dump your chunks in the hopper.', goal: 'Break 3 blocks of ore', on: 'mine', count: d => (ROCKS[d.kind] ? 1 : 0), n: 3, r: 20, gift: 'barrow' },
+                { say: 'Here, take my old wheelbarrow. It holds 4. Turn 8 chunks into gems!', goal: 'Turn 8 chunks into gems', on: 'gem', n: 8, r: 60 },
+                { say: 'Flint buys gems at the counter. Sell him 150 Coins worth.', goal: 'Sell 150 Coins worth of gems', on: 'sell', count: d => (d.what === 'gems' ? d.coins : 0), n: 150, r: 80 },
+                { say: 'Rusty rock is deeper in. You need an iron pickaxe first. Break 40 gray blocks and Flint will send you one. Then break 4 rusty blocks.', goal: 'Break 4 blocks of rusty rock', on: 'mine', count: d => (d.kind === 'rust' ? 1 : 0), n: 4, r: 150 },
+                { say: 'That wheelbarrow is killing your back. Crush 60 chunks and Flint will send you a mine cart!', goal: 'Earn a mine cart or better', have: () => (G.mine.carts.some(i => i >= 1) ? 1 : 0), n: 1, r: 150 },
+                { say: 'Emeralds come out of rusty rock sometimes. Blue veins have more! Find one.', goal: 'Find an Emerald', on: 'gem', count: d => (d.gem === 'emerald' ? 1 : 0), n: 1, r: 250 },
+                { say: 'Crystal geodes hide diamonds. Find me one!', goal: 'Find a Diamond', on: 'gem', count: d => (d.gem === 'diamond' ? 1 : 0), n: 1, r: 600 }
             ] },
-        belter: { name: 'Garnet', loc: 'cave', place: 'the Crystal Cave', done: 'You and that belt are a fine team.', steps: [
-                { say: 'I keep the belt running. Feed it 10 chunks and watch them come out shining.', goal: 'Turn 10 chunks into gems', on: 'gem', n: 10, r: 50 },
-                { say: 'Topaz is the first good one. Find me a Topaz.', goal: 'Find a Topaz', on: 'gem', count: d => (d.gem === 'topaz' ? 1 : 0), n: 1, r: 80 },
-                { say: 'This old belt crawls. Crush 150 chunks and Flint will put in a Fast belt: it sifts out better gems, too.', goal: 'Earn a Fast belt', have: () => (G.mine.belt >= 1 ? 1 : 0), n: 1, r: 200 },
-                { say: 'See the blocks in the seam that glitter? Those are gem pockets. Crack one open.', goal: 'Break open a gem pocket', on: 'mine', count: d => (d.kind === 'pocket' ? 1 : 0), n: 1, r: 150 },
-                { say: 'Now keep her busy. 150 chunks through the crusher, all told.', goal: 'Turn 150 chunks into gems (all told)', have: () => G.mine.made, n: 150, r: 300 },
-                { say: 'Once in a blue moon a Star opal comes down that belt. Bring me news of one.', goal: 'Find a Star opal', on: 'gem', count: d => (d.gem === 'opal' ? 1 : 0), n: 1, r: 600 }
+        belter: { name: 'Garnet', loc: 'cave', place: 'the Crystal Cave', done: 'You and that belt make a great team.', steps: [
+                { say: 'I run the belt. Feed it 10 chunks and watch them shine!', goal: 'Turn 10 chunks into gems', on: 'gem', n: 10, r: 50 },
+                { say: 'Topaz is the first good one. Find me a Topaz!', goal: 'Find a Topaz', on: 'gem', count: d => (d.gem === 'topaz' ? 1 : 0), n: 1, r: 80 },
+                { say: 'This old belt is sooo slow. Crush 150 chunks and Flint will put in a Fast belt.', goal: 'Earn a Fast belt', have: () => (G.mine.belt >= 1 ? 1 : 0), n: 1, r: 200 },
+                { say: 'See the sparkly blocks? Those are gem pockets. Crack one open!', goal: 'Break open a gem pocket', on: 'mine', count: d => (d.kind === 'pocket' ? 1 : 0), n: 1, r: 150 },
+                { say: 'Keep her busy! 150 chunks through the crusher.', goal: 'Turn 150 chunks into gems (all told)', have: () => G.mine.made, n: 150, r: 300 },
+                { say: 'Once in a while a Star opal comes down the belt. Find one!', goal: 'Find a Star opal', on: 'gem', count: d => (d.gem === 'opal' ? 1 : 0), n: 1, r: 600 }
             ] },
-        keeper: { name: 'Clover', loc: 'petshop', place: 'Paws & Whiskers', done: 'You are the best pet parent on the Green. Give them a cuddle from me!', steps: [
-                { say: 'Every pet deserves a home. Pick one out at the counter and adopt it.', goal: 'Adopt a pet', have: () => (G.pet ? 1 : 0), n: 1, r: 50 },
-                { say: 'Pets get hungry every day. Click your pet and feed it.', goal: 'Feed your pet', on: 'petfeed', n: 1, r: 20 },
-                { say: 'A clean pet is a happy pet. Give yours a bath: scrub off every spot.', goal: 'Give your pet a bath', on: 'petbath', n: 1, r: 30 },
-                { say: 'Nothing beats a game. Play fetch with your pet three times.', goal: 'Play fetch 3 times', on: 'petfetch', n: 3, r: 40 },
-                { say: 'Now the real test: look after your pet three days in a row. A meal every day, and a bath, a game or a stroke.', goal: 'Care for your pet 3 days in a row', have: () => (G.pet ? G.pet.streak : 0), n: 3, r: 150 },
-                { say: 'A pet that trusts you learns tricks. Get your bond up to 7 and it will roll over for you.', goal: 'Reach bond 7 with your pet', have: () => (G.pet ? G.pet.bond : 0), n: 7, r: 300 }
+        keeper: { name: 'Clover', loc: 'petshop', place: 'Paws & Whiskers', done: 'Best pet owner on the Green! Give them a hug from me!', steps: [
+                { say: 'Every pet needs a home. Pick one at the counter and adopt it!', goal: 'Adopt a pet', have: () => (G.pet ? 1 : 0), n: 1, r: 50 },
+                { say: 'Pets get hungry. Click your pet and feed it!', goal: 'Feed your pet', on: 'petfeed', n: 1, r: 20 },
+                { say: 'Clean pet = happy pet. Give yours a bath!', goal: 'Give your pet a bath', on: 'petbath', n: 1, r: 30 },
+                { say: 'Play fetch with your pet 3 times!', goal: 'Play fetch 3 times', on: 'petfetch', n: 3, r: 40 },
+                { say: 'Take care of your pet 3 days in a row. Feed it every day, and give it a bath, a game or a pet.', goal: 'Care for your pet 3 days in a row', have: () => (G.pet ? G.pet.streak : 0), n: 3, r: 150 },
+                { say: 'Pets that trust you learn tricks! Get your bond to 7 and it\'ll roll over.', goal: 'Reach bond 7 with your pet', have: () => (G.pet ? G.pet.bond : 0), n: 7, r: 300 }
             ] },
-        knight: { name: 'Captain Rook', loc: 'dungeon', place: 'the Hollow Crypt', done: 'The crypt fears you now. Rest easy, hero.', steps: [
-                { say: 'Goblins, under our very feet! You have a weapon, good: anything better you will have to earn down there. Say hello to Grizzle, our merchant, and I will see you have potions.', goal: 'Say hello to Grizzle', on: 'talk', uniq: hello(['Grizzle']), n: 1, r: 10, gift: 'potions' },
-                { say: 'Through the Dungeon Gate lie the Goblin Warrens. Click a goblin to target it and you will keep attacking. Watch for the red flash: that is it winding up. Defeat 5 goblins.', goal: 'Defeat 5 goblins', on: 'kill', count: d => (d.kind === 'goblin' ? 1 : 0), n: 5, r: 40 },
-                { say: 'Every room has a loot chest or two. Crack one open.', goal: 'Open a loot chest', on: 'chest', n: 1, r: 40 },
-                { say: 'At level 3 you learn your second skill. Get there, and spend your stat points (open your bag with B).', goal: 'Reach level 3', have: () => G.dun.level, n: 3, r: 60 },
-                { say: 'Now the Goblin King himself, at the end of the Warrens. Clear them!', goal: 'Clear the Goblin Warrens', have: () => (G.dun.done.includes(0) ? 1 : 0), n: 1, r: 150 },
-                { say: 'In the Ghoul Catacombs the dead walk. They are slow, but they hit hard. Defeat 10 ghouls.', goal: 'Defeat 10 ghouls', on: 'kill', count: d => (d.kind === 'ghoul' ? 1 : 0), n: 10, r: 150 },
-                { say: 'Monsters and chests drop weapons. Find one that is Rare or better.', goal: 'Find a Rare weapon or better', have: () => (G.dun.bag.some(w => w.r >= 2) ? 1 : 0), n: 1, r: 200 },
-                { say: 'The Ghoul Lord waits at the end of the Catacombs. Clear them!', goal: 'Clear the Ghoul Catacombs', have: () => (G.dun.done.includes(1) ? 1 : 0), n: 1, r: 400 },
-                { say: 'The Hollow Depths: the King and the Lord, together. If you can clear those, you are a legend.', goal: 'Clear the Hollow Depths', have: () => (G.dun.done.includes(2) ? 1 : 0), n: 1, r: 600 }
+        knight: { name: 'Captain Rook', loc: 'dungeon', place: 'the Hollow Crypt', done: 'The crypt is scared of you now! Nice job, hero.', steps: [
+                { say: 'Goblins! Under our feet! Say hi to Grizzle, he sells stuff. I\'ll get you some potions.', goal: 'Say hello to Grizzle', on: 'talk', uniq: hello(['Grizzle']), n: 1, r: 10, gift: 'potions' },
+                { say: 'Go through the Dungeon Gate to the Goblin Warrens. Click a goblin to attack. Watch for the red flash! Beat 5 goblins.', goal: 'Defeat 5 goblins', on: 'kill', count: d => (d.kind === 'goblin' ? 1 : 0), n: 5, r: 40 },
+                { say: 'Every room has a loot chest. Open one!', goal: 'Open a loot chest', on: 'chest', n: 1, r: 40 },
+                { say: 'At level 3 you get your second skill. Get there and spend your points! (B opens your bag)', goal: 'Reach level 3', have: () => G.dun.level, n: 3, r: 60 },
+                { say: 'Now beat the Goblin King at the end of the Warrens!', goal: 'Clear the Goblin Warrens', have: () => (G.dun.done.includes(0) ? 1 : 0), n: 1, r: 150 },
+                { say: 'Ghouls are slow but they hit HARD. Beat 10 ghouls in the Catacombs.', goal: 'Defeat 10 ghouls', on: 'kill', count: d => (d.kind === 'ghoul' ? 1 : 0), n: 10, r: 150 },
+                { say: 'Monsters drop weapons! Find a Rare one or better.', goal: 'Find a Rare weapon or better', have: () => (G.dun.bag.some(w => w.r >= 2) ? 1 : 0), n: 1, r: 200 },
+                { say: 'The Ghoul Lord is at the end of the Catacombs. Go beat him!', goal: 'Clear the Ghoul Catacombs', have: () => (G.dun.done.includes(1) ? 1 : 0), n: 1, r: 400 },
+                { say: 'The Hollow Depths has the King AND the Lord. Beat it and you\'re a legend!', goal: 'Clear the Hollow Depths', have: () => (G.dun.done.includes(2) ? 1 : 0), n: 1, r: 600 }
             ] },
-        dancer: { name: 'Jazz', loc: 'dance', place: 'the Neon Dance House', done: 'You have got the moves. See you on the floor!', steps: [
-                { say: 'You cannot stand still in here! Show me a dance.', goal: 'Dance in the Neon Dance House', on: 'emote', count: d => (d.kind === 'dance' && d.loc === 'dance' ? 1 : 0), n: 1, r: 25 },
-                { say: 'The sofas by the Juice Bar are the best seats in the house. Go and try one.', goal: 'Sit on a sofa in the Dance House', on: 'sit', count: d => (d.loc === 'dance' ? 1 : 0), n: 1, r: 25 },
-                { say: 'Ask at the DJ booth for the full show: start Concert Mode.', goal: 'Start Concert Mode', on: 'concert', n: 1, r: 60 }
+        dancer: { name: 'Jazz', loc: 'dance', place: 'the Neon Dance House', done: 'You got moves! See you on the floor!', steps: [
+                { say: 'No standing still in here! Show me a dance!', goal: 'Dance in the Neon Dance House', on: 'emote', count: d => (d.kind === 'dance' && d.loc === 'dance' ? 1 : 0), n: 1, r: 25 },
+                { say: 'The sofas by the Juice Bar are the best seats. Go try one!', goal: 'Sit on a sofa in the Dance House', on: 'sit', count: d => (d.loc === 'dance' ? 1 : 0), n: 1, r: 25 },
+                { say: 'Ask the DJ for the full show! Start Concert Mode.', goal: 'Start Concert Mode', on: 'concert', n: 1, r: 60 }
             ] },
     };
     const GIFTS = {
@@ -26078,7 +26078,7 @@
                 return false;
             }
             if (!tool) {
-                this.mineTell('You need a pickaxe first. Pebble, by the counter, knows how to get one.');
+                this.mineTell('You need a pickaxe! Talk to Pebble.');
                 return false;
             }
             if (tool.hard < B.hard) {
@@ -26086,14 +26086,14 @@
                 return false;
             }
             if (ROCKS[b.kind] && M.load.length >= cartOf(M).cap) {
-                this.mineTell(M.cart >= 0 ? 'Your cart is full! Tip it into the hopper by the belt.' : 'Your hands are full! Tip the chunks into the hopper by the belt.');
+                this.mineTell(M.cart >= 0 ? 'Cart full! Dump it in the hopper.' : 'Hands full! Dump it in the hopper.');
                 return false;
             }
             return true;
         }
         mineClick(b) {
             if (!b.shown) {
-                this.mineTell('You cannot get at that yet: tunnel your way to it.');
+                this.mineTell('Can\'t reach that yet!');
                 return;
             }
             if (!this.mineReach(b)) {
@@ -26277,7 +26277,7 @@
             }
             const n = beltAdd(M, M.load, Date.now());
             if (!n) {
-                this.mineTell('The hopper is full. Give the belt a moment to catch up.');
+                this.mineTell('Hopper\'s full! Wait a sec.');
                 return 0;
             }
             M.load.splice(0, n);
@@ -27240,7 +27240,7 @@
                     this.nameTag.setText(this.myTagText());
                     this.pillFit(this.nameTag);
                 }
-                this.note('Level up! Level ' + Dn.level + ': ' + DUN.PTS * ups + ' stat points to spend (Stats & skills in your Backpack).', '#7dff9a');
+                this.note('Level up! Level ' + Dn.level + ': ' + DUN.PTS * ups + ' points to spend! (B)', '#7dff9a');
                 const px = this.pz.x, py = this.pz.y + FOOT;
                 this.dunRing(px, py, 90, 0xffd84d);
                 this.dunRing(px, py, 60, 0xffffff);
@@ -27313,7 +27313,7 @@
                 this.add.image(this.stairs.x, this.stairs.y, 'glow').setDisplaySize(220, 160).setTint(0x7dff9a).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(7001);
                 sfx.chime();
                 this.noteUntil = 0;
-                this.note(this.roomKind === 'ambush' ? 'Ambush beaten! A chest for your trouble, and the stairs are open.' : 'Room cleared! The stairs down are open.', '#7dff9a');
+                this.note(this.roomKind === 'ambush' ? 'Ambush beaten! Free chest!' : 'Room cleared! The stairs down are open.', '#7dff9a');
             }
             else if (!this.stairs && !this.portal) {
                 const x = this.D.w / 2, y = 560, first = Dg.daily ? Dn.daily !== day : !Dn.done.includes(Dn.run.d);
@@ -30181,7 +30181,7 @@
             if (this.present)
                 return 'You are carrying one already: take it to the ' + this.present.name + '.';
             if (F.wpn >= WINTER.day)
-                return 'That is all the presents for today. Come back tomorrow!';
+                return 'No more presents today! Come back tomorrow.';
             const doors = this.doorSpots || [];
             if (!doors.length)
                 return '';
@@ -30213,14 +30213,14 @@
                 let extra = '';
                 if (F.wp >= WINTER.sweater && !G.outfits.some(o => o.id === WINTER_FIT.id)) {
                     G.outfits.push(cleanOutfit(WINTER_FIT));
-                    extra = ' Holly sends you a Cozy Holiday Sweater for all your help!';
+                    extra = ' Holly gave you a Cozy Holiday Sweater!';
                     chatLineSys('🎁 You earned the Cozy Holiday Sweater!');
                 }
                 if (F.wp === WINTER.globe && G.home && G.home.inv) {
                     const key = furnKey('snowglobe', 0);
                     G.home.inv[key] = Math.min(99, (G.home.inv[key] || 0) + 1);
                     extra += ' And a Snow Globe for your house!';
-                    chatLineSys('❄️ ' + WINTER.globe + ' presents! Holly gave you a Snow Globe: it is in your house storage.');
+                    chatLineSys('❄️ ' + WINTER.globe + ' presents! Holly gave you a Snow Globe!');
                 }
                 sfx.coin();
                 this.noteUntil = 0;
@@ -30441,13 +30441,13 @@
                 if (!this.trash || !this.trash.includes(g))
                     return null;
                 if (!T || T.t !== 'grab')
-                    return toolsOwned('grab').length ? 'Take your grabber out first: pick it on the tool wheel at the bottom of the screen.' : 'You need a grabber to pick up trash: Rusty at the Recycling Yard on the Village Green has one for you.';
+                    return toolsOwned('grab').length ? 'Take out your grabber first!' : 'You need a grabber! Ask Rusty at the Recycling Yard.';
                 return '';
             }
             if (!g.on)
                 return null;
             if (!T || T.t !== 'basket')
-                return toolsOwned('basket').length ? 'Take your basket out first: pick it on the tool wheel at the bottom of the screen.' : 'You need a basket for flowers: the Flower Shop on the Village Green gives you one.';
+                return toolsOwned('basket').length ? 'Take out your basket first!' : 'You need a basket! Get one at the Flower Shop.';
             return '';
         }
         gatherPick(g) {
@@ -30529,7 +30529,7 @@
                 F.ggd = (F.ggd || 0) + 1;
             sfx.snip();
             (gold ? sfx.chime : () => sfx.pickup('common'))();
-            this.note((gold ? 'A GOLDEN FLOWER! And ' : 'Picked ') + flowerWord(g.kind, n) + '! (Sell them at the Flower Shop, or fill its bouquet orders.)', gold ? '#ffe066' : '#ffb8d8');
+            this.note((gold ? 'A GOLDEN FLOWER! And ' : 'Picked ') + flowerWord(g.kind, n) + '! Sell them at the Flower Shop.', gold ? '#ffe066' : '#ffb8d8');
             if (gold)
                 chatLineSys('🌼 ' + (G.name || 'You') + ' found a golden flower!');
             if (ui.onEvent)
@@ -32004,11 +32004,11 @@
             if ((!P && !(this.spots && this.spots.length)) || this.fish || this.leaving)
                 return;
             if (!hasTackle()) {
-                this.note('You need a rod and reel. The Skipper in the Tackle Shop hands out a starter kit for a small errand.');
+                this.note('You need a rod! Talk to the Skipper at the Tackle Shop.');
                 return;
             }
             if (!this.canCast()) {
-                this.note(P ? 'Walk out along the pier (or up to the tide pool) to fish.' : 'Walk up to the water to fish.');
+                this.note(P ? 'Go out on the pier to fish!' : 'Walk up to the water to fish.');
                 return;
             }
             const land = !(P && (this.boating || this.onPier())) ? this.spotNear() : null;
@@ -35765,7 +35765,7 @@
         const socialOn = () => !!soc.db && !!soc.uid;
         const socialWhy = () => (soc.down ? 'Friends and messages are not available right now.'
             : account.uid && !account.cloud ? 'Friends and messages need an account that can save here. Ask the owner of this Planet Wando to share it with you as an Editor.'
-                : !account.uid ? 'Friends and messages need a Planet Wando account, and you are playing as a guest.' + (ONLINE_OWN() ? ' ' + guestWhy() : '') : 'Connecting your friends list...');
+                : !account.uid ? 'You\'re a guest! Make an account to add friends.' + (ONLINE_OWN() ? ' ' + guestWhy() : '') : 'Connecting your friends list...');
         const friendOf = id => G.friends.find(f => f.id === id) || null;
         const isFriend = id => { const f = friendOf(id); return !!f && f.ok; };
         const farOf = id => (net.far && net.far.get(id)) || null;
@@ -36192,7 +36192,7 @@
                     const b = node('button', 'lcd-btn', 'Open Friends List');
                     b.type = 'button';
                     b.dataset.go = 'friends';
-                    out.push(node('p', 'lcd-note', 'You can message your friends here. Add a friend first.'), b);
+                    out.push(node('p', 'lcd-note', 'Add a friend to message them!'), b);
                 }
                 const TL = ui.tradeLog ? ui.tradeLog() : [];
                 if (TL.length) {
@@ -36283,7 +36283,7 @@
                         hits.appendChild(li);
                     });
                     out.push(F.busy ? node('p', 'lcd-note', 'Searching...') : !F.list ? node('p', 'lcd-note', 'The search did not go through. Try again.')
-                        : F.list.length ? hits : node('p', 'lcd-note', 'Nobody found by that name. Check the spelling: it has to be the start of their name. A player can be found once they have opened Planet Wando with their account.'));
+                        : F.list.length ? hits : node('p', 'lcd-note', 'Nobody found. Check the spelling!'));
                 }
                 if (soc.reqs.length) {
                     const list = node('ul', 'lcd-list');
@@ -36311,7 +36311,7 @@
                     li.appendChild(mini(ph.sure === f.id ? 'Sure?' : '×', 'remove', f.id, (f.ok ? 'Remove ' : 'Take back the request to ') + f.name));
                     list.appendChild(li);
                 });
-                out.push(G.friends.length ? list : node('p', 'lcd-note', 'No friends yet. Search for a player by name above, or add one of the players listed below.'));
+                out.push(G.friends.length ? list : node('p', 'lcd-note', 'No friends yet! Search for someone.'));
                 const others = [...net.peers.values()].filter(p => !p.mine && !friendOf(p.uid)).sort((a, b) => a.name.localeCompare(b.name));
                 out.push(node('p', 'log-tier', 'In Planet Wando now'));
                 if (others.length) {
@@ -36326,7 +36326,7 @@
                     out.push(now);
                 }
                 else
-                    out.push(node('p', 'lcd-note', net.peers.size ? 'Everyone here is already on your list.' : 'Nobody else is here right now. Search for a player by name at the top.'));
+                    out.push(node('p', 'lcd-note', net.peers.size ? 'Everyone here is already on your list.' : 'Nobody else is here.'));
                 return out;
             },
             missions() {
@@ -36357,7 +36357,7 @@
                     li.append(dot, node('b', '', b.name), node('span', 'status', (G.board && G.board.id === b.id ? (G.riding ? 'riding · ' : 'selected · ') : '') + (b.kind === 'skate' ? 'skateboard' : b.kind === 'car' ? 'car' : 'hoverboard')));
                     list.appendChild(li);
                 });
-                return [list, node('p', 'lcd-note', (G.boards.length ? 'Pick the board you ride in the Wardrobe (slot 3), under My boards. ' : '') + (G.shovel ? 'Shovel: ' + G.digsLeft + ' digs left. ' : 'Shovel: none. ') + 'Worth ' + shellValue() + ' Coins at the Shovel Shop on Starfish Beach.'
+                return [list, node('p', 'lcd-note', (G.boards.length ? 'Pick your board in the Wardrobe. ' : '') + (G.shovel ? 'Shovel: ' + G.digsLeft + ' digs left. ' : 'Shovel: none. ') + 'Worth ' + shellValue() + ' Coins at the Shovel Shop on Starfish Beach.'
                         + (coolerCount() ? ' Cooler: ' + coolerCount() + ' fish, worth ' + coolerValue() + ' Coins at the Tackle Shop.' : ''))];
             },
             collect() {
@@ -36431,7 +36431,7 @@
                     });
                     out.push(asked);
                 }
-                out.push(node('p', 'lcd-note', fresh ? fresh + ' of the townsfolk ' + (fresh > 1 ? 'have' : 'has') + ' something to ask you: look for a gold ! over their head, and walk up to talk.' : going.length ? 'Go back to whoever asked to be paid.' : 'Every errand is done. The townsfolk are in your debt.'));
+                out.push(node('p', 'lcd-note', fresh ? fresh + ' of the townsfolk ' + (fresh > 1 ? 'have' : 'has') + ' something to ask you: look for a gold ! over their head, and walk up to talk.' : going.length ? 'Go back to whoever asked to be paid.' : 'All errands done!'));
                 return out;
             }
         };
@@ -36724,9 +36724,9 @@
         const shopMsg = document.getElementById('shop-msg');
         [
             'Buy a shovel here for ' + SHOVEL_PRICE + ' Coins. It lasts ' + SHOVEL_DIGS + ' digs, then breaks.',
-            'Take it out with hotbar slot 1 at the bottom of the screen (or press 1).',
-            'Click the sand to dig. About one dig in three turns up a shell.',
-            'Click the shell to pick it up. It goes into your Shell Bag on the phone.',
+            'Press 1 to take it out.',
+            'Click the sand to dig!',
+            'Click the shell to grab it!',
             'Come back and sell: white shell ' + SHELLS.common.value + ', pink conch ' + SHELLS.rare.value + ', golden nautilus ' + SHELLS.legendary.value + ' Coins.'
         ].forEach(step => document.getElementById('shop-guide').appendChild(node('li', '', step)));
         Object.keys(LOCS).filter(loc => !LOCS[loc].interior).forEach(loc => {
@@ -36797,7 +36797,7 @@
             shellsAll.textContent = n && pickN === n ? 'Select none' : 'Select all';
             shellsNote.textContent = n
                 ? G.shells.common + ' white, ' + G.shells.rare + ' pink, ' + G.shells.legendary + ' golden. Worth ' + shellValue() + ' Coins.'
-                : 'None yet. Shells have to be dug up: equip a shovel and click the sand.';
+                : 'None yet! Dig some up.';
         }
         function paintState() {
             document.querySelectorAll('[data-coins]').forEach(n => { n.textContent = G.coins; });
@@ -37708,7 +37708,7 @@
             const cfg = dashLevel(cup.pick), stars = G.cakeStars[cup.pick - 1] || 0;
             cupCard.hidden = live;
             cupScrim.hidden = !cup.live;
-            cupStats.textContent = live ? cupLine(st) : trained ? 'Levels passed: ' + G.cakeStars.length + ' of ' + DASH.LEVELS + ' · Best score: ' + G.cakeBest : 'First time? The training shift walks you through the whole job.';
+            cupStats.textContent = live ? cupLine(st) : trained ? 'Levels passed: ' + G.cakeStars.length + ' of ' + DASH.LEVELS + ' · Best score: ' + G.cakeBest : 'First time? Try the training shift!';
             cupPickRow.hidden = !trained;
             cupGoal.hidden = !trained;
             cupLevel.textContent = 'Level ' + cup.pick + (stars ? ' ' + '★'.repeat(stars) : '');
@@ -37793,7 +37793,7 @@
                     coins = DASH.TRAINING_COINS;
                 }
                 G.coins += coins;
-                cupMsg.replaceChildren(finished ? 'Training done! You know the whole job. ' : 'Training stopped. You can start it again any time.', coins ? node('b', 'f-coin', '+' + coins + ' Coins') : '', finished ? ' Level 1 starts slow; every level after is busier and pays more.' : '');
+                cupMsg.replaceChildren(finished ? 'Training done! You know the whole job. ' : 'Training stopped.', coins ? node('b', 'f-coin', '+' + coins + ' Coins') : '', finished ? ' Higher levels = busier and more Coins!' : '');
                 if (finished)
                     sfx.chime();
             }
@@ -37828,7 +37828,7 @@
             if (cup.live)
                 return;
             if (!cup.st)
-                cupMsg.textContent = 'The café is filling up and the Baker cannot leave the oven. Take the floor!';
+                cupMsg.textContent = 'The café is packed! Help out!';
             cupShow(cup.pick);
         }
         const cupCloseCard = cupP.close;
@@ -37850,7 +37850,7 @@
             else {
                 G.cakeTut = true;
                 saveGame();
-                cupMsg.textContent = 'Training skipped. You can play it from here any time.';
+                cupMsg.textContent = 'Training skipped.';
                 cupShow(1);
             }
             if (e.detail > 0)
@@ -38210,7 +38210,7 @@
         function paintDeed(done) {
             deedBuy.textContent = G.home.owned ? 'Sold' : 'Buy this house · ' + HOME.PRICE + ' Coins';
             deedBuy.disabled = G.home.owned || G.coins < HOME.PRICE;
-            deedMsg.textContent = done ? 'It is yours! Walk in through the door. Homestead Furniture, across the green, sells everything to fill it, and Decorate adds rooms.'
+            deedMsg.textContent = done ? 'It\'s yours!! Go inside! Get furniture at Homestead.'
                 : G.home.owned ? 'This house is yours. Walk in!' : G.coins < HOME.PRICE ? 'You need ' + (HOME.PRICE - G.coins) + ' more Coins.' : '';
         }
         deedBuy.addEventListener('click', e => {
@@ -38264,7 +38264,7 @@
             if (!it) {
                 furnBuy.disabled = true;
                 furnBuy.textContent = 'Buy';
-                furnMsg.textContent = fs.note || (G.home.owned ? 'Pick something to see its price.' : 'You can shop before you own a house: everything waits in storage. The house for sale is across the green.');
+                furnMsg.textContent = fs.note || (G.home.owned ? 'Pick something to see its price.' : 'No house yet? Stuff you buy waits in storage.');
                 return;
             }
             const full = it.d ? cap(furnName(it.d, it.c)) : it.name, key = it.d ? furnKey(it.d.id, it.c) : '', have = it.d ? ownedOf(key) : 0, stored = it.d ? G.home.inv[key] || 0 : 0;
@@ -38344,13 +38344,13 @@
             if (it.d) {
                 const key = furnKey(it.d.id, it.c);
                 G.home.inv[key] = Math.min(99, (G.home.inv[key] || 0) + 1);
-                fs.note = cap(furnName(it.d, it.c)) + ' bought. It is in your storage: place it with Decorate, inside your house.';
+                fs.note = cap(furnName(it.d, it.c)) + ' bought! Place it with Decorate.';
             }
             else {
                 const own = fs.cat === 'walls' ? G.home.walls : G.home.floors;
                 own.push(it.style);
                 own.sort((a, b) => a - b);
-                fs.note = it.name + ' bought. Put it up with Decorate, inside your house.';
+                fs.note = it.name + ' bought! Place it with Decorate.';
             }
             sfx.coin();
             paintState();
@@ -38458,12 +38458,12 @@
             }));
             trayTurn.hidden = !held || !furnTurns(held.d);
             trayFlip.hidden = trayStore.hidden = !held;
-            trayNote.textContent = held ? cap(furnName(held.d, held.it.c)) + ': click where it should go. ' + (furnTurns(held.d) ? 'Turn (R) faces it another way, Flip (F) mirrors it.' : 'Flip (F) mirrors it.') + (held.d.build ? ' Click a colour below to repaint it.' + (held.from ? ' Put away takes it down.' : '') : held.from ? ' Put away sends it to storage.' : '')
+            trayNote.textContent = held ? cap(furnName(held.d, held.it.c)) + ': click where it should go. ' + (furnTurns(held.d) ? 'R = turn, F = flip' : 'Flip (F) mirrors it.') + (held.d.build ? ' Click a colour below to repaint it.' + (held.from ? ' Put away takes it down.' : '') : held.from ? ' Put away sends it to storage.' : '')
                 : hm.tab === 'rooms' ? hm.note || 'Your ' + HOME.SIZES[Hm.rooms.length - 1].toLowerCase() + ' has ' + Hm.rooms.length + (Hm.rooms.length > 1 ? ' rooms' : ' room') + '. Click a room to go there, or walk through the doors in the side walls. '
                     + (more ? 'Another room costs ' + HOME.ROOMS[Hm.rooms.length] + ' Coins and makes it a ' + HOME.SIZES[Hm.rooms.length].toLowerCase() + '.' : 'A manor is as big as a house gets.')
-                    : hm.tab === 'build' ? (hm.ask ? 'What colour should the ' + FURN_BY[hm.ask].name.toLowerCase() + ' be?' : 'Walls and doors are free: as many as you like. Pick one, choose its colour, then click in the room. Click a placed one to move or repaint it.')
-                        : hm.tab !== 'furn' ? 'Click one to put it up in this room. Homestead Furniture on Village Green sells more.'
-                            : (hm.list.length ? 'Click a piece below, then click in the room. ' : 'Your storage is empty: Homestead Furniture on Village Green sells furniture. ') + 'Click a piece in the room to move it. ' + R.items.length + ' of ' + HOME.MAX + ' placed in this room.';
+                    : hm.tab === 'build' ? (hm.ask ? 'What colour should the ' + FURN_BY[hm.ask].name.toLowerCase() + ' be?' : 'Walls and doors are free! Pick one, pick a colour, click to place.')
+                        : hm.tab !== 'furn' ? 'Click one to place it.'
+                            : (hm.list.length ? 'Click a piece below, then click in the room. ' : 'Nothing in storage! Get furniture at Homestead. ') + 'Click a piece in the room to move it. ' + R.items.length + ' of ' + HOME.MAX + ' placed in this room.';
         }
         function homeEdit(on) {
             const s = scene();
@@ -38759,17 +38759,17 @@
             return; tackleMsg.textContent = baitBuy(b.dataset.buybait); paintTackle(); });
         ui.bait = { buy: baitBuy };
         [
-            'Click the Skipper and do his errand: he hands you the starter kit, a ' + ROD_LEVELS[0].name + ' and a ' + REEL_LEVELS[0].name + '.',
-            'Walk out along the pier and press 2 to take your rod out. Click anywhere on the water to throw the line to that spot.',
-            'Watch the water: a shadow comes up and circles your bobber (a big shadow, a big fish). It nibbles first: strike on a nibble and you scare it off.',
-            'When the bobber goes right under and the alert sounds, press F (or click) to strike. Strike fast for a perfect hookset: the fish starts the fight a little tired.',
-            'Then fight it. Hold Space to reel, and pull the rod with A and D (or the Rod buttons) against the way it swims: that turns it and tires it out.',
-            'When it runs or jumps, let go of the reel, or the line snaps. Let the line go slack for too long and it throws the hook. Let it run too far and it takes all your line.',
-            'A swirl and a "!" on the water warn you that it is about to run, jump or dive. Runners run, jumpers leap and shake, diggers dive for the bottom (pump them up).',
-            'Heavier and rarer fish pull harder and last longer. Rods and reels change the numbers: read the specs on each rack. A clean fight (never in the red) earns 50% more xp.',
-            'Buy a boat here, walk to the end of the pier and press Launch boat. The ' + BOAT_LEVELS[1].name + ' reaches the Reef; only the ' + BOAT_LEVELS[2].name + ' can enter the Deep Ocean.',
-            'Each zone has its own fish. Legendary fish are a rare event in the Deep Ocean: about 1 bite in ' + Math.round(100 / ZONES.deep.odds.legendary) + '.',
-            'Landed a fish? Keep it (it goes in your cooler, to sell) or release it (half its angler xp again). Fish go in your cooler, priced by weight. Sell them at this counter. Every species you land is kept in the Fish Log on your phone: ' + FISH.length + ' to find.'
+            'Do the Skipper\'s errand to get a free ' + ROD_LEVELS[0].name + ' and ' + REEL_LEVELS[0].name + '.',
+            'Go out on the pier, press 2, and click the water to cast.',
+            'Big shadow = big fish! Don\'t strike when it nibbles or it swims off.',
+            'When the bobber goes under, press F or click. Faster = better!',
+            'Hold Space to reel. Pull with A and D the opposite way it swims.',
+            'When it runs or jumps, let go or your line snaps! Too slack and it gets away.',
+            'See a swirl and a "!"? It\'s about to run, jump or dive. Get ready!',
+            'Big fish fight harder. Better rods help! Stay out of the red for 50% more XP.',
+            'Buy a boat and launch it from the end of the pier. ' + BOAT_LEVELS[1].name + ' = Reef. ' + BOAT_LEVELS[2].name + ' = Deep Ocean.',
+            'Every area has different fish. Legendaries live in the Deep Ocean (1 in ' + Math.round(100 / ZONES.deep.odds.legendary) + ')!',
+            'Keep fish to sell here, or let them go for bonus XP. Catch all ' + FISH.length + ' kinds for your Fish Log!'
         ].forEach(t => document.getElementById('tackle-guide').appendChild(node('li', '', t)));
         const tackleStarterRow = document.getElementById('tackle-starter-row'), tackleStarter = document.getElementById('tackle-starter');
         tackleStarter.addEventListener('click', e => {
@@ -39093,7 +39093,7 @@
             reelName.hidden = true;
             reelTier.hidden = true;
             fightStage.classList.remove('legendary');
-            fightCv.setAttribute('aria-label', 'Through your eyes: your rod, your line, and the fish in the water');
+            fightCv.setAttribute('aria-label', 'Fishing view');
             rk.who = fightWho();
             rk.res = null;
             tugDraw(rk.last);
@@ -39239,7 +39239,7 @@
                     s.endFishing();
                 holdTool(G.rodOut ? null : 'rod');
                 if (s && G.rodOut)
-                    s.note(water && water.canCast ? 'Rod ready. Click anywhere on the water to cast there.' : 'Rod ready. Cast from the pier or a boat.');
+                    s.note(water && water.canCast ? 'Rod out! Click the water.' : 'Rod ready. Cast from the pier or a boat.');
             }
             paintState();
         }
@@ -39420,46 +39420,46 @@
         const CLOSET_CATS = [
             { id: 'outfits', label: 'My outfits', crop: null,
                 icon: SVG('<path d="M12 8.500V7a2 2 0 1 0-2-2"/><path d="M12 8.500l8.300 6.200a1.300 1.300 0 0 1-.800 2.300h-15a1.300 1.300 0 0 1-.800-2.300z"/>'),
-                note: 'Click an outfit to wear it. Click it again to take it off.',
-                empty: 'No outfits yet. The Tailor on Village Green sells a new line every week.',
+                note: 'Click to wear. Click again to take off.',
+                empty: 'No outfits yet! Check the Tailor.',
                 items: () => G.outfits.map(o => ({ key: 'own:' + o.id, kind: 'outfit', name: o.name, on: l => !!l.outfit && l.outfit.id === o.id, put: l => { l.outfit = cleanOutfit(o); } })) },
             { id: 'hat', label: 'Hats', crop: [8, -9, 79], store: 'hats',
                 icon: SVG('<path d="M4.500 15a7.500 7.500 0 0 1 15 0z" fill="currentColor" fill-opacity=".3"/><path d="M2.500 15H22"/><path d="M12 7.500V6"/>'),
-                note: 'Your hats: pick one, then a colour. Top Shelf Hats in Cosmo Mall sells more.',
-                empty: 'No hats yet. Top Shelf Hats in Cosmo Mall sells them.',
+                note: 'Pick a hat, then a colour. More at Top Shelf Hats!',
+                empty: 'No hats yet! Check Top Shelf Hats at the mall.',
                 items: wearItems('hat', 'hatStyle'),
                 colors: { list: HAT_COLORS, names: HAT_COLOR_NAMES, get: l => l.hat, set: (l, i) => { l.hat = i; } } },
             { id: 'eyes', label: 'Eyewear', crop: [16, 15, 63], store: 'charm',
                 icon: SVG('<circle cx="7" cy="13" r="3.500"/><circle cx="17" cy="13" r="3.500"/><path d="M10.500 13h3M3.500 12.500L5 8M20.500 12.500L19 8"/>'),
-                note: 'Your glasses, shades and masks. Charm & Shade in Cosmo Mall sells more.',
-                empty: 'No eyewear yet. Charm & Shade in Cosmo Mall sells glasses, shades and masks.',
+                note: 'Glasses, shades and masks.',
+                empty: 'None yet! Check Charm & Shade at the mall.',
                 items: wearItems('eyes', 'eyes'),
                 colors: { list: HAT_COLORS, names: HAT_COLOR_NAMES, get: l => l.eyesC, set: (l, i) => { l.eyesC = i; } } },
             { id: 'neck', label: 'Neckwear', crop: [20, 38, 56], store: 'charm',
                 icon: SVG('<path d="M12 12L4 8v8zM12 12l8-4v8z"/><circle cx="12" cy="12" r="1.600" fill="currentColor"/>'),
-                note: 'Your scarves, ties and necklaces. Charm & Shade in Cosmo Mall sells more.',
-                empty: 'No neckwear yet. Charm & Shade in Cosmo Mall sells scarves, ties and necklaces.',
+                note: 'Scarves, ties and necklaces.',
+                empty: 'None yet! Check Charm & Shade at the mall.',
                 items: wearItems('neck', 'neck'),
                 colors: { list: HAT_COLORS, names: HAT_COLOR_NAMES, get: l => l.neckC, set: (l, i) => { l.neckC = i; } } },
             { id: 'pack', label: 'On your back', crop: null, view: 'back', store: 'charm',
                 icon: SVG('<path d="M7 9a5 5 0 0 1 10 0v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z"/><path d="M9.500 5.200V4a2.500 2.500 0 0 1 5 0v1.200M9.500 13h5v3.500h-5z"/>'),
-                note: 'What you own for your back, shown from behind. Charm & Shade in Cosmo Mall sells more.',
-                empty: 'Nothing for your back yet. Charm & Shade in Cosmo Mall sells wings, capes, packs and tails.',
+                note: 'Wings, capes, packs and tails.',
+                empty: 'None yet! Check Charm & Shade at the mall.',
                 items: wearItems('pack', 'pack'),
                 colors: { list: HAT_COLORS, names: HAT_COLOR_NAMES, get: l => l.packC, set: (l, i) => { l.packC = i; } } },
             { id: 'fringe', label: 'Hair', crop: [2, -8, 92], show: bareHead,
                 icon: SVG('<circle cx="12" cy="13" r="7.500"/><path d="M4.600 12.300C5 6.500 9 4.500 12 4.500s7 2 7.400 7.800c-3.200-.400-5.600-2.200-7.400-4.600-1.800 2.400-4.200 4.200-7.400 4.600z" fill="currentColor"/>'),
-                note: 'Your hairstyle: picking one changes all your hair, front and back. Free. Shown without a hat so you can see it.',
+                note: 'Pick a hairstyle. Free!',
                 items: () => HAIRSTYLES.map(([nm, f, b], i) => ({ key: 'fringe:' + i, name: nm, on: l => l.fringeStyle === f && l.backStyle === b, put: l => { l.fringeStyle = f; l.backStyle = b; l.back = l.fringe; } })),
                 colors: { list: HAIRS, names: HAIR_NAMES, get: l => l.fringe, set: (l, i) => { l.fringe = l.back = i; } } },
             { id: 'top', label: 'Tops', crop: [19, 53, 58],
                 icon: SVG('<path d="M8.500 4L3 7l2 4 2.500-1.200V20h9V9.800L19 11l2-4-5.500-3a3.500 3.500 0 0 1-7 0z"/>'),
-                note: 'All free: pick a pattern, then a colour. Putting one on takes a tailor outfit off.',
+                note: 'All free! Pick a pattern, then a colour.',
                 items: () => TOP_STYLES.map((st, s) => ({ key: 'top:' + s, name: TOP_ITEM_NAMES[s], on: l => !l.outfit && l.topStyle === s, put: l => { ownClothes(l); l.topStyle = s; } })),
                 colors: { list: TOPS.map(t => t.shirt), names: TOP_COLOR_NAMES, get: l => (l.outfit ? -2 : l.top), set: (l, i) => { ownClothes(l); l.top = i; } } },
             { id: 'bottom', label: 'Bottoms', crop: [24, 62, 48],
                 icon: SVG('<path d="M7 3.500h10l1.500 17h-5L12 9.500l-1.500 11h-5z"/>'),
-                note: 'All free. The first swatch matches them to your top. Picking your own takes a tailor outfit off.',
+                note: 'All free!',
                 items: () => BOTTOM_STYLES.map((st, s) => ({ key: 'bottom:' + s, name: st, on: l => !l.outfit && l.bottom === s, put: l => { ownClothes(l); l.bottom = s; } })),
                 colors: { list: PANTS_COLORS, names: PANTS_COLOR_NAMES, auto: 'Match my top', get: l => (l.outfit ? -2 : l.legs), set: (l, i) => { ownClothes(l); l.legs = i; } } },
             { id: 'shoes', label: 'Shoes', crop: [30, 74, 36],
@@ -39469,13 +39469,13 @@
                 colors: { list: SHOE_COLORS, names: SHOE_COLOR_NAMES, auto: 'Match my top', get: l => (l.outfit ? -2 : l.shoes), set: (l, i) => { ownClothes(l); l.shoes = i; } } },
             { id: 'skin', label: 'Body and skin', crop: [5, 6, 86],
                 icon: SVG('<circle cx="12" cy="12" r="8.500"/><path d="M9 10.500v.500M15 10.500v.500"/><path d="M8.500 14.500c1 1.400 2.200 2 3.500 2s2.500-.600 3.500-2"/>'),
-                note: 'Girl or guy, and your skin tone on the swatches. Everything you own can be worn on either.',
+                note: 'Girl or guy, and skin tone.',
                 items: () => BODY_NAMES.map((name, i) => ({ key: 'body:' + i, name, on: l => l.body === i, put: l => { l.body = i; } })),
                 colors: { list: SKINS, names: SKINS.map((_, i) => 'Tone ' + (i + 1)), get: l => l.skin, set: (l, i) => { l.skin = i; } } },
             { id: 'boards', label: 'My boards', crop: null,
                 icon: SVG('<path d="M2.500 12.500h19a3.500 3.500 0 0 1-3.500 3.500H6a3.500 3.500 0 0 1-3.500-3.500z"/><circle cx="7" cy="19" r="1.600"/><circle cx="17" cy="19" r="1.600"/>'),
-                note: 'Click a board to make it the one you ride, then press H or the Ride button. On a skateboard, Space pops an ollie.',
-                empty: 'No boards yet. Kickflip Skate Shop and Hover Hub are in Cosmo Mall.',
+                note: 'Pick a board, then press H to ride. Space = ollie!',
+                empty: 'No boards yet! Check the mall.',
                 items: () => (G.boards.length ? [{ key: 'board:', kind: 'board', board: null, name: 'On foot', sub: 'No board', on: () => !G.board, put: () => { } }] : [])
                     .concat(G.boards.map(b => ({ key: 'board:' + b.id, kind: 'board', board: b, name: b.name, sub: (b.kind === 'skate' ? 'Skateboard' : 'Hoverboard') + ' · +' + Math.round((b.speed - 1) * 100) + '% speed',
                     on: () => !!G.board && G.board.id === b.id, put: () => { } }))) }
@@ -39532,7 +39532,7 @@
             }
             closetNote.textContent = cl.msg ? cl.msg
                 : t && here ? (G.coins < t.price ? 'You need ' + (t.price - G.coins) + ' more coins for the ' + t.name + '.' : 'Buy the ' + t.name + ' once and it is yours in every colour.')
-                    : C ? (cl.shop ? 'Click anything to try it on. Buy it once and it is yours in every colour, kept in your Wardrobe.' : cl.items.length ? C.note : C.empty) : '';
+                    : C ? (cl.shop ? 'Click to try it on! Buy once, get every colour.' : cl.items.length ? C.note : C.empty) : '';
         }
         function paintClosetDial() {
             const v = closetShown(), hovered = cl.items[cl.hover];
@@ -39742,7 +39742,7 @@
             sfx.coin();
             cl.trying = null;
             t.put(look);
-            cl.msg = t.name + ' bought for ' + t.price + ' coins. You are wearing it, and it is in your Wardrobe for good.';
+            cl.msg = t.name + ' bought for ' + t.price + ' coins. It\'s yours!';
             lookChanged();
             saveGame();
             if (e.detail > 0)
@@ -40126,10 +40126,10 @@
                 });
             }
             mineList.replaceChildren(...rows);
-            mineMsg.textContent = ms.note || (ms.tab === 'gems' ? (gemsWorth(M) ? 'Flint buys every gem you bring.' : 'Your pouch is empty. Break rocks, tip your cart into the hopper, and the belt turns every chunk into a gem.')
-                : ms.tab === 'hammers' ? 'Hold the mouse button (or E) on a rock to drill. Q swaps between the pickaxe and the jackhammer.'
-                    : ms.tab === 'belt' ? 'A faster belt crushes your chunks sooner, and its sifter turns up better gems. It runs even while you are away.'
-                        : ms.tab === 'carts' ? 'Without a cart your hands hold ' + MINE.HANDS + ' chunks. A bigger cart means fewer trips to the belt.' : 'Strike as the marker crosses the green for a PERFECT. Perfects in a row hit harder still.');
+            mineMsg.textContent = ms.note || (ms.tab === 'gems' ? (gemsWorth(M) ? 'Flint buys every gem you bring.' : 'No gems yet! Break rocks and dump them in the hopper.')
+                : ms.tab === 'hammers' ? 'Hold the mouse (or E) to drill. Q = switch tools.'
+                    : ms.tab === 'belt' ? 'Faster belt = more gems. It works while you\'re gone!'
+                        : ms.tab === 'carts' ? 'Without a cart your hands hold ' + MINE.HANDS + ' chunks.' : 'Hit it on the green for PERFECT! Combos hit harder.');
         }
         function mineOpen() { ms.note = ''; paintMine(); questHappened('talk', { name: 'Flint' }); }
         function mineAct(act, i) {
@@ -40148,11 +40148,11 @@
                 return '';
             const own = tab === 'picks' ? M.picks : tab === 'hammers' ? M.hammers : tab === 'carts' ? M.carts : null;
             if (act === 'buy')
-                return 'Flint does not sell gear any more: you earn it by mining. The goals are on each one.';
+                return 'You earn gear by mining! Goals are on each one.';
             if (act !== 'use' || tab === 'belt' || !own.includes(i))
                 return '';
             if (tab === 'carts' && M.load.length > it.cap)
-                return 'Tip your cart into the hopper first: that one is too small for what is in it.';
+                return 'Dump your cart first!';
             if (tab === 'picks') {
                 M.pick = i;
                 M.tool = 'pick';
@@ -40275,8 +40275,8 @@
                 });
             }
             petsBody.replaceChildren(...rows);
-            petsMsg.textContent = ps.note || (ps.tab === 'adopt' ? (G.pet ? 'You already have ' + G.pet.name + ': one pet at a time.' : 'A pet needs food, a bath and some love every day. A pet that is left alone for too long gets sick, and can pass away.')
-                : 'Feed your pet from its care screen: click it, or open My Pet on your phone.');
+            petsMsg.textContent = ps.note || (ps.tab === 'adopt' ? (G.pet ? 'You already have ' + G.pet.name + ': one pet at a time.' : 'Feed, bathe and love your pet every day! Don\'t leave it alone too long.')
+                : 'Click your pet to feed it.');
         }
         function petsOpen(id) {
             const [k, c, pt, cl] = typeof id === 'string' ? id.split(':').map(Number) : [];
@@ -40303,7 +40303,7 @@
             saveGame();
             paintPip();
             questHappened('pet', {});
-            return 'Welcome home, ' + G.pet.name + '! Three meals of pet food come with it. Click your pet any time to look after it.';
+            return 'Welcome home, ' + G.pet.name + '! Comes with 3 meals. Click your pet to take care of it.';
         }
         petsTabs.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b)
             return; ps.tab = b.dataset.tab; ps.note = ''; paintPets(); if (e.detail > 0)
@@ -40390,12 +40390,12 @@
             document.getElementById('pet-walk').textContent = p.out ? 'Leave at home' : 'Take along';
             document.getElementById('pet-collar').textContent = 'Collar: ' + PET_COLLARS[p.collar][1];
             careTricks.replaceChildren(node('span', '', 'Tricks'), ...PET_TRICKS.map(([need, name]) => { const b = el('button', 'lcd-mini', { type: 'button', 'data-trick': name }); b.textContent = p.bond >= need ? name : name + ' (bond ' + need + ')'; b.disabled = p.bond < need || !!pc.anim; return b; }));
-            careHint.textContent = pc.mode === 'bath' ? 'Scrub the dirt off: hold the mouse button down and rub over each spot.' : pc.mode === 'play' ? 'Click anywhere to throw the ball. ' + (PET.FETCHES - t.fetches) + ' more fetches today make ' + p.name + ' happier.'
+            careHint.textContent = pc.mode === 'bath' ? 'Hold the mouse and scrub!' : pc.mode === 'play' ? 'Click anywhere to throw the ball. ' + (PET.FETCHES - t.fetches) + ' more fetches today make ' + p.name + ' happier.'
                 : 'Rub ' + p.name + ' with the mouse (button held) to stroke it. Every day: a meal, plus a bath, a game or a stroke.' + (p.last === dayNumber() ? ' Today counts as cared for!' : '');
         }
         function careMemorial() {
             careTitle.textContent = pc.lost ? 'Goodbye, ' + pc.lost : 'My Pet';
-            careInfo.textContent = pc.lost ? pc.lost + ' passed away. A pet needs food, a bath and some love every day.' : 'You have no pet. Adopt one at Paws & Whiskers, on the west side of Village Green.';
+            careInfo.textContent = pc.lost ? pc.lost + ' passed away. A pet needs food, a bath and some love every day.' : 'No pet yet! Adopt one at the Pet Shop.';
             careBars.replaceChildren(...G.petMemory.slice().reverse().map(m => node('li', 'memory', 'In memory of ' + m.name + ', ' + PET_KINDS[m.kind].name.toLowerCase() + ' · ' + m.days + (m.days === 1 ? ' day' : ' days') + ' · bond ' + m.bond)));
             careWarn.hidden = true;
             careTricks.replaceChildren();
@@ -40838,7 +40838,7 @@
             }
             else if (dn.tab === 'wares' && dn.shop) {
                 const day = dayNumber(), st = grizzleStock(day, D.level, D.cls), got = D.stock.day === day ? D.stock.got : [];
-                rows.push(node('p', 'pet-hint', 'Three weapons a day, made for your level. New ones tomorrow.'));
+                rows.push(node('p', 'pet-hint', '3 new weapons every day!'));
                 st.forEach(({ w, price }, i) => {
                     const li = node('div', 'mine-row dun-row'), text = node('div', 'mine-text'), nm = node('b', '', w.name);
                     nm.style.color = mix(RARITIES[w.r][1], '#1d1424', 0.35);
@@ -40906,7 +40906,7 @@
                     rows.push(li);
                 });
                 if (!D.bag.length)
-                    rows.push(node('p', 'pet-hint', 'No weapons yet. Pick a class at the camp for a free one; monsters and chests drop better.'));
+                    rows.push(node('p', 'pet-hint', 'No weapons yet! Pick a class at camp for a free one.'));
             }
             else {
                 [['potion', 'Potion', DUN.POTION, 'Heals ' + DUN.POTION_HEAL + ' health (H).', D.potions], ['big', 'Big potion', DUN.BIG_POTION, 'Heals ' + DUN.BIG_HEAL + ' health (H).', D.big], ['mana', 'Mana potion', DUN.MANA_POTION, 'Restores ' + DUN.MANA_HEAL + ' mana (M).', D.mana]].forEach(([id, name, price, blurb, have]) => {
@@ -40920,7 +40920,7 @@
                 });
             }
             dunList.replaceChildren(...rows);
-            dunMsg.textContent = dn.note || (dn.tab === 'stats' ? 'Every level brings ' + DUN.PTS + ' stat points. New skills come at levels 3 and 6.' : dn.shop ? 'Grizzle buys any weapon you do not need.' : 'Equip a weapon to fight with it. Grizzle, at the camp, buys the rest.');
+            dunMsg.textContent = dn.note || (dn.tab === 'stats' ? 'Every level brings ' + DUN.PTS + ' stat points. New skills come at levels 3 and 6.' : dn.shop ? 'Grizzle buys any weapon you do not need.' : 'Equip a weapon. Sell extras to Grizzle.');
         }
         function dunOpen(shop, tab) { dn.shop = !!shop; dn.tab = tab || (shop ? 'bag' : 'stats'); dn.note = ''; paintDun(); dunP.open(); if (shop)
             questHappened('talk', { name: 'Grizzle' }); }
@@ -41059,7 +41059,7 @@
                 card.append(weaponCanvas(makeWeapon(C.likes[0], 2, 2), 72), node('b', '', C.name), node('small', '', C.blurb), node('small', 'dun-skills', SKILLS[id].map(S => S.name + (S.lv > 1 ? ' (lv ' + S.lv + ')' : '')).join(' · ')), node('small', '', 'Health +' + C.hp + ' · mana ' + C.mp), b);
                 return card;
             }));
-            classMsg.textContent = first ? 'Welcome to the crypt! Pick a class to fight as. You can change it later, here at the camp.' : 'Changing class is free, here at the camp. Your level, stats and bag stay as they are.';
+            classMsg.textContent = first ? 'Welcome to the crypt! Pick a class.' : 'Changing class is free!';
             classP.open();
         }
         classList.addEventListener('click', e => {
@@ -41309,7 +41309,7 @@
                 rows.push(node('p', 'coll-head', 'Today\'s Classics (new ones tomorrow)'));
                 rows.push(grid(S.classic.map(d => collCard(kind, d, true))));
                 rows.push(node('p', 'coll-head', 'New this week: ' + armoryTheme(wk).name + '. Not for sale: win them!'));
-                rows.push(node('p', 'pet-hint', 'This week\'s set and the Legends are prizes. Clear the Daily Delve, beat crypt bosses and elites, land a legendary fish, dig up a buried chest in the Crystal Cave, earn a new arcade medal, or finish all three daily quests: each has a chance of one.'));
+                rows.push(node('p', 'pet-hint', 'Win these! Beat bosses, clear the Delve, catch legendary fish, win medals or finish your quests.'));
                 rows.push(grid(S.week.map(d => collCard(kind, d, false))));
             }
             else {
@@ -41321,7 +41321,7 @@
                     rows.push(grid(list.map(d => collCard(kind, d, false))));
             }
             collList.replaceChildren(...rows);
-            collMsg.textContent = cs.note || (shop ? 'Classics are sold here; new sets and Legends are won. Every copy has its own serial number. Trade them with other players: the Trading Manor is the place.' : kind === 'w' ? 'Weapons drop in the Hollow Crypt.' : kind === 'c' ? 'Player cards are sold at the card counter in the Trading Manor.' : 'Buy them at the ' + (kind === 'o' ? 'Tailor' : kind === 'b' ? 'Hover Hub or the skate shop' : 'furniture store') + ': press Collection there.');
+            collMsg.textContent = cs.note || (shop ? 'Classics are for sale. Sets and Legends are won! Trade at the Trading Manor.' : kind === 'w' ? 'Weapons drop in the Hollow Crypt.' : kind === 'c' ? 'Player cards are sold at the card counter in the Trading Manor.' : 'Buy them at the ' + (kind === 'o' ? 'Tailor' : kind === 'b' ? 'Hover Hub or the skate shop' : 'furniture store') + ': press Collection there.');
         }
         function collOpen(kind, shop) {
             cs.kind = kind;
@@ -42101,9 +42101,9 @@
                 bar.append(rd, cx);
                 rows.push(bar);
                 const offered = new Set(m.w.map(w => w.u)), bag = tradeMine().filter(w => !offered.has(w.u));
-                rows.push(node('div', 'mine-row mine-top', 'Your things: outfits, boards, cards, tools, weapons, flowers, and furniture in your storage'));
+                rows.push(node('div', 'mine-row mine-top', 'Your stuff'));
                 if (G.home.rooms && G.home.rooms.some(R => R.items && R.items.some(it => !FURN_BY[it.t] || !FURN_BY[it.t].build)))
-                    rows.push(node('p', 'pet-hint', 'Furniture placed in your house can be traded once you put it back in storage (Decorate, then pick it up).'));
+                    rows.push(node('p', 'pet-hint', 'Put furniture back in storage to trade it.'));
                 if (!bag.length)
                     rows.push(node('p', 'pet-hint', 'Nothing else that can be traded.'));
                 bag.forEach(w => rows.push(row(w, 'on', 'Offer')));
@@ -42116,7 +42116,7 @@
             }
             tradeBody.replaceChildren(...rows);
             tradeMsg.classList.toggle('trade-hot', !!tr.count || (!!t && !tr.done && t.ready === m.rev && m.ready < 0));
-            tradeMsg.textContent = tr.note || (tr.done ? '' : locked() ? 'Swapping...' : tr.count ? 'Both ready! Trading in ' + Math.max(0, Math.ceil((tr.count.end - Date.now()) / 1000)) + ' seconds. Press Back out to stop it.' : m.ready >= 0 ? (t && t.ready === m.rev ? 'Both ready...' : 'Waiting for ' + tr.otherName + ' to be ready.') : t && t.ready === m.rev ? '✅ ' + tr.otherName + ' is ready! Press Ready to trade.' : 'Both of you press Ready to swap. Changing an offer takes you both off Ready.');
+            tradeMsg.textContent = tr.note || (tr.done ? '' : locked() ? 'Swapping...' : tr.count ? 'Both ready! Trading in ' + Math.max(0, Math.ceil((tr.count.end - Date.now()) / 1000)) + ' seconds. Press Back out to stop it.' : m.ready >= 0 ? (t && t.ready === m.rev ? 'Both ready...' : 'Waiting for ' + tr.otherName + ' to be ready.') : t && t.ready === m.rev ? '✅ ' + tr.otherName + ' is ready! Press Ready to trade.' : 'Both press Ready to trade!');
         }
         if (tradeBody) {
             tradeBody.addEventListener('click', e => {
@@ -42628,14 +42628,14 @@
             netBtn.title = net.room ? (others.length ? others.length + 1 + ' players here' : 'Who is here: just you so far') : 'Playing together';
             if (netPop.hidden)
                 return;
-            document.getElementById('save-status').textContent = account.cloud ? (ONLINE_OWN() ? (acctEmail() ? 'Your player is saved to your account (' + acctEmail() + '): sign in with it on any computer.' : 'Your player is saved online, but only for this browser. To keep it safe, add an email and password on the start screen.') : 'Your player is saved to your Planet Wando account, through your sign-in.')
+            document.getElementById('save-status').textContent = account.cloud ? (ONLINE_OWN() ? (acctEmail() ? 'Your player is saved to your account (' + acctEmail() + '): sign in with it on any computer.' : 'Saved for this browser only. Add an email and password to keep it safe!') : 'Your player is saved to your Planet Wando account, through your sign-in.')
                 : account.uid ? 'Your account cannot save on this page (it is shared with you as view-only), so your player is saved in this browser only.'
-                    : 'You are playing as a guest: your player is saved in this browser only.';
+                    : 'Playing as a guest (saved in this browser).';
             if (!window.wandoHost)
-                document.getElementById('net-help').textContent = 'Playing together online is not available in this copy, so you are playing alone.';
+                document.getElementById('net-help').textContent = 'Playing solo.';
             else if (ONLINE_OWN())
-                document.getElementById('net-help').textContent = 'Everyone playing Planet Wando is in the same world: you see each other when you are in the same place. Add friends to message them and trade.';
-            netStatus.textContent = !net.room ? 'This copy of Planet Wando is not connected to other players right now, so you are playing alone.'
+                document.getElementById('net-help').textContent = 'Add friends to message and trade!';
+            netStatus.textContent = !net.room ? 'Not connected. Playing solo.'
                 : !net.live ? 'Connecting to the other players...'
                     : 'Server: ' + srvById(SRV.id).name + '. ' + (others.length ? others.length + 1 + ' players are on this server right now.' : 'Nobody else is on this server yet.') + (G.name ? '' : ' Pick a name so others know who you are.');
             const row = (name, place, extra) => {
@@ -42788,7 +42788,7 @@
             netPush();
             const sc = scene();
             if (G.fan.host) {
-                chatLine('', '🎉 Your party is on! Friends can join from their "Who is here" list while you are at home.', 'sys');
+                chatLine('', '🎉 Party time! Friends can join from Who\'s here.', 'sys');
                 if (sc && sc.loc !== 'home') {
                     netPop.hidden = true;
                     sc.travelTo('home', true);
@@ -43038,12 +43038,12 @@
                 return b;
             });
             if (!slots.length)
-                slots.push(node('p', 'inv-empty', iv.tab === 'w' ? 'No weapons yet. Pick a class at the crypt camp for a free one; the rest you have to find.' : iv.tab === 'all' ? 'Your backpack is empty.' : 'Nothing here yet.'));
+                slots.push(node('p', 'inv-empty', iv.tab === 'w' ? 'No weapons yet! Pick a class at the crypt camp.' : iv.tab === 'all' ? 'Your backpack is empty.' : 'Nothing here yet.'));
             invGrid.replaceChildren(...slots);
             const it = all.find(x => x.key === iv.sel);
             if (!it) {
                 iv.sel = '';
-                invPick.replaceChildren(node('p', 'inv-hint', iv.note || 'Click something in your backpack to see it and use it.'));
+                invPick.replaceChildren(node('p', 'inv-hint', iv.note || 'Click something to use it.'));
                 return;
             }
             const text = node('div', 'inv-text'), nm = node('b', '', it.name + (it.n > 1 ? ' × ' + it.n : ''));
@@ -43173,9 +43173,9 @@
             if (busy())
                 return 'Finish what you are doing first.';
             if (s.loc === 'dungeon' && G.dun.run && G.dun.run.room)
-                return 'You are deep in a dungeon: get back to the camp first.';
+                return 'You\'re in a dungeon! Get back to camp first.';
             if (loc === 'home' && !G.home.owned)
-                return 'You do not have a house yet. The deed office is on the Village Green.';
+                return 'You don\'t have a house yet!';
             if (loc === s.loc)
                 return 'You are already here.';
             wmapClose();
@@ -43289,7 +43289,7 @@
                 return li;
             });
             loginDays.replaceChildren(...items);
-            loginSub.textContent = st.ready ? (st.kept && st.n > 1 ? st.n + ' days in a row! ' : 'Welcome back! ') + 'Collect today\'s reward. Come back every day: day 7 has a prize.' : 'You have collected today\'s reward. Come back tomorrow for day ' + ((st.day % 7) + 1) + '!';
+            loginSub.textContent = st.ready ? (st.kept && st.n > 1 ? st.n + ' days in a row! ' : 'Welcome back! ') + 'Daily reward! Day 7 has a prize.' : 'You have collected today\'s reward. Come back tomorrow for day ' + ((st.day % 7) + 1) + '!';
             loginBtn.disabled = !st.ready;
             loginBtn.textContent = st.ready ? 'Collect!' : 'See you tomorrow';
         }
@@ -43498,10 +43498,10 @@
                     await db.collection('feedback').doc(id).set({ by, name: G.name || 'Player', kind, text, at: Date.now(), where: s ? s.loc : G.loc, about: about ? about.uid : '', aboutName: about ? about.name : '', server: SRV.id, screen: screenPhone() ? 'phone' : 'pc', build: String(window.WANDO_BUILD || '') });
                     sentAt = Date.now();
                     txt.value = '';
-                    note.textContent = 'Sent! Thank you for helping make Planet Wando better. 💜';
+                    note.textContent = 'Sent! Thanks!! 💜';
                 }
                 catch (e) {
-                    note.textContent = 'It could not be sent just now. Try again in a little while.';
+                    note.textContent = 'Couldn\'t send. Try again later.';
                 }
                 sendB.disabled = false;
             });
@@ -43963,12 +43963,12 @@
             return { id: 'tailor', title: 'Tailor', sub: 'Fashion & costumes', color: '#ff7ab0', burst: 'New arrivals!',
                 keeper: keeperLook({ body: 0, fringe: 4, back: 4, backStyle: 3, top: 6, topStyle: 1, hatStyle: 0 }), per: 4,
                 sections: () => [
-                    { name: 'Rare of the Day', blurb: 'One rare outfit, today only. Tomorrow there is a different one.', items: [item(rareToday())] },
+                    { name: 'Rare of the Day', blurb: 'Today only!', items: [item(rareToday())] },
                     { name: 'New tops', blurb: 'Free! Pick any colour.', items: piece('top', 50) },
                     { name: 'New bottoms', blurb: 'Free!', items: piece('bottom', 12) },
                     { name: 'New shoes', blurb: 'Free!', items: piece('shoes', 12) },
                     ...(SEASON ? [{ name: SEASON.name, blurb: 'Limited: gone when the week turns.', items: WEEK_OUTFITS.filter(o => o.holiday).map(item) }] : []),
-                    { name: 'Costumes', blurb: 'Dress up! Whole costumes, from crab suits to cupcakes. Yours to keep.', items: COSTUME_OUTFITS.map(item) },
+                    { name: 'Costumes', blurb: 'Costumes! Crab suits, cupcakes and more.', items: COSTUME_OUTFITS.map(item) },
                     { name: "What's New", blurb: OUTFITS_PER_WEEK + ' outfits this week. ' + WEEK_LABEL + '.', items: WEEK_OUTFITS.filter(o => !o.holiday).map(item) },
                     { name: 'Your outfits', blurb: 'Everything you have bought, to wear again.', items: G.outfits.map(item), empty: 'Nothing here yet.' }
                 ] };
@@ -43999,7 +43999,7 @@
             const earlier = G.boards.filter(o => o.kind !== 'car' && (o.kind === 'skate') === skate && !stock.some(w => w.id === o.id) && (skate || !HOVER_CLASSICS.some(w => w.id === o.id)));
             return { id: skate ? 'skate' : 'hover', title: skate ? 'Kickflip' : 'Hover Hub', sub: skate ? 'Skateboard catalog' : 'Hoverboard catalog', color: skate ? '#ff8a3a' : '#5ef2ff',
                 burst: skate ? 'Fresh decks!' : 'New boards!', keeper: keeperLook(skate ? { body: 1, fringe: 3, back: 3, fringeStyle: 3, top: 5 } : { body: 0, fringe: 6, back: 6, backStyle: 5, top: 3 }), per: 4,
-                sections: () => [{ name: "What's New", blurb: 'Faster boards cost more. Boards you buy are yours to keep.', items: stock.map(item) },
+                sections: () => [{ name: "What's New", blurb: 'Faster boards cost more.', items: stock.map(item) },
                     ...(skate ? [] : [{ name: 'Classics', blurb: HOVER_CLASSICS.length + ' boards that never leave the shop, from a gentle glide to a rocket.', items: HOVER_CLASSICS.map(item) }]),
                     { name: 'Your boards', blurb: 'From earlier weeks.', items: earlier.map(item), empty: 'No boards from earlier weeks.' }] };
         }
@@ -44019,13 +44019,13 @@
                     if (it.d) {
                         const key = furnKey(it.d.id, it.c);
                         G.home.inv[key] = Math.min(99, (G.home.inv[key] || 0) + 1);
-                        said = cap(furnName(it.d, it.c)) + ' bought. It is in your storage: place it with Decorate, inside your house.';
+                        said = cap(furnName(it.d, it.c)) + ' bought! Place it with Decorate.';
                     }
                     else {
                         const own = it.id.startsWith('walls') ? G.home.walls : G.home.floors;
                         own.push(it.style);
                         own.sort((a, b) => a - b);
-                        said = it.name + ' bought. Put it up with Decorate, inside your house.';
+                        said = it.name + ' bought! Place it with Decorate.';
                     }
                     sfx.coin();
                     saveGame();
@@ -44075,12 +44075,12 @@
                         const baskets = toolShopItems('basket');
                         return [{ name: 'Baskets this week', blurb: 'Hold a basket and click flowers to pick them. First one is free!', items: baskets },
                             { name: 'Bouquet orders', blurb: '3 new orders every day!', items: orders },
-                            { name: 'Sell flowers', blurb: 'Golden flowers are rare: about one patch in thirty has one.', items: sell },
-                            { name: 'For your house', blurb: 'Every plant goes to your house storage: put it out with Decorate.', items: list.map(item) }];
+                            { name: 'Sell flowers', blurb: 'Golden flowers are super rare!', items: sell },
+                            { name: 'For your house', blurb: 'Plants go in your storage.', items: list.map(item) }];
                     } };
             return { id: 'furn', title: 'Homestead', sub: 'Furniture catalog', color: '#7fd06a', burst: 'Everything for your home!', per: 6,
                 keeper: keeperLook({ body: 1, fringe: 2, back: 2, top: 1, topStyle: 2 }),
-                sections: () => [{ name: 'This week\'s picks', blurb: 'A quarter off, this week only. New picks every Monday.', items: furnWeekPicks().map(p => Object.assign(item({ id: 'pick:' + p.d.id + ':' + p.c, d: p.d, c: p.c, name: cap(furnName(p.d, p.c)), price: p.price }), { tag: '25% off · was ' + p.d.price })) }]
+                sections: () => [{ name: 'This week\'s picks', blurb: '25% off this week only!', items: furnWeekPicks().map(p => Object.assign(item({ id: 'pick:' + p.d.id + ':' + p.c, d: p.d, c: p.c, name: cap(furnName(p.d, p.c)), price: p.price }), { tag: '25% off · was ' + p.d.price })) }]
                     .concat(FS_CATS.map(([cat, name]) => { const keepCat = fs.cat; fs.cat = cat; const list = furnItems(); fs.cat = keepCat; return { name, items: list.map(item) }; })) };
         }
         function storeBook(shop) {
@@ -44116,7 +44116,7 @@
                                     it.put(look);
                                     lookChanged();
                                     saveGame();
-                                    return have ? 'Now wearing the ' + it.name + '.' : it.name + ' bought for ' + it.price + ' Coins. You are wearing it, and it is in your Wardrobe for good.';
+                                    return have ? 'Now wearing the ' + it.name + '.' : it.name + ' bought for ' + it.price + ' Coins. It\'s yours!';
                                 } };
                         }) };
                 }) };
@@ -44901,7 +44901,7 @@
                     return true;
                 }
                 if (!net.room) {
-                    say('You are not connected to the other players right now.');
+                    say('You\'re offline right now.');
                     return true;
                 }
                 if (S.id === SRV.id) {
@@ -45051,15 +45051,15 @@
                     $('gate-play').textContent = 'Play on ' + srvById(SRV.id).name;
                     paintAcct();
                     drawPortrait($('gate-face'), normLook(existing.look));
-                    $('gate-in-note').textContent = account.uid ? (ONLINE_OWN() ? 'Welcome back! This is your player, saved online to this browser.' : 'Welcome back! You are signed in with your account, and this is the player saved to it.')
-                        : 'Welcome back! This is the player saved in this browser.';
+                    $('gate-in-note').textContent = account.uid ? (ONLINE_OWN() ? 'Welcome back!' : 'Welcome back! You are signed in with your account, and this is the player saved to it.')
+                        : 'Welcome back!';
                 }
                 else
-                    $('gate-in-note').textContent = account.uid ? 'There is no player on your account yet. Sign up to make one.' : 'There is no player saved in this browser yet. Sign up to make one.';
+                    $('gate-in-note').textContent = account.uid ? 'No player yet! Sign up to make one.' : 'No player yet! Sign up to make one.';
             }
             else if (which === 'up') {
-                $('gate-up-note').textContent = (account.uid ? (ONLINE_OWN() ? 'Your player is saved online and kept for this browser: no password to remember. ' : 'Your player is tied to your sign-in, so there is no password to choose or remember. ')
-                    : 'Your player is saved in this browser, so play on the same computer and browser to keep your progress. ')
+                $('gate-up-note').textContent = (account.uid ? (ONLINE_OWN() ? 'Saved online for this browser. ' : 'Your player is tied to your sign-in, so there is no password to choose or remember. ')
+                    : 'Saved in this browser only. ')
                     + (carry && !existing ? 'The progress already on this device (' + facts(carry) + ') comes with you.' : 'Pick the name other players will see.');
                 replaceRow.hidden = !existing;
                 replaceBox.checked = false;
@@ -45074,7 +45074,7 @@
             else if (which === 'mail') {
                 $('gate-mail-title').textContent = mailMode === 'protect' ? 'Keep your player safe' : 'Sign in';
                 $('gate-mail-note').textContent = mailMode === 'protect' ? 'Add an email and password to ' + (existing ? cleanText(existing.name, 16) || 'your player' : 'your player') + '. Then you can sign in on any computer and get it back.'
-                    : 'Sign in with the email and password you made your player with.';
+                    : 'Sign in with your email and password.';
                 $('gate-mail-go').textContent = mailMode === 'protect' ? 'Save my player' : 'Sign in';
                 $('gate-mail-pw').setAttribute('autocomplete', mailMode === 'protect' ? 'new-password' : 'current-password');
                 $('gate-mail-forgot').hidden = mailMode === 'protect';
@@ -45101,7 +45101,7 @@
                 b.dataset.acct = 'out';
             }
             else {
-                t.textContent = '⚠️ This player is only kept in this browser. Add an email and password so you never lose it.';
+                t.textContent = '⚠️ Add an email and password so you never lose your player!';
                 b.textContent = 'Keep my player safe';
                 b.dataset.acct = 'protect';
             }
@@ -45132,7 +45132,7 @@
                 $('gate-mail-error').textContent = 'Type your email first, then press this again.';
                 return;
             }
-            A.reset(em).then(() => { $('gate-mail-error').textContent = 'Sent! Check your email for a link to pick a new password.'; }, err => { $('gate-mail-error').textContent = (err && err.message) || 'That did not work.'; });
+            A.reset(em).then(() => { $('gate-mail-error').textContent = 'Sent! Check your email.'; }, err => { $('gate-mail-error').textContent = (err && err.message) || 'That did not work.'; });
         });
         let mailBusy = false;
         paneMail.addEventListener('submit', async (e) => {
@@ -45267,7 +45267,7 @@
                 return;
             }
             if (existing && !replaceBox.checked) {
-                upError.textContent = 'You already have a player. Tick the box to replace it, or use Sign in.';
+                upError.textContent = 'You already have a player! Tick the box to replace it.';
                 return;
             }
             const A = ACCT();
@@ -45437,7 +45437,7 @@
         });
         try {
             const wk = armoryWeek(), Dg = dailyDelve(dayNumber());
-            $('gate-ticker-text').textContent = ['Welcome to Planet Wando!', 'NEW: Wando Motors collector cars, roads to every place, and a hundred new pieces for your house!', 'NEW: drive a taxi on the Village Green, ride along with friends, wash & wax, and Wando FM on the car radio!', ...(trickOn() ? ['Trick or treat! Collect candy from the townsfolk'] : []), 'New this week: ' + armoryTheme(wk).name, 'Today\'s Daily Delve: ' + Dg.name, 'Win the new weekly sets in the crypt, the cave, the sea and the arcade',
+            $('gate-ticker-text').textContent = ['Welcome to Planet Wando!', 'NEW: collector cars, roads everywhere, and 100 new furniture items!', 'NEW: drive a taxi, ride with friends, and car radio!', ...(trickOn() ? ['Trick or treat! Collect candy from the townsfolk'] : []), 'New this week: ' + armoryTheme(wk).name, 'Today\'s Daily Delve: ' + Dg.name, 'Win the new weekly sets!',
                 'Trade with your friends', 'Build a house and fill it with Collector\'s pieces', 'Adopt a pet on the Green'].join('   ★   ');
             $('gate-delve').textContent = Dg.name;
         }
@@ -45627,7 +45627,7 @@
             foot.textContent = why;
             show(existing ? 'in' : 'up');
         };
-        setTimeout(() => guestNow('Your account did not answer in time, so this visit is saved in this browser only.'), 9000);
+        setTimeout(() => guestNow('Couldn\'t reach your account. Saving in this browser for now.'), 9000);
         Promise.race([accountConnect(), new Promise(r => setTimeout(() => r({ uid: null, doc: null, cloud: null, slow: true }), 8000))]).catch(() => ({ uid: null, doc: null, cloud: null })).then(acct => {
             if (entered || ready)
                 return;
@@ -45643,11 +45643,11 @@
             }
             ready = true;
             status.textContent = existing ? 'Sign in to carry on, or sign up to start again.' : 'Sign up to make your player.';
-            foot.textContent = acct.uid ? (ONLINE_OWN() ? 'Online: you can see and play with everyone in the beta.' : 'Signed in. No password needed.')
-                : acct.slow ? 'Your account did not answer in time, so this visit is saved in this browser only.'
+            foot.textContent = acct.uid ? (ONLINE_OWN() ? 'Online!' : 'Signed in. No password needed.')
+                : acct.slow ? 'Couldn\'t reach your account. Saving in this browser for now.'
                     : 'Your player is saved in this browser.' + (ONLINE_OWN() ? ' ' + guestWhy() : '');
             show(existing ? 'in' : 'up');
-        }).catch(() => guestNow('Something went wrong reading your account, so this visit is saved in this browser only.'));
+        }).catch(() => guestNow('Something went wrong. Saving in this browser for now.'));
     }
     fonts.then(() => {
         const hot = window.wandoHost && window.wandoHost.hot;
