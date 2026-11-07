@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794050183';
+window.WANDO_BUILD = '1794050457';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -18693,9 +18693,10 @@ window.WANDO_BUILD = '1794050183';
         sfx.thud(); this.taxiMark(T.to.x, T.to.y + 60, '📍 ' + LOCS[T.to.door].name);
         this.noteUntil = 0; this.note('They hop in. "To ' + LOCS[T.to.door].name + ', please!" Follow the 📍.', '#ffe9a8'); return;
       }
-      const pay = TAXI.base + Math.round(T.dist / 100) * TAXI.per; G.coins += pay; G.taxi[1]++; sfx.coin(); saveGame();
+      const wet = weatherNow() === 'rain', pay = Math.round((TAXI.base + Math.round(T.dist / 100) * TAXI.per) * (wet ? 1.5 : 1));   // (nobody wants to walk in the rain: wet fares tip more)
+      G.coins += pay; G.taxi[1]++; sfx.coin(); saveGame();
       this.taxiAt = time + 7000; this.taxiDrop(null); this.noteUntil = 0;
-      this.note('"Thanks for the lift!" +' + pay + ' Coins. ' + (G.taxi[1] >= TAXI.max ? 'That is all the fares for today.' : (TAXI.max - G.taxi[1]) + ' more fares today.'), '#ffe066');
+      this.note((wet ? '"Thanks for keeping me dry!" +' : '"Thanks for the lift!" +') + pay + ' Coins. ' + (G.taxi[1] >= TAXI.max ? 'That is all the fares for today.' : (TAXI.max - G.taxi[1]) + ' more fares today.'), '#ffe066');
       if (ui.onEvent) ui.onEvent('taxi', { pay });
     }
 
@@ -26148,6 +26149,7 @@ window.WANDO_BUILD = '1794050183';
         trickOn() ? art('Trick or Treat!', 'It is Halloween on Planet Wando! Walk up to any of the townsfolk, in every place, and they give you a candy (once each a day). Swap your candies at the bubbling cauldron for Coins, a Spooky Violet teddy, or the Friendly Ghost and Pumpkin Patch costumes. You have ' + (G.fan.cy || 0) + ' candies.') : null,
         art('Wando Motors', 'This week\'s collector cars: ' + carCollWeek().map(d => d.name + ' (' + RARITIES[d.r][0] + ')').join(', ') + '. Sold this week only, each with its own serial number. Walk into the showroom on the Village Green!'),
         art('Homestead Picks', 'A quarter off this week: ' + furnWeekPicks().map(p => cap(furnName(p.d, p.c))).join(', ') + '. New picks every Monday.'),
+        art('Taxi!', 'Got a car? Drive it on the Village Green and the townsfolk will wave you down for a lift to their favourite shop. Up to six fares a day, and rainy-day riders tip half as much again. Fresh from the Wash & wax at Wando Motors? Everyone will see you sparkle.'),
         feastOn() ? art('The Harvest Feast', 'Happy Thanksgiving! A table of food is laid out on the Village Green all week: grab a free plate once a day, and look out for twice the acorns.') : null,
         art('Roads Open', 'The paths now lead somewhere! Walk off the Village Green to Starfish Beach, Cosmo Mall or Frostwood Lake, and on from there to the Trading Manor, the Neon Dance House, the Crystal Cave and the Hollow Crypt.'),
         art('Frostwood Lake', 'Fish of the Week: the ' + ICE_FISH[iceWeekFish()][1] + ' (' + ICE_TIERS[ICE_FISH[iceWeekFish()][2]] + '). Catch one this week for double fishing XP; Captain Floe pays double for it too. Catch enough of any kind and you earn its mounted trophy for your wall (and trophies can be traded). The Frostwood Derby starts on the hour and every 20 minutes after: most pounds in 4 minutes wins.'),
@@ -26529,7 +26531,7 @@ window.WANDO_BUILD = '1794050183';
     });
     try {                                                   // the ticker and the Delve panel
       const wk = armoryWeek(), Dg = dailyDelve(dayNumber());
-      $('gate-ticker-text').textContent = ['Welcome to Planet Wando!', 'NEW: Wando Motors collector cars, roads to every place, and a hundred new pieces for your house!', ...(trickOn() ? ['Trick or treat! Collect candy from the townsfolk'] : []), 'New this week: ' + armoryTheme(wk).name, 'Today\'s Daily Delve: ' + Dg.name, 'Win the new weekly sets in the crypt, the cave, the sea and the arcade',
+      $('gate-ticker-text').textContent = ['Welcome to Planet Wando!', 'NEW: Wando Motors collector cars, roads to every place, and a hundred new pieces for your house!', 'NEW: drive a taxi on the Village Green, ride along with friends, wash & wax, and Wando FM on the car radio!', ...(trickOn() ? ['Trick or treat! Collect candy from the townsfolk'] : []), 'New this week: ' + armoryTheme(wk).name, 'Today\'s Daily Delve: ' + Dg.name, 'Win the new weekly sets in the crypt, the cave, the sea and the arcade',
         'Trade with your friends', 'Build a house and fill it with Collector\'s pieces', 'Adopt a pet on the Green'].join('   ★   ');
       $('gate-delve').textContent = Dg.name;
     } catch (e) { /* the news can wait */ }
