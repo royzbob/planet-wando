@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794002977';
+window.WANDO_BUILD = '1794045984';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -1675,6 +1675,16 @@ window.WANDO_BUILD = '1794002977';
     background: repeating-linear-gradient(rgba(0, 0, 0, 0.24) 0 2px, transparent 2px 4px), radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.5));
   }
   .shop.arcade.hires .arc-screen canvas { image-rendering: auto; }
+  @media (max-height: 480px) and (orientation: landscape) {      /* a phone on its side: the screen on the left, the stick and buttons beside it */
+    .shop.arcade { display: grid; grid-template-columns: auto minmax(150px, 1fr); grid-template-rows: auto 1fr auto; width: min(780px, calc(100% - 16px)); max-height: calc(100% - 10px); }
+    .shop.arcade .arc-marquee { grid-column: 1 / -1; }
+    .shop.arcade .arc-screen { grid-column: 1; grid-row: 2; height: calc(100vh - 185px); min-height: 96px; margin: 6px 8px 2px 12px; }
+    .shop.arcade .arc-msg { grid-column: 1; grid-row: 3; margin-bottom: 6px; }
+    .shop.arcade .arc-deck { grid-column: 2; grid-row: 2 / 4; flex-direction: column; justify-content: center; padding: 4px 10px; gap: 6px; }
+    .shop.arcade .arc-pad { grid-template: repeat(3, 30px) / repeat(3, 30px); }
+    .shop.arcade .arc-fire { width: 66px; height: 66px; font-size: 13px; }
+    .shop.arcade .arc-info { gap: 2px; }
+  }
   .shop.arcade.hires .arc-screen::after { display: none; }
   .arc-msg { flex: none; min-height: 1.3em; margin: 0 14px; font: 800 12px/1.3 var(--font-body); letter-spacing: 0.03em; color: #cfc4ff; text-align: center; }
   .arc-deck { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 16px 14px; }
@@ -12399,6 +12409,7 @@ window.WANDO_BUILD = '1794002977';
       afk: q.afk === 1,                                     // away from the keyboard (or the game is in another tab)      // on a phone or tablet ('m'), or a computer ('d')
       boat: Number.isInteger(q.boat) ? clamp(q.boat, 0, BOAT_LEVELS.length - 1) : 0,
       car: CAR_LOCS.includes(q.loc) && carUncode(q.car) ? q.car : 0,     // the car they are driving (see carCode)
+      pk: Array.isArray(q.pk) && q.pk.length === 5 && carUncode(q.pk[0]) && CAR_LOCS.includes(q.pk[1]) && Number.isFinite(q.pk[2]) && Number.isFinite(q.pk[3]) ? [q.pk[0], q.pk[1], Math.round(q.pk[2]), Math.round(q.pk[3]), q.pk[4] < 0 ? -1 : 1] : null,   // their parked car: [car, place, x, y, facing]
       party: q.loc === 'home' && q.party === 1 ? 1 : 0,                  // a party on at their house
       gr: Number.isInteger(q.gr) ? clamp(q.gr, 0, 999) : 0,              // their count in a Gem Rush
       kb: Array.isArray(q.kb) && q.kb.length === 7 && q.kb.every(Number.isFinite) ? q.kb.map(v => Math.round(v)) : null,     // their last kick of a ball: [ball, x, y, vx, vy, vz, count]
@@ -18367,6 +18378,21 @@ window.WANDO_BUILD = '1794002977';
       this.parkSpot = { kind: 'mycar', x: at.x, y: at.y, r: 70, hit: new Phaser.Geom.Rectangle(at.x - 64, at.y - 84, 128, 92), inside: null };
       this.hotspots.push(this.parkSpot);
     }
+    othersParked() {                                          // other players' parked cars here: drawn where they left them, with their name on a plate
+      if (!CAR_LOCS.includes(this.loc) || !ui.parked) return;
+      const list = ui.parked(this.loc), seen = new Set(), M = this.parkedOthers || (this.parkedOthers = new Map());
+      list.forEach(p => {
+        const key = p.id + '|' + p.car + '|' + p.x + ',' + p.y + ',' + p.f; seen.add(p.id);
+        const o = M.get(p.id); if (o && o.key === key) return; if (o) { o.img.destroy(); o.sh.destroy(); o.tag.destroy(); o.tag.pill.destroy(); }
+        const car = carUncode(p.car); if (!car) return;
+        const tex = 'pcar_' + p.car; bake(this, tex, 130, 150, c => drawCarWith(c, car, null));
+        const sh = this.add.image(p.x, p.y - 2, 'shadow').setDisplaySize(118, 22).setDepth(-500);
+        const img = this.add.image(p.x, p.y, tex).setOrigin(0.5, 140 / 150).setScale((p.f < 0 ? -1 : 1) / TEX, 1 / TEX).setDepth(p.y);
+        const tag = this.pillTag(p.x, p.y + 4, p.name + '\'s car', p.y + 1, '#1f5fa8');
+        M.set(p.id, { key, img, sh, tag });
+      });
+      for (const [id, o] of M) if (!seen.has(id)) { o.img.destroy(); o.sh.destroy(); o.tag.destroy(); o.tag.pill.destroy(); M.delete(id); }
+    }
     carHum() {                                                // engines: yours while you drive, and the nearest few other players' cars, fainter
       const keep = new Set(), me = G.riding && G.board && G.board.kind === 'car' ? G.board : null;
       if (me) { sfx.hum('me', me.model, this.moveAmt || 0, 0.02); keep.add('me'); }
@@ -19963,7 +19989,7 @@ window.WANDO_BUILD = '1794002977';
       if (this.seats.length) this.seatUpdate();
       if (this.askers.length) this.errandMarks();
       this.syncOthers(dt, time);                               // other players in this place
-      this.carParkedShow(); this.carHum();
+      this.carParkedShow(); this.carHum(); if (time > (this.pkAt || 0)) { this.pkAt = time + 500; this.othersParked(); }
       if (time > (this.whereAt || 0)) { this.whereAt = time + 3000; whereKeep(this); }
       if (this.carWalk && (time > this.carWalk || G.riding)) this.carWalk = 0; else if (this.carWalk && this.carNear()) { this.carWalk = 0; this.carKey(); }   // walked up to your car: start it
 
@@ -24473,7 +24499,7 @@ window.WANDO_BUILD = '1794002977';
       const s = scene();
       if (!s || !s.pz) return null;
       return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
-        boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
+        boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
         kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
     }
     function netPush() {                                    // called ten times a second; only a change is sent
@@ -24523,6 +24549,10 @@ window.WANDO_BUILD = '1794002977';
     }
     srvClicks(document.getElementById('net-srv-list'), srvSwitch);
     ui.srv = { switch: srvSwitch, get: () => SRV.id };
+    // your parked car, for the others: [car, place, x, y, facing], or 0 (driving it, or no car). A car not parked anywhere
+    // stands at Wando Motors' lot.
+    const parkedCode = () => { const car = G.board; if (!car || car.kind !== 'car' || G.riding) return 0; const at = carSpotOf(car); return [carCode(car), at.loc, Math.round(at.x), Math.round(at.y), at.f < 0 ? -1 : 1]; };
+    ui.parked = loc => { const out = []; net.peers.forEach(p => { if (p.pk && p.pk[1] === loc) out.push({ id: p.id, name: p.name, car: p.pk[0], x: p.pk[2], y: p.pk[3], f: p.pk[4] }); }); return out; };   // everyone's parked cars here
     ui.others = loc => {                                    // (at home: only whoever is in the same room of the same house)
       const out = [], s = scene(), key = loc === 'home' ? (s && s.loc === 'home' ? houseKey(s) : null) : '';
       net.peers.forEach(p => { if (p.loc === loc && (loc !== 'home' || p.house === key) && (loc !== 'dungeon' || p.fl === dunPlace(G.dun)) && (loc !== 'trade' || p.fl === (G.troom || 0))) out.push(p); });     // (in the Manor: whoever is in the same room)     // (in the crypt: whoever is on the same floor)
