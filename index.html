@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794048987';
+window.WANDO_BUILD = '1794049181';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -18639,6 +18639,26 @@ window.WANDO_BUILD = '1794048987';
       sfx.humOnly(keep);
     }
 
+    carLights() {                                             // after dark, cars have their lights on: headlamps ahead, red lamps behind
+      const night = daylight(clockHour()).night, want = [];
+      if (night > 0.25 || this.beams) {
+        if (night > 0.25) {
+          if (this.inCar && this.pz && !this.boating) want.push([this.pz.x, this.pz.y + FOOT, this.flip < 0 ? -1 : 1, this.carEndNow || '']);
+          this.others.forEach(o => { if (o.carModel >= 0 && want.length < 6) want.push([o.x, o.y, o.carFace || 1, o.carEnd || '']); });
+        }
+        if (!this.beams) this.beams = [];
+        while (this.beams.length < want.length * 2) this.beams.push(this.add.image(0, 0, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(6895).setVisible(false));
+        this.beams.forEach(b => { b.setVisible(false); b.lit = false; });
+        const al = clamp((night - 0.25) / 0.5, 0, 1), W = 0xfff0c0, R = 0xff3a3a;
+        want.forEach(([x, y, f, end], i) => {
+          const a = this.beams[i * 2], t = this.beams[i * 2 + 1];
+          if (end === 'nose') { a.lit = true; a.setPosition(x, y + 26).setDisplaySize(190, 90).setTint(W).setAlpha(0.42 * al).setVisible(true); }
+          else if (end === 'rear') { a.lit = true; a.setPosition(x, y - 30).setDisplaySize(120, 40).setTint(R).setAlpha(0.4 * al).setVisible(true); }
+          else { a.lit = t.lit = true; a.bx = x + f * 125; a.setPosition(x + f * 125, y - 24).setDisplaySize(210, 84).setTint(W).setAlpha(0.42 * al).setVisible(true); t.setPosition(x - f * 60, y - 30).setDisplaySize(42, 30).setTint(R).setAlpha(0.45 * al).setVisible(true); }
+        });
+      }
+    }
+
     // ── travel ──
     travelTo(loc, again, road) {                              // again: start this place over (into a friend's house from your own, say). road: walked there
       if (this.leaving || !LOCS[loc] || (loc === this.loc && !again) || (loc === 'home' && !G.home.owned && !(ui.visit && ui.visit()))) return;
@@ -20235,7 +20255,7 @@ window.WANDO_BUILD = '1794048987';
       if (this.seats.length) this.seatUpdate();
       if (this.askers.length) this.errandMarks();
       this.syncOthers(dt, time);                               // other players in this place
-      this.rideTick(time); this.carParkedShow(); this.carHum(); if (time > (this.pkAt || 0)) { this.pkAt = time + 500; this.othersParked(); }
+      this.rideTick(time); this.carParkedShow(); this.carHum(); this.carLights(); if (time > (this.pkAt || 0)) { this.pkAt = time + 500; this.othersParked(); }
       if (time > (this.whereAt || 0)) { this.whereAt = time + 3000; whereKeep(this); }
       if (this.carWalk && (time > this.carWalk || G.riding)) this.carWalk = 0; else if (this.carWalk && this.carNear()) { this.carWalk = 0; this.carKey(); }   // walked up to your car: start it
 
