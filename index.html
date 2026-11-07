@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794049629';
+window.WANDO_BUILD = '1794049768';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -5527,7 +5527,13 @@ window.WANDO_BUILD = '1794049629';
       bass: 'x-7-x-7-x-7-x-7-', bassWave: 'square', bassVol: 0.13, bassLen: 0.9, bassCut: 900, pad: null,
       arp: 'xxxxxxxxxxxxxxxx', arpWave: 'square', arpVol: 0.024, arpOct: 1, arpLen: 0.8,
       wave: 'square', leadVol: 0.05, leadLen: 1.7, echo: 0.3,
-      melody: '7...4...7.9.7...' + '5...4.5.7...4...' + '9...7...4.5.7...' + '8.7.5...4.......' }
+      melody: '7...4...7.9.7...' + '5...4.5.7...4...' + '9...7...4.5.7...' + '8.7.5...4.......' },
+    // Wando FM, the car radio: a sunny cruising tune with a driving bass, on whenever you are behind the wheel
+    radio: { name: 'Wando FM: Cruise Control', bpm: 118, root: 62, major: true, prog: [0, 4, 5, 3], gain: 0.75,
+      kick: 'x-----x-x-------', kickVol: 0.5, clap: '----x-------x---', clapVol: 0.16, hat: 'x-x-x-x-x-x-x-x-', hatVol: 0.5,
+      bass: 'x-x-x-xxx-x-x-xx', bassWave: 'square', bassVol: 0.11, bassLen: 0.8, bassCut: 1100, pad: 'soft', padVol: 0.03,
+      wave: 'triangle', leadVol: 0.07, leadLen: 1.4, echo: 0.22,
+      melody: '4.5.7...7.9.7...' + '4.2.4...2.......' + '5.4.5.7.9...7...' + '4.....2.4.......' }
   };
   BGM.cave = { name: 'Deep Echoes', bpm: 72, root: 50, major: false, prog: [0, 5, 3, 4], gain: 0.85,     // the Crystal Cave: low and echoing, with drips
     kick: 'x---------------', kickVol: 0.25, bass: 'x-------x-------', bassWave: 'sine', bassVol: 0.17, bassLen: 7, bassOct: -1, pad: 'swell', padVol: 0.04,
@@ -18688,7 +18694,7 @@ window.WANDO_BUILD = '1794049629';
       if (G.riding && G.board && G.board.kind === 'car' && !(road && CAR_LOCS.includes(loc))) this.carParkHere();     // off by ship, or indoors: the car is parked here (down a road to the beach, you drive)
       sfx.humStop();
       this.clearTarget(); this.steering = false; this.vel.set(0, 0);
-      music.setScene(BGM_FOR[loc]);                            // this place's music starts fading now; the next one's comes in as you arrive
+      music.setScene(G.riding && G.board && G.board.kind === 'car' && CAR_LOCS.includes(loc) ? 'radio' : BGM_FOR[loc]);                            // this place's music starts fading now; the next one's comes in as you arrive
       const trip = this.trip = { done: false }, go = () => { if (this.trip !== trip || trip.done) return; trip.done = true; this.scene.start(loc, { from: this.loc, road: !!road }); };
       setTimeout(go, 1500);                                    // (if the fade never finishes, go anyway)
       if (REDUCED) { go(); return; }
@@ -20061,7 +20067,7 @@ window.WANDO_BUILD = '1794049629';
       this.rideAmt += ((riding ? 1 : 0) - this.rideAmt) * Math.min(1, dt * 7);
       this.boardImg.setVisible(riding && !driving); this.boardGlow.setVisible(floating);
       if (this.ride && !driving) { const o = this.others.get(this.ride.id), M = o && o.carModel >= 0 ? CAR_MODELS[o.carModel] : null; if (M) { this.rig.y += -(M.seat + 6); this.parts.legL.setVisible(false); this.parts.legR.setVisible(false); } }   // riding along: in the back seat
-      if (driving !== this.inCar) { this.inCar = driving; this.parts.legL.setVisible(!driving); this.parts.legR.setVisible(!driving); this.carBack.setVisible(driving); this.carFront.setVisible(driving); }
+      if (driving !== this.inCar) { if (this.inCar !== undefined || driving) music.setScene(driving ? 'radio' : BGM_FOR[this.loc]); this.inCar = driving; this.parts.legL.setVisible(!driving); this.parts.legR.setVisible(!driving); this.carBack.setVisible(driving); this.carFront.setVisible(driving); }
       if (!driving) this.boardGlow.y = 7;                          // (a hover car lowers the glow; a hoverboard has it back where it was)
       if (driving && !CAR_LOCS.includes(this.loc)) { G.riding = false; G.park = null; this.note('Your car went back to Wando Motors\' lot. Cars can go on the Village Green and Starfish Beach.', '#ffe9a8'); }
       if (driving) {                                           // a car: you sit in it, it rolls with a little bounce, puffs exhaust, and a hover car floats
@@ -24761,7 +24767,7 @@ window.WANDO_BUILD = '1794049629';
       paintWater(null);                                     // the beach scene reports its own water state once it is running
       questHappened('visit', { loc });
       if (SCENE_NOW && SCENE_NOW.loc === loc && SCENE_NOW.road) questHappened('road', { loc });   // came down a road
-      music.setScene(BGM_FOR[loc]);                         // this place's loop (the booth's track and the concert stay in the Dance House)
+      music.setScene(G.riding && G.board && G.board.kind === 'car' && CAR_LOCS.includes(loc) ? 'radio' : BGM_FOR[loc]);                         // this place's loop (the booth's track and the concert stay in the Dance House)
       paintTravel(); paintState();
     };
     paintTravel(); paintState();
@@ -26447,7 +26453,7 @@ window.WANDO_BUILD = '1794049629';
       const wk = armoryWeek(), Dg = dailyDelve(dayNumber()), n = armory().list.length + ['o', 'b', 'f'].reduce((a, k) => a + collCat(k).list.length, 0);
       const page = {
         news: ['What\'s new', ['<b>Wando Motors:</b> walk into the showroom on the Village Green. Six one-of-a-kind collector cars every Monday, each with its own serial number, sold that week only. Park your car anywhere and start it with your key; it turns as you drive and hums as it goes.',
-          '<b>Wash & wax</b> at Wando Motors: 75 Coins and your cars sparkle all day. Every car has its own horn now.',
+          '<b>Wash & wax</b> at Wando Motors: 75 Coins and your cars sparkle all day. Every car has its own horn now, and the radio plays Wando FM while you drive.',
           '<b>Ride along:</b> tap a friend who is driving (or use the 🚗 button in Who\'s here) to hop in their car and go where they go, even down the roads. After dark, cars put their lights on.',
           '<b>Roads:</b> the paths lead to the other places now. Walk off the Village Green to the beach, the mall or the frozen lake, and on from there.',
           '<b>For your house:</b> almost a hundred new pieces of furniture (Space age and Holiday sections too), new wallpapers and floors, a quarter off this week\'s picks at Homestead, and furniture with real depth.',
