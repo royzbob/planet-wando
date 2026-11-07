@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794080209';
+<script>window.WANDO_BUILD = '1794080962';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -3258,6 +3258,7 @@
       <div id="tray-tabs" class="seg" role="group" aria-label="What to place"></div>
       <p id="tray-note" class="tray-note" role="status"></p>
       <div class="tray-acts">
+        <button id="tray-grid" class="btn" type="button" aria-pressed="true">Grid</button>
         <button id="tray-turn" class="btn" type="button" hidden>Turn</button>
         <button id="tray-flip" class="btn" type="button" hidden>Flip</button>
         <button id="tray-store" class="btn" type="button" hidden>Put away</button>
@@ -15542,8 +15543,19 @@
         const edge = Math.min(d && d.height ? d.top : A.bottom, hub && hub.height ? hub.top : A.bottom);
         return { bottom: Math.max(0, A.bottom - edge), top: cb && cb.height ? Math.max(0, cb.bottom - A.top) : 0 };
     }
-    function homeSpot(d, x, y, r, doors) {
+    const HOME_GRID = { step: 30, on: (() => { try {
+            return localStorage.getItem('meadowmere-grid') !== '0';
+        }
+        catch (e) {
+            return true;
+        } })() };
+    function homeSpot(d, x, y, r, doors, snap) {
         const F = d.build ? HOME.EDGE : HOME.FLOOR, half = furnW(d, r || 0) / 2;
+        if (snap && d.kind !== 'wall') {
+            const S = HOME_GRID.step, F0 = HOME.FLOOR;
+            x = F0.x + Math.round((x - F0.x) / S) * S;
+            y = F0.y + Math.round((y - F0.y) / S) * S;
+        }
         if (d.kind === 'wall')
             return { x: clamp(Math.round(x), 44 + half, HOME.W - 44 - half), y: clamp(Math.round(y), d.h + 6, 148), ok: true };
         const top = (d.kind === 'rug' ? F.y + d.h / 2 - 20 : d.build ? F.y : F.y + 6) + (furnSlant(d, r) ? Math.round(d.w * WALL_SIDE.SB) : 0), bottom = d.kind === 'rug' ? F.y + F.h - d.h / 2 : F.y + F.h;
@@ -29732,7 +29744,24 @@
         homeEditSet(on) { const E = this.homeEdit; if (!E)
             return; if (!on)
             this.homeDrop(false); E.on = !!on && this.homeMine; if (E.on)
-            this.homeStand(true); }
+            this.homeStand(true); this.homeGridShow(); }
+        homeGridShow() {
+            const want = !!(this.homeEdit && this.homeEdit.on && HOME_GRID.on);
+            if (want && !this.homeGridG) {
+                const F = HOME.FLOOR, S = HOME_GRID.step, g = this.add.graphics().setDepth(-855);
+                for (let x = F.x, i = 0; x <= F.x + F.w; x += S, i++) {
+                    g.lineStyle(1, 0x2a1a2e, i % 4 ? 0.13 : 0.26);
+                    g.lineBetween(x, F.y, x, F.y + F.h);
+                }
+                for (let y = F.y, i = 0; y <= F.y + F.h; y += S, i++) {
+                    g.lineStyle(1, 0x2a1a2e, i % 4 ? 0.13 : 0.26);
+                    g.lineBetween(F.x, y, F.x + F.w, y);
+                }
+                this.homeGridG = g;
+            }
+            if (this.homeGridG)
+                this.homeGridG.setVisible(want);
+        }
         homeHold(t, c) {
             const E = this.homeEdit, d = FURN_BY[t];
             if (!E || !E.on || !d)
@@ -29781,7 +29810,7 @@
         homeUpdate() {
             const E = this.homeEdit;
             if (E.held && E.ghost) {
-                const p = this.input.activePointer, wp = this.cameras.main.getWorldPoint(p.x, p.y), s = homeSpot(E.held.d, wp.x, wp.y, E.held.it.r, this.homeSides());
+                const p = this.input.activePointer, wp = this.cameras.main.getWorldPoint(p.x, p.y), s = homeSpot(E.held.d, wp.x, wp.y, E.held.it.r, this.homeSides(), HOME_GRID.on);
                 E.ghost.setPosition(s.x, s.y).setTint(s.ok ? 0xffffff : 0xff7070);
             }
             const near = E.on || !this.pz ? null : this.seated || this.homeNear();
@@ -29796,7 +29825,7 @@
         homeClick(x, y) {
             const E = this.homeEdit, Hm = G.home, items = this.homeRoom().items;
             if (E.held) {
-                const h = E.held, r = h.it.r || 0, s = homeSpot(h.d, x, y, r, this.homeSides()), fx = this.pz.x, fy = this.pz.y + FOOT;
+                const h = E.held, r = h.it.r || 0, s = homeSpot(h.d, x, y, r, this.homeSides(), HOME_GRID.on), fx = this.pz.x, fy = this.pz.y + FOOT;
                 const onYou = h.d.kind === 'floor' && furnSolids(h.d, r).some(([dx, dy, rad]) => Math.hypot(s.x + dx - fx, s.y + dy - fy) < rad + 16);
                 if (!s.ok || onYou) {
                     this.note(onYou ? 'Step aside first: that would land on you.' : 'Keep the doorways clear.', '#ffe066');
@@ -31558,6 +31587,7 @@
             this.taxi = null;
             this.taxiAt = 0;
             this.taxiTag = this.taxiGlow = this.taxiRider = null;
+            this.homeGridG = null;
             this.beams = null;
             this.shineFx = null;
             if (G.riding && G.board && G.board.kind === 'car' && !CAR_LOCS.includes(this.loc)) {
@@ -38721,6 +38751,15 @@
             if (e.detail > 0)
                 b.blur();
         });
+        const trayGrid = document.getElementById('tray-grid');
+        const gridSet = on => { HOME_GRID.on = on; try {
+            localStorage.setItem('meadowmere-grid', on ? '1' : '0');
+        }
+        catch (e) { } trayGrid.setAttribute('aria-pressed', String(on)); trayGrid.textContent = on ? 'Grid: on' : 'Grid: off'; const s = scene(); if (s && s.homeGridShow)
+            s.homeGridShow(); };
+        gridSet(HOME_GRID.on);
+        trayGrid.addEventListener('click', e => { gridSet(!HOME_GRID.on); sfx.tick(); if (e.detail > 0)
+            trayGrid.blur(); });
         trayTurn.addEventListener('click', e => { const s = scene(); if (s && s.homeTurn)
             s.homeTurn(); if (e.detail > 0)
             trayTurn.blur(); });
@@ -38736,7 +38775,11 @@
             if (!hm.edit || isTyping() || e.ctrlKey || e.metaKey || e.altKey)
                 return;
             const s = scene(), held = s && s.homeEdit ? s.homeEdit.held : null;
-            if ((e.key === 'r' || e.key === 'R') && held)
+            if (e.key === 'g' || e.key === 'G') {
+                gridSet(!HOME_GRID.on);
+                sfx.tick();
+            }
+            else if ((e.key === 'r' || e.key === 'R') && held)
                 s.homeTurn();
             else if ((e.key === 'f' || e.key === 'F') && held)
                 s.homeFlip();
