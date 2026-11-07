@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794079491';
+<script>window.WANDO_BUILD = '1794080209';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -15072,8 +15072,11 @@
         glowshroom: [0x9dff5a, 1.8, 0.4, 0.5], crystal: [0xc7a6f2, 1.8, 0.45, 0.5], xmastree: [0xffe9a8, 1.4, 0.4, 0.5], pumpkin: [0xff9a2e, 1.8, 0.45, 0.5], retrotv: [0x9fd0ff, 1.4, 0.4, 0.55], bigtv: [0xff9ad5, 1.4, 0.45, 0.7], gamingpc: [0x9fe8ff, 1.3, 0.45, 0.72], flattv: [0x9fd0ff, 1.4, 0.4, 0.5], pinball: [0xffe066, 1.4, 0.4, 0.7] };
     const FURN_ROUND = new Set(['stool', 'beanbag', 'dining', 'coffee', 'round', 'lamp', 'plant', 'cactus', 'tree', 'vase', 'globe', 'trophy', 'tub', 'hammock', 'gumball', 'pouf', 'barstool', 'bin', 'cooler', 'lavalamp', 'shroomlamp', 'candles', 'discolight', 'fan', 'bonsai', 'sunflowers', 'palm', 'fern', 'glowshroom', 'planetlamp', 'crystal', 'xmastree', 'snowman', 'pumpkin', 'fishbowl']);
     const FURN_SIDE = 0.56;
-    const furnTurns = d => d.kind === 'floor';
-    const furnW = (d, r) => (r % 2 && furnTurns(d) ? Math.round(d.w * FURN_SIDE) : d.w);
+    const furnTurns = d => d.kind === 'floor' && d.id !== 'pillar';
+    const WALL_SIDE = { SB: 0.5, T: 16 };
+    const furnSlant = (d, r) => !!(d && d.build && (r || 0) % 2 && furnTurns(d));
+    const furnW = (d, r) => (furnSlant(d, r) ? WALL_SIDE.T : r % 2 && furnTurns(d) ? Math.round(d.w * FURN_SIDE) : d.w);
+    const furnOrigin = (d, r) => furnSlant(d, r) ? [0.5, 1 - 2 / (d.h + d.w * WALL_SIDE.SB + 4)] : [0.5, d.kind === 'rug' ? 0.5 : d.kind === 'wall' ? 1 : (d.h - 2) / d.h];
     function drawFurnView(c, d, ci, r, open) {
         if (!r || !furnTurns(d)) {
             drawFurn(c, d, ci, open);
@@ -15099,6 +15102,43 @@
     }
     function bakeFurn(scene, d, ci, r, open) {
         const v = !r || !furnTurns(d) ? 0 : r === 2 ? 2 : 1, o = open && d.opens ? 1 : 0, key = 'furn_' + d.id + '_' + ci + '_' + v + (o ? '_o' : '');
+        if (v === 1 && furnSlant(d, 1)) {
+            const { SB, T } = WALL_SIDE, W2 = T + 8, back = d.w * SB, H2 = d.h + back + 4;
+            bake(scene, key + 's', W2, H2, c => {
+                const S = 6, end = document.createElement('canvas');
+                end.width = T * S;
+                end.height = d.h * S;
+                const ec = end.getContext('2d');
+                if (!ec)
+                    return;
+                ec.scale(S * T / d.w, S);
+                drawFurn(ec, d, ci, 0);
+                const cap = Math.min(16, d.h * 0.2) * S, foot = H2 - 2, top = foot - d.h;
+                const strip = (y0, y1, a) => { c.globalAlpha = a; c.drawImage(end, 0, 0, end.width, cap, 4, y0, T, y1 - y0); c.globalAlpha = 1; };
+                if (d.walk) {
+                    const t1 = top - back;
+                    strip(t1, t1 + back * 0.22, 1);
+                    strip(t1 + back * 0.22, top - back * 0.22, 0.55);
+                    strip(top - back * 0.22, top + 1, 1);
+                }
+                else
+                    strip(top - back, top + 1, 1);
+                c.drawImage(end, 4, top, T, d.h);
+                c.save();
+                c.globalCompositeOperation = 'source-atop';
+                c.fillStyle = 'rgba(30,18,36,.22)';
+                c.fillRect(4, top, T, d.h);
+                c.restore();
+                c.strokeStyle = 'rgba(40,24,30,.55)';
+                c.lineWidth = 1;
+                c.strokeRect(4.5, top - back + 0.5, T - 1, d.h + back - 1);
+                c.beginPath();
+                c.moveTo(4, top + 0.5);
+                c.lineTo(4 + T, top + 0.5);
+                c.stroke();
+            });
+            return key + 's';
+        }
         const ex = furnDepth(d), k = ex ? Math.min(0.93, (d.h - 2) / (d.h + ex), d.w / (d.w + 1.5 * ex)) : 0.93;
         bake(scene, key, d.w, d.h, c => { c.translate(d.w / 2, d.h - 1.5); c.scale(k, k); c.translate(-d.w / 2, -d.h); drawFurnView(c, d, ci, v, o); });
         return key;
@@ -15113,6 +15153,10 @@
     function furnSolids(d, r, open) {
         if (d.kind !== 'floor')
             return [];
+        if (furnSlant(d, r)) {
+            const sy = d.w * WALL_SIDE.SB, ts = d.walk && !(d.opens && !open) ? [0, 1] : [0, 0.25, 0.5, 0.75, 1];
+            return ts.map(t => [0, -8 - sy * t, 10]);
+        }
         if (d.opens && !open) {
             const w = furnW(d, r || 0), side = (r || 0) % 2;
             return side ? [[0, -8, 14], [0, -8 - d.w * 0.25, 14], [0, -8 - d.w * 0.5, 14]] : [[-w / 3, -8, 16], [0, -8, 16], [w / 3, -8, 16]];
@@ -15502,7 +15546,7 @@
         const F = d.build ? HOME.EDGE : HOME.FLOOR, half = furnW(d, r || 0) / 2;
         if (d.kind === 'wall')
             return { x: clamp(Math.round(x), 44 + half, HOME.W - 44 - half), y: clamp(Math.round(y), d.h + 6, 148), ok: true };
-        const top = d.kind === 'rug' ? F.y + d.h / 2 - 20 : d.build ? F.y : F.y + 6, bottom = d.kind === 'rug' ? F.y + F.h - d.h / 2 : F.y + F.h;
+        const top = (d.kind === 'rug' ? F.y + d.h / 2 - 20 : d.build ? F.y : F.y + 6) + (furnSlant(d, r) ? Math.round(d.w * WALL_SIDE.SB) : 0), bottom = d.kind === 'rug' ? F.y + F.h - d.h / 2 : F.y + F.h;
         const px = clamp(Math.round(x), F.x + half, F.x + F.w - half), py = clamp(Math.round(y), top, bottom);
         const front = py > HOME.H - 150 && Math.abs(px - HOME.W / 2) < 70 + half;
         const L = !doors || doors[0], R = !doors || doors[1], E = HOME.FLOOR;
@@ -29528,16 +29572,17 @@
             this.homeShowRoom(n, dir);
         } }
         homePut(it) {
-            const d = FURN_BY[it.t], r = it.r || 0, key = bakeFurn(this, d, it.c, r, it.on), flip = (it.f ? -1 : 1) * (r === 3 ? -1 : 1), w = furnW(d, r), rec = { it, d, zones: [], shadow: null, glow: null };
+            const d = FURN_BY[it.t], r = it.r || 0, key = bakeFurn(this, d, it.c, r, it.on), slant = furnSlant(d, r), flip = (it.f && !slant ? -1 : 1) * (r === 3 ? -1 : 1), w = furnW(d, r), rec = { it, d, zones: [], shadow: null, glow: null };
             if (d.kind === 'rug') {
                 rec.img = this.add.image(it.x, it.y, key).setScale(flip / TEX, 1 / TEX).setDepth(-860 + it.y * 0.0001);
                 rec.hit = new Phaser.Geom.Rectangle(it.x - d.w / 2, it.y - d.h / 2, d.w, d.h);
             }
             else {
-                rec.img = this.add.image(it.x, it.y, key).setOrigin(0.5, d.kind === 'wall' ? 1 : (d.h - 2) / d.h).setScale(flip / TEX, 1 / TEX).setDepth(d.kind === 'wall' ? -880 : it.y);
-                rec.hit = new Phaser.Geom.Rectangle(it.x - w / 2, it.y - d.h, w, d.h);
+                const [ox, oy] = furnOrigin(d, r), back = slant ? d.w * WALL_SIDE.SB : 0;
+                rec.img = this.add.image(it.x, it.y, key).setOrigin(ox, oy).setScale(flip / TEX, 1 / TEX).setDepth(d.kind === 'wall' ? -880 : it.y);
+                rec.hit = slant ? new Phaser.Geom.Rectangle(it.x - 14, it.y - d.h - back, 28, d.h + back) : new Phaser.Geom.Rectangle(it.x - w / 2, it.y - d.h, w, d.h);
                 if (d.kind === 'floor') {
-                    rec.shadow = this.shadowAt(it.x + 4, it.y - 1, w * 0.92, Math.min(26, 10 + w * 0.08));
+                    rec.shadow = slant ? null : this.shadowAt(it.x + 4, it.y - 1, w * 0.92, Math.min(26, 10 + w * 0.08));
                     furnSolids(d, r, it.on).forEach(([dx, dy, rad]) => { const z = this.add.zone(it.x + dx, it.y + dy, rad * 2, rad * 2); this.solids.add(z); z.body.setCircle(rad); rec.zones.push(z); });
                 }
             }
@@ -29680,8 +29725,9 @@
             if (!h)
                 return;
             const r = h.it.r || 0;
-            E.ghost = this.add.image(h.it.x, h.it.y, bakeFurn(this, h.d, h.it.c, r)).setOrigin(0.5, h.d.kind === 'rug' ? 0.5 : h.d.kind === 'wall' ? 1 : (h.d.h - 2) / h.d.h)
-                .setScale((h.it.f ? -1 : 1) * (r === 3 ? -1 : 1) / TEX, 1 / TEX).setDepth(9000).setAlpha(0.75);
+            const [ox, oy] = furnOrigin(h.d, r);
+            E.ghost = this.add.image(h.it.x, h.it.y, bakeFurn(this, h.d, h.it.c, r)).setOrigin(ox, oy)
+                .setScale((h.it.f && !furnSlant(h.d, r) ? -1 : 1) * (r === 3 ? -1 : 1) / TEX, 1 / TEX).setDepth(9000).setAlpha(0.75);
         }
         homeEditSet(on) { const E = this.homeEdit; if (!E)
             return; if (!on)
