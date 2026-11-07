@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794080962';
+<script>window.WANDO_BUILD = '1794081695';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -15552,8 +15552,8 @@
     function homeSpot(d, x, y, r, doors, snap) {
         const F = d.build ? HOME.EDGE : HOME.FLOOR, half = furnW(d, r || 0) / 2;
         if (snap && d.kind !== 'wall') {
-            const S = HOME_GRID.step, F0 = HOME.FLOOR;
-            x = F0.x + Math.round((x - F0.x) / S) * S;
+            const S = HOME_GRID.step, F0 = HOME.FLOOR, w = furnSlant(d, r) ? 0 : furnW(d, r || 0);
+            x = F0.x + Math.round((x - w / 2 - F0.x) / S) * S + w / 2;
             y = F0.y + Math.round((y - F0.y) / S) * S;
         }
         if (d.kind === 'wall')
@@ -15564,6 +15564,31 @@
         const L = !doors || doors[0], R = !doors || doors[1], E = HOME.FLOOR;
         const sides = py > HOME.DOOR_Y - 40 && py < HOME.DOOR_Y + 76 && ((L && px - half < E.x + 64) || (R && px + half > E.x + E.w - 64));
         return { x: px, y: py, ok: d.kind !== 'floor' || !(front || sides) };
+    }
+    function homeFootprint(d, x, y, r, open) {
+        const S = HOME_GRID.step, F = HOME.FLOOR, z = furnSolids(d, r, open);
+        let a, b, c, e;
+        if (z.length) {
+            a = Math.min(...z.map(q => q[0] - q[2]));
+            c = Math.max(...z.map(q => q[0] + q[2]));
+            b = Math.min(...z.map(q => q[1] - q[2]));
+            e = Math.max(...z.map(q => q[1] + q[2]));
+        }
+        else if (d.kind === 'rug') {
+            a = -d.w / 2;
+            c = d.w / 2;
+            b = -d.h / 2;
+            e = d.h / 2;
+        }
+        else
+            return null;
+        if (d.build) {
+            const back = furnSlant(d, r) ? d.w * WALL_SIDE.SB : 14, half = furnSlant(d, r) ? 10 : d.w / 2;
+            return [x - half, y - back, x + half, y];
+        }
+        e = 0;
+        const sn = (v, up) => F.x + (up ? Math.ceil : Math.floor)((v - F.x) / S - (up ? 0.01 : -0.01)) * S, sy = (v, up) => F.y + (up ? Math.ceil : Math.floor)((v - F.y) / S - (up ? 0.01 : -0.01)) * S;
+        return [sn(x + a, false), sy(y + b, false), sn(x + c, true), Math.max(sy(y + e, true), sy(y + b, false) + S)];
     }
     function cleanHome(h) {
         const out = { owned: false, walls: [0], floors: [0], inv: {}, rooms: [{ wall: 0, floor: 0, items: [] }] };
@@ -29749,14 +29774,16 @@
             const want = !!(this.homeEdit && this.homeEdit.on && HOME_GRID.on);
             if (want && !this.homeGridG) {
                 const F = HOME.FLOOR, S = HOME_GRID.step, g = this.add.graphics().setDepth(-855);
-                for (let x = F.x, i = 0; x <= F.x + F.w; x += S, i++) {
-                    g.lineStyle(1, 0x2a1a2e, i % 4 ? 0.13 : 0.26);
-                    g.lineBetween(x, F.y, x, F.y + F.h);
-                }
-                for (let y = F.y, i = 0; y <= F.y + F.h; y += S, i++) {
-                    g.lineStyle(1, 0x2a1a2e, i % 4 ? 0.13 : 0.26);
-                    g.lineBetween(F.x, y, F.x + F.w, y);
-                }
+                const line = (x0, y0, x1, y1, major) => {
+                    g.lineStyle(major ? 2 : 1, 0x1a1020, major ? 0.32 : 0.22);
+                    g.lineBetween(x0 + 1, y0 + 1, x1 + 1, y1 + 1);
+                    g.lineStyle(major ? 2 : 1, 0xffffff, major ? 0.5 : 0.32);
+                    g.lineBetween(x0, y0, x1, y1);
+                };
+                for (let x = F.x, i = 0; x <= F.x + F.w; x += S, i++)
+                    line(x, F.y, x, F.y + F.h, i % 4 === 0);
+                for (let y = F.y, i = 0; y <= F.y + F.h; y += S, i++)
+                    line(F.x, y, F.x + F.w, y, i % 4 === 0);
                 this.homeGridG = g;
             }
             if (this.homeGridG)
@@ -29812,6 +29839,31 @@
             if (E.held && E.ghost) {
                 const p = this.input.activePointer, wp = this.cameras.main.getWorldPoint(p.x, p.y), s = homeSpot(E.held.d, wp.x, wp.y, E.held.it.r, this.homeSides(), HOME_GRID.on);
                 E.ghost.setPosition(s.x, s.y).setTint(s.ok ? 0xffffff : 0xff7070);
+                const fp = homeFootprint(E.held.d, s.x, s.y, E.held.it.r || 0);
+                if (!this.homeFoot)
+                    this.homeFoot = this.add.graphics().setDepth(-854);
+                const g = this.homeFoot, key = fp ? fp.join(',') + (s.ok ? 'y' : 'n') : '';
+                if (key !== this.homeFootKey) {
+                    this.homeFootKey = key;
+                    g.clear();
+                    if (fp) {
+                        const col = s.ok ? 0x5ee88a : 0xff5a5a, S = HOME_GRID.step;
+                        g.fillStyle(col, 0.28);
+                        g.fillRect(fp[0], fp[1], fp[2] - fp[0], fp[3] - fp[1]);
+                        g.lineStyle(2, col, 0.9);
+                        g.strokeRect(fp[0], fp[1], fp[2] - fp[0], fp[3] - fp[1]);
+                        g.lineStyle(1, col, 0.45);
+                        for (let x = fp[0] + S; x < fp[2]; x += S)
+                            g.lineBetween(x, fp[1], x, fp[3]);
+                        for (let y = fp[1] + S; y < fp[3]; y += S)
+                            g.lineBetween(fp[0], y, fp[2], y);
+                    }
+                }
+                g.setVisible(true);
+            }
+            else if (this.homeFoot && this.homeFootKey !== '') {
+                this.homeFoot.clear();
+                this.homeFootKey = '';
             }
             const near = E.on || !this.pz ? null : this.seated || this.homeNear();
             const text = !near ? '' : this.seated ? 'E · Stand up' : 'E · ' + ({ door: near.it.on ? 'Shut' : 'Open', sit: 'Sit', light: 'Switch', screen: 'Switch', music: 'Play', tune: 'Play', treat: 'Treat', hug: 'Hug' })[FURN_USE[near.d.id]];
@@ -31588,6 +31640,8 @@
             this.taxiAt = 0;
             this.taxiTag = this.taxiGlow = this.taxiRider = null;
             this.homeGridG = null;
+            this.homeFoot = null;
+            this.homeFootKey = '';
             this.beams = null;
             this.shineFx = null;
             if (G.riding && G.board && G.board.kind === 'car' && !CAR_LOCS.includes(this.loc)) {
