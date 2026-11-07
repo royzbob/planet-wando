@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794050012';
+window.WANDO_BUILD = '1794050183';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -12601,6 +12601,7 @@ window.WANDO_BUILD = '1794050012';
     claw:   { on: 'claw',  text: () => 'Have a go on the Claw Machine at the mall' },
     race:   { on: 'race',  text: () => 'Finish the Green Grand Prix' },
     ferris: { on: 'ferris', text: () => 'Ride the Big Wheel at Starfish Beach' },
+    taxi:   { on: 'taxi',  text: q => 'Drive ' + q.n + ' taxi fares on the Village Green', car: true },
     maze:   { on: 'maze',  text: () => 'Find the chest in the Hedge Maze on the Village Green' },
     freeze: { on: 'freeze', text: () => 'Play Freeze Dance at the Neon Dance House' },
     candy:  { on: 'candy', text: q => 'Trick-or-treat: get ' + q.n + ' candies from the townsfolk', season: 'halloween' },
@@ -12653,6 +12654,7 @@ window.WANDO_BUILD = '1794050012';
     if (harvestOn()) errands.push(() => q('acorn', 4, 30), () => q('acorn', 7, 45));
     if (feastOn(new Date(day * 86400000 + 43200000))) errands.push(() => q('feast', 1, 25), () => q('feast', 1, 25));
     if (winterOn()) errands.push(() => q('present', 3, 30), () => q('present', 5, 45));
+    if (G.boards.some(o => o.kind === 'car')) errands.push(() => q('taxi', 2, 20));    // (only once you have a car to drive)
     const list = [pick(fishing)(), pick(jobs)(), pick(errands)()];
     if (list[2].k === list[1].k) list[2] = q('chat', 1, 10);    // never the same job twice
     return list;
