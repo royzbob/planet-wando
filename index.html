@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794047836';
+window.WANDO_BUILD = '1794048123';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -5257,12 +5257,12 @@ window.WANDO_BUILD = '1794047836';
   // Roads between places: a gateway at the end of a path. Walk through it (or tap it, and you walk there) to go to the
   // next place; you come out at that place's gateway back. side: the edge it is on (you step out of it inward).
   const ROADS = {
-    green: [{ to: 'beach', x: 140, y: 1052, side: 'w' }, { to: 'mall', x: 2660, y: 884, side: 'e' }, { to: 'ice', x: 1386, y: 196, side: 'n' }],
+    green: [{ to: 'ice', x: 140, y: 1052, side: 'w' }, { to: 'beach', x: 2660, y: 884, side: 'e' }, { to: 'mall', x: 1386, y: 196, side: 'n' }],   // (as the map has them: the beach east, the mall north, the lake south-west)
     beach: [{ to: 'green', x: 1870, y: 420, side: 'e' }, { to: 'trade', x: 130, y: 420, side: 'w' }],
     mall: [{ to: 'green', x: 250, y: 720, side: 'w' }, { to: 'dance', x: 1550, y: 720, side: 'e' }],
     dance: [{ to: 'mall', x: 1580, y: 980, side: 'e' }],
     trade: [{ to: 'beach', x: 300, y: 1170, side: 's' }],
-    ice: [{ to: 'green', x: 1000, y: 1290, side: 's' }, { to: 'cave', x: 1870, y: 900, side: 'e' }],
+    ice: [{ to: 'cave', x: 1000, y: 1290, side: 's' }, { to: 'green', x: 1870, y: 900, side: 'e' }],
     cave: [{ to: 'ice', x: 140, y: 1340, side: 'w' }, { to: 'dungeon', x: 1820, y: 1390, side: 's' }],
     dungeon: [{ to: 'cave', x: 175, y: 1120, side: 'w' }]
   };
@@ -5815,7 +5815,7 @@ window.WANDO_BUILD = '1794047836';
   const toonable = (key, w, h, scale) => TOON.on && scale === TEX && !TOON_SKIP.test(String(key)) && w * h <= 900 * 700;
   // Props drawn in three-quarter view (see toonDepth): how deep each looks, in world units.
   const PROP_DEPTH = { house_0: 16, house_1: 16, house_2: 16, house_3: 16, house_4: 16, shopcounter: 8, crate: 5, booth: 10, newsstand: 8, carlot: 10, iceshack: 12, harveststand: 8, table: 5, tackle: 10,
-    ticketbooth: 6, vending: 5, pastrycase: 6, oven: 5, minecounter: 6, tm_counter: 6, flowerbed: 4, planter: 4 };
+    ticketbooth: 6, vending: 5, pastrycase: 6, oven: 5, minecounter: 6, tm_counter: 6, tm_table: 5, flowerbed: 4, planter: 4, missionboard: 4, popcorn: 4 };
   function bake(scene, key, w, h, draw, scale = TEX) {
     if (scene.textures.exists(key)) return scene.textures.get(key);     // textures outlive scenes: bake each one once
     const tex = scene.textures.createCanvas(key, Math.ceil(w * scale), Math.ceil(h * scale));
@@ -16311,6 +16311,20 @@ window.WANDO_BUILD = '1794047836';
       if (ui.onEvent) ui.onEvent('ducks', { loc: this.loc });
       return true;
     }
+    // Your driveway: once the house is yours, your other cars (not the one you drive) are parked in a row beside it.
+    driveway() {
+      if (!G.home.owned) return;
+      const cars = G.boards.filter(b => b.kind === 'car' && !(G.board && G.board.id === b.id)).slice(0, 4); if (!cars.length) return;
+      const hx = 2200, hy = 1180;
+      cars.forEach((car, i) => {
+        const x = hx + 290 + (i % 2) * 150, y = hy - 40 + Math.floor(i / 2) * 110; if (!this.free(x, y, 50)) return;
+        const key = 'drive_' + car.id; bake(this, key, 130, 150, c => drawCarWith(c, car, null));
+        this.add.image(x, y - 2, 'shadow').setDisplaySize(118, 22).setDepth(-500);
+        this.prop(key, x, y, 140 / 150, { solids: [[-34, -10, 20], [0, -10, 20], [34, -10, 20]], reserve: 70 }).setFlipX(true);
+        this.tag(x, y + 6, car.name, -400, 10).setColor(car.r != null ? mix(RARITIES[car.r][1], '#ffffff', 0.4) : '#ffffff');
+      });
+      this.tag(hx + 365, hy - 150, 'Your driveway', -400, 11).setColor('#ffe9a8');
+    }
     // The bandstand: a white gazebo with benches inside, between two neat flowerbeds, on a clear stretch of grass.
     gazebo() {
       if (!this.textures.exists('gazebo')) bake(this, 'gazebo', 230, 220, c => {
@@ -17413,6 +17427,7 @@ window.WANDO_BUILD = '1794047836';
       this.playground();
       this.hedgeMaze();
       this.gazebo();
+      this.driveway();
       for (const [x, y] of [[420, 1170], [430, 880], [260, 1200], [560, 1260], [200, 860]]) if (this.free(x, y, 60)) { this.pgSign('green', x, y); this.tag(x, y + 30, 'Green Grand Prix: race the village!', -400, 11).setColor('#ffe066'); break; }
       this.pathFurniture(pathPts);
       this.truckSetup(pathPts[1]);
