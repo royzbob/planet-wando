@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794048400';
+window.WANDO_BUILD = '1794048505';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -5815,7 +5815,7 @@ window.WANDO_BUILD = '1794048400';
   const toonable = (key, w, h, scale) => TOON.on && scale === TEX && !TOON_SKIP.test(String(key)) && w * h <= 900 * 700;
   // Props drawn in three-quarter view (see toonDepth): how deep each looks, in world units.
   const PROP_DEPTH = { house_0: 16, house_1: 16, house_2: 16, house_3: 16, house_4: 16, shopcounter: 8, crate: 5, booth: 10, newsstand: 8, carlot: 10, iceshack: 12, harveststand: 8, table: 5, tackle: 10,
-    ticketbooth: 6, vending: 5, pastrycase: 6, oven: 5, minecounter: 6, tm_counter: 6, tm_table: 5, flowerbed: 4, planter: 4, missionboard: 4, popcorn: 4 };
+    ticketbooth: 6, vending: 5, pastrycase: 6, oven: 5, minecounter: 6, tm_counter: 6, tm_table: 5, flowerbed: 4, planter: 4, missionboard: 4, popcorn: 4, parkbench: 5, bench: 5, sofa: 6, recyclebin: 4, wheelstand: 0 };
   function bake(scene, key, w, h, draw, scale = TEX) {
     if (scene.textures.exists(key)) return scene.textures.get(key);     // textures outlive scenes: bake each one once
     const tex = scene.textures.createCanvas(key, Math.ceil(w * scale), Math.ceil(h * scale));
@@ -17801,8 +17801,6 @@ window.WANDO_BUILD = '1794048400';
         const b = this.prop('balloons', x, 318, 112 / 118, { solids: [[0, -6, 9]] });
         if (!REDUCED) this.tweens.add({ targets: b, y: 312, angle: { from: -3, to: 3 }, duration: 1500 + i * 180, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
       });
-      this.lanterns(250, 620, 700, 620, 5, 0xff7ad9);
-      this.lanterns(1100, 620, 1550, 620, 5, 0x5ef2ff);
       [[560, 900], [1240, 900]].forEach(([x, y]) => {
         if (this.free(x, y, 60)) this.bench(x, y);
       });
