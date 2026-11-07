@@ -232,7 +232,7 @@
 })();
 </script>
 <script>
-window.WANDO_BUILD = '1794047178';
+window.WANDO_BUILD = '1794047337';
 // Updates: this copy knows which build it is. Every few minutes it quietly looks at the page on the server; when a newer
 // build is there, a banner offers to refresh (your progress is saved first).
 (function () {
@@ -11234,8 +11234,16 @@ window.WANDO_BUILD = '1794047178';
     if (kind === 'c') { const k = cardCopy(d); G.cards.push(k); if (!G.card) G.card = k.u; return k; }
     const key = furnKey(d.t, FURN_COLL + d.id); G.home.inv[key] = Math.min(99, (G.home.inv[key] || 0) + 1); return key;
   }
+  // Now and then the prize is a retired collector car instead (one of the last four weeks' sets, no longer sold): it
+  // waits on the lot outside Wando Motors. CAR_PRIZE: the chance, for the moments big enough to win one.
+  const CAR_PRIZE = { delve: 0.08, login: 0.1, quests: 0.04, minerank: 0.05, boss: 0.02 };
   function prizeTry(src, rand) {                             // a hard-won moment: maybe a prize. Returns it, or null.
-    const p = collPrize(src, rand || Math.random);
+    const rr = rand || Math.random;
+    if (CAR_PRIZE[src] && rr() < CAR_PRIZE[src]) {
+      const wk = armoryWeek(), pool = [1, 2, 3, 4].flatMap(k => carCollWeek(wk - k)).filter(d => d && d.r <= 3), d = pool.length ? pool[Math.floor(rr() * pool.length)] : null;
+      if (d) { const car = collCar(d); G.boards.push(car); saveGame(); const p = { kind: 'k', d, car }; if (ui.onPrize) ui.onPrize(p); return p; }
+    }
+    const p = collPrize(src, rr);
     if (!p) return null;
     collGive(p.kind, p.d);
     saveGame();
@@ -14617,7 +14625,7 @@ window.WANDO_BUILD = '1794047178';
         this.displays.push({ x, y: y + 30, id: 'kc:' + d.code, kind: 'carlot', near: true, tag: this.tag(x, y - 120, 'Click to see it', 9300, 11).setVisible(false), hit: new Phaser.Geom.Rectangle(x - 80, y - 90, 160, 110) });
       });
       [[110, 330], [990, 330]].forEach(([x, y]) => this.prop('shelf_motors', x, y - 78, 144 / 150, { scale: 0.7, solids: [[-40, -10, 22], [40, -10, 22]], reserve: 90 }));
-      this.npc(140, 560, 2, 'Axel'); this.npc(960, 560, 5, 'Penny');
+      this.npc(105, 560, 2, 'Axel'); this.npc(985, 380, 5, 'Penny');
     }
     // Kickflip Skate Shop and Hover Hub: this week's boards hang on the back wall and stand on tables around the room.
     // Walk up to a table and click it (or press E) for that board; the counter has the whole list.
@@ -24172,7 +24180,7 @@ window.WANDO_BUILD = '1794047178';
       b.addEventListener('click', e => { collOpen(kind, true); if (e.detail > 0) b.blur(); });
     });
     ui.onPrize = p => {                                     // a prize! Say so, loudly.
-      const s = scene(), where = p.kind === 'o' ? 'in your Tailor\'s wardrobe' : p.kind === 'b' ? 'with your boards' : p.kind === 'c' ? 'with your player cards' : 'in your furniture storage';
+      const s = scene(), where = p.kind === 'k' ? 'parked at Wando Motors\' lot (choose it in your bag to drive it)' : p.kind === 'o' ? 'in your Tailor\'s wardrobe' : p.kind === 'b' ? 'with your boards' : p.kind === 'c' ? 'with your player cards' : 'in your furniture storage';
       sfx.chime(); setTimeout(() => sfx.pickup('legendary'), 250);
       if (s) { s.noteUntil = 0; s.note('PRIZE! ' + p.d.name + (p.d.set === 'legend' ? ' (a LEGEND!)' : '') + ': it is ' + where + '.', RARITIES[p.d.r][1]); }
       paintState();
