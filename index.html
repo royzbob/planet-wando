@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794102809';
+<script>window.WANDO_BUILD = '1794104227';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2454,6 +2454,12 @@
     .cb-turn { width: 34px; height: 34px; font-size: 15px; }
     .cb-title { font-size: clamp(22px, 5vw, 34px); }
   }
+.died{position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;background:radial-gradient(ellipse at center,rgba(70,0,0,.55),rgba(8,0,0,.9));animation:diedIn .45s ease-out;transition:opacity .6s}
+.died b{font:900 clamp(44px,12vw,78px)/1 "Baloo 2","Trebuchet MS",sans-serif;color:#ff3b3b;letter-spacing:4px;text-shadow:0 5px 0 #3a0000,0 0 26px rgba(255,30,30,.6)}
+.died small{font:800 16px "Baloo 2","Trebuchet MS",sans-serif;color:#ffd0c8;text-shadow:0 2px 0 #3a0000}
+.died.out{opacity:0}
+@keyframes diedIn{from{opacity:0;transform:scale(1.25)}}
+@media (prefers-reduced-motion:reduce){.died{animation:none}}
 </style>
 
 <div id="app">
@@ -8621,6 +8627,8 @@
         }
         if (L.costume && COSTUMES[L.costume] && drawCostumeLayer(c, layer, view, L, COSTUMES[L.costume]) === 'skip')
             return;
+        if (L.armorH && (layer === 'hairBack' || layer === 'hairFront'))
+            return;
         const lw = 2.2, side = view === 'side', back = view === 'back';
         const skinInk = mix(L.skin, '#5a1f2a', 0.5);
         if (layer === 'pack' || layer === 'neck' || layer === 'eyes') {
@@ -8687,6 +8695,8 @@
                 c.stroke();
             }
             c.restore();
+            if (L.armorB)
+                drawBodyArmor(c, ARMOR_SETS[L.armorB.a], view, guy);
             if (L.bottom === 5 || L.bottom === 7 || L.bottom === 10) {
                 const sx = side ? 0.72 : 1, X = x => 48 + (x - 48) * sx, b = L.bottom;
                 if (b === 5) {
@@ -9059,6 +9069,10 @@
             c.restore();
         }
         else if (layer === 'hat') {
+            if (L.armorH) {
+                drawHelm(c, ARMOR_SETS[L.armorH.a], view);
+                return;
+            }
             if (!L.hatStyle)
                 return;
             if (L.hatStyle > 6) {
@@ -10521,6 +10535,20 @@
             if (o.pack) {
                 L.pack = o.pack.style;
                 L.packC = o.pack.color;
+            }
+        }
+        if (look.armor) {
+            const A = look.armor;
+            if (A.b && ARMOR_SETS[A.b.a]) {
+                const S = ARMOR_SETS[A.b.a];
+                L.armorB = A.b;
+                L.shirt = S.main;
+                L.accent = S.trim;
+                delete L.costume;
+            }
+            if (A.h && ARMOR_SETS[A.h.a]) {
+                L.armorH = A.h;
+                delete L.costume;
             }
         }
         ['skin', 'hat', 'fringe', 'back', 'eyesC', 'neckC', 'packC', 'shirt', 'accent', 'pants', 'shoe'].forEach(k => { if (typeof L[k] === 'string' && /^#[0-9a-f]{6}$/i.test(L[k]))
@@ -17173,7 +17201,267 @@
         const o = { kind: Math.floor(v / 1000), coat: Math.floor(v / 100) % 10, pattern: Math.floor(v / 10) % 10, collar: v % 10 };
         return o.kind < PET_KINDS.length && o.coat < PET_COATS.length && o.pattern < PET_PATTERNS.length && o.collar < PET_COLLARS.length ? o : null;
     }
-    const DUN = { W: 1800, H: 1300, IFRAMES: 0.3, REGEN: 1.2, CALM: 320, REST: 4, POT_CD: 6, HIT: 0.9, DODGE: 0.04, BLOCK: 1, PACK: 260, BAG: 40, STASH: 120, LOOT: 8, POTION: 40, POTION_HEAL: 50, BIG_POTION: 110, BIG_HEAL: 100, MANA_POTION: 35, MANA_HEAL: 60, FIST: 4, PTS: 3, OFF: 0.7, CLICK_MS: 220 };
+    const DUN = { W: 1800, H: 1300, IFRAMES: 0.3, REGEN: 1.2, CALM: 320, REST: 4, POT_CD: 6, HIT: 0.9, DODGE: 0.04, BLOCK: 1, PACK: 260, BAG: 40, STASH: 120, LOOT: 4, ARM: 24, ASTASH: 60, POTION: 40, POTION_HEAL: 50, BIG_POTION: 110, BIG_HEAL: 100, MANA_POTION: 35, MANA_HEAL: 60, FIST: 4, PTS: 3, OFF: 0.7, CLICK_MS: 220 };
+    let KO_BED = false;
+    const ARMOR_SETS = [
+        { name: 'Leather', helm: 'Cap', body: 'Vest', tier: 0, main: '#8a5a34', trim: '#c89a5a', look: 'cap' },
+        { name: 'Chain', helm: 'Coif', body: 'Mail', tier: 1, main: '#9aa2b0', trim: '#5a6270', look: 'coif' },
+        { name: 'Bone', helm: 'Skull', body: 'Ribs', tier: 1, main: '#e8dcc0', trim: '#8a7a5a', look: 'horn' },
+        { name: 'Iron', helm: 'Helm', body: 'Plate', tier: 2, main: '#b8c0cc', trim: '#c8323c', look: 'crest' },
+        { name: 'Bronze', helm: 'Helm', body: 'Guard', tier: 2, main: '#c8883a', trim: '#7a3a1a', look: 'visor' },
+        { name: 'Shadow', helm: 'Hood', body: 'Garb', tier: 3, main: '#3a2a4a', trim: '#a86ad8', look: 'hood' },
+        { name: 'Emerald', helm: 'Crown', body: 'Mail', tier: 3, main: '#2f8a5a', trim: '#ffd84d', look: 'crown' },
+        { name: 'Dragon', helm: 'Helm', body: 'Scale', tier: 4, main: '#b8322a', trim: '#ffcf4a', look: 'horn' },
+        { name: 'Frost King', helm: 'Crown', body: 'Plate', tier: 4, main: '#9ad8f0', trim: '#e8f8ff', look: 'crown' }
+    ];
+    function armorStats(p) {
+        const S = ARMOR_SETS[p.a], k = (1 + p.r * 0.3) * (p.q || 100) / 100, body = p.s === 'b';
+        return { def: Math.max(1, Math.round((body ? 4 : 2.5) * (1 + S.tier * 1.4) * k)), hp: p.r >= 1 ? Math.round(((body ? 6 : 3) + S.tier * (body ? 8 : 4)) * p.r * 0.5) : 0 };
+    }
+    function armorName(p) { const S = ARMOR_SETS[p.a]; return S.name + ' ' + (p.s === 'h' ? S.helm : S.body); }
+    function armorValue(p) { return Math.round(armorStats(p).def * 4 * (1 + p.r * 0.8)); }
+    function cleanArmor(p) {
+        if (!p || typeof p !== 'object' || !Number.isInteger(p.a) || !ARMOR_SETS[p.a] || (p.s !== 'h' && p.s !== 'b') || !Number.isInteger(p.r) || p.r < 0 || p.r > 4)
+            return null;
+        return { a: p.a, s: p.s, r: p.r, u: typeof p.u === 'string' && /^[0-9A-Z]{8}$/.test(p.u) ? p.u : serial(), q: Number.isInteger(p.q) ? clamp(p.q, 92, 108) : 100 };
+    }
+    function rollArmor(f, rand, luck, src) {
+        const r = rand || Math.random, tier = clamp(Math.floor((f - 1) / 3) + (r() < 0.3 ? 1 : 0) - (r() < 0.2 ? 1 : 0), 0, 4);
+        const pool = ARMOR_SETS.map((S, i) => i).filter(i => ARMOR_SETS[i].tier === tier);
+        const x = r() * 100 - (luck || 0) - Math.min(15, f);
+        let rr = x < 1 ? 4 : x < 5 ? 3 : x < 15 ? 2 : x < 40 ? 1 : 0;
+        if (rr === 4 && src !== 'boss' && src !== 'delve')
+            rr = 3;
+        return { a: pool[Math.floor(r() * pool.length)], s: r() < 0.5 ? 'h' : 'b', r: rr, u: serial(r), q: 92 + Math.floor(r() * 17) };
+    }
+    function dunArmor(D) { let def = 0, hp = 0; ['h', 'b'].forEach(k => { const p = D && D.worn && D.worn[k]; if (p) {
+        const st = armorStats(p);
+        def += st.def;
+        hp += st.hp;
+    } }); return { def, hp, cut: def / (def + 100) }; }
+    function armorLine(p) { const st = armorStats(p); return RARITIES[p.r][0] + ' ' + (p.s === 'h' ? 'helm' : 'body armor') + ' · tier ' + (ARMOR_SETS[p.a].tier + 1) + ' · armor ' + st.def + (st.hp ? ' · +' + st.hp + ' health' : ''); }
+    function drawHelm(c, S, view) {
+        const side = view === 'side', back = view === 'back', cx = side ? 47 : 48, m = S.main, t = S.trim, ln = ink(m), lw = 2.2, hi = lighten(m, 0.4);
+        c.save();
+        c.lineJoin = c.lineCap = 'round';
+        if (S.look === 'hood' || S.look === 'coif') {
+            const shape = side ? (k => { k.moveTo(cx - 27, 60); k.bezierCurveTo(cx - 33, 4, cx + 30, 4, cx + 27, 34); k.lineTo(cx + 15, 31); k.quadraticCurveTo(cx + 4, 46, cx + 8, 60); k.closePath(); })
+                : back ? (k => { k.moveTo(cx - 28, 60); k.bezierCurveTo(cx - 33, 4, cx + 33, 4, cx + 28, 60); k.quadraticCurveTo(cx, 64, cx - 28, 60); k.closePath(); })
+                    : (k => { k.moveTo(cx - 28, 60); k.bezierCurveTo(cx - 33, 4, cx + 33, 4, cx + 28, 60); k.lineTo(cx + 19, 58); k.bezierCurveTo(cx + 22, 24, cx - 22, 24, cx - 19, 58); k.closePath(); });
+            inked(c, m, ln, lw, shape);
+            c.save();
+            c.beginPath();
+            shape(c);
+            c.clip();
+            if (S.look === 'coif') {
+                c.fillStyle = darken(m, 0.25);
+                for (let y = 10; y < 62; y += 4)
+                    for (let x = cx - 30 + (y % 8 ? 2 : 0); x < cx + 30; x += 4)
+                        c.fillRect(x, y, 1.6, 1.6);
+            }
+            else {
+                c.strokeStyle = t;
+                c.lineWidth = 2.4;
+                c.beginPath();
+                if (!back && !side)
+                    c.ellipse(cx, 41, 20, 19, 0, Math.PI * 1.02, Math.PI * 1.98);
+                c.stroke();
+            }
+            c.strokeStyle = hi;
+            c.globalAlpha = 0.6;
+            c.lineWidth = 2.4;
+            c.beginPath();
+            c.arc(cx - 6, 30, 20, Math.PI * 1.15, Math.PI * 1.5);
+            c.stroke();
+            c.restore();
+            c.restore();
+            return;
+        }
+        const dome = side ? (k => { k.moveTo(cx - 26, 36); k.bezierCurveTo(cx - 28, 7, cx + 26, 7, cx + 27, 33); k.closePath(); }) : (k => { k.moveTo(cx - 26, 35); k.bezierCurveTo(cx - 28, 7, cx + 28, 7, cx + 26, 35); k.closePath(); });
+        if (S.look === 'horn') {
+            const hc = S.name === 'Bone' ? '#d8cca8' : '#f2e6c4', hl = ink(hc);
+            (side ? [1] : [-1, 1]).forEach(d => inked(c, hc, hl, 1.8, k => { const x0 = side ? cx - 6 : cx + d * 20; k.moveTo(x0, 22); k.quadraticCurveTo(x0 + d * 22, 18, x0 + d * 18, -2); k.quadraticCurveTo(x0 + d * 12, 12, x0 - d * 4, 14); k.closePath(); }));
+        }
+        if (back)
+            inked(c, darken(m, 0.1), ln, lw, k => { k.moveTo(cx - 26, 30); k.lineTo(cx + 26, 30); k.lineTo(cx + 24, 57); k.quadraticCurveTo(cx, 61, cx - 24, 57); k.closePath(); });
+        else if (side)
+            inked(c, darken(m, 0.1), ln, lw, k => { k.moveTo(cx - 26, 30); k.lineTo(cx - 6, 32); k.lineTo(cx - 9, 50); k.lineTo(cx - 25, 57); k.closePath(); });
+        else
+            [-1, 1].forEach(d => inked(c, darken(m, 0.1), ln, lw, k => { k.moveTo(cx + d * 26, 30); k.lineTo(cx + d * 18, 32); k.lineTo(cx + d * 19, 50); k.quadraticCurveTo(cx + d * 24, 53, cx + d * 27, 46); k.closePath(); }));
+        inked(c, m, ln, lw, dome);
+        c.save();
+        c.beginPath();
+        dome(c);
+        c.clip();
+        c.strokeStyle = hi;
+        c.globalAlpha = 0.7;
+        c.lineWidth = 3;
+        c.beginPath();
+        c.arc(cx - 4, 34, 20, Math.PI * 1.15, Math.PI * 1.5);
+        c.stroke();
+        c.globalAlpha = 1;
+        if (S.look === 'cap') {
+            c.strokeStyle = darken(m, 0.35);
+            c.lineWidth = 1;
+            c.setLineDash([2, 2]);
+            c.beginPath();
+            c.moveTo(cx, 12);
+            c.lineTo(cx, 34);
+            c.stroke();
+            c.setLineDash([]);
+        }
+        if (S.look === 'horn' && S.name === 'Dragon') {
+            c.fillStyle = darken(m, 0.25);
+            for (let y = 16; y < 34; y += 6)
+                for (let x = cx - 24 + (y % 12 ? 3 : 0); x < cx + 26; x += 6) {
+                    c.beginPath();
+                    c.arc(x, y, 3, 0, Math.PI);
+                    c.fill();
+                }
+        }
+        c.restore();
+        inked(c, side ? t : darken(m, 0.18), ln, 1.8, k => rr(k, cx - 27, 29, 54, 7, 3.5));
+        c.fillStyle = lighten(m, 0.55);
+        [-18, -6, 6, 18].forEach(x => { if (!side || x > -10)
+            disc(c, cx + x, 32.5, 1.3); });
+        if (S.look === 'visor' && !back)
+            inked(c, darken(m, 0.12), ln, 1.6, k => (side ? rr(k, cx + 22, 30, 5, 16, 2) : rr(k, cx - 2.5, 30, 5, 17, 2.5)));
+        if (S.look === 'crest') {
+            if (back)
+                inked(c, t, ink(t), 1.6, k => rr(k, cx - 3, 4, 6, 14, 3));
+            else if (side)
+                inked(c, t, ink(t), 1.6, k => { k.moveTo(cx + 8, 10); k.quadraticCurveTo(cx - 6, -4, cx - 30, 14); k.quadraticCurveTo(cx - 10, 4, cx - 4, 14); k.closePath(); });
+            else
+                inked(c, t, ink(t), 1.6, k => { k.moveTo(cx - 4, 12); k.quadraticCurveTo(cx - 6, -6, cx, -4); k.quadraticCurveTo(cx + 6, -6, cx + 4, 12); k.closePath(); });
+        }
+        if (S.look === 'crown') {
+            const xs = side ? [-14, -4, 6, 16] : [-20, -10, 0, 10, 20];
+            xs.forEach((x, i) => inked(c, t, ink(t), 1.4, k => { k.moveTo(cx + x - 5, 30); k.lineTo(cx + x, i % 2 ? 18 : 14); k.lineTo(cx + x + 5, 30); k.closePath(); }));
+            if (!back) {
+                inked(c, S.name === 'Frost King' ? '#3fa7f5' : '#e8323c', '#1d1424', 1.2, k => k.arc(side ? cx + 16 : cx, 32.5, 3, 0, TAU));
+            }
+        }
+        c.restore();
+    }
+    function drawBodyArmor(c, S, view, guy) {
+        const side = view === 'side', back = view === 'back', m = S.main, t = S.trim, ln = ink(m), lw = 2.2, cx = 48;
+        const hw = side ? (guy ? 10.5 : 10) : (guy ? 15.5 : 14.5), sx2 = side ? 8.5 : (guy ? 13 : 11.5);
+        const body = k => {
+            k.moveTo(cx - sx2 + 2, 59.5);
+            k.quadraticCurveTo(cx, 63, cx + sx2 - 2, 59.5);
+            k.quadraticCurveTo(cx + hw + 1.5, 59.5, cx + hw + 1.5, 64.5);
+            k.lineTo(cx + hw - 0.5, 81);
+            k.quadraticCurveTo(cx, 83.5, cx - hw + 0.5, 81);
+            k.lineTo(cx - hw - 1.5, 64.5);
+            k.quadraticCurveTo(cx - hw - 1.5, 59.5, cx - sx2 + 2, 59.5);
+            k.closePath();
+        };
+        c.save();
+        c.lineJoin = c.lineCap = 'round';
+        inked(c, m, ln, lw, body);
+        c.save();
+        c.beginPath();
+        body(c);
+        c.clip();
+        if (S.look === 'coif') {
+            c.fillStyle = darken(m, 0.25);
+            for (let y = 60; y < 84; y += 4)
+                for (let x = cx - 18 + (y % 8 ? 2 : 0); x < cx + 18; x += 4)
+                    c.fillRect(x, y, 1.6, 1.6);
+        }
+        else if (S.look === 'horn' && S.name === 'Bone') {
+            c.strokeStyle = darken(m, 0.35);
+            c.lineWidth = 1.6;
+            for (let y = 65; y < 78; y += 4) {
+                c.beginPath();
+                c.moveTo(cx - hw + 3, y);
+                c.quadraticCurveTo(cx, y + 2.5, cx + hw - 3, y);
+                c.stroke();
+            }
+        }
+        else if (S.look === 'horn') {
+            c.fillStyle = darken(m, 0.25);
+            for (let y = 63; y < 80; y += 5)
+                for (let x = cx - 18 + (y % 10 ? 2.5 : 0); x < cx + 18; x += 5) {
+                    c.beginPath();
+                    c.arc(x, y, 2.5, 0, Math.PI);
+                    c.fill();
+                }
+        }
+        else if (S.look === 'hood') {
+            c.strokeStyle = t;
+            c.lineWidth = 3;
+            c.beginPath();
+            c.moveTo(cx - hw, 60);
+            c.lineTo(cx + hw, 80);
+            c.stroke();
+        }
+        else if (S.look === 'cap') {
+            c.strokeStyle = darken(m, 0.35);
+            c.lineWidth = 1;
+            c.setLineDash([2, 2]);
+            c.beginPath();
+            c.moveTo(cx - hw + 4, 64);
+            c.lineTo(cx - hw + 4, 78);
+            c.moveTo(cx + hw - 4, 64);
+            c.lineTo(cx + hw - 4, 78);
+            c.stroke();
+            c.setLineDash([]);
+        }
+        else if (!back) {
+            inked(c, lighten(m, 0.15), ln, 1.4, k => rr(k, cx - hw + 3.5, 63, (hw - 3.5) * 2, 12, 5));
+            c.strokeStyle = lighten(m, 0.6);
+            c.lineWidth = 2;
+            c.globalAlpha = 0.7;
+            c.beginPath();
+            c.moveTo(cx - hw + 6, 66);
+            c.lineTo(cx - hw + 6, 72);
+            c.stroke();
+            c.globalAlpha = 1;
+        }
+        if (S.look === 'crown' && !back) {
+            c.fillStyle = t;
+            c.beginPath();
+            c.moveTo(cx, 64);
+            c.lineTo(cx + 4, 69);
+            c.lineTo(cx, 74);
+            c.lineTo(cx - 4, 69);
+            c.closePath();
+            c.fill();
+        }
+        c.restore();
+        inked(c, darken(t, 0.1), ink(t), 1.4, k => rr(k, cx - hw + 0.5, 76.5, (hw - 0.5) * 2, 4.5, 2));
+        if (!back)
+            inked(c, '#ffd84d', '#6a4a12', 1, k => rr(k, (side ? cx + 2 : cx) - 2.5, 76, 5, 5.5, 1.2));
+        if (S.look !== 'hood' && S.look !== 'cap')
+            (side ? [0] : [-1, 1]).forEach(d => {
+                const x = side ? cx - 1 : cx + d * (hw + 0.5);
+                inked(c, m, ln, 1.8, k => k.ellipse(x, 62.5, side ? 8.5 : 7, 5.5, 0, Math.PI, 0, false), k => { k.moveTo(x - (side ? 8.5 : 7), 62.5); k.lineTo(x + (side ? 8.5 : 7), 62.5); });
+                c.strokeStyle = t;
+                c.lineWidth = 1.6;
+                c.beginPath();
+                c.moveTo(x - (side ? 7 : 5.5), 61.5);
+                c.lineTo(x + (side ? 7 : 5.5), 61.5);
+                c.stroke();
+            });
+        c.restore();
+    }
+    function drawArmorIcon(c, p) {
+        const S = ARMOR_SETS[p.a];
+        c.save();
+        if (p.s === 'h') {
+            c.translate(24 - 48 * 0.7, 6);
+            c.scale(0.7, 0.7);
+            drawHelm(c, S, 'front');
+        }
+        else {
+            c.translate(24 - 48 * 1.35, -74);
+            c.scale(1.35, 1.35);
+            drawBodyArmor(c, S, 'front', true);
+        }
+        c.restore();
+    }
+    function bakeArmor(scene, p) { const key = 'arm_' + p.a + p.s; bake(scene, key, 48, 48, c => drawArmorIcon(c, p)); return key; }
     const WEAPON_TYPES = {
         sword: { name: 'Sword', reach: 82, cool: 0.42, mul: 1, arc: 1.15, stat: 'str' },
         hammer: { name: 'Hammer', reach: 96, cool: 0.95, mul: 2.3, area: 74, stat: 'str' },
@@ -17527,6 +17815,8 @@
         dunFound(D, w);
         return w;
     }
+    const armorFound = (D, p) => { const i = p.a * 2 + (p.s === 'b' ? 1 : 0); D.afound = D.afound || []; if (!D.afound.includes(i))
+        D.afound.push(i); };
     const dunFound = (D, w) => { if (w && Number.isInteger(w.c) && !D.found.includes(w.c))
         D.found.push(w.c); };
     const dunPlace = D => (D.run.room ? (D.run.d + 1) * 1000 + D.run.room : 0);
@@ -17542,7 +17832,7 @@
     }
     const dunOpenTo = (D, i) => i === 0 || (DUNGEONS[i] && DUNGEONS[i].daily ? D.done.includes(0) : D.done.includes(i - 1));
     const xpFor = L => Math.round(40 * Math.pow(L, 1.5));
-    const dunMaxHp = D => 100 + (D.level - 1) * 12 + (CLASSES[D.cls] ? CLASSES[D.cls].hp : 0) + D.stats.str * 4;
+    const dunMaxHp = D => 100 + (D.level - 1) * 12 + (CLASSES[D.cls] ? CLASSES[D.cls].hp : 0) + D.stats.str * 4 + dunArmor(D).hp;
     const dunMaxMp = D => (CLASSES[D.cls] ? CLASSES[D.cls].mp : 30) + D.stats.int * 5 + (D.level - 1) * 3;
     const dunDmgMul = L => 1 + (L - 1) * 0.06;
     function dunPower(D, w) {
@@ -17590,6 +17880,15 @@
         const lv = v.loot && typeof v.loot === 'object' ? v.loot : {};
         out.loot = { day: int(lv.day, 0, 1e7, 0), n: int(lv.n, 0, 999, 0), got: (Array.isArray(lv.got) ? lv.got : []).filter(x => typeof x === 'string' && x.length < 24).slice(0, 40) };
         out.eq = int(v.eq, -1, out.bag.length - 1, -1);
+        out.arm = (Array.isArray(v.arm) ? v.arm : []).map(cleanArmor).filter(Boolean).slice(0, DUN.ARM);
+        out.astash = (Array.isArray(v.astash) ? v.astash : []).map(cleanArmor).filter(Boolean).slice(0, DUN.ASTASH);
+        const wv = v.worn && typeof v.worn === 'object' ? v.worn : {};
+        out.worn = { h: cleanArmor(wv.h), b: cleanArmor(wv.b) };
+        if (out.worn.h && out.worn.h.s !== 'h')
+            out.worn.h = null;
+        if (out.worn.b && out.worn.b.s !== 'b')
+            out.worn.b = null;
+        out.afound = (Array.isArray(v.afound) ? v.afound : []).filter(i => Number.isInteger(i) && i >= 0 && i < ARMOR_SETS.length * 2).slice(0, 200);
         out.hp = Number.isFinite(v.hp) ? clamp(v.hp, 1, dunMaxHp(out)) : dunMaxHp(out);
         out.mp = Number.isFinite(v.mp) ? clamp(v.mp, 0, dunMaxMp(out)) : dunMaxMp(out);
         const run = v.run && typeof v.run === 'object' ? v.run : {};
@@ -18455,6 +18754,30 @@
             c.fillStyle = 'rgba(40,38,50,.4)';
             [44, 66, 86].forEach(y => c.fillRect(13, y, 38, 2));
         });
+        bake(scene, 'cot', 150, 84, c => {
+            const ink = '#1d1424';
+            [[14, 50], [132, 50]].forEach(([x, y]) => inked(c, '#7a4f32', ink, 2, q => rr(q, x, y, 8, 30, 2)));
+            inked(c, '#8a5a34', ink, 2.2, q => rr(q, 6, 22, 14, 52, 4));
+            inked(c, '#9a6a3e', ink, 2.2, q => rr(q, 10, 44, 132, 16, 4));
+            inked(c, '#efe8d8', ink, 2, q => rr(q, 14, 30, 126, 20, 7));
+            inked(c, '#ffffff', ink, 1.8, q => rr(q, 18, 24, 30, 18, 8));
+            inked(c, '#b8323c', ink, 2, q => rr(q, 56, 30, 84, 22, 6));
+            c.strokeStyle = '#e8d4a8';
+            c.lineWidth = 3;
+            c.beginPath();
+            c.moveTo(60, 34);
+            c.lineTo(136, 34);
+            c.stroke();
+            c.fillStyle = '#ffffff';
+            c.fillRect(8, 2, 10, 24);
+            c.fillRect(1, 9, 24, 10);
+            c.strokeStyle = ink;
+            c.lineWidth = 1.6;
+            c.strokeRect(8, 2, 10, 24);
+            c.fillStyle = '#e8323c';
+            c.fillRect(10, 5, 6, 18);
+            c.fillRect(4, 11, 18, 6);
+        });
         bake(scene, 'torch', 24, 56, c => { inked(c, '#7a4f32', '#1d1424', 1.6, q => rr(q, 9, 20, 6, 34, 2)); inked(c, '#ffb52e', '#a84a12', 1.4, q => { q.moveTo(12, 2); q.quadraticCurveTo(22, 14, 12, 22); q.quadraticCurveTo(2, 14, 12, 2); }); c.fillStyle = '#fff3b0'; c.beginPath(); c.ellipse(12, 15, 3, 5, 0, 0, TAU); c.fill(); });
         bake(scene, 'stairs', 120, 96, c => {
             c.fillStyle = '#0a0610';
@@ -18760,6 +19083,9 @@
         D.loot.n++;
         return true;
     }
+    function dunLootSeen(D, key) { const day = dayNumber(); if (!D.loot || D.loot.day !== day)
+        D.loot = { day, n: 0, got: [] }; if (D.loot.got.includes(key))
+        return false; D.loot.got.push(key); return true; }
     const dunLootLeft = D => (D.loot && D.loot.day === dayNumber() ? Math.max(0, DUN.LOOT - D.loot.n) : DUN.LOOT);
     const WEEKLY_DROP = { boss: 0.2, delve: 0.3, elite: 0.12, chest: 0.08 };
     function rollWeapon(f, rand, luck, cls, src) {
@@ -27342,6 +27668,13 @@
                 this.noPad = false;
                 this.npc(620, 1110, 5, 'Grizzle');
                 this.npc(1200, 1110, 3, 'Captain Rook');
+                const bed = { x: 1520, y: 1130 };
+                this.add.image(bed.x, bed.y, 'cot').setOrigin(0.5, 0.92).setScale(1.25 / TEX).setDepth(bed.y - 40);
+                this.label(bed.x, bed.y - 120, 'Infirmary', '#5a1a1a');
+                if (KO_BED) {
+                    KO_BED = false;
+                    this.time.delayedCall(30, () => this.inBed(bed.x + 18, bed.y - 45));
+                }
                 this.label(620, 1030, 'Grizzle\'s Supplies', '#3a1a5a');
                 this.hotspot('dunshop', 620, 1158, 54, new Phaser.Geom.Rectangle(560, 1020, 120, 110));
                 this.gate = { x: D.w / 2, y: 520 };
@@ -27520,6 +27853,8 @@
             this.dunAtkAt = 0;
             this.iframes = 0;
             this.dunOver = false;
+            this.bedUntil = 0;
+            this.fallen = 0;
             this.swingStart = -1e9;
             this.dunHpShown = -1;
             this.dunTold = 0;
@@ -28123,11 +28458,21 @@
             const f = roomDiff(Dn.run.d, Math.max(1, Dn.run.room), Dn.level), fort = this.boon('fortune');
             const daily = !!(this.dunDg && this.dunDg.daily), src = m.boss ? (daily ? 'delve' : 'boss') : m.elite || m.kind === 'mimic' ? 'elite' : null;
             const bossKey = m.boss ? 'b' + Dn.run.d + (DUNGEONS[Dn.run.d].rooms ? '' : ':' + Dn.run.room) : '', firstBoss = m.boss && !(Dn.loot && Dn.loot.day === dayNumber() && Dn.loot.got.includes(bossKey));
-            if ((m.boss || Math.random() < (m.kind === 'mimic' ? 0.5 : m.elite ? 0.3 : fort ? 0.035 : 0.02)) && dunLootTake(Dn, 'w', bossKey))
-                this.dunDrop(m.x, m.y, rollWeapon(f, Math.random, (m.boss ? 30 : m.elite || m.kind === 'mimic' ? 20 : 0) + (fort ? 15 : 0), Dn.cls, src));
-            else if (m.boss) {
+            const luck = (m.boss ? 30 : m.elite || m.kind === 'mimic' ? 20 : 0) + (fort ? 15 : 0);
+            if (m.boss && !firstBoss) {
                 this.noteUntil = 0;
-                this.note(dunLootLeft(Dn) <= 0 ? 'No more weapons today! Come back tomorrow.' : 'You already got this boss\'s weapon today!', '#ffd0c8');
+                this.note('This boss has nothing more for you today.', '#ffd0c8');
+            }
+            else {
+                if (m.boss)
+                    dunLootSeen(Dn, bossKey);
+                const pw = m.boss ? 0.4 : m.kind === 'mimic' ? 0.25 : m.elite ? 0.12 : fort ? 0.012 : 0.006, pa = m.boss ? 0.3 : m.kind === 'mimic' ? 0.2 : m.elite ? 0.1 : fort ? 0.01 : 0.005, x = Math.random();
+                const got = x < pw ? dunLootTake(Dn, 'w') && (this.dunDrop(m.x, m.y, rollWeapon(f, Math.random, luck, Dn.cls, src)), true)
+                    : x < pw + pa ? dunLootTake(Dn, 'a') && (this.dunDrop(m.x, m.y, null, null, rollArmor(f, Math.random, luck, src)), true) : false;
+                if (m.boss && !got) {
+                    this.noteUntil = 0;
+                    this.note(dunLootLeft(Dn) <= 0 ? 'No more loot today! Come back tomorrow.' : 'The boss dropped nothing this time.', '#ffd0c8');
+                }
             }
             if ((firstBoss && !daily) || m.elite)
                 prizeTry(m.boss ? 'boss' : 'elite');
@@ -28225,13 +28570,26 @@
                     ui.onState();
             }
         }
-        dunDrop(x, y, w, pot) {
-            const key = w ? bakeWeapon(this, w) : pot === 'mana' ? 'manapot' : 'potion';
-            const img = this.add.image(x, y - 10, key).setScale((w ? 0.8 : 1) / TEX).setDepth(y);
-            const g = this.add.image(x, y - 10, 'glow').setDisplaySize(70, 70).setTint(w ? parseInt(RARITIES[w.r][1].slice(1), 16) : pot === 'mana' ? 0x4a8aff : 0xff5a7a).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setDepth(7001);
+        inBed(x, y) {
+            if (!this.pz || !this.pz.body)
+                return;
+            this.pz.body.reset(x, y - FOOT);
+            this.avatar.setPosition(x, y);
+            this.clearTarget();
+            this.vel.set(0, 0);
+            this.bedUntil = this.time.now + 2600;
+            if (this.setFacing)
+                this.setFacing('front', 1);
+            this.noteUntil = 0;
+            this.note('Zzz... you wake up in the infirmary.', '#ffd0c8');
+        }
+        dunDrop(x, y, w, pot, arm) {
+            const key = w ? bakeWeapon(this, w) : arm ? bakeArmor(this, arm) : pot === 'mana' ? 'manapot' : 'potion', it = w || arm;
+            const img = this.add.image(x, y - 10, key).setScale((w ? 0.8 : arm ? 1.1 : 1) / TEX).setDepth(y);
+            const g = this.add.image(x, y - 10, 'glow').setDisplaySize(70, 70).setTint(it ? parseInt(RARITIES[it.r][1].slice(1), 16) : pot === 'mana' ? 0x4a8aff : 0xff5a7a).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setDepth(7001);
             if (!REDUCED)
                 this.tweens.add({ targets: img, y: y - 16, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
-            this.drops.push({ x, y, w, pot: pot || 'potion', img, g });
+            this.drops.push({ x, y, w, arm, pot: pot || 'potion', img, g });
         }
         dunOpen(ch) {
             const Dn = G.dun, f = roomDiff(Dn.run.d, Math.max(1, Dn.run.room), Dn.level), mods = this.mods || [], fort = this.boon('fortune') ? 15 : 0;
@@ -28259,8 +28617,16 @@
             Dn.chests++;
             this.dunPop(ch.x, ch.y - 60, '+' + coins + ' Coins', '#ffd84d', true);
             const bigSrc = ch.big ? 'chest' : null;
-            if ((ch.big || Math.random() < (ch.luck ? 0.35 : 0.2)) && dunLootTake(Dn, 'w', ch.big ? 'c' + Dn.run.d + (DUNGEONS[Dn.run.d].rooms ? '' : ':' + Dn.run.room) : ''))
-                this.dunDrop(ch.x - 30, ch.y + 30, rollWeapon(f, Math.random, (ch.big ? 40 : 12) + (ch.luck || 0) + fort, Dn.cls, bigSrc));
+            const cKey = 'c' + Dn.run.d + (DUNGEONS[Dn.run.d].rooms ? '' : ':' + Dn.run.room), cl = (ch.big ? 40 : 12) + (ch.luck || 0) + fort;
+            if (!ch.big || dunLootSeen(Dn, cKey)) {
+                const pw = ch.big ? 0.4 : ch.luck ? 0.12 : 0.06, pa = ch.big ? 0.3 : ch.luck ? 0.1 : 0.05, x = Math.random();
+                if (x < pw) {
+                    if (dunLootTake(Dn, 'w'))
+                        this.dunDrop(ch.x - 30, ch.y + 30, rollWeapon(f, Math.random, cl, Dn.cls, bigSrc));
+                }
+                else if (x < pw + pa && dunLootTake(Dn, 'a'))
+                    this.dunDrop(ch.x - 30, ch.y + 30, null, null, rollArmor(f, Math.random, cl, bigSrc ? 'chest' : null));
+            }
             if (ch.big || Math.random() < 0.5)
                 this.dunDrop(ch.x + 30, ch.y + 30, null, Math.random() < 0.5 ? 'mana' : 'potion');
             sfx.chime();
@@ -28282,6 +28648,9 @@
             this.hurtAt = this.time.now;
             if (this.time.now < this.buff.skin)
                 d = Math.ceil(d / 2);
+            const cut = dunArmor(Dn).cut;
+            if (cut)
+                d = Math.max(1, Math.round(d * (1 - cut)));
             if (this.boon('stone'))
                 d = Math.ceil(d * 0.8);
             Dn.hp = Math.max(0, Dn.hp - d);
@@ -28300,8 +28669,10 @@
                 ui.onDun();
             if (Dn.hp <= 0) {
                 this.dunOver = true;
-                this.noteUntil = 0;
-                this.note('Knocked out! You wake up back at the camp.', '#ff9a9a');
+                KO_BED = true;
+                if (ui.onDied)
+                    ui.onDied();
+                this.fallen = this.time.now;
                 Dn.run.room = 0;
                 Dn.run.boons = [];
                 Dn.hp = dunMaxHp(Dn);
@@ -28309,7 +28680,7 @@
                 saveGame();
                 if (ui.onEvent)
                     ui.onEvent('ko', {});
-                this.time.delayedCall(900, () => { this.leaving = false; this.travelTo('dungeon', true); });
+                this.time.delayedCall(2300, () => { this.leaving = false; this.travelTo('dungeon', true); });
             }
         }
         dunGo(room, d) {
@@ -28726,6 +29097,31 @@
                     sfx.pickup(dr.w.r >= 3 ? 'legendary' : dr.w.r >= 1 ? 'rare' : 'common');
                     if (ui.onEvent)
                         ui.onEvent('loot', { r: dr.w.r });
+                }
+                else if (dr.arm) {
+                    Dn.arm = Dn.arm || [];
+                    if (Dn.arm.length >= DUN.ARM) {
+                        if (time > this.dunTold) {
+                            this.dunTold = time + 2500;
+                            this.noteUntil = 0;
+                            this.note('Your armor bag is full! Sell or stash some with Grizzle at camp.', '#ffd0c8');
+                        }
+                        return true;
+                    }
+                    const p = dr.arm;
+                    armorFound(Dn, p);
+                    Dn.worn = Dn.worn || { h: null, b: null };
+                    if (!Dn.worn[p.s]) {
+                        Dn.worn[p.s] = p;
+                        this.applyLook();
+                    }
+                    else
+                        Dn.arm.push(p);
+                    this.noteUntil = 0;
+                    this.note('Found: ' + armorName(p) + ' (' + RARITIES[p.r][0] + ')', RARITIES[p.r][1]);
+                    sfx.pickup(p.r >= 3 ? 'legendary' : p.r >= 1 ? 'rare' : 'common');
+                    if (ui.onEvent)
+                        ui.onEvent('loot', { r: p.r });
                 }
                 else if (dr.pot === 'mana') {
                     Dn.mana = Math.min(99, Dn.mana + 1);
@@ -32782,8 +33178,9 @@
             if (ui.onLoc)
                 ui.onLoc(this.loc);
         }
+        dressLook() { const W = G.dun && G.dun.worn; return this.loc === 'dungeon' && W && (W.h || W.b) ? Object.assign({}, this.look, { armor: W }) : this.look; }
         buildPlayer() {
-            bakeAvatar(this, this.look);
+            bakeAvatar(this, this.dressLook());
             bakeHandTools(this);
             this.bubble = null;
             const D = this.D, B = D.bounds;
@@ -33782,7 +34179,7 @@
             P.armR.setPosition(ax, -39);
         }
         applyLook() {
-            bakeAvatar(this, this.look);
+            bakeAvatar(this, this.dressLook());
             if (this.parts && this.view) {
                 const v = this.view;
                 this.view = '';
@@ -35746,6 +36143,8 @@
                     sfx.thud();
                 }
             }
+            if (this.bedUntil)
+                v.set(0, 0);
             b.setVelocity(v.x, v.y);
             const realVx = (this.pz.x - this.lastX) / dt;
             const moved = Math.hypot(this.pz.x - this.lastX, this.pz.y - this.lastY);
@@ -35775,6 +36174,20 @@
             this.rig.y = -step * 5 * a;
             this.lean += (clamp(realVx / SPEED, -1, 1) * 0.07 * a - this.lean) * Math.min(1, dt * 10);
             this.rig.rotation = this.lean;
+            if (this.fallen) {
+                this.rig.rotation = -Math.PI / 2 * clamp((time - this.fallen) / 300, 0, 1);
+                this.rig.setScale(1, 1);
+            }
+            if (this.bedUntil) {
+                const k = clamp((this.bedUntil - time) / 450, 0, 1);
+                this.rig.rotation = -Math.PI / 2 * k;
+                this.rig.setScale(1, 1);
+                if (time >= this.bedUntil) {
+                    this.bedUntil = 0;
+                    this.noteUntil = 0;
+                    this.note('Back on your feet!', '#7dff9a');
+                }
+            }
             this.upper.y = -step * 1.6 * a;
             if (boating)
                 this.shadow.setDisplaySize(124, 26);
@@ -41812,12 +42225,16 @@
         const gateP = makePanel(dq('dungate')), gateList = dq('dungate-list');
         const shrineP = makePanel(dq('dunshrine')), shrineList = dq('dunshrine-list'), dunBoonsEl = dq('dun-boons');
         const dn = { tab: 'bag', shop: false, note: '' };
-        const DUN_TABS = [['bag', 'Bag'], ['stats', 'Stats & skills'], ['armory', 'Armory'], ['shop', 'Potions'], ['wares', 'Today\'s wares'], ['stash', 'Stash']];
+        const DUN_TABS = [['bag', 'Bag'], ['stats', 'Stats & skills'], ['armory', 'Armory'], ['shop', 'Potions'], ['wares', 'Today\'s wares'], ['stash', 'Stash'], ['armor', 'Armor']];
         dn.af = 'week';
         const dunTabBtns = DUN_TABS.map(([id, name]) => { const b = el('button', 'furn-cat', { type: 'button', 'data-tab': id, 'aria-pressed': 'false' }); b.textContent = name; dunTabs.appendChild(b); return b; });
         const weaponLine = w => { const d = Number.isInteger(w.c) ? armoryDef(w.c) : null; return RARITIES[w.r][0] + ' ' + (d ? FORMS[d.t][d.form].name[0].toLowerCase() : WEAPON_TYPES[w.t].name.toLowerCase()) + ' · damage ' + w.dmg + (d && d.fx !== 'none' ? ' · ' + MAGIC[d.fx][2].split(':')[0] : ''); };
         const weaponFrom = w => { const d = Number.isInteger(w.c) ? armoryDef(w.c) : null; return d ? armorySetName(d) + (armoryLive(d) ? '' : ' (retired)') + ' · #' + w.u : ''; };
         const weaponTip = w => { const d = Number.isInteger(w.c) ? armoryDef(w.c) : null; return d ? d.name + '\n' + (d.fx !== 'none' ? MAGIC[d.fx][2] + '\n' : '') + d.lore + '\nQuality ' + w.q + '%' : w.name; };
+        const armorCanvas = (p, n) => { const cv = el('canvas', '', { width: n || 96, height: n || 96, 'aria-hidden': 'true' }), c = cv.getContext('2d'); if (c) {
+            c.setTransform((n || 96) / 48, 0, 0, (n || 96) / 48, 0, 0);
+            drawArmorIcon(c, p);
+        } return cv; };
         const weaponCanvas = (w, n) => { const cv = el('canvas', '', { width: n || 96, height: n || 96, 'aria-hidden': 'true' }), c = cv.getContext('2d'); c.setTransform((n || 96) / 72, 0, 0, (n || 96) / 72, (n || 96) / 6, (n || 96) / 6); drawWeapon(c, w); return cv; };
         const dunWhere = () => { const D = G.dun, Dg = dunDef(D.run.d, dayNumber()); return !D.run.room ? 'Camp' : Dg.rooms ? Dg.name + ' · ' + (D.run.room >= Dg.rooms ? 'the boss' : 'room ' + D.run.room + ' of ' + Dg.rooms) : Dg.name + ' · floor ' + D.run.room; };
         function paintDunSkills() {
@@ -41898,9 +42315,11 @@
         }
         function paintDun() {
             const D = G.dun, rows = [];
+            D.worn = D.worn || { h: null, b: null };
+            D.arm = D.arm || [];
             if (!dn.shop && dn.tab === 'bag')
                 dn.tab = 'stats';
-            dunTabBtns.forEach((b, i) => { b.setAttribute('aria-pressed', String(DUN_TABS[i][0] === dn.tab)); b.hidden = (i >= 3 || i === 0) && !dn.shop; });
+            dunTabBtns.forEach((b, i) => { b.setAttribute('aria-pressed', String(DUN_TABS[i][0] === dn.tab)); b.hidden = (i === 0 || (i >= 3 && i <= 5)) && !dn.shop; });
             if (dn.tab === 'stats') {
                 const C = CLASSES[D.cls], w = D.eq >= 0 ? D.bag[D.eq] : null;
                 const top = node('div', 'mine-row mine-top');
@@ -41973,6 +42392,32 @@
                     rows.push(li);
                 });
             }
+            else if (dn.tab === 'armor') {
+                const A = dunArmor(D), top = node('div', 'mine-row mine-top');
+                top.append(node('span', '', 'Armor ' + A.def + ' (takes ' + Math.round(A.cut * 100) + '% off every hit)' + (A.hp ? ' · +' + A.hp + ' health' : '') + ' · ' + (D.arm || []).length + ' of ' + DUN.ARM + ' in your bag · collection: ' + (D.afound || []).length + ' of ' + ARMOR_SETS.length * 2));
+                rows.push(top);
+                const armRow = (p, btns) => {
+                    const li = node('div', 'mine-row dun-row'), text = node('div', 'mine-text'), nm = node('b', '', armorName(p));
+                    nm.style.color = mix(RARITIES[p.r][1], '#1d1424', 0.35);
+                    text.append(nm, node('small', '', armorLine(p)), node('small', 'dun-from', '#' + p.u));
+                    li.append(armorCanvas(p, 72), text);
+                    btns.forEach(([act, i, label, off]) => { const b = el('button', 'btn', { type: 'button', 'data-act': act, 'data-i': String(i) }); b.textContent = label; b.disabled = !!off; li.appendChild(b); });
+                    return li;
+                };
+                [['h', 'Helm'], ['b', 'Body']].forEach(([k, what]) => { const p = D.worn[k]; if (p) {
+                    const li = armRow(p, [['unwear', k, 'Take off', (D.arm || []).length >= DUN.ARM]]);
+                    li.classList.add('on');
+                    rows.push(li);
+                }
+                else
+                    rows.push(node('p', 'pet-hint', what + ': nothing on.')); });
+                (D.arm || []).forEach((p, i) => { const b = [['wear', i, 'Wear']]; if (dn.shop)
+                    b.push(['asell', i, 'Sell ' + armorValue(p)], ['astash', i, 'Stash', (D.astash || []).length >= DUN.ASTASH]); rows.push(armRow(p, b)); });
+                if (dn.shop)
+                    (D.astash || []).forEach((p, i) => { const li = armRow(p, [['atake', i, 'Take', (D.arm || []).length >= DUN.ARM]]); li.querySelector('.dun-from').textContent = 'In your stash'; rows.push(li); });
+                if (!(D.arm || []).length && !D.worn.h && !D.worn.b)
+                    rows.push(node('p', 'pet-hint', 'No armor yet. Bosses, elites, mimics and chests can drop it, but not often.'));
+            }
             else if (dn.tab === 'stash' && dn.shop) {
                 const top = node('div', 'mine-row mine-top');
                 top.append(node('span', '', (D.stash || []).length + ' of ' + DUN.STASH + ' in your stash · ' + D.bag.length + ' of ' + DUN.BAG + ' in your bag'));
@@ -41994,7 +42439,7 @@
             }
             else if (dn.tab === 'bag' || !dn.shop) {
                 const top = node('div', 'mine-row mine-top');
-                top.append(node('span', '', D.bag.length + ' of ' + DUN.BAG + ' weapons · ' + D.potions + ' potions, ' + D.big + ' big, ' + D.mana + ' mana · weapons left to find today: ' + dunLootLeft(D)));
+                top.append(node('span', '', D.bag.length + ' of ' + DUN.BAG + ' weapons · ' + D.potions + ' potions, ' + D.big + ' big, ' + D.mana + ' mana · loot left today: ' + dunLootLeft(D)));
                 if (dn.shop && D.bag.some((w, i) => w.r === 0 && i !== D.eq)) {
                     const b = el('button', 'btn', { type: 'button', 'data-act': 'sellcommon', 'data-i': '0' });
                     b.textContent = 'Sell all Common';
@@ -42053,6 +42498,68 @@
             if (act === 'af') {
                 dn.af = i;
                 return '';
+            }
+            if (act === 'wear' || act === 'unwear' || act === 'asell' || act === 'astash' || act === 'atake') {
+                D.arm = D.arm || [];
+                D.astash = D.astash || [];
+                const redo = () => { const s = scene(); if (s && s.loc === 'dungeon' && s.applyLook)
+                    s.applyLook(); D.hp = Math.min(D.hp, dunMaxHp(D)); };
+                if (act === 'wear') {
+                    const p = D.arm[i];
+                    if (!p)
+                        return '';
+                    D.arm.splice(i, 1);
+                    if (D.worn[p.s])
+                        D.arm.push(D.worn[p.s]);
+                    D.worn[p.s] = p;
+                    redo();
+                    sfx.tick();
+                    return armorName(p) + ' is on.';
+                }
+                if (act === 'unwear') {
+                    const p = D.worn[i];
+                    if (!p)
+                        return '';
+                    if (D.arm.length >= DUN.ARM)
+                        return 'Your armor bag is full.';
+                    D.worn[i] = null;
+                    D.arm.push(p);
+                    redo();
+                    sfx.tick();
+                    return armorName(p) + ' is off.';
+                }
+                if (!dn.shop)
+                    return '';
+                if (act === 'asell') {
+                    const p = D.arm[i];
+                    if (!p)
+                        return '';
+                    const v = armorValue(p);
+                    G.coins += v;
+                    D.arm.splice(i, 1);
+                    sfx.coin();
+                    return armorName(p) + ' sold for ' + v + ' Coins.';
+                }
+                if (act === 'astash') {
+                    const p = D.arm[i];
+                    if (!p)
+                        return '';
+                    if (D.astash.length >= DUN.ASTASH)
+                        return 'Your armor stash is full.';
+                    D.arm.splice(i, 1);
+                    D.astash.push(p);
+                    sfx.tick();
+                    return armorName(p) + ' is in your stash.';
+                }
+                const p = D.astash[i];
+                if (!p)
+                    return '';
+                if (D.arm.length >= DUN.ARM)
+                    return 'Your armor bag is full.';
+                D.astash.splice(i, 1);
+                D.arm.push(p);
+                sfx.tick();
+                return armorName(p) + ' is back in your bag.';
             }
             if (act === 'stat' && D.pts > 0 && Object.prototype.hasOwnProperty.call(D.stats, i)) {
                 D.pts--;
@@ -42323,7 +42830,7 @@
             const b = e.target.closest('[data-act]');
             if (!b || b.disabled)
                 return;
-            dn.note = dunAct(b.dataset.act, ['buy', 'stat', 'af', 'slot'].includes(b.dataset.act) ? b.dataset.i : Number(b.dataset.i));
+            dn.note = dunAct(b.dataset.act, ['buy', 'stat', 'af', 'slot', 'unwear'].includes(b.dataset.act) ? b.dataset.i : Number(b.dataset.i));
             paintState();
             paintDun();
             paintDunHud();
@@ -42383,6 +42890,18 @@
         ui.onDun = paintDunHud;
         ui.onDunTick = paintDunSkills;
         ui.onDunClass = classOpen;
+        ui.onDied = () => {
+            const d = document.createElement('div');
+            d.className = 'died';
+            d.setAttribute('role', 'alert');
+            const b = document.createElement('b'), sm = document.createElement('small');
+            b.textContent = 'YOU DIED';
+            sm.textContent = 'Lost your boons. Off to the infirmary...';
+            d.append(b, sm);
+            document.body.appendChild(d);
+            setTimeout(() => d.classList.add('out'), 2300);
+            setTimeout(() => d.remove(), 3000);
+        };
         ui.onShrine = shrineOpen;
         ui.dun = { dn, open: dunOpen, act: dunAct, drink: dunDrink, gate: gateOpen, enter: gateEnter, pick: classOpen, choose: classPick, shrine: shrineTake };
         const collP = makePanel(document.getElementById('coll')), collTabs = document.getElementById('coll-tabs'), collList = document.getElementById('coll-list'), collMsg = document.getElementById('coll-msg');
@@ -42571,7 +43090,7 @@
             paintState();
         };
         ui.coll = { cs, open: collOpen, buy: collBuy, paint: collPaint };
-        const TRADE = { WAIT: 120000, MAXW: 8, MAXC: 100000, COUNT: 10000, PV: 2 };
+        const TRADE = { WAIT: 120000, MAXW: 8, MAXC: 100000, COUNT: 10000, PV: 3 };
         const TRADE_ID = /^[a-z0-9-]{4,40}$/;
         const tr = { id: '', other: '', otherName: '', me: null, them: null, stop: null, done: false, invite: null, note: '', writing: Promise.resolve() };
         const tradeP = makePanel(document.getElementById('trade')), tradeBody = document.getElementById('trade-body'), tradeMsg = document.getElementById('trade-msg');
@@ -42618,6 +43137,10 @@
                 const d = furnCollOf(e.c);
                 return d && typeof e.u === 'string' && /^[a-z0-9:._-]{1,40}$/i.test(e.u) ? { k: 'f', u: e.u, name: d.name, r: d.r, obj: { t: d.t, c: e.c } } : null;
             }
+            if (e.k === 'a') {
+                const p = cleanArmor(e);
+                return p ? { k: 'a', u: p.u, name: armorName(p), r: p.r, obj: p } : null;
+            }
             const w = cleanWeapon(e);
             return w ? Object.assign(w, { k: 'w' }) : null;
         }
@@ -42630,9 +43153,10 @@
         const goodsOf = t => (/^fl[0-4]$/.test(t) ? { name: n => cap(flowerWord(+t[2], n)), r: 0, have: () => gatherOf().gfl[+t[2]] || 0, add: n => { const F = gatherOf(); F.gfl[+t[2]] = clamp((F.gfl[+t[2]] || 0) + n, 0, 9999); } }
             : t === 'gold' ? { name: n => n + ' golden flower' + (n === 1 ? '' : 's'), r: 3, have: () => G.fan.ggd || 0, add: n => { G.fan.ggd = clamp((G.fan.ggd || 0) + n, 0, 9999); } }
                 : t === 'trash' ? { name: n => 'Trash bag (' + n + ' piece' + (n === 1 ? '' : 's') + ')', r: 0, have: () => G.fan.gtr || 0, add: n => { G.fan.gtr = clamp((G.fan.gtr || 0) + n, 0, 999); } } : null);
-        const tradeItemOut = it => (it.k === 'k' ? { k: 'k', kc: it.obj.kc, u: it.u } : it.k === 't' ? { k: 't', d: it.obj.d, u: it.u } : it.k === 'g' ? { k: 'g', t: it.obj.t, n: it.obj.n, u: it.u } : it.k === 'w' ? { k: 'w', c: it.c, u: it.u, q: it.q } : it.k === 'm' ? { k: 'm', t: it.obj.t, u: it.u } : it.k === 'f' ? { k: 'f', c: it.obj.c, u: it.u } : it.k === 'p' ? { k: 'p', o: it.obj, u: it.u } : it.k === 'h' ? { k: 'h', t: it.obj.t, c: it.obj.c, u: it.u } : { k: it.k, c: it.obj.c, u: it.u });
+        const tradeItemOut = it => (it.k === 'a' ? { k: 'a', a: it.obj.a, s: it.obj.s, r: it.obj.r, q: it.obj.q, u: it.u } : it.k === 'k' ? { k: 'k', kc: it.obj.kc, u: it.u } : it.k === 't' ? { k: 't', d: it.obj.d, u: it.u } : it.k === 'g' ? { k: 'g', t: it.obj.t, n: it.obj.n, u: it.u } : it.k === 'w' ? { k: 'w', c: it.c, u: it.u, q: it.q } : it.k === 'm' ? { k: 'm', t: it.obj.t, u: it.u } : it.k === 'f' ? { k: 'f', c: it.obj.c, u: it.u } : it.k === 'p' ? { k: 'p', o: it.obj, u: it.u } : it.k === 'h' ? { k: 'h', t: it.obj.t, c: it.obj.c, u: it.u } : { k: it.k, c: it.obj.c, u: it.u });
         function tradeMine() {
             const out = G.dun.bag.map(w => Object.assign({}, w, { k: 'w' }));
+            (G.dun.arm || []).forEach(p => out.push({ k: 'a', u: p.u, name: armorName(p), r: p.r, obj: p }));
             const pn = {};
             G.outfits.forEach(o => { if (Number.isInteger(o.c))
                 out.push({ k: 'o', u: o.u, name: o.name, r: o.r, obj: o });
@@ -42661,7 +43185,7 @@
                 out.push({ k: 'f', u: key + ':' + i, name: d.name, r: d.r, obj: { t, c: Number(ci) } }); });
             return out;
         }
-        const tradeHas = it => (it.k === 'k' ? G.boards.some(x => x.u === it.u) : it.k === 'w' ? G.dun.bag.some(x => x.u === it.u) : it.k === 'o' ? G.outfits.some(x => x.u === it.u) : it.k === 'b' ? G.boards.some(x => x.u === it.u) : it.k === 'c' ? G.cards.some(x => x.u === it.u) : it.k === 'g' ? goodsOf(it.obj.t).have() >= it.obj.n : it.k === 't' ? toolsOf().some(x => x[0] === it.u) : it.k === 'p' ? G.outfits.filter(o => !Number.isInteger(o.c) && o.id === it.obj.id).length >= Number(it.u.split(':')[2]) : true);
+        const tradeHas = it => (it.k === 'a' ? (G.dun.arm || []).some(x => x.u === it.u) : it.k === 'k' ? G.boards.some(x => x.u === it.u) : it.k === 'w' ? G.dun.bag.some(x => x.u === it.u) : it.k === 'o' ? G.outfits.some(x => x.u === it.u) : it.k === 'b' ? G.boards.some(x => x.u === it.u) : it.k === 'c' ? G.cards.some(x => x.u === it.u) : it.k === 'g' ? goodsOf(it.obj.t).have() >= it.obj.n : it.k === 't' ? toolsOf().some(x => x[0] === it.u) : it.k === 'p' ? G.outfits.filter(o => !Number.isInteger(o.c) && o.id === it.obj.id).length >= Number(it.u.split(':')[2]) : true);
         function tradeRead(b) {
             if (!b || typeof b !== 'object')
                 return null;
@@ -42844,6 +43368,8 @@
             } });
             if (Object.keys(fkeys).some(key => (G.home.inv[key] || 0) < fkeys[key]))
                 return 'A piece of furniture you offered is not in your storage any more.';
+            if ((D.arm || []).length - m.w.filter(x => x.k === 'a').length + t.w.filter(x => x.k === 'a').length > DUN.ARM)
+                return 'Your armor bag would be too full: offer more, or ask for less.';
             if (D.bag.length - m.w.filter(x => x.k === 'w').length + t.w.filter(x => x.k === 'w').length > DUN.BAG)
                 return 'Your weapon bag would be too full: offer more, or ask for less.';
             return '';
@@ -42887,6 +43413,7 @@
             }
             const gone = new Set(m.w.map(w => w.u)), held = D.eq >= 0 ? D.bag[D.eq] : null;
             D.bag = D.bag.filter(x => !gone.has(x.u));
+            D.arm = (D.arm || []).filter(x => !gone.has(x.u));
             D.eq = held && !gone.has(held.u) ? D.bag.indexOf(held) : -1;
             if (look.outfit && gone.has(look.outfit.u)) {
                 look.outfit = null;
@@ -42920,7 +43447,17 @@
                     delete G.home.inv[key];
             } });
             t.w.forEach(x => {
-                if (x.k === 'w') {
+                if (x.k === 'a') {
+                    D.worn = D.worn || {};
+                    if (!D.arm.some(y => y.u === x.u) && !['h', 'b'].some(k => D.worn[k] && D.worn[k].u === x.u)) {
+                        const p = cleanArmor(x.obj);
+                        if (p) {
+                            D.arm.push(p);
+                            armorFound(D, p);
+                        }
+                    }
+                }
+                else if (x.k === 'w') {
                     if (!D.bag.some(y => y.u === x.u)) {
                         const w = Object.assign({}, x);
                         delete w.k;
@@ -43129,6 +43666,12 @@
                     text.append(nm, node('small', '', weaponLine(w)), node('small', 'dun-from', weaponFrom(w)));
                     li.title = weaponTip(w);
                     li.append(weaponCanvas(w, 56), text);
+                }
+                else if (w.k === 'a') {
+                    const cv = armorCanvas(w.obj, 112);
+                    cv.classList.add('coll-cv', 'trade-cv');
+                    text.append(nm, node('small', '', armorLine(w.obj)), node('small', 'dun-from', '#' + w.u));
+                    li.append(cv, text);
                 }
                 else if (w.k === 't') {
                     const cv = el('canvas', 'coll-cv trade-cv', { 'aria-hidden': 'true' });
