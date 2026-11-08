@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794101956';
+<script>window.WANDO_BUILD = '1794102387';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17242,6 +17242,87 @@
         return out;
     }
     const roomDiff = (di, room, lv) => { const me = Math.max(1, (lv || 1) - 1); return DUNGEONS[di].daily ? me + (room - 1) * 0.6 : DUNGEONS[di].rooms ? Math.max(DUNGEONS[di].diff, me) + (room - 1) * 0.8 : Math.max(DUNGEONS[di].diff, me) + room - 1; };
+    const HALLS = { on: true };
+    function hallLayout(rand, B, pad) {
+        const cols = [B.x + 270, B.x + B.w / 2, B.x + B.w - 270], rows = [B.y + 210, pad.y - 40];
+        const at = [1, 1], path = [[1, 1]], seen = new Set(['1,1']);
+        const want = 3 + Math.floor(rand() * 3);
+        for (let tries = 0; path.length < want && tries < 40; tries++) {
+            const [c, r] = path[path.length - 1], opts = [[c - 1, r], [c + 1, r], [c, r - 1], [c, r + 1]].filter(([a, b]) => a >= 0 && a < 3 && b >= 0 && b < 2 && !seen.has(a + ',' + b));
+            if (!opts.length)
+                break;
+            const nx = opts[Math.floor(rand() * opts.length)];
+            path.push(nx);
+            seen.add(nx.join(','));
+        }
+        const rooms = path.map(([c, r], i) => {
+            const w = i === 0 ? 470 : 400 + Math.floor(rand() * 90), h = i === 0 ? 330 : r === 0 ? 300 + Math.floor(rand() * 60) : 300 + Math.floor(rand() * 40);
+            const cx = cols[c] + (i === 0 ? 0 : Math.round((rand() - 0.5) * 60)), cy = i === 0 ? B.y + B.h - h / 2 : rows[r] + Math.round((rand() - 0.5) * 40);
+            const x = clamp(cx - w / 2, B.x, B.x + B.w - w), y = clamp(cy - h / 2, B.y, B.y + B.h - h);
+            return { x, y, w, h, cx: x + w / 2, cy: y + h / 2, c, r };
+        });
+        const halls = [];
+        for (let i = 1; i < rooms.length; i++) {
+            const a = rooms[i - 1], b = rooms[i], W = 130;
+            if (a.r === b.r) {
+                const y = Math.round((Math.max(a.y, b.y) + Math.min(a.y + a.h, b.y + b.h)) / 2);
+                halls.push({ x: Math.min(a.cx, b.cx), y: y - W / 2, w: Math.abs(a.cx - b.cx), h: W });
+            }
+            else {
+                const x = Math.round((Math.max(a.x, b.x) + Math.min(a.x + a.w, b.x + b.w)) / 2);
+                halls.push({ x: x - W / 2, y: Math.min(a.cy, b.cy), w: W, h: Math.abs(a.cy - b.cy) });
+            }
+        }
+        const rects = rooms.concat(halls);
+        const walk = (x, y, m = 0) => rects.some(R => x >= R.x + m && x <= R.x + R.w - m && y >= R.y + m && y <= R.y + R.h - m);
+        return { rooms, halls, rects, walk };
+    }
+    function drawHalls(c, L, W, H, tint) {
+        const col = mix('#8a84a0', tint || '#8a84a0', 0.22), wallC = mix(col, '#2e2a3a', 0.5), capC = mix(col, '#d8d4e4', 0.25), dark = '#07040c';
+        c.fillStyle = dark;
+        c.fillRect(0, 0, W, H);
+        L.rects.forEach(R => c.clearRect(R.x, R.y, R.w, R.h));
+        const S = 8;
+        L.rects.forEach(R => {
+            for (let x = R.x; x < R.x + R.w; x += S) {
+                if (L.walk(x + S / 2, R.y - 6))
+                    continue;
+                c.fillStyle = wallC;
+                c.fillRect(x, R.y - 74, S + 0.5, 74);
+                c.fillStyle = capC;
+                c.fillRect(x, R.y - 84, S + 0.5, 12);
+            }
+            for (let y = R.y - 84; y < R.y + R.h; y += S) {
+                [[R.x - 14, R.x - 6], [R.x + R.w + 6, R.x + R.w]].forEach(([px, test]) => { if (L.walk(test < R.x ? R.x - 6 : R.x + R.w + 6, Math.max(R.y + 2, y)) || y < R.y - 84)
+                    return; c.fillStyle = capC; c.fillRect(px, y, 14, S + 0.5); });
+            }
+            for (let x = R.x - 14; x < R.x + R.w + 14; x += S) {
+                if (L.walk(Math.min(Math.max(x, R.x + 2), R.x + R.w - 2), R.y + R.h + 6))
+                    continue;
+                c.fillStyle = capC;
+                c.fillRect(x, R.y + R.h, S + 0.5, 14);
+            }
+        });
+        c.strokeStyle = 'rgba(20,10,30,.45)';
+        c.lineWidth = 1.5;
+        L.rects.forEach(R => { for (let x = R.x; x < R.x + R.w; x += 4) {
+            if (L.walk(x + 2, R.y - 6))
+                continue;
+        } });
+        L.rects.forEach(R => {
+            for (let row = 0; row < 3; row++) {
+                const y = R.y - 74 + row * 24;
+                for (let x = R.x + (row % 2) * 22; x < R.x + R.w; x += 44) {
+                    if (L.walk(x + 22, R.y - 6) || L.walk(x + 2, R.y - 6))
+                        continue;
+                    c.strokeRect(x, y, 44, 24);
+                }
+            }
+        });
+        L.rects.forEach(R => { const g = c.createLinearGradient(0, R.y, 0, R.y + 40); g.addColorStop(0, 'rgba(10,5,20,.45)'); g.addColorStop(1, 'rgba(10,5,20,0)'); c.fillStyle = g; for (let x = R.x; x < R.x + R.w; x += S)
+            if (!L.walk(x + S / 2, R.y - 6))
+                c.fillRect(x, R.y, S + 0.5, 40); });
+    }
     const pickW = (list, rand) => { const tot = list.reduce((a, m) => a + m[1], 0); let x = rand() * tot; for (const [k, w] of list) {
         x -= w;
         if (x < 0)
@@ -26219,6 +26300,8 @@
         }
         solid(x, y, r) { const z = this.add.zone(x, y, r * 2, r * 2); this.solids.add(z); z.body.setCircle(r); return z; }
         free(x, y, r) {
+            if (this.halls && !this.halls.walk(x, y, Math.min(r, 34)))
+                return false;
             for (const t of this.taken) {
                 const dx = t.x - x, dy = t.y - y, q = t.r + r;
                 if (dx * dx + dy * dy < q * q)
@@ -27199,16 +27282,17 @@
                     this.tweens.add({ targets: g, alpha: alpha * 0.6, duration: 300 + Math.random() * 400, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
                 return g;
             };
-            if (!mods.includes('dark'))
+            if (!mods.includes('dark') && camp)
                 for (let x = 200; x < D.w - 100; x += 300) {
                     if (Math.abs(x - 350) % 600 < 60)
                         continue;
                     this.add.image(x, 214, 'torch').setOrigin(0.5, 1).setScale(1.3 / TEX).setDepth(-850);
                     glow(x, 190, 300, 0xffa040, 0.4);
                 }
-            if (!mods.includes('dark'))
+            if (!mods.includes('dark') && camp)
                 [300, 800, 1200].forEach(y => [70, D.w - 70].forEach(x => glow(x, y, 220, 0xffa040, 0.22)));
             this.dunLamp = this.add.image(0, 0, 'glow').setDisplaySize(mods.includes('dark') ? 340 : 460, mods.includes('dark') ? 340 : 460).setTint(0xffe2a8).setAlpha(mods.includes('dark') ? 0.42 : 0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(7001);
+            this.halls = null;
             this.dunWalls = [];
             this.mons = [];
             this.shots = [];
@@ -27260,10 +27344,42 @@
             else {
                 this.noPad = true;
                 const what = last ? 'the boss' : ROOM_TYPES[type].name.toLowerCase();
-                this.label(D.w / 2, 300, Dg.rooms ? Dg.name + ': ' + (last ? 'the boss' : 'room ' + room + ' of ' + Dg.rooms + ', ' + what) : Dg.name + ': floor ' + room + (room % 5 === 0 ? ' (a boss waits here)' : type === 'fight' ? '' : ', ' + what), '#3a1a2a');
+                const roomLabel = this.label(D.w / 2, 300, Dg.rooms ? Dg.name + ': ' + (last ? 'the boss' : 'room ' + room + ' of ' + Dg.rooms + ', ' + what) : Dg.name + ': floor ' + room + (room % 5 === 0 ? ' (a boss waits here)' : type === 'fight' ? '' : ', ' + what), '#3a1a2a');
                 if (!Dg.rooms)
                     Dn.best = Math.max(Dn.best, room);
                 const pad = D.pad, nearPad = (x, y, r) => Math.hypot(x - pad.x, y - pad.y) < r;
+                const HL = this.halls = HALLS.on ? hallLayout(rand, B, pad) : { rooms: [{ x: B.x, y: B.y, w: B.w, h: B.h, cx: B.x + B.w / 2, cy: B.y + B.h / 2 }], halls: [], rects: [], walk: () => true, open: true }, key = 'halls_' + day + '_' + Dg.id + '_' + room;
+                if (!HL.open)
+                    bake(this, key, D.w, D.h, c => drawHalls(c, HL, D.w, D.h, Dg.tint), 1);
+                if (!HL.open)
+                    this.add.image(0, 0, key).setOrigin(0).setDepth(-895);
+                if (!HL.open)
+                    for (let y = 0; y < D.h; y += 30) {
+                        let run = -1;
+                        for (let x = 0; x <= D.w; x += 30) {
+                            const open = x < D.w && HL.walk(x + 15, y + 15);
+                            if (!open && x < D.w) {
+                                if (run < 0)
+                                    run = x;
+                            }
+                            else if (run >= 0) {
+                                const z = this.add.zone((run + x) / 2, y + 15, x - run, 30);
+                                this.solids.add(z);
+                                run = -1;
+                            }
+                        }
+                    }
+                if (!HL.open && roomLabel && roomLabel.setPosition)
+                    roomLabel.setPosition(HL.rooms[0].cx, HL.rooms[0].y - 92);
+                if (HL.open)
+                    this.halls = null;
+                else
+                    HL.rooms.forEach((R, i) => { for (let x = R.x + 120; x < R.x + R.w - 60; x += 260) {
+                        if (HL.walk(x, R.y - 6))
+                            continue;
+                        this.add.image(x, R.y - 20, 'torch').setOrigin(0.5, 1).setScale(1.2 / TEX).setDepth(-850);
+                        glow(x, R.y - 40, 240, 0xffa040, 0.3);
+                    } });
                 const style = ['scatter', 'rows', 'ring', 'pairs', 'cross'][Math.floor(rand() * 5)], cx = D.w / 2, cy = B.y + (B.h - 230) / 2, spots = [];
                 if (style === 'rows')
                     [0.3, 0.7].forEach(fy => [0.2, 0.4, 0.6, 0.8].forEach(fx => spots.push([B.x + B.w * fx, B.y + 80 + (B.h - 330) * fy])));
@@ -27285,9 +27401,10 @@
                     this.dunWalls.push({ x, y: y - 10, r: 30 });
                 });
                 if (!last) {
-                    let sx = D.w / 2, sy = B.y + 90;
+                    const end = HL.rooms[HL.rooms.length - 1];
+                    let sx = end.cx, sy = end.y + 90;
                     for (let i = 0; i < 200; i++) {
-                        const x = B.x + 150 + rand() * (B.w - 300), y = B.y + 60 + rand() * 160;
+                        const x = end.x + 80 + rand() * (end.w - 160), y = end.y + 70 + rand() * (end.h - 160);
                         if (this.free(x, y, 80)) {
                             sx = x;
                             sy = y;
@@ -27297,8 +27414,6 @@
                     this.reserve(sx, sy, 80);
                     this.stairs = { x: sx, y: sy, open: false, img: this.add.image(sx, sy, 'stairs').setScale(1 / TEX).setDepth(-880).setAlpha(0.45), tag: this.tag(sx, sy + 52, 'Locked', 9300, 12) };
                 }
-                else
-                    this.reserve(D.w / 2, 560, 120);
                 if (type === 'shrine') {
                     let x = cx, y = cy + 60;
                     for (let i = 0; i < 200 && !this.free(x, y, 70); i++) {
@@ -27335,16 +27450,17 @@
                     k++;
                 }
                 const diff = roomDiff(Dn.run.d, room, Dn.level), kinds = roomMonsters(Dg, room, rand, type);
-                let pack = null, packN = 0;
+                let pack = null, packN = 0, packI = 0;
                 const place = kind => {
                     if (MONSTERS[kind].boss)
                         pack = null;
                     else if (!pack || packN <= 0) {
                         pack = null;
-                        packN = 3 + Math.floor(rand() * 3);
+                        packN = 4 + Math.floor(rand() * 3);
+                        const HR = HL.rooms, list = HR.length > 1 ? HR.slice(1).concat(HL.halls) : HR, R = list[(packI++) % list.length];
                         for (let i = 0; i < 200; i++) {
-                            const x = B.x + 160 + rand() * (B.w - 320), y = B.y + 140 + rand() * (B.h - 420);
-                            if (!nearPad(x, y, 520) && this.free(x, y, 60)) {
+                            const x = R.x + 50 + rand() * Math.max(10, R.w - 100), y = R.y + 50 + rand() * Math.max(10, R.h - 100);
+                            if (!nearPad(x, y, 300) && this.free(x, y, 50)) {
                                 pack = { x, y };
                                 break;
                             }
@@ -27352,7 +27468,8 @@
                     }
                     packN--;
                     for (let i = 0; i < 300; i++) {
-                        const loose = !pack || i > 120, x = loose ? B.x + 80 + rand() * (B.w - 160) : pack.x + (rand() - 0.5) * 220, y = loose ? B.y + 80 + rand() * (B.h - 330) : pack.y + (rand() - 0.5) * 150;
+                        const endR = HL.rooms[HL.rooms.length - 1], bossHere = MONSTERS[kind].boss && i < 150;
+                        const loose = !pack || i > 120, x = bossHere ? endR.cx + (rand() - 0.5) * (endR.w - 140) * (i / 150) : loose ? B.x + 80 + rand() * (B.w - 160) : pack.x + (rand() - 0.5) * 220, y = bossHere ? endR.cy + (rand() - 0.5) * (endR.h - 140) * (i / 150) : loose ? B.y + 80 + rand() * (B.h - 330) : pack.y + (rand() - 0.5) * 150;
                         if (!this.free(x, y, 40) || nearPad(x, y, 480))
                             continue;
                         const boss = MONSTERS[kind].boss, aff = boss ? (Dg.bossAffix ? [Dg.bossAffix] : null) : eliteRoll(rand, diff, mods.includes('champs') ? 3 : 1);
@@ -28131,6 +28248,33 @@
             } });
             m.x = clamp(m.x, B.x + 20, B.x + B.w - 20);
             m.y = clamp(m.y, B.y + 30, B.y + B.h - 20);
+            if (this.halls) {
+                const ok = (x, y) => this.halls.walk(x, y, 14);
+                if (!ok(m.x, m.y)) {
+                    if (m.okx != null && ok(m.x, m.oky))
+                        m.y = m.oky;
+                    else if (m.okx != null && ok(m.okx, m.y))
+                        m.x = m.okx;
+                    else if (m.okx != null) {
+                        m.x = m.okx;
+                        m.y = m.oky;
+                    }
+                }
+                if (ok(m.x, m.y)) {
+                    m.okx = m.x;
+                    m.oky = m.y;
+                }
+            }
+        }
+        hallSee(ax, ay, bx, by) {
+            if (!this.halls)
+                return true;
+            for (let k = 1; k < 12; k++) {
+                const t = k / 12;
+                if (!this.halls.walk(ax + (bx - ax) * t, ay + (by - ay) * t))
+                    return false;
+            }
+            return true;
         }
         dunClick(x, y) {
             const fx = this.pz.x, fy = this.pz.y + FOOT;
@@ -28202,7 +28346,7 @@
                 if (m.dead)
                     continue;
                 const dx = fx - m.x, dy = fy - m.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
-                if (!m.aggro && d < notice)
+                if (!m.aggro && d < notice && this.hallSee(m.x, m.y, fx, fy))
                     this.monAlert(m);
                 if (m.aggro && d < DUN.CALM)
                     near = true;
@@ -46276,6 +46420,7 @@
             const wk = armoryWeek(), Dg = dailyDelve(dayNumber()), n = armory().list.length + ['o', 'b', 'f'].reduce((a, k) => a + collCat(k).list.length, 0);
             const page = {
                 news: ['What\'s new', ['<b>NEW!</b> Wando Motors is open on the Village Green. 6 collector cars every Monday!',
+                        '<b>New dungeon halls!</b> Every crypt room is now chambers and corridors. Fight your way through the hordes to the stairs!',
                         '<b>Crypt update!</b> Monsters get tougher as you level up. 8 weapon finds a day, one per boss. Bigger bag, and a Stash at camp!',
                         '<b>Back yards!</b> Go out your back door and decorate outside. Trees, pools, swings and more at Homestead!',
                         '<b>Taxi!</b> Drive around the Green and pick people up for Coins.',
