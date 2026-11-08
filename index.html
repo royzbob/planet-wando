@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794104227';
+<script>window.WANDO_BUILD = '1794110609';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17471,7 +17471,8 @@
     const CLASSES = {
         warrior: { name: 'Warrior', hp: 40, mp: 40, regen: 1.5, likes: ['sword', 'hammer'], blurb: 'Tough. Swords and hammers.' },
         archer: { name: 'Archer', hp: 15, mp: 60, regen: 2, likes: ['bow'], blurb: 'Fast. Bows from far away.' },
-        mage: { name: 'Mage', hp: 0, mp: 100, regen: 3.5, likes: ['staff'], blurb: 'Weak but strong magic. Fire, ice and healing.' }
+        mage: { name: 'Mage', hp: 0, mp: 100, regen: 3.5, likes: ['staff'], blurb: 'Weak but strong magic. Fire, ice and healing.' },
+        cleric: { name: 'Cleric', hp: 25, mp: 90, regen: 3, likes: ['hammer', 'staff'], blurb: 'The healer. Heals and protects you and your friends.' }
     };
     const SKILLS = {
         warrior: [{ id: 'charge', name: 'Charge', lv: 1, mp: 10, cd: 6, blurb: 'Dash forward, hitting and stunning everything in the way.' },
@@ -17494,8 +17495,16 @@
             { id: 'chain', name: 'Chain Lightning', lv: 10, mp: 20, cd: 7, blurb: 'Lightning jumps between up to five monsters.' },
             { id: 'blink', name: 'Blink', lv: 14, mp: 15, cd: 9, blurb: 'Teleport forward, out of trouble.' },
             { id: 'meteor', name: 'Meteor', lv: 18, mp: 35, cd: 14, blurb: 'Call down a meteor in front of you. Huge damage where it lands.' },
-            { id: 'ward', name: 'Mana Shield', lv: 24, mp: 30, cd: 24, blurb: 'Take half damage for 8 seconds.' }]
+            { id: 'ward', name: 'Mana Shield', lv: 24, mp: 30, cd: 24, blurb: 'Take half damage for 8 seconds.' }],
+        cleric: [{ id: 'smite', name: 'Smite', lv: 1, mp: 10, cd: 3, blurb: 'A ball of holy light at the nearest monster.' },
+            { id: 'mend', name: 'Mend', lv: 3, mp: 18, cd: 8, blurb: 'Heal yourself and every friend near you.' },
+            { id: 'bless', name: 'Blessing', lv: 6, mp: 20, cd: 20, blurb: 'You and friends near you hit 50% harder for 8 seconds.' },
+            { id: 'sanct', name: 'Sanctuary', lv: 10, mp: 24, cd: 22, blurb: 'You and friends near you take half damage for 6 seconds.' },
+            { id: 'renew', name: 'Renew', lv: 14, mp: 22, cd: 16, blurb: 'You and friends near you heal a little every second for 6 seconds.' },
+            { id: 'nova', name: 'Holy Nova', lv: 18, mp: 28, cd: 12, blurb: 'A burst of light: hurts monsters around you and heals friends.' },
+            { id: 'divine', name: 'Divine Light', lv: 24, mp: 40, cd: 30, blurb: 'Fully heal yourself and every friend near you.' }]
     };
+    const HEALS = ['heal', 'mend', 'bless', 'sanct', 'renew', 'divine'];
     const DUNGEONS = [
         { id: 0, name: 'Goblin Warrens', lv: 1, rooms: 4, diff: 1, extra: 0, tint: '#a8e08a', mods: [], mix: [['goblin', 45], ['archer', 20], ['skeleton', 15], ['bat', 12], ['shaman', 8]], boss: ['king'], blurb: 'Tunnels full of goblins, and their King at the end.' },
         { id: 1, name: 'Ghoul Catacombs', lv: 5, rooms: 4, diff: 5, extra: 1, tint: '#a8c8e8', mods: [], mix: [['skeleton', 28], ['skelarcher', 18], ['ghoul', 24], ['wraith', 10], ['slime', 12], ['bat', 8]], boss: ['lord'], blurb: 'Where the dead walk. The Ghoul Lord rules here.' },
@@ -17915,8 +17924,8 @@
         return out;
     }
     function drawSkillIcon(c, id) {
-        const bgNew = { slam: '#a8742a', warcry: '#d84a2a', cleave: '#8a2a3a', quake: '#7a5a2a', pierce: '#2f6a8a', snare: '#4a8a2a', rain: '#2a6a4a', swift: '#2aa8a0', chain: '#5a6ad8', blink: '#8a4ad8', meteor: '#c8501e', ward: '#4a6aa8' }[id];
-        id = { slam: 'whirl', warcry: 'hawk', cleave: 'sword', quake: 'whirl', pierce: 'volley', snare: 'leap', rain: 'volley', swift: 'leap', chain: 'frost', blink: 'leap', meteor: 'fire', ward: 'skin' }[id] || id;
+        const bgNew = { smite: '#d8a43a', mend: '#3fbf5f', bless: '#e8b84a', sanct: '#7a9ad8', renew: '#2fa86a', nova: '#e8d070', divine: '#f0c040', slam: '#a8742a', warcry: '#d84a2a', cleave: '#8a2a3a', quake: '#7a5a2a', pierce: '#2f6a8a', snare: '#4a8a2a', rain: '#2a6a4a', swift: '#2aa8a0', chain: '#5a6ad8', blink: '#8a4ad8', meteor: '#c8501e', ward: '#4a6aa8' }[id];
+        id = { smite: 'fire', mend: 'heal', bless: 'hawk', sanct: 'skin', renew: 'heal', nova: 'whirl', divine: 'heal', slam: 'whirl', warcry: 'hawk', cleave: 'sword', quake: 'whirl', pierce: 'volley', snare: 'leap', rain: 'volley', swift: 'leap', chain: 'frost', blink: 'leap', meteor: 'fire', ward: 'skin' }[id] || id;
         const ink = '#1d1424', bg = bgNew || { charge: '#c8323c', whirl: '#c8323c', skin: '#8a90a4', volley: '#3f8a3a', leap: '#3f8a3a', hawk: '#d8a43a', fire: '#e8602a', frost: '#3fa7f5', heal: '#3fbf5f' }[id] || '#6a4a8a';
         c.save();
         c.lineJoin = c.lineCap = 'round';
@@ -22624,6 +22633,13 @@
             return { text: 'They\'re eating!', hit: null };
         return { text: 'More guests are on their way.', hit: null };
     }
+    function coopIn(g) {
+        if (!g || typeof g !== 'object' || !Number.isInteger(g.k) || !Number.isInteger(g.day) || !Number.isFinite(g.t))
+            return null;
+        const ints = (a, n, lo, hi) => (Array.isArray(a) ? a.slice(0, n).map(v => (Number.isFinite(v) ? clamp(Math.round(v), lo, hi) : 0)) : []);
+        const ev = (a, kinds) => (Array.isArray(a) && a.length === 4 && Number.isInteger(a[0]) && (kinds ? kinds.includes(a[1]) : Number.isFinite(a[1])) && Number.isFinite(a[2]) && Number.isFinite(a[3]) ? [a[0], kinds ? a[1] : clamp(a[1], 0, 100), a[2], a[3]] : 0);
+        return { k: g.k, day: g.day, t: g.t, h: ints(g.h, 160, 0, 100000), m: g.m ? ints(g.m, 120, 0, 5000) : null, hl: ev(g.hl), bf: ev(g.bf, ['cry', 'skin', 'renew']) };
+    }
     function peerState(p) {
         const q = p && p.presence;
         if (!q || q.v !== 1 || typeof q.loc !== 'string' || !Object.prototype.hasOwnProperty.call(LOCS, q.loc))
@@ -22638,6 +22654,7 @@
             house: typeof q.house === 'string' ? q.house.slice(0, 90) : '',
             lift: Number.isFinite(q.lift) ? clamp(Math.round(q.lift), 0, 60) : 0,
             fl: Number.isInteger(q.fl) ? clamp(q.fl, 0, 99999) : 0,
+            dg: q.loc === 'dungeon' ? coopIn(q.dg) : null,
             lv: Number.isInteger(q.lv) ? clamp(q.lv, 1, 50) : 0,
             ti: Number.isInteger(q.ti) && q.ti > 0 && q.ti < PLAYER_TITLES.length ? q.ti : 0,
             tb: q.loc === 'trade' && Number.isInteger(q.tb) ? clamp(q.tb, 0, 99999) : 0,
@@ -27643,6 +27660,15 @@
             if (!mods.includes('dark') && camp)
                 [300, 800, 1200].forEach(y => [70, D.w - 70].forEach(x => glow(x, y, 220, 0xffa040, 0.22)));
             this.dunLamp = this.add.image(0, 0, 'glow').setDisplaySize(mods.includes('dark') ? 340 : 460, mods.includes('dark') ? 340 : 460).setTint(0xffe2a8).setAlpha(mods.includes('dark') ? 0.42 : 0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(7001);
+            this.monN = 0;
+            this.monById = new Map();
+            this.roomT0 = Date.now();
+            this.roomAt = this.time.now;
+            this.coopSeen = {};
+            this.coopHl = 0;
+            this.coopBf = 0;
+            this.party = [];
+            this.coopLead = true;
             this.halls = null;
             this.dunWalls = [];
             this.mons = [];
@@ -27662,7 +27688,7 @@
             this.shrine = null;
             this.cleared = false;
             this.cds = [0, 0, 0];
-            this.buff = { skin: 0, hawk: 0, cry: 0, swift: 0 };
+            this.buff = { skin: 0, hawk: 0, cry: 0, swift: 0, renew: 0 };
             this.dunTarget = null;
             if (camp) {
                 this.noPad = false;
@@ -27830,7 +27856,7 @@
                         const loose = !pack || i > 120, x = bossHere ? endR.cx + (rand() - 0.5) * (endR.w - 140) * (i / 150) : loose ? B.x + 80 + rand() * (B.w - 160) : pack.x + (rand() - 0.5) * 220, y = bossHere ? endR.cy + (rand() - 0.5) * (endR.h - 140) * (i / 150) : loose ? B.y + 80 + rand() * (B.h - 330) : pack.y + (rand() - 0.5) * 150;
                         if (!this.free(x, y, 40) || nearPad(x, y, 480))
                             continue;
-                        const boss = MONSTERS[kind].boss, aff = boss ? (Dg.bossAffix ? [Dg.bossAffix] : null) : eliteRoll(rand, diff, mods.includes('champs') ? 3 : 1);
+                        const boss = MONSTERS[kind].boss, aff = boss ? (Dg.bossAffix ? [Dg.bossAffix] : null) : eliteRoll(rand, roomDiff(Dn.run.d, room, 1), mods.includes('champs') ? 3 : 1);
                         this.monPut(kind, x, y, diff, aff);
                         this.reserve(x, y, 40);
                         return;
@@ -27947,6 +27973,9 @@
             if (mods.includes('blood') && !m.affixes.includes('vampiric'))
                 m.affixes.push('vampiric');
             m.max = m.hp;
+            m.id = this.monN = (this.monN || 0) + 1;
+            m.mine = 0;
+            (this.monById = this.monById || new Map()).set(m.id, m);
             m.shadow = this.add.image(x, y + 1, 'pshadow').setDisplaySize(44 * m.size, 18 * m.size).setDepth(-450);
             if (m.elite || m.boss && m.affixes.length)
                 m.aura = this.add.image(x, y - 30 * m.size, 'glow').setDisplaySize(110 * m.size, 110 * m.size).setTint(parseInt(AFFIXES[m.affixes[0]].color.slice(1), 16)).setAlpha(0.4).setBlendMode(Phaser.BlendModes.ADD).setDepth(y - 1);
@@ -27979,13 +28008,15 @@
         dunAim(tx, ty) {
             const fx = this.pz.x, cy = this.pz.y + FOOT - 22, T = this.dunTarget && !this.dunTarget.dead ? this.dunTarget : null;
             let dx, dy;
+            const N = T || tx != null || !this.mons ? null : this.mons.filter(m => !m.dead && Math.hypot(m.x - fx, m.y - cy) < 520).sort((a, b) => Math.hypot(a.x - fx, a.y - cy) - Math.hypot(b.x - fx, b.y - cy))[0];
             if (tx != null) {
                 dx = tx - fx;
                 dy = ty - cy;
             }
-            else if (T) {
-                dx = T.x - fx;
-                dy = T.y - 24 * T.size - cy;
+            else if (T || N) {
+                const A = T || N;
+                dx = A.x - fx;
+                dy = A.y - 24 * A.size - cy;
             }
             else {
                 dx = this.view === 'side' ? this.flip : 0;
@@ -28079,7 +28110,7 @@
             const Dn = G.dun, S = dunSlots(Dn)[i], now = this.time.now;
             if (!S || !this.dun || !this.mons || this.leaving || this.dunOver)
                 return false;
-            const why = Dn.level < S.lv ? S.name + ' is learned at level ' + S.lv + '.' : now < this.cds[i] ? '' : Dn.mp < S.mp ? 'Not enough mana for ' + S.name + '.' : this.mons.length || S.id === 'heal' ? null : 'Nothing to fight here.';
+            const why = Dn.level < S.lv ? S.name + ' is learned at level ' + S.lv + '.' : now < this.cds[i] ? '' : Dn.mp < S.mp ? 'Not enough mana for ' + S.name + '.' : this.mons.length || HEALS.includes(S.id) ? null : 'Nothing to fight here.';
             if (why !== null) {
                 if (why) {
                     this.noteUntil = 0;
@@ -28243,10 +28274,49 @@
                 sfx.chime();
             }
             else if (S.id === 'heal') {
-                const h = Math.round(dunMaxHp(Dn) * 0.4);
-                Dn.hp = Math.min(dunMaxHp(Dn), Dn.hp + h);
-                this.dunPop(fx, fy - 96, '+' + h, '#7dff9a', true);
-                this.dunRing(fx, fy, 70, 0x7dff9a);
+                this.coopHeal(40, fx, fy);
+                this.coopSend('hl', 25, fx, fy);
+                sfx.chime();
+            }
+            else if (S.id === 'smite') {
+                this.dunShoot('fireball', fx + dx * 22, cy + dy * 22, dx, dy, 420, 1.3, 1.5);
+                const sh = this.shots[this.shots.length - 1];
+                if (sh && sh.img.setTint)
+                    sh.img.setTint(0xfff0a0);
+                sfx.whoosh();
+            }
+            else if (S.id === 'mend') {
+                this.coopHeal(30, fx, fy);
+                this.coopSend('hl', 30, fx, fy);
+                sfx.chime();
+            }
+            else if (S.id === 'bless') {
+                this.coopBuff('cry', fx, fy);
+                this.coopSend('bf', 'cry', fx, fy);
+                sfx.chime();
+            }
+            else if (S.id === 'sanct') {
+                this.coopBuff('skin', fx, fy);
+                this.coopSend('bf', 'skin', fx, fy);
+                sfx.chime();
+            }
+            else if (S.id === 'renew') {
+                this.coopBuff('renew', fx, fy);
+                this.coopSend('bf', 'renew', fx, fy);
+                sfx.chime();
+            }
+            else if (S.id === 'nova') {
+                hitAll(m => Math.hypot(m.x - fx, m.y - fy) < 160 + 14 * m.size, 1.5, 30);
+                this.dunRing(fx, fy, 160, 0xfff0a0);
+                this.coopHeal(20, fx, fy);
+                this.coopSend('hl', 20, fx, fy);
+                sfx.chime();
+            }
+            else if (S.id === 'divine') {
+                this.coopHeal(100, fx, fy);
+                this.coopSend('hl', 100, fx, fy);
+                this.iframes = Math.max(this.iframes, 1);
+                this.dunRing(fx, fy, 120, 0xfff0a0);
                 sfx.chime();
             }
             if (ui.onDun)
@@ -28273,6 +28343,7 @@
                 blocked = true;
             }
             m.hp -= d;
+            m.mine = (m.mine || 0) + d;
             this.monAlert(m);
             m.flash = 0.12;
             if (!notMine && this.boon('leech')) {
@@ -28570,6 +28641,136 @@
                     ui.onState();
             }
         }
+        coopParty() {
+            if (!ui.others || !G.dun || !G.dun.run.room)
+                return [];
+            const key = dunPlace(G.dun), day = dayNumber();
+            return ui.others('dungeon').filter(p => !p.mine && p.dg && p.dg.k === key && p.dg.day === day);
+        }
+        coopOut() {
+            if (this.loc !== 'dungeon' || !G.dun.run.room || !this.mons)
+                return 0;
+            const h = [];
+            this.mons.forEach(m => { if (m.mine > 0 && h.length < 100)
+                h.push(m.id, Math.min(1000, Math.round(1000 * m.mine / m.max))); });
+            const out = { k: dunPlace(G.dun), day: dayNumber(), t: this.roomT0 || 0, h, hl: this.coopHl || 0, bf: this.coopBf || 0 };
+            if (this.coopLead && (this.party || []).length) {
+                const mp = [];
+                this.mons.forEach(m => { if (!m.dead && mp.length < 90)
+                    mp.push(m.id, Math.round(m.x), Math.round(m.y)); });
+                out.m = mp;
+            }
+            return out;
+        }
+        coopSend(kind, v, x, y) {
+            if (kind === 'hl')
+                this.coopHl = [((this.coopHl && this.coopHl[0]) || 0) + 1, v, Math.round(x), Math.round(y)];
+            else
+                this.coopBf = [((this.coopBf && this.coopBf[0]) || 0) + 1, v, Math.round(x), Math.round(y)];
+        }
+        coopHeal(pct, x, y) {
+            const Dn = G.dun, fx = this.pz.x, fy = this.pz.y + FOOT, h = Math.round(dunMaxHp(Dn) * pct / 100);
+            Dn.hp = Math.min(dunMaxHp(Dn), Dn.hp + h);
+            this.dunPop(fx, fy - 96, '+' + h, '#7dff9a', true);
+            this.dunRing(fx, fy, 70, 0x7dff9a);
+            if (ui.onDun)
+                ui.onDun();
+        }
+        coopBuff(kind, x, y) {
+            const now = this.time.now, fx = this.pz.x, fy = this.pz.y + FOOT;
+            if (kind === 'cry') {
+                this.buff.cry = now + 8000;
+                this.dunPop(fx, fy - 96, 'Blessed!', '#ffd84d', true);
+                this.dunRing(fx, fy, 80, 0xffd84d);
+            }
+            else if (kind === 'skin') {
+                this.buff.skin = now + 6000;
+                this.dunPop(fx, fy - 96, 'Sanctuary!', '#9bbcff', true);
+                this.dunRing(fx, fy, 80, 0x9bbcff);
+            }
+            else if (kind === 'renew') {
+                this.buff.renew = now + 6000;
+                this.dunPop(fx, fy - 96, 'Renew!', '#7dff9a', true);
+                this.dunRing(fx, fy, 80, 0x7dff9a);
+            }
+        }
+        monGone(m) {
+            m.dead = true;
+            m.shadow.destroy();
+            if (m.tag)
+                m.tag.destroy();
+            if (m.aura)
+                m.aura.destroy();
+            m.img.destroy();
+            if (this.dunTarget === m)
+                this.dunTarget = null;
+            if (m.split)
+                [-1, 1].forEach(s => { const b = this.monPut('slimelet', m.x + s * 22, m.y + 4, m.diff || 1); this.dunFree(b); });
+            if (this.mons.every(q => q.dead) && !this.waves.length)
+                this.dunCleared();
+        }
+        coopTick(dt, fx, fy) {
+            const party = this.party = this.coopParty();
+            this.coopLead = party.every(p => (this.roomT0 || 0) < p.dg.t || ((this.roomT0 || 0) === p.dg.t && (G.name || '') <= p.name));
+            if (!party.length)
+                return;
+            const lost = new Map();
+            party.forEach(p => { const h = p.dg.h; for (let i = 0; i + 1 < h.length; i += 2)
+                lost.set(h[i], (lost.get(h[i]) || 0) + h[i + 1]); });
+            const early = this.time.now - (this.roomAt || 0) < 2500;
+            this.mons.forEach(m => {
+                if (m.dead)
+                    return;
+                const f = lost.get(m.id);
+                if (!f)
+                    return;
+                const cap = m.max * (1 - f / 1000) - (m.mine || 0);
+                if (m.hp <= cap)
+                    return;
+                if (cap > 0.5) {
+                    m.hp = cap;
+                    m.flash = 0.12;
+                    if (!m.aggro)
+                        this.monAlert(m);
+                }
+                else if (early)
+                    this.monGone(m);
+                else {
+                    m.hp = 0;
+                    this.monKill(m);
+                }
+            });
+            if (!this.coopLead) {
+                const L = party.reduce((a, p) => (!a || p.dg.t < a.dg.t ? p : a), null), mp = L && L.dg.m, k = Math.min(1, dt * 4);
+                if (mp)
+                    for (let i = 0; i + 2 < mp.length; i += 3) {
+                        const m = this.monById && this.monById.get(mp[i]);
+                        if (m && !m.dead && Math.hypot(mp[i + 1] - m.x, mp[i + 2] - m.y) < 400) {
+                            m.x += (mp[i + 1] - m.x) * k;
+                            m.y += (mp[i + 2] - m.y) * k;
+                        }
+                    }
+            }
+            party.forEach(p => {
+                const seen = this.coopSeen[p.id], hl = p.dg.hl, bf = p.dg.bf;
+                if (!seen) {
+                    this.coopSeen[p.id] = { hl: hl ? hl[0] : 0, bf: bf ? bf[0] : 0 };
+                    return;
+                }
+                if (hl && hl[0] !== seen.hl) {
+                    seen.hl = hl[0];
+                    if (Math.hypot(hl[2] - fx, hl[3] - fy) < 340) {
+                        this.coopHeal(hl[1], hl[2], hl[3]);
+                        this.dunPop(fx, fy - 118, p.name + ' healed you!', '#7dff9a');
+                    }
+                }
+                if (bf && bf[0] !== seen.bf) {
+                    seen.bf = bf[0];
+                    if (Math.hypot(bf[2] - fx, bf[3] - fy) < 340)
+                        this.coopBuff(bf[1], bf[2], bf[3]);
+                }
+            });
+        }
         inBed(x, y) {
             if (!this.pz || !this.pz.body)
                 return;
@@ -28806,6 +29007,8 @@
             Dn.mp = Math.min(dunMaxMp(Dn), Dn.mp + (CLASSES[Dn.cls] ? CLASSES[Dn.cls].regen : 1) * (this.boon('arcane') ? 1.5 : 1) * dt);
             if (this.boon('mend') && !this.dunOver)
                 Dn.hp = Math.min(dunMaxHp(Dn), Dn.hp + 2 * dt);
+            if (time < (this.buff.renew || 0) && !this.dunOver)
+                Dn.hp = Math.min(dunMaxHp(Dn), Dn.hp + dunMaxHp(Dn) * 0.06 * dt);
             const T = this.dunTarget;
             if (k && (k.LEFT.isDown || k.RIGHT.isDown || k.UP.isDown || k.DOWN.isDown || k.W.isDown || k.A.isDown || k.S.isDown || k.D.isDown) && !isTyping())
                 this.dunTarget = null;
@@ -28822,13 +29025,17 @@
                 this.dunWave();
             let near = false;
             const notice = mods.includes('dark') ? 230 : 380;
+            this.coopTick(dt, fx, fy);
+            const foes = [{ x: fx, y: fy, me: true }].concat(this.party.map(p => ({ x: p.x, y: p.y, me: false })));
             for (const m of this.mons) {
                 if (m.dead)
                     continue;
-                const dx = fx - m.x, dy = fy - m.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
-                if (!m.aggro && d < notice && this.hallSee(m.x, m.y, fx, fy))
+                const foe = foes.length > 1 ? foes.reduce((a, b) => (Math.hypot(b.x - m.x, b.y - m.y) < Math.hypot(a.x - m.x, a.y - m.y) ? b : a)) : foes[0];
+                const tx = foe.x, ty = foe.y, me = foe.me;
+                const dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+                if (!m.aggro && d < notice && this.hallSee(m.x, m.y, tx, ty))
                     this.monAlert(m);
-                if (m.aggro && d < DUN.CALM)
+                if (m.aggro && me && d < DUN.CALM)
                     near = true;
                 m.flash = Math.max(0, m.flash - dt);
                 m.swing = Math.max(0, m.swing - dt);
@@ -28844,6 +29051,7 @@
                         const n = Math.floor(o.acc);
                         o.acc -= n;
                         m.hp -= n;
+                        m.mine = (m.mine || 0) + n;
                         this.dunPop(m.x + (Math.random() - 0.5) * 20, m.y - 60 * m.size, String(n), k === 'burn' ? '#ff9a5c' : '#8fe04a');
                     }
                     if (o.t <= 0)
@@ -28878,11 +29086,11 @@
                         }
                         else if (m.storm) {
                             const spots = m.boss ? [[0, 0], [70, 30], [-70, 30], [0, -60]] : [[0, 0]];
-                            spots.forEach(([ox, oy], i) => this.dunStorm(fx + ox + (i ? (Math.random() - 0.5) * 40 : 0), fy + oy, m.dmg, m, 0.85 + i * 0.12));
+                            spots.forEach(([ox, oy], i) => this.dunStorm(tx + ox + (i ? (Math.random() - 0.5) * 40 : 0), ty + oy, m.dmg, m, 0.85 + i * 0.12));
                             sfx.cast();
                         }
                         else if (m.shoot) {
-                            const ax = fx - m.x, ay = fy - 20 - (m.y - 30), al = Math.hypot(ax, ay) || 1, hex = m.heal, sp = hex ? 260 : 340;
+                            const ax = tx - m.x, ay = ty - 20 - (m.y - 30), al = Math.hypot(ax, ay) || 1, hex = m.heal, sp = hex ? 260 : 340;
                             const img = this.add.image(m.x, m.y - 30, hex ? 'hex' : 'arrow').setScale(1 / TEX).setRotation(Math.atan2(ay, ax)).setDepth(9000);
                             if (!hex)
                                 img.setTint(0xffb0b0);
@@ -28891,7 +29099,7 @@
                             this.shots.push({ x: m.x, y: m.y - 30, vx: ax / al * sp, vy: ay / al * sp, life: 1.8, mine: false, kind: hex ? 'hex' : 'arrow', dmg: m.dmg, src: m, img });
                             sfx.cast();
                         }
-                        else if (d < m.reach + 18)
+                        else if (me && d < m.reach + 18)
                             this.playerHurt(m.dmg, m);
                     }
                 }
@@ -37991,7 +38199,15 @@
             }
             if (act === 'go') {
                 const on = peerOf(id), s = scene();
-                if (on && s && !busy() && on.loc !== s.loc) {
+                if (on && s && on.loc === 'dungeon' && on.fl > 0 && ui.dunJoin) {
+                    closePhone();
+                    const line = ui.dunJoin(on.id);
+                    if (line) {
+                        s.noteUntil = 0;
+                        s.note(line, '#7dff9a');
+                    }
+                }
+                else if (on && s && !busy() && on.loc !== s.loc) {
                     closePhone();
                     s.travelTo(on.loc);
                 }
@@ -42767,6 +42983,19 @@
                 D.bounty = { day, p: [0, 0, 0], got: [0, 0, 0] };
             const wk = armoryWeek();
             rows.push(node('p', 'pet-hint', 'New in the Armory this week: ' + armoryTheme(wk).name + ', 12 weapons. They only drop from bosses, elites, mimics, big chests and the Daily Delve, and not often. Each weekly set drops for ' + ARMORY_RETIRE + ' weeks, then retires: after that, only trading gets you one. Clearing the Delve also wins a prize from the new outfits, boards and furniture.'));
+            const fights = [];
+            net.peers.forEach(p => { if (!p.mine && p.loc === 'dungeon' && p.fl > 0 && p.dg && p.dg.day === day && DUNGEONS[Math.floor(p.fl / 1000) - 1])
+                fights.push(p); });
+            if (fights.length) {
+                rows.push(node('div', 'mine-row mine-top', 'Fight together! (same room, same monsters)'));
+                fights.sort((a, b) => (friendOf(b.uid) ? 1 : 0) - (friendOf(a.uid) ? 1 : 0)).slice(0, 6).forEach(p => {
+                    const Dg = DUNGEONS[Math.floor(p.fl / 1000) - 1], li = node('div', 'mine-row'), text = node('div', 'mine-text'), b = el('button', 'btn', { type: 'button', 'data-join': String(p.id) });
+                    text.append(node('b', '', (friendOf(p.uid) ? '★ ' : '') + p.name + (p.lv ? ' (level ' + p.lv + ')' : '')), node('small', '', Dg.name + ' · room ' + (p.fl % 1000)));
+                    b.textContent = 'Join';
+                    li.append(text, b);
+                    rows.push(li);
+                });
+            }
             rows.push(node('div', 'mine-row mine-top', 'Today\'s bounties'));
             bountiesToday(day).forEach((bi, i) => {
                 const Bt = BOUNTIES[bi], li = node('div', 'mine-row' + (D.bounty.got[i] ? ' dun-locked' : '')), text = node('div', 'mine-text');
@@ -42793,6 +43022,32 @@
             dq('dungate-msg').textContent = D.cls ? (D.level < 3 && !D.done.length ? 'Start with the Goblin Warrens. Click to attack where you click, or click a monster to keep at it.' : 'Pick a dungeon.') : '';
             gateP.open();
         }
+        function dunJoin(p) {
+            const D = G.dun, s = scene();
+            if (!p || p.loc !== 'dungeon' || !p.fl || !s)
+                return 'They are not in a dungeon room right now.';
+            if (!D.cls) {
+                if (G.loc === 'dungeon')
+                    classOpen(true);
+                return 'Pick a class at the camp first!';
+            }
+            const d = Math.floor(p.fl / 1000) - 1, room = p.fl % 1000;
+            if (!DUNGEONS[d] || room < 1)
+                return '';
+            if (p.dg && p.dg.day !== dayNumber())
+                return 'Their dungeon is from another day.';
+            if (G.loc === 'dungeon' && D.run.d === d && D.run.room === room)
+                return 'You are already in the same room!';
+            if (busy())
+                return '';
+            D.run.boons = [];
+            gateP.close();
+            s.dunGo(room, d);
+            return 'Joining ' + p.name + '!';
+        }
+        ui.dunJoin = id => { if (id && typeof id === 'object')
+            return dunJoin(id); let p = null; net.peers.forEach(q => { if (String(q.id) === String(id) || q.uid === id)
+            p = p || q; }); return dunJoin(p); };
         function gateEnter(i) {
             const D = G.dun, s = scene();
             if (!s || !s.dunGo || !D.cls || !dunOpenTo(D, i) || G.loc !== 'dungeon' || D.run.room)
@@ -42820,7 +43075,14 @@
         shrineList.addEventListener('click', e => { const b = e.target.closest('[data-boon]'); if (b)
             shrineTake(b.dataset.boon); });
         dq('dunshrine-close').addEventListener('click', () => shrineP.close());
-        gateList.addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (!b || b.disabled)
+        gateList.addEventListener('click', e => { const j = e.target.closest('[data-join]'); if (j) {
+            const line = ui.dunJoin(j.dataset.join), sc = scene();
+            if (line && sc) {
+                sc.noteUntil = 0;
+                sc.note(line, '#7dff9a');
+            }
+            return;
+        } const b = e.target.closest('[data-d]'); if (!b || b.disabled)
             return; gateEnter(Number(b.dataset.d)); });
         dq('dungate-close').addEventListener('click', () => gateP.close());
         dunTabs.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b)
@@ -44217,7 +44479,7 @@
                 return null;
             return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
                 boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, sh: G.riding && !s.boating && shineOn() ? 1 : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
-                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
+                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
         }
         function netPush() {
             if (!net.room)
@@ -44225,7 +44487,12 @@
             const mine = netMine();
             if (!mine)
                 return;
-            const text = JSON.stringify(mine);
+            let text = JSON.stringify(mine);
+            if (text.length > 3600 && mine.dg) {
+                mine.dg.m = null;
+                mine.dg.h = mine.dg.h.slice(0, 60);
+                text = JSON.stringify(mine);
+            }
             if (text === net.sent || text.length > 3600)
                 return;
             net.sent = text;
@@ -44367,7 +44634,12 @@
                     rb.textContent = on ? 'Hop out' : '🚗 Ride along';
                     acts.appendChild(rb);
                 }
-                if (p.loc !== here && p.loc !== 'home') {
+                if (!p.mine && p.loc === 'dungeon' && p.fl > 0 && !(here === 'dungeon' && p.fl === dunPlace(G.dun))) {
+                    const jb = el('button', 'btn', { type: 'button', 'data-djoin': String(p.id) });
+                    jb.textContent = '⚔️ Join fight';
+                    acts.appendChild(jb);
+                }
+                else if (p.loc !== here && p.loc !== 'home') {
                     const go = el('button', 'btn', { type: 'button', 'data-go': p.loc });
                     go.textContent = 'Go there';
                     acts.appendChild(go);
@@ -44458,6 +44730,17 @@
                     sc.rideEnd('You hopped out.');
                 else
                     sc.rideAlong(rd.dataset.ride);
+                return;
+            }
+            const dj = e.target.closest('[data-djoin]');
+            if (dj) {
+                netPop.hidden = true;
+                netBtn.setAttribute('aria-expanded', 'false');
+                const line = ui.dunJoin(dj.dataset.djoin), sc = scene();
+                if (line && sc) {
+                    sc.noteUntil = 0;
+                    sc.note(line, '#7dff9a');
+                }
                 return;
             }
             const pj = e.target.closest('[data-party]');
