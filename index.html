@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794098816';
+<script>window.WANDO_BUILD = '1794101357';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -4912,7 +4912,7 @@
         home: { owned: false, walls: [0], floors: [0], inv: {}, rooms: [{ wall: 0, floor: 0, items: [] }] },
         mine: { pick: -1, picks: [], hammer: -1, hammers: [], cart: -1, carts: [], belt: 0, tool: 'pick', load: [], queue: [], gems: {}, log: {}, broke: 0, made: 0, seam: null, kinds: { grey: 0, rust: 0, blue: 0, geode: 0 }, perfects: 0, xp: 0 },
         pet: null, petMemory: [], petBag: {},
-        dun: { cls: '', level: 1, xp: 0, pts: 0, stats: { str: 0, dex: 0, int: 0 }, hp: 100, mp: 30, bag: [], eq: -1, run: { d: 0, room: 0, boons: [] }, done: [], best: 0, potions: 0, big: 0, mana: 0, kills: {}, chests: 0, free: [], daily: 0, stock: { day: 0, got: [] }, bounty: { day: 0, p: [0, 0, 0], got: [0, 0, 0] }, found: [], wk: -999, traded: [], trade: null },
+        dun: { cls: '', level: 1, xp: 0, pts: 0, stats: { str: 0, dex: 0, int: 0 }, hp: 100, mp: 30, bag: [], stash: [], loot: { day: 0, n: 0, got: [] }, eq: -1, run: { d: 0, room: 0, boons: [] }, done: [], best: 0, potions: 0, big: 0, mana: 0, kills: {}, chests: 0, free: [], daily: 0, stock: { day: 0, got: [] }, bounty: { day: 0, p: [0, 0, 0], got: [0, 0, 0] }, found: [], wk: -999, traded: [], trade: null },
         errands: {},
         friends: [], seen: {},
         arcade: { best: {}, medal: {}, plays: 0 },
@@ -17173,7 +17173,7 @@
         const o = { kind: Math.floor(v / 1000), coat: Math.floor(v / 100) % 10, pattern: Math.floor(v / 10) % 10, collar: v % 10 };
         return o.kind < PET_KINDS.length && o.coat < PET_COATS.length && o.pattern < PET_PATTERNS.length && o.collar < PET_COLLARS.length ? o : null;
     }
-    const DUN = { W: 1800, H: 1300, IFRAMES: 0.3, REGEN: 1.2, CALM: 320, REST: 4, POT_CD: 6, HIT: 0.9, DODGE: 0.04, BLOCK: 1, PACK: 260, BAG: 24, POTION: 40, POTION_HEAL: 50, BIG_POTION: 110, BIG_HEAL: 100, MANA_POTION: 35, MANA_HEAL: 60, FIST: 4, PTS: 3, OFF: 0.7, CLICK_MS: 220 };
+    const DUN = { W: 1800, H: 1300, IFRAMES: 0.3, REGEN: 1.2, CALM: 320, REST: 4, POT_CD: 6, HIT: 0.9, DODGE: 0.04, BLOCK: 1, PACK: 260, BAG: 40, STASH: 120, LOOT: 8, POTION: 40, POTION_HEAL: 50, BIG_POTION: 110, BIG_HEAL: 100, MANA_POTION: 35, MANA_HEAL: 60, FIST: 4, PTS: 3, OFF: 0.7, CLICK_MS: 220 };
     const WEAPON_TYPES = {
         sword: { name: 'Sword', reach: 82, cool: 0.42, mul: 1, arc: 1.15, stat: 'str' },
         hammer: { name: 'Hammer', reach: 96, cool: 0.95, mul: 2.3, area: 74, stat: 'str' },
@@ -17224,7 +17224,7 @@
     };
     function monsterOn(kind, f) {
         const M = MONSTERS[kind], k = Math.max(0, f - 1);
-        return { kind, name: M.name, lv: Math.max(1, Math.round(f)), hp: Math.round(M.hp * 1.25 * (1 + 0.3 * k)), dmg: Math.round(M.dmg * 1.3 * (1 + 0.18 * k)), speed: M.speed * (1 + 0.02 * Math.min(k, 15)), reach: M.reach, wind: M.wind, cool: M.cool,
+        return { kind, name: M.name, lv: Math.max(1, Math.round(f)), hp: Math.round(M.hp * 1.25 * (1 + 0.3 * k) * (1 + 0.05 * k)), dmg: Math.round(M.dmg * 1.3 * (1 + 0.18 * k) * (1 + 0.02 * k)), speed: M.speed * (1 + 0.02 * Math.min(k, 15)), reach: M.reach, wind: M.wind, cool: M.cool,
             xp: Math.round(M.xp * (1 + 0.2 * k)), coins: M.coins.map(c => Math.round(c * (1 + 0.15 * k))), size: M.size, boss: !!M.boss, shoot: M.shoot || 0, split: !!M.split, fly: !!M.fly, heal: !!M.heal,
             block: M.block || 0, armor: M.armor || 0, storm: M.storm || 0, float: !!M.float, affixes: [], elite: false };
     }
@@ -17241,7 +17241,7 @@
             out.push(f % 10 === 0 ? 'lord' : f % 15 === 0 ? 'lich' : 'king');
         return out;
     }
-    const roomDiff = (di, room, lv) => (DUNGEONS[di].daily ? Math.max(1, (lv || 1) - 1) + (room - 1) * 0.6 : DUNGEONS[di].rooms ? DUNGEONS[di].diff + (room - 1) * 0.8 : DUNGEONS[di].diff + room - 1);
+    const roomDiff = (di, room, lv) => { const me = Math.max(1, (lv || 1) - 1); return DUNGEONS[di].daily ? me + (room - 1) * 0.6 : DUNGEONS[di].rooms ? Math.max(DUNGEONS[di].diff, me) + (room - 1) * 0.8 : Math.max(DUNGEONS[di].diff, me) + room - 1; };
     const pickW = (list, rand) => { const tot = list.reduce((a, m) => a + m[1], 0); let x = rand() * tot; for (const [k, w] of list) {
         x -= w;
         if (x < 0)
@@ -17470,7 +17470,7 @@
         return a <= arc;
     }
     function cleanDun(v) {
-        const out = { cls: '', level: 1, xp: 0, pts: 0, stats: { str: 0, dex: 0, int: 0 }, hp: 100, mp: 30, bag: [], eq: -1, run: { d: 0, room: 0, boons: [] }, done: [], best: 0, potions: 0, big: 0, mana: 0, kills: {}, chests: 0, free: [], daily: 0, stock: { day: 0, got: [] }, bounty: { day: 0, p: [0, 0, 0], got: [0, 0, 0] }, found: [], wk: -999, traded: [], trade: null };
+        const out = { cls: '', level: 1, xp: 0, pts: 0, stats: { str: 0, dex: 0, int: 0 }, hp: 100, mp: 30, bag: [], stash: [], loot: { day: 0, n: 0, got: [] }, eq: -1, run: { d: 0, room: 0, boons: [] }, done: [], best: 0, potions: 0, big: 0, mana: 0, kills: {}, chests: 0, free: [], daily: 0, stock: { day: 0, got: [] }, bounty: { day: 0, p: [0, 0, 0], got: [0, 0, 0] }, found: [], wk: -999, traded: [], trade: null };
         if (!v || typeof v !== 'object')
             return out;
         const int = (x, lo, hi, d) => (Number.isInteger(x) ? clamp(x, lo, hi) : d);
@@ -17482,6 +17482,9 @@
         const owed = Math.max(0, (out.level - 1) * DUN.PTS - out.stats.str - out.stats.dex - out.stats.int);
         out.pts = Number.isInteger(v.pts) ? clamp(v.pts, 0, owed) : owed;
         out.bag = (Array.isArray(v.bag) ? v.bag : []).map(cleanWeapon).filter(Boolean).slice(0, DUN.BAG);
+        out.stash = (Array.isArray(v.stash) ? v.stash : []).map(cleanWeapon).filter(Boolean).slice(0, DUN.STASH);
+        const lv = v.loot && typeof v.loot === 'object' ? v.loot : {};
+        out.loot = { day: int(lv.day, 0, 1e7, 0), n: int(lv.n, 0, 999, 0), got: (Array.isArray(lv.got) ? lv.got : []).filter(x => typeof x === 'string' && x.length < 24).slice(0, 40) };
         out.eq = int(v.eq, -1, out.bag.length - 1, -1);
         out.hp = Number.isFinite(v.hp) ? clamp(v.hp, 1, dunMaxHp(out)) : dunMaxHp(out);
         out.mp = Number.isFinite(v.mp) ? clamp(v.mp, 0, dunMaxMp(out)) : dunMaxMp(out);
@@ -18637,6 +18640,21 @@
         return weaponOf(A.list[0], rand);
     }
     const weaponValue = w => Math.round(w.dmg * 3 * (1 + w.r * 0.8));
+    function dunLootTake(D, kind, key) {
+        const day = dayNumber();
+        if (!D.loot || D.loot.day !== day)
+            D.loot = { day, n: 0, got: [] };
+        if (D.loot.n >= DUN.LOOT)
+            return false;
+        if (key) {
+            if (D.loot.got.includes(key))
+                return false;
+            D.loot.got.push(key);
+        }
+        D.loot.n++;
+        return true;
+    }
+    const dunLootLeft = D => (D.loot && D.loot.day === dayNumber() ? Math.max(0, DUN.LOOT - D.loot.n) : DUN.LOOT);
     const WEEKLY_DROP = { boss: 0.2, delve: 0.3, elite: 0.12, chest: 0.08 };
     function rollWeapon(f, rand, luck, cls, src) {
         const likes = cls && CLASSES[cls] ? CLASSES[cls].likes : null, all = Object.keys(WEAPON_TYPES);
@@ -27878,9 +27896,14 @@
             }
             const f = roomDiff(Dn.run.d, Math.max(1, Dn.run.room), Dn.level), fort = this.boon('fortune');
             const daily = !!(this.dunDg && this.dunDg.daily), src = m.boss ? (daily ? 'delve' : 'boss') : m.elite || m.kind === 'mimic' ? 'elite' : null;
-            if (m.boss || Math.random() < (m.kind === 'mimic' ? 0.5 : m.elite ? 0.3 : fort ? 0.035 : 0.02))
+            const bossKey = m.boss ? 'b' + Dn.run.d + (DUNGEONS[Dn.run.d].rooms ? '' : ':' + Dn.run.room) : '', firstBoss = m.boss && !(Dn.loot && Dn.loot.day === dayNumber() && Dn.loot.got.includes(bossKey));
+            if ((m.boss || Math.random() < (m.kind === 'mimic' ? 0.5 : m.elite ? 0.3 : fort ? 0.035 : 0.02)) && dunLootTake(Dn, 'w', bossKey))
                 this.dunDrop(m.x, m.y, rollWeapon(f, Math.random, (m.boss ? 30 : m.elite || m.kind === 'mimic' ? 20 : 0) + (fort ? 15 : 0), Dn.cls, src));
-            if ((m.boss && !daily) || m.elite)
+            else if (m.boss) {
+                this.noteUntil = 0;
+                this.note(dunLootLeft(Dn) <= 0 ? 'No more weapons today! Come back tomorrow.' : 'You already got this boss\'s weapon today!', '#ffd0c8');
+            }
+            if ((firstBoss && !daily) || m.elite)
                 prizeTry(m.boss ? 'boss' : 'elite');
             if (!m.boss && Math.random() < 0.1)
                 this.dunDrop(m.x + 20, m.y, null, Math.random() < 0.5 ? 'mana' : 'potion');
@@ -28010,7 +28033,7 @@
             Dn.chests++;
             this.dunPop(ch.x, ch.y - 60, '+' + coins + ' Coins', '#ffd84d', true);
             const bigSrc = ch.big ? 'chest' : null;
-            if (ch.big || Math.random() < (ch.luck ? 0.35 : 0.2))
+            if ((ch.big || Math.random() < (ch.luck ? 0.35 : 0.2)) && dunLootTake(Dn, 'w', ch.big ? 'c' + Dn.run.d + (DUNGEONS[Dn.run.d].rooms ? '' : ':' + Dn.run.room) : ''))
                 this.dunDrop(ch.x - 30, ch.y + 30, rollWeapon(f, Math.random, (ch.big ? 40 : 12) + (ch.luck || 0) + fort, Dn.cls, bigSrc));
             if (ch.big || Math.random() < 0.5)
                 this.dunDrop(ch.x + 30, ch.y + 30, null, Math.random() < 0.5 ? 'mana' : 'potion');
@@ -28437,7 +28460,7 @@
                         if (time > this.dunTold) {
                             this.dunTold = time + 2500;
                             this.noteUntil = 0;
-                            this.note('Your bag is full: sell something to Grizzle.', '#ffd0c8');
+                            this.note('Your bag is full! Sell or stash weapons with Grizzle at camp.', '#ffd0c8');
                         }
                         return true;
                     }
@@ -41526,7 +41549,7 @@
         const gateP = makePanel(dq('dungate')), gateList = dq('dungate-list');
         const shrineP = makePanel(dq('dunshrine')), shrineList = dq('dunshrine-list'), dunBoonsEl = dq('dun-boons');
         const dn = { tab: 'bag', shop: false, note: '' };
-        const DUN_TABS = [['bag', 'Bag'], ['stats', 'Stats & skills'], ['armory', 'Armory'], ['shop', 'Potions'], ['wares', 'Today\'s wares']];
+        const DUN_TABS = [['bag', 'Bag'], ['stats', 'Stats & skills'], ['armory', 'Armory'], ['shop', 'Potions'], ['wares', 'Today\'s wares'], ['stash', 'Stash']];
         dn.af = 'week';
         const dunTabBtns = DUN_TABS.map(([id, name]) => { const b = el('button', 'furn-cat', { type: 'button', 'data-tab': id, 'aria-pressed': 'false' }); b.textContent = name; dunTabs.appendChild(b); return b; });
         const weaponLine = w => { const d = Number.isInteger(w.c) ? armoryDef(w.c) : null; return RARITIES[w.r][0] + ' ' + (d ? FORMS[d.t][d.form].name[0].toLowerCase() : WEAPON_TYPES[w.t].name.toLowerCase()) + ' · damage ' + w.dmg + (d && d.fx !== 'none' ? ' · ' + MAGIC[d.fx][2].split(':')[0] : ''); };
@@ -41679,9 +41702,28 @@
                     rows.push(li);
                 });
             }
+            else if (dn.tab === 'stash' && dn.shop) {
+                const top = node('div', 'mine-row mine-top');
+                top.append(node('span', '', (D.stash || []).length + ' of ' + DUN.STASH + ' in your stash · ' + D.bag.length + ' of ' + DUN.BAG + ' in your bag'));
+                rows.push(top);
+                (D.stash || []).forEach((w, i) => {
+                    const li = node('div', 'mine-row dun-row'), text = node('div', 'mine-text'), nm = node('b', '', w.name);
+                    nm.style.color = mix(RARITIES[w.r][1], '#1d1424', 0.35);
+                    text.append(nm, node('small', '', weaponLine(w)));
+                    li.title = weaponTip(w);
+                    li.append(weaponCanvas(w), text);
+                    const tk = el('button', 'btn', { type: 'button', 'data-act': 'take', 'data-i': String(i) });
+                    tk.textContent = 'Take';
+                    tk.disabled = D.bag.length >= DUN.BAG;
+                    li.appendChild(tk);
+                    rows.push(li);
+                });
+                if (!(D.stash || []).length)
+                    rows.push(node('p', 'pet-hint', 'Nothing stashed yet. Stash weapons from your Bag to make room.'));
+            }
             else if (dn.tab === 'bag' || !dn.shop) {
                 const top = node('div', 'mine-row mine-top');
-                top.append(node('span', '', D.bag.length + ' of ' + DUN.BAG + ' weapons · ' + D.potions + ' potions, ' + D.big + ' big, ' + D.mana + ' mana'));
+                top.append(node('span', '', D.bag.length + ' of ' + DUN.BAG + ' weapons · ' + D.potions + ' potions, ' + D.big + ' big, ' + D.mana + ' mana · weapons left to find today: ' + dunLootLeft(D)));
                 if (dn.shop && D.bag.some((w, i) => w.r === 0 && i !== D.eq)) {
                     const b = el('button', 'btn', { type: 'button', 'data-act': 'sellcommon', 'data-i': '0' });
                     b.textContent = 'Sell all Common';
@@ -41704,6 +41746,10 @@
                         const sl = el('button', 'btn', { type: 'button', 'data-act': 'sell', 'data-i': String(i) });
                         sl.textContent = 'Sell ' + weaponValue(w);
                         li.appendChild(sl);
+                        const st = el('button', 'btn', { type: 'button', 'data-act': 'stash', 'data-i': String(i) });
+                        st.textContent = 'Stash';
+                        st.disabled = (D.stash || []).length >= DUN.STASH;
+                        li.appendChild(st);
                     }
                     rows.push(li);
                 });
@@ -41761,6 +41807,30 @@
                     D.eq--;
                 sfx.coin();
                 return w.name + ' sold for ' + v + ' Coins.';
+            }
+            if (act === 'stash' && w && dn.shop) {
+                D.stash = D.stash || [];
+                if (D.stash.length >= DUN.STASH)
+                    return 'Your stash is full.';
+                D.stash.push(w);
+                D.bag.splice(i, 1);
+                if (D.eq === i)
+                    D.eq = -1;
+                else if (D.eq > i)
+                    D.eq--;
+                sfx.tick();
+                return w.name + ' is in your stash.';
+            }
+            if (act === 'take' && dn.shop) {
+                const sw = (D.stash || [])[i];
+                if (!sw)
+                    return '';
+                if (D.bag.length >= DUN.BAG)
+                    return 'Your bag is full.';
+                D.stash.splice(i, 1);
+                D.bag.push(sw);
+                sfx.tick();
+                return sw.name + ' is back in your bag.';
             }
             if (act === 'sellcommon' && dn.shop) {
                 let v = 0;
@@ -46196,6 +46266,7 @@
             const wk = armoryWeek(), Dg = dailyDelve(dayNumber()), n = armory().list.length + ['o', 'b', 'f'].reduce((a, k) => a + collCat(k).list.length, 0);
             const page = {
                 news: ['What\'s new', ['<b>NEW!</b> Wando Motors is open on the Village Green. 6 collector cars every Monday!',
+                        '<b>Crypt update!</b> Monsters get tougher as you level up. 8 weapon finds a day, one per boss. Bigger bag, and a Stash at camp!',
                         '<b>Back yards!</b> Go out your back door and decorate outside. Trees, pools, swings and more at Homestead!',
                         '<b>Taxi!</b> Drive around the Green and pick people up for Coins.',
                         '<b>Wash & Wax</b> makes your car sparkle all day. Every car has its own horn too.',
