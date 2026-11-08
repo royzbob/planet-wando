@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794101357';
+<script>window.WANDO_BUILD = '1794101956';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -35718,6 +35718,10 @@
             const coneUp = Date.now() < TREAT.until && TREAT.i >= 0 && !boating && !this.mineNodes && !this.dun;
             const held = !rodUp && !digging && this.view !== 'back' ? (this.mineNodes ? this.mineHeld() : this.dun ? this.dunHeld() : coneUp ? { key: bakeCone(this, TREAT.i, clamp(2 - Math.floor(((TREAT.until - Date.now()) / 1000) / Math.max(1, TREAT.secs) * 3), 0, 2)), cone: true } : null) : null;
             P.mtool.setVisible(!!held);
+            if (!(held && held.weapon) && this.mtoolLayer === 'R' && this.upper.moveBelow) {
+                this.upper.moveBelow(P.armR, P.torso);
+                this.mtoolLayer = '';
+            }
             if (held) {
                 if (this.mtoolKey !== held.key) {
                     this.mtoolKey = held.key;
@@ -35733,20 +35737,26 @@
                 }
                 else if (held.weapon) {
                     const arm = side ? P.armF : P.armR, L = 18, want = side ? 'F' : 'R';
-                    if (this.mtoolLayer !== want) {
+                    if (this.mtoolLayer !== want && this.upper.moveAbove) {
                         this.mtoolLayer = want;
-                        if (this.upper.moveBelow)
-                            this.upper.moveBelow(P.mtool, arm);
+                        if (side) {
+                            this.upper.moveBelow(P.armR, P.torso);
+                            this.upper.moveBelow(P.mtool, P.armF);
+                        }
+                        else {
+                            this.upper.moveAbove(P.mtool, P.torso);
+                            this.upper.moveAbove(P.armR, P.mtool);
+                        }
                     }
                     const u = (time - this.swingStart) / (held.bow ? 300 : MINE.SWING_MS), on = u >= 0 && u < 1;
                     let ar, wr;
                     if (held.bow) {
                         const pull = on ? Math.sin(u * Math.PI) : 0;
-                        ar = side ? 1.45 - pull * 0.15 : -0.35 - pull * 0.1;
+                        ar = side ? -1.45 + pull * 0.15 : -0.35 - pull * 0.1;
                         wr = side ? Math.PI / 2 : 0.1;
                     }
                     else {
-                        const K = side ? [[0.25, -0.25], [-2.3, -1.7], [1.35, 1.3], [0.25, -0.25]] : [[0.12, -0.4], [-2.5, -0.75], [-0.9, 1.25], [0.12, -0.4]];
+                        const K = side ? [[-0.3, 0.6], [2.3, -1.7], [-1.35, 1.3], [-0.3, 0.6]] : [[-0.35, 0.05], [-2.5, -0.75], [-0.9, 1.25], [-0.35, 0.05]];
                         const at = on ? (u < 0.4 ? [0, u / 0.4] : u < 0.7 ? [1, (u - 0.4) / 0.3] : [2, (u - 0.7) / 0.3]) : [0, 0], k = at[1], ez = k * k * (3 - 2 * k), A = K[at[0]], B = K[at[0] + 1];
                         ar = A[0] + (B[0] - A[0]) * ez;
                         wr = A[1] + (B[1] - A[1]) * ez;
