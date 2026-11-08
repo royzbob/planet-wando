@@ -311,7 +311,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794090731';
+<script>window.WANDO_BUILD = '1794098816';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -35698,7 +35698,7 @@
             if (held) {
                 if (this.mtoolKey !== held.key) {
                     this.mtoolKey = held.key;
-                    P.mtool.setTexture(held.key).setOrigin(held.bow ? 0.5 : held.weapon ? 8 / 48 : held.hammer ? 0.5 : 16 / 56, held.bow ? 0.55 : held.weapon ? 42 / 48 : held.hammer ? 6 / 64 : 46 / 56).setScale((held.weapon ? 0.85 : 0.78) / TEX);
+                    P.mtool.setTexture(held.key).setOrigin(held.bow ? 0.5 : held.weapon ? 12 / 48 : held.hammer ? 0.5 : 16 / 56, held.bow ? 0.55 : held.weapon ? 38 / 48 : held.hammer ? 6 / 64 : 46 / 56).setScale((held.weapon ? 0.85 : 0.78) / TEX);
                 }
                 const side = this.view === 'side';
                 if (held.cone) {
@@ -35707,6 +35707,29 @@
                     P.mtool.setPosition(side ? 9 - lick * 2 : 12 - lick * 5, -33 - lick * 9).setRotation(side ? -0.15 - lick * 0.4 : -0.1 - lick * 0.35);
                     if (side)
                         P.armF.rotation = 1.0 + lick * 0.5;
+                }
+                else if (held.weapon) {
+                    const arm = side ? P.armF : P.armR, L = 18, want = side ? 'F' : 'R';
+                    if (this.mtoolLayer !== want) {
+                        this.mtoolLayer = want;
+                        if (this.upper.moveBelow)
+                            this.upper.moveBelow(P.mtool, arm);
+                    }
+                    const u = (time - this.swingStart) / (held.bow ? 300 : MINE.SWING_MS), on = u >= 0 && u < 1;
+                    let ar, wr;
+                    if (held.bow) {
+                        const pull = on ? Math.sin(u * Math.PI) : 0;
+                        ar = side ? 1.45 - pull * 0.15 : -0.35 - pull * 0.1;
+                        wr = side ? Math.PI / 2 : 0.1;
+                    }
+                    else {
+                        const K = side ? [[0.25, -0.25], [-2.3, -1.7], [1.35, 1.3], [0.25, -0.25]] : [[0.12, -0.4], [-2.5, -0.75], [-0.9, 1.25], [0.12, -0.4]];
+                        const at = on ? (u < 0.4 ? [0, u / 0.4] : u < 0.7 ? [1, (u - 0.4) / 0.3] : [2, (u - 0.7) / 0.3]) : [0, 0], k = at[1], ez = k * k * (3 - 2 * k), A = K[at[0]], B = K[at[0] + 1];
+                        ar = A[0] + (B[0] - A[0]) * ez;
+                        wr = A[1] + (B[1] - A[1]) * ez;
+                    }
+                    arm.rotation = ar;
+                    P.mtool.setPosition(arm.x - Math.sin(ar) * L, arm.y + Math.cos(ar) * L).setRotation(wr);
                 }
                 else if (held.bow) {
                     const u = (time - this.swingStart) / 300, pull = u >= 0 && u < 1 ? Math.sin(u * Math.PI) * 3 : 0;
