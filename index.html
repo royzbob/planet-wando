@@ -262,6 +262,10 @@
                     setTimeout(lost, 0);
             } notify(); return function () { peerCbs = peerCbs.filter(function (x) { return x !== f; }); }; },
             onConnection: function (f) { connCbs.push(f); return function () { connCbs = connCbs.filter(function (x) { return x !== f; }); }; },
+            leave: function () { latest = null; sentText = ''; if (timer) {
+                clearTimeout(timer);
+                timer = 0;
+            } mine.remove().catch(function () { }); },
             emit: function () { return Promise.resolve(); }, on: function () { return function () { }; }
         };
     }
@@ -311,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794111230';
+<script>window.WANDO_BUILD = '1794222308';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -4110,7 +4114,7 @@
         { id: 'twist', name: 'The Twist', price: 300, blurb: 'Twist down low and back up.' },
         { id: 'floss', name: 'Floss', price: 400, blurb: 'Swing those arms back and forth.' },
         { id: 'breakdance', name: 'Breakdance', price: 700, blurb: 'Down on the floor and spinning.' },
-        { id: 'superstar', name: 'Superstar', price: 0, shows: 3, blurb: 'See 3 Supernova shows to unlock.' }
+        { id: 'superstar', name: 'Superstar', price: 0, shows: 3, blurb: 'See 3 Supernova Live concerts (the Dance House, every hour on the hour) to unlock.' }
     ];
     const BEAT_ROWS = [['k', 'Kick'], ['s', 'Snare'], ['c', 'Clap'], ['h', 'Hi-hat']], BEAT_SCALE = [0, 261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3], BEAT_TOKEN = '::b:';
     function cleanBeat(b) {
@@ -4502,8 +4506,8 @@
         { id: 'rich', name: 'High Roller', icon: '💰', how: 'Hold 5,000 Coins', got: G => G.coins >= 5000 },
         { id: 'stars', name: 'Star Hunter', icon: '⭐', how: 'Find 3 of the daily hidden stars', got: G => (G.login.stars || 0) >= 3 },
         { id: 'spinner', name: 'Lucky Spinner', icon: '🎡', how: 'Spin the Prize Wheel 7 times', got: G => (G.login.spins || 0) >= 7 },
-        { id: 'goer', name: 'Concert Goer', icon: '🎤', how: 'See 3 Supernova Live shows', got: G => (G.fan.shows || 0) >= 3 },
-        { id: 'superfan', name: 'Superfan', icon: '🌟', how: 'See 10 Supernova Live shows', got: G => (G.fan.shows || 0) >= 10 },
+        { id: 'goer', name: 'Concert Goer', icon: '🎤', how: 'See 3 Supernova Live concerts in the Dance House (every hour on the hour)', got: G => (G.fan.shows || 0) >= 3 },
+        { id: 'superfan', name: 'Superfan', icon: '🌟', how: 'See 10 Supernova Live concerts in the Dance House', got: G => (G.fan.shows || 0) >= 10 },
         { id: 'dancer', name: 'Dance Machine', icon: '🕺', how: 'Know 6 dance moves', got: G => DANCES.filter(d => danceOwned(G, d)).length >= 6 },
         { id: 'vip', name: 'VIP', icon: '💎', how: 'Reach step 4 of the Star Pass', got: G => !!((G.fan.pc || 0) & 8) },
         { id: 'rusher', name: 'Gem Rusher', icon: '💨', how: 'Win a Gem Rush', got: G => !!G.fan.rushWin },
@@ -4553,6 +4557,12 @@
     const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const DEV = { touch: false };
     const IDLE = { at: Date.now(), AFTER: 3 * 60000 };
+    const NET_AWAY = { hiddenAt: 0, HIDDEN: 60000, IDLE: 15 * 60000 };
+    try {
+        document.addEventListener('visibilitychange', () => { NET_AWAY.hiddenAt = document.hidden ? Date.now() : 0; if (!document.hidden)
+            IDLE.at = Date.now(); });
+    }
+    catch (e) { }
     ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(t => window.addEventListener(t, () => { IDLE.at = Date.now(); }, { capture: true, passive: true }));
     const isIdle = () => Date.now() - IDLE.at > IDLE.AFTER || (typeof document !== 'undefined' && document.hidden === true);
     const SCREEN = { mode: 'auto' };
@@ -6532,6 +6542,8 @@
     const SHOVEL_PRICE = 20;
     const DIG_MS = 600;
     const DIG_FIND = 0.35;
+    const DUG = [];
+    const DUG_MS = 4 * 60000, DUG_R = 70;
     const SHOVEL_DIGS = 40;
     const DIG_REACH = 38;
     const LOAN_DIGS = 10;
@@ -34400,6 +34412,22 @@
             const now = this.time.now;
             if (this.loc !== 'beach' || !G.shovel || G.digsLeft <= 0 || this.leaving || now < this.digUntil)
                 return false;
+            {
+                const side0 = flipHint || this.flip || 1, x0 = clamp(this.pz.x + side0 * DIG_REACH, 40, this.D.w - 40), y0 = this.pz.y + FOOT + 4, t = Date.now();
+                while (DUG.length && t - DUG[0].at > DUG_MS)
+                    DUG.shift();
+                if (DUG.some(h => Math.hypot(h.x - x0, h.y - y0) < DUG_R)) {
+                    this.digOnArrive = false;
+                    this.digUntil = now + 400;
+                    this.noteUntil = 0;
+                    this.note('Already dug here! Try a new spot.', '#ffe9a8');
+                    sfx.buzz();
+                    return false;
+                }
+                DUG.push({ x: x0, y: y0, at: t });
+                if (DUG.length > 60)
+                    DUG.shift();
+            }
             this.digStart = now;
             this.digUntil = now + DIG_MS;
             this.digOnArrive = false;
@@ -36964,7 +36992,7 @@
                 const light = daylight(clockHour()), key = Math.round(light.night * 200) * 1000 + Math.round(light.warm * 200);
                 if (key !== this.lightKey) {
                     this.lightKey = key;
-                    this.nightRect.setAlpha(light.night * 0.46);
+                    this.nightRect.setAlpha(light.night * 0.34);
                     this.warmRect.setAlpha(light.warm * 0.15);
                     this.flies.setAlpha(light.night);
                 }
@@ -41822,6 +41850,14 @@
         });
         setInterval(paintClock, 5000);
         paintClock();
+        try {
+            new MutationObserver(() => { if (clockPop.hidden && CLOCK.preview != null) {
+                CLOCK.preview = null;
+                clockPreview.querySelectorAll('.seg-btn').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.hour === '')));
+                paintClock();
+            } }).observe(clockPop, { attributes: true, attributeFilter: ['hidden'] });
+        }
+        catch (e) { }
         const npcP = makePanel(document.getElementById('npcq')), npcTitle = document.getElementById('npcq-name'), npcSay = document.getElementById('npcq-say'), npcTask = document.getElementById('npcq-task');
         const npcGoal = document.getElementById('npcq-goal'), npcBar = document.getElementById('npcq-bar'), npcCount = document.getElementById('npcq-count'), npcMsg = document.getElementById('npcq-msg'), npcGo = document.getElementById('npcq-go');
         const nq = { id: '', thanks: 0 };
@@ -44583,6 +44619,16 @@
         function netPush() {
             if (!net.room)
                 return;
+            const away = (NET_AWAY.hiddenAt && Date.now() - NET_AWAY.hiddenAt > NET_AWAY.HIDDEN) || Date.now() - IDLE.at > NET_AWAY.IDLE;
+            if (away) {
+                if (!net.gone && net.room.leave) {
+                    net.gone = true;
+                    net.sent = '';
+                    net.room.leave();
+                }
+                return;
+            }
+            net.gone = false;
             const mine = netMine();
             if (!mine)
                 return;
