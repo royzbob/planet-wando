@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794222308';
+<script>window.WANDO_BUILD = '1794265346';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -6543,7 +6543,7 @@
     const DIG_MS = 600;
     const DIG_FIND = 0.35;
     const DUG = [];
-    const DUG_MS = 4 * 60000, DUG_R = 70;
+    const DUG_MS = 4 * 60000, DUG_RX = 26, DUG_RY = 16;
     const SHOVEL_DIGS = 40;
     const DIG_REACH = 38;
     const LOAN_DIGS = 10;
@@ -34416,7 +34416,7 @@
                 const side0 = flipHint || this.flip || 1, x0 = clamp(this.pz.x + side0 * DIG_REACH, 40, this.D.w - 40), y0 = this.pz.y + FOOT + 4, t = Date.now();
                 while (DUG.length && t - DUG[0].at > DUG_MS)
                     DUG.shift();
-                if (DUG.some(h => Math.hypot(h.x - x0, h.y - y0) < DUG_R)) {
+                if (DUG.some(h => ((h.x - x0) / DUG_RX) ** 2 + ((h.y - y0) / DUG_RY) ** 2 < 1)) {
                     this.digOnArrive = false;
                     this.digUntil = now + 400;
                     this.noteUntil = 0;
