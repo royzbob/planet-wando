@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346355';
+<script>window.WANDO_BUILD = '1794346410';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2090,8 +2090,9 @@
   .wmap-card-foot { display: flex; gap: 6px; align-items: center; }
   .wmap-card-foot small { font: 700 11px/1.2 var(--font-body); opacity: 0.75; }
   .wmap-card-go { flex: 1; }
+  .wmap-card-who { cursor: pointer; color: #2a1a6a; } .wmap-card-who:hover, .wmap-card-who:focus-visible { background: var(--sun); outline: none; }
   .wmap-card-foot .btn { padding: 4px 12px; font-size: 14px; min-height: 0; }
-  @media (max-width: 640px), (max-height: 500px) { .wmap-card { left: 5px; right: 5px; bottom: 5px; width: auto; padding: 5px 8px; gap: 3px; border-width: 2px; border-radius: 10px; } .wmap-card.left { left: 5px; } .wmap-card.top { bottom: auto; top: 5px; } .wmap-card-t { font-size: 13px; } .wmap-card-p { font-size: 10px; } .wmap-card-p.blurb, .wmap-card-row small { display: none; } .wmap-card .wmap-ev, .wmap-card-chip { font-size: 9px; padding: 0 5px; border-width: 1.5px; } .wmap-card-foot .btn { padding: 3px 10px; font-size: 12px; min-height: 0; } }
+  @media (max-width: 640px), (max-height: 500px) { .wmap-card { left: 5px; right: 5px; bottom: 5px; width: auto; padding: 5px 8px; gap: 3px; border-width: 2px; border-radius: 10px; } .wmap-card.left { left: 5px; } .wmap-card.top { bottom: auto; top: 5px; } .wmap-card-t { font-size: 13px; } .wmap-card-p { font-size: 10px; } .wmap-card-p.blurb, .wmap-card-row small:not(.keep) { display: none; } .wmap-card .wmap-ev, .wmap-card-chip { font-size: 9px; padding: 0 5px; border-width: 1.5px; } .wmap-card-foot .btn { padding: 3px 10px; font-size: 12px; min-height: 0; } }
   @media (max-width: 560px) { .wmap-pill { padding: 1px 6px; font-size: 10px; border-width: 1.5px; } .wmap-n { font-size: 9px; padding: 0 5px; } .wmap-spot::before { width: 80px; height: 60px; } }   
   .wmap-n { padding: 0 7px; border: 2px solid #120b3a; border-radius: 999px; background: #3fbf5f; color: #fff; font: 800 11px/1.45 var(--font-body); white-space: nowrap; }
   .wmap-you {
@@ -46853,7 +46854,9 @@
             if (ev.length) { const row = node('div', 'wmap-card-row'); ev.forEach(x => row.appendChild(node('span', 'wmap-ev' + (x.live ? ' live' : '') + (x.car ? ' wmap-car' : '') + (x.cls || ''), x.txt))); kids.push(row); }
             const fr = D.F[loc] || [], n = D.N[loc] || 0, names = (wmapNames[loc] || []).slice(0, 6);
             if (fr.length) kids.push(node('p', 'wmap-card-p', '★ Friends: ' + fr.map(f => f.name + (f.away ? ' (other server)' : '')).join(', ')));
-            kids.push(node('p', 'wmap-card-p', n ? n + (n === 1 ? ' player here: ' : ' players here: ') + names.join(', ') + (n > names.length ? ' and more' : '') : 'Nobody else is here right now.'));
+            const peers = []; try { net.peers.forEach(p => { if (!p.mine && p.loc && wmapWhere(p.loc) === loc && peers.length < 8) peers.push(p); }); } catch (e) { }
+            if (tap && peers.length) { const row = node('div', 'wmap-card-row'); row.appendChild(node('small', 'keep', n + (n === 1 ? ' player:' : ' players:'))); peers.forEach(p => { const b = el('button', 'wmap-card-chip wmap-card-who', { type: 'button', 'data-pid': String(p.id), title: 'See ' + p.name + '\'s card' }); b.textContent = p.name; row.appendChild(b); }); kids.push(row); }
+            else kids.push(node('p', 'wmap-card-p', n ? n + (n === 1 ? ' player here: ' : ' players here: ') + names.join(', ') + (n > names.length ? ' and more' : '') : 'Nobody else is here right now.'));
             const foot = node('div', 'wmap-card-foot');
             if (tap) {
                 const go = el('button', 'btn wmap-card-go', { type: 'button', 'data-wgo': loc }); go.textContent = here ? 'You are here' : 'Go there'; go.disabled = here;
@@ -46897,6 +46900,7 @@
         wmapFind.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); wmapSearch(true); } if (e.key !== 'Escape') e.stopPropagation(); });
         wmapCard.addEventListener('click', e => {
             if (e.target.closest('[data-wcard]')) { wmapCardShow(''); return; }
+            const who = e.target.closest('[data-pid]'); if (who) { wmapClose(); if (ui.pcard) ui.pcard.open(who.dataset.pid); return; }
             const b = e.target.closest('[data-wgo]'); if (!b) return;
             const why = wmapGo(b.dataset.wgo); wmapCardShow('');
             if (why) { wmapEl.dataset.say = why; wmapPaint(); delete wmapEl.dataset.say; }
