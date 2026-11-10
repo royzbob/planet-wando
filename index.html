@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794354502';
+<script>window.WANDO_BUILD = '1794354576';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -30578,7 +30578,10 @@
         }
         wanderSetup() {
             this.walkers = [];
-            if (REDUCED || this.D.interior || this.loc === 'dance' || this.loc === 'trade' || this.loc === 'dungeon' || this.loc === 'cave')
+            this.clubbers = [];
+            if (!REDUCED && this.loc === 'dance')
+                return this.clubSetup();
+            if (REDUCED || this.D.interior || this.loc === 'dance' || this.loc === 'trade' || this.loc === 'dungeon')
                 return;
             const askers = new Set(Object.keys(ERRANDS).filter(id => ERRANDS[id].loc === this.loc).map(id => ERRANDS[id].name));
             this.npcs.forEach((n, k) => {
@@ -30596,6 +30599,59 @@
                 n.mood = '';
                 this.walkers.push(n);
             });
+        }
+        clubSetup() {                                               // the dancers: each picks its own moves (on the beat) and now and then wanders off across the floor
+            const askers = new Set(Object.keys(ERRANDS).filter(id => ERRANDS[id].loc === this.loc).map(id => ERRANDS[id].name));
+            const MOVES = ['bounce', 'sway', 'spin', 'jump', 'shuffle', 'twist', 'cheer', 'chill'];
+            this.npcs.forEach((n, k) => {
+                if (!n.dance) return;
+                if (n.breathe) n.breathe.stop();
+                n.stay = askers.has(n.name);
+                if (!n.stay && n.zone) { n.zone.destroy(); n.zone = null; this.taken = this.taken.filter(t => !(t.x === n.x && t.y === n.y && t.r === 30)); }
+                n.home = { x: n.x, y: n.y };
+                n.move = MOVES[k % MOVES.length]; n.until = 3 + Math.random() * 6; n.off = k % 3 === 0 ? 0.5 : 0; n.walk = null; n.face = k % 2 ? 1 : -1;
+                this.clubbers.push(n);
+            });
+            this.clubMoves = MOVES;
+        }
+        clubTick(time, dt) {
+            const B = this.D.bounds, F = this.D.floor, bt = (this.danceClock ? this.danceClock(time) : time) / 330.7;
+            for (const n of this.clubbers) {
+                n.until -= dt;
+                if (n.until <= 0 && !n.walk) {
+                    if (!n.stay && Math.random() < 0.35) {                // off somewhere else on the floor (or to the edge for a breather)
+                        for (let k = 0; k < 14; k++) {
+                            const onFloor = F && Math.random() < 0.75, tx = onFloor ? F.x + 30 + Math.random() * (F.cols * F.size - 60) : clamp(n.home.x + (Math.random() - 0.5) * 500, B.x + 40, B.x + B.w - 40);
+                            const ty = onFloor ? F.y + 30 + Math.random() * (F.rows * F.size - 60) : clamp(n.home.y + (Math.random() - 0.5) * 300, B.y + 60, B.y + B.h - 40);
+                            let ok = Math.hypot(tx - n.x, ty - n.y) > 80;
+                            for (let u = 0.2; u <= 1 && ok; u += 0.2) if (!this.free(n.x + (tx - n.x) * u, n.y + (ty - n.y) * u, 6)) ok = false;
+                            if (ok && this.clubbers.every(o => o === n || Math.hypot((o.walk ? o.walk.x : o.x) - tx, (o.walk ? o.walk.y : o.y) - ty) > 60)) { n.walk = { x: tx, y: ty }; break; }
+                        }
+                    }
+                    if (!n.walk) { let m = n.move; while (m === n.move) m = this.clubMoves[Math.floor(Math.random() * this.clubMoves.length)]; n.move = m; n.until = 4 + Math.random() * 7; if (Math.random() < 0.3) n.face = -n.face; }
+                }
+                let ox = 0, oy = 0, ang = 0, sx = 1, sy = 1;
+                if (n.walk) {
+                    const dx = n.walk.x - n.x, dy = n.walk.y - n.y, d = Math.hypot(dx, dy), step = 70 * dt;
+                    if (d <= step) { n.x = n.walk.x; n.y = n.walk.y; n.walk = null; n.move = this.clubMoves[Math.floor(Math.random() * this.clubMoves.length)]; n.until = 4 + Math.random() * 7; }
+                    else { n.x += dx / d * step; n.y += dy / d * step; n.face = dx < 0 ? -1 : 1; }
+                    oy = -Math.abs(Math.sin(Math.PI * (bt + n.off))) * 5;                  // (a bounce in their step, on the beat)
+                } else {
+                    const b = bt + n.off, s1 = Math.sin(Math.PI * b), a1 = Math.abs(s1);
+                    if (n.move === 'bounce') oy = -a1 * 9;
+                    else if (n.move === 'sway') { ang = s1 * 9; oy = -a1 * 3; }
+                    else if (n.move === 'spin') { sx = Math.cos(Math.PI * b * 0.5) || 0.05; oy = -2; }
+                    else if (n.move === 'jump') { const h = Math.abs(Math.sin(Math.PI * b * 0.5)); oy = -h * 26; if (h < 0.15) { sx = 1.08; sy = 0.9; } }
+                    else if (n.move === 'shuffle') { ox = s1 * 12; oy = -Math.abs(Math.sin(2 * Math.PI * b)) * 3; }
+                    else if (n.move === 'twist') { ang = Math.sin(2 * Math.PI * b) * 13; oy = -a1 * 2; }
+                    else if (n.move === 'cheer') { ang = Math.sin(time * 0.012) * 5; oy = -a1 * 6; }
+                    else oy = -a1 * 2;                                                        // (chill: just nodding along)
+                }
+                n.img.setPosition(n.x + ox, n.y + oy).setDepth(n.y).setAngle(ang).setScale(sx / TEX * (n.face < 0 ? 1 : 1), sy / TEX).setFlipX(n.face < 0);
+                n.sh.setPosition(n.x + ox, n.y + 1).setDisplaySize(44 * (1 + oy / 80), 20 * (1 + oy / 80));
+                if (n.tag) n.tag.setPosition(n.x + ox, n.y + 6);
+            }
+            if (this.askers) this.askers.forEach(a => { const n = this.clubbers.find(c => c.stay && ERRANDS[a.id] && ERRANDS[a.id].name === c.name); if (n && a.mark) a.mark.x = n.x; });
         }
         wanderTick(time, dt) {
             const B = this.D.bounds;
@@ -37630,6 +37686,8 @@
                 this.gemTick(time);
             if (this.walkers && this.walkers.length)
                 this.wanderTick(time, dt);
+            if (this.clubbers && this.clubbers.length)
+                this.clubTick(time, dt);
             if (this.balls && this.pz)
                 this.ballTick(time, dt);
             if (this.truck)
