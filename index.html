@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794311646';
+<script>window.WANDO_BUILD = '1794311749';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -4542,7 +4542,13 @@
         { id: 'flowers', name: 'Flower Picker', icon: '🌸', how: 'Pick 300 flowers on the Village Green', got: G => (G.fan.gfn || 0) >= 300 },
         { id: 'eco', name: 'Eco Hero', icon: '♻️', how: 'Put 200 pieces of trash in the recycling bins', got: G => (G.fan.gtn || 0) >= 200 },
         { id: 'cabbie', name: 'Cabbie', icon: '🚕', how: 'Drive 25 taxi fares on the Village Green', got: G => (G.fan.tx || 0) >= 25 },
-        { id: 'garage', name: 'Car Collector', icon: '🚗', how: 'Own 5 cars', got: G => G.boards.filter(o => o.kind === 'car').length >= 5 }
+        { id: 'garage', name: 'Car Collector', icon: '🚗', how: 'Own 5 cars', got: G => G.boards.filter(o => o.kind === 'car').length >= 5 },
+        { id: 'squasher', name: 'Spider Squasher', icon: '🕷️', how: 'Defeat 50 cave spiders in the crypt', got: G => ((G.dun.kills || {}).spider || 0) >= 50 },
+        { id: 'queenslayer', name: 'Queen Slayer', icon: '👸', how: 'Defeat the Spider Queen', got: G => ((G.dun.kills || {}).queen || 0) >= 1 },
+        { id: 'armored', name: 'Knight in Armor', icon: '🛡️', how: 'Wear a full armor set: the helm and body of one set', got: G => !!dunArmor(G.dun).set },
+        { id: 'forger', name: 'Forgemaster', icon: '🔨', how: 'Forge an Epic weapon at Grizzle\'s', got: G => !!((G.dun.forged || 0) & 8) },
+        { id: 'medic', name: 'Field Medic', icon: '💚', how: 'Pick up 5 friends who are down in the crypt', got: G => (G.dun.revives || 0) >= 5 },
+        { id: 'abyss', name: 'Abyss Diver', icon: '🕳️', how: 'Reach floor 25 of the Endless Crypt', got: G => (G.dun.best || 0) >= 25 }
     ];
     const titleIdx = id => Math.max(0, PLAYER_TITLES.findIndex(t => t.id === id));
     const titleGot = (G, t) => { try {
@@ -18067,6 +18073,8 @@
         out.bounty = { day: int(bo.day, 0, 1e7, 0), p: [0, 1, 2].map(i => int(Array.isArray(bo.p) ? bo.p[i] : 0, 0, 999, 0)), got: [0, 1, 2].map(i => (Array.isArray(bo.got) && bo.got[i] ? 1 : 0)) };
         out.done = Array.from(new Set((Array.isArray(v.done) ? v.done : []).filter(i => Number.isInteger(i) && i >= 0 && i < DUNGEONS.length))).sort((a, b) => a - b);
         out.best = int(v.best, 0, 999, 0);
+        out.forged = int(v.forged, 0, 31, 0);
+        out.revives = int(v.revives, 0, 99999, 0);
         out.free = Object.keys(CLASSES).filter(k => Array.isArray(v.free) && v.free.includes(k));
         out.potions = int(v.potions, 0, 99, 0);
         out.big = int(v.big, 0, 99, 0);
@@ -36637,6 +36645,13 @@
                     if (p.sw[0] !== o.swN && !(p.hw >= 0))
                         o.swN = p.sw[0];
                 }
+                if (o.dnWas && !p.dn && this.loc === 'dungeon' && this.pz && Math.hypot(this.pz.x - o.x, this.pz.y + FOOT - o.y) < DOWN.reach + 30) {
+                    G.dun.revives = (G.dun.revives || 0) + 1;
+                    this.noteUntil = 0;
+                    this.note('You picked ' + p.name + ' up!', '#7dff9a');
+                    saveGame();
+                }
+                o.dnWas = !!p.dn;
                 if (p.dn) {
                     o.img.setAngle(-90).setPosition(o.x + 42, o.y - 12);
                     if (!o.dnTag)
@@ -43720,6 +43735,7 @@
                 const w = makeWeapon(t, Math.max(...melt.map(x => x.tier)), r + 1, Math.random);
                 D.bag.push(w);
                 dunFound(D, w);
+                D.forged = (D.forged || 0) | (1 << w.r);
                 sfx.chime();
                 return 'The forge roars! Out comes ' + w.name + ' (' + RARITIES[w.r][0] + ').';
             }
