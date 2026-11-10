@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794314037';
+<script>window.WANDO_BUILD = '1794314192';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -29201,6 +29201,24 @@
             }
             return out;
         }
+        wayArrow() {
+            const t = this.stairs && this.stairs.open ? this.stairs : this.portal, g = this.wayG || (this.wayG = this.add.graphics().setDepth(9600));
+            g.clear();
+            if (!t || this.dunOver)
+                return;
+            const cam = this.cameras.main, V = cam.worldView, z = typeof cam.zoom === 'number' && cam.zoom > 0 ? cam.zoom : 1, pad = 46 / z;
+            if (!V || !V.width)
+                return;
+            if (t.x > V.x + pad && t.x < V.right - pad && t.y > V.y + pad && t.y < V.bottom - pad)
+                return;
+            const cx = V.centerX, cy = V.centerY, dx = t.x - cx, dy = t.y - cy, k = Math.min(Math.abs((V.width / 2 - pad) / (dx || 1e-6)), Math.abs((V.height / 2 - pad) / (dy || 1e-6)));
+            const x = cx + dx * k, y = cy + dy * k, a = Math.atan2(dy, dx), r = 18 / z, pulse = REDUCED ? 1 : 0.75 + 0.25 * Math.sin(this.time.now / 160);
+            const pt = (ang, len) => ({ x: x + Math.cos(a + ang) * len, y: y + Math.sin(a + ang) * len });
+            g.fillStyle(0x0a0610, 0.7);
+            g.fillCircle(x, y, r * 1.25);
+            g.fillStyle(t === this.portal ? 0xb06bff : 0x7dff9a, pulse);
+            g.fillTriangle(pt(0, r).x, pt(0, r).y, pt(2.5, r).x, pt(2.5, r).y, pt(-2.5, r).x, pt(-2.5, r).y);
+        }
         dunPing(x, y, who) {
             this.pings = (this.pings || []).filter(q => q.until > this.time.now).concat([{ x, y, until: this.time.now + 4000 }]);
             this.dunRing(x, y, 70, 0x5ec8ff);
@@ -29466,6 +29484,11 @@
                 this.cameras.main.shake(100, 0.004);
             }
             sfx.buzz();
+            if (Dn.hp > 0 && Dn.hp / dunMaxHp(Dn) < 0.25 && (Dn.potions || Dn.big) && this.lowTold !== this.roomT0) {
+                this.lowTold = this.roomT0;
+                this.noteUntil = 0;
+                this.note('Low health! ' + (TOUCH_FIRST ? 'Tap the red flask' : 'Press H') + ' for a potion.', '#ff9a9a');
+            }
             if (ui.onDun)
                 ui.onDun();
             if (Dn.hp <= 0) {
@@ -29760,6 +29783,7 @@
                 else if (!this.target || Math.hypot(this.target.x - T.x, this.target.y - T.y) > 20)
                     this.setTarget(T.x, T.y);
             }
+            this.wayArrow();
             if (this.waveAt && time >= this.waveAt && this.waves.length)
                 this.dunWave();
             let near = false;
