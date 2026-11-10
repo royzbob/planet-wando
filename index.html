@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794265346';
+<script>window.WANDO_BUILD = '1794270200';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17779,7 +17779,38 @@
         const bx = r(), boss = [bx < 0.34 ? 'king' : bx < 0.67 ? 'lord' : 'lich'], ak = Object.keys(AFFIXES), bossAffix = ak[Math.floor(r() * ak.length)];
         return Object.assign({}, base, { name: 'The ' + adj[0] + ' ' + noun, tint: adj[1], mods, mix, boss, bossAffix, day });
     }
-    const dunDef = (di, day) => (DUNGEONS[di].daily ? dailyDelve(day) : DUNGEONS[di]);
+    const DUN_DAILY = [
+        { names: [['Goblin Warrens', '#a8e08a'], ['Mossy Burrows', '#9ad8a0'], ['Mudfang Caves', '#c8b08a'], ['Rattle Pit', '#d8d0b8'], ['Toadstool Hollow', '#e0a8c8'], ['Grubby Tunnels', '#b8c890'], ['Snaggletooth Den', '#e8c890']],
+            mix: ['goblin', 'archer', 'skeleton', 'bat', 'shaman', 'slime'], must: 'goblin', rooms: [3, 5], bosses: [['king']], twist: 0.3, twists: ['gilded', 'keg'] },
+        { names: [['Ghoul Catacombs', '#a8c8e8'], ['Weeping Tombs', '#a8b8d8'], ['Sunken Ossuary', '#98c8c0'], ['Bonechill Vault', '#c8e0f0'], ['Ashen Graves', '#c0b0a8'], ['Moonlit Mausoleum', '#b8b0e8'], ['Rotroot Crypt', '#a8c898']],
+            mix: ['skeleton', 'skelarcher', 'ghoul', 'wraith', 'slime', 'bat', 'goblin'], must: 'ghoul', rooms: [4, 5], bosses: [['lord'], ['king']], twist: 0.5, twists: ['gilded', 'keg', 'spiked', 'dark'] },
+        { names: [['Hollow Depths', '#e8a8a8'], ['Obsidian Halls', '#b8a8c8'], ['Abyssal Throne', '#a8a0d8'], ['Drowned Keep', '#88b8c8'], ['Shadowfang Citadel', '#c8a0b8'], ['Cinder Deep', '#e8b088'], ['Kingsbane Vaults', '#d8c088']],
+            mix: ['knight', 'wraith', 'skeleton', 'skelarcher', 'ghoul', 'shaman', 'bat', 'slime'], must: 'knight', rooms: [4, 6], bosses: [['lich', 'lord'], ['lich', 'king'], ['lord', 'king'], ['lich']], twist: 0.6, twists: ['gilded', 'keg', 'spiked', 'dark', 'swarm'] }
+    ];
+    const DUN_DAILY_CACHE = new Map();
+    function dunToday(di, day) {
+        const T = DUN_DAILY[di], base = DUNGEONS[di], key = di + ':' + day;
+        if (!T)
+            return base;
+        if (DUN_DAILY_CACHE.has(key))
+            return DUN_DAILY_CACHE.get(key);
+        const r = rng(dunHash(day, 9100 + di)), pick = a => a[Math.floor(r() * a.length)];
+        const [name, tint] = pick(T.names), kinds = T.mix.filter(k => k === T.must || r() < 0.6);
+        const mix = kinds.map(k => [k, 8 + Math.floor(r() * 40) + (k === T.must ? 20 : 0)]);
+        if (mix.length < 3)
+            T.mix.filter(k => !kinds.includes(k)).slice(0, 3 - mix.length).forEach(k => mix.push([k, 15]));
+        const rooms = T.rooms[0] + Math.floor(r() * (T.rooms[1] - T.rooms[0] + 1)), boss = pick(T.bosses).slice();
+        const ak = Object.keys(AFFIXES), bossAffix = di > 0 && (boss.length === 1 || r() < 0.3) ? ak[Math.floor(r() * ak.length)] : null;
+        const mods = r() < T.twist ? [pick(T.twists)] : [];
+        const who = boss.map(k => MONSTERS[k].name);
+        const blurb = 'Today: ' + (who.length > 1 ? who.join(' and ') + ', together' : (bossAffix ? AFFIXES[bossAffix].name + ' ' : '') + who[0]) + ' at the end' + (mods.length ? '. Twist: ' + DELVE_MODS[mods[0]].name + ' (' + DELVE_MODS[mods[0]].blurb.replace(/\.$/, '').toLowerCase() + ')' : '') + '.';
+        const out = Object.assign({}, base, { name, tint, mix, rooms, boss, bossAffix, mods, blurb, day });
+        if (DUN_DAILY_CACHE.size > 30)
+            DUN_DAILY_CACHE.clear();
+        DUN_DAILY_CACHE.set(key, out);
+        return out;
+    }
+    const dunDef = (di, day) => (DUNGEONS[di].daily ? dailyDelve(day) : dunToday(di, day));
     function roomMonsters(Dg, room, rand, type) {
         let out;
         if (!Dg.rooms)
@@ -43124,7 +43155,7 @@
             if (fights.length) {
                 rows.push(node('div', 'mine-row mine-top', 'Fight together! (same room, same monsters)'));
                 fights.sort((a, b) => (friendOf(b.uid) ? 1 : 0) - (friendOf(a.uid) ? 1 : 0)).slice(0, 6).forEach(p => {
-                    const Dg = DUNGEONS[Math.floor(p.fl / 1000) - 1], li = node('div', 'mine-row'), text = node('div', 'mine-text'), b = el('button', 'btn', { type: 'button', 'data-join': String(p.id) });
+                    const Dg = dunDef(Math.floor(p.fl / 1000) - 1, day), li = node('div', 'mine-row'), text = node('div', 'mine-text'), b = el('button', 'btn', { type: 'button', 'data-join': String(p.id) });
                     text.append(node('b', '', (friendOf(p.uid) ? '★ ' : '') + p.name + (p.lv ? ' (level ' + p.lv + ')' : '')), node('small', '', Dg.name + ' · room ' + (p.fl % 1000)));
                     b.textContent = 'Join';
                     li.append(text, b);
@@ -43138,7 +43169,7 @@
                 li.appendChild(text);
                 rows.push(li);
             });
-            rows.push(node('div', 'mine-row mine-top', 'The dungeons (the rooms change every day)'));
+            rows.push(node('div', 'mine-row mine-top', 'Today\'s dungeons (all new every day)'));
             DUNGEONS.forEach((base, i) => {
                 const Dg = dunDef(i, day), open = dunOpenTo(D, i), li = node('div', 'mine-row' + (open ? '' : ' dun-locked')), text = node('div', 'mine-text'), b = el('button', 'btn', { type: 'button', 'data-d': String(i) });
                 const plan = roomPlan(Dg, day), done = Dg.daily ? D.daily === day : D.done.includes(i);
@@ -43148,7 +43179,7 @@
                 else
                     blurb += ' Your best: floor ' + D.best + '.';
                 text.append(node('b', '', (Dg.daily ? 'Daily Delve: ' : '') + Dg.name + (done ? (Dg.daily ? ' · done today' : ' · cleared') : '')), node('small', '', blurb));
-                b.textContent = open ? 'Enter' : Dg.daily ? 'Clear the Goblin Warrens first' : 'Clear ' + DUNGEONS[i - 1].name + ' first';
+                b.textContent = open ? 'Enter' : Dg.daily ? 'Clear ' + dunDef(0, day).name + ' first' : 'Clear ' + dunDef(i - 1, day).name + ' first';
                 b.disabled = !open || !D.cls;
                 li.append(text, b);
                 rows.push(li);
