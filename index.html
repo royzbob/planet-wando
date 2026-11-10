@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794314192';
+<script>window.WANDO_BUILD = '1794314284';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -48293,7 +48293,7 @@
         ui.wmap = { open: wmapOpen, close: wmapClose, go: wmapGo, paint: wmapPaint, btns: wmapBtns, panel: wmapP, el: wmapEl, note: wmapNote };
         ui.chat = { lines: chatLines, line: chatLine, min: chatMin, el: chatBoxEl };
         const CMD_HELP = ['/wave /dance /sit /jump /cheer /spin: do an emote (and any dance you own, like /robot)', '/who: who is on your server', '/server Starfall: switch server (or /server 2)',
-            '/settings: sound, screen, chat box and feedback', '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/join Name: join their fight in the crypt', '/mute Name and /unmute Name'];
+            '/settings: sound, screen, chat box and feedback', '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/join Name: join their fight in the crypt', '/crypt: your crypt record', '/mute Name and /unmute Name'];
         const GO_WORDS = { beach: 'beach', starfish: 'beach', mall: 'mall', cosmo: 'mall', cave: 'cave', crystal: 'cave', mine: 'cave', trade: 'trade', manor: 'trade', trading: 'trade', dance: 'dance', club: 'dance', ice: 'ice', frost: 'ice', frostwood: 'ice', lake: 'ice', crypt: 'dungeon', dungeon: 'dungeon', hollow: 'dungeon', home: 'home', house: 'home', green: 'green', village: 'green', town: 'green' };
         function chatCommand(raw) {
             const say = t => chatLine('', t, 'sys'), parts = raw.slice(1).trim().split(/\s+/), cmd = (parts.shift() || '').toLowerCase(), rest = parts.join(' '), s = scene();
@@ -48353,6 +48353,11 @@
                 const line = ui.dunJoin ? ui.dunJoin(p) : '';
                 if (line)
                     say(line);
+                return true;
+            }
+            if (cmd === 'crypt' || cmd === 'stats') {
+                const D = G.dun, k = D.kills || {}, total = Object.values(k).reduce((t, n) => t + (n | 0), 0), top = Object.keys(k).sort((a, b) => k[b] - k[a])[0];
+                say((CLASSES[D.cls] ? CLASSES[D.cls].name + ', level ' + D.level : 'No class yet') + ' · ' + total + ' monsters beaten' + (top && MONSTERS[top] ? ' (most: ' + MONSTERS[top].name + ' x' + k[top] + ')' : '') + ' · ' + (D.done || []).length + ' crypts cleared · deepest Endless floor ' + (D.best || 0) + ' · ' + D.bag.length + ' weapons, ' + (D.chests || 0) + ' chests opened.');
                 return true;
             }
             if (cmd === 'go' || cmd === 'warp' || cmd === 'tp') {
