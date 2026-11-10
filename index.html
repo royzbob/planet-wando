@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794310724';
+<script>window.WANDO_BUILD = '1794310803';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -45794,7 +45794,7 @@
         const invEl = document.getElementById('inv'), invP = makePanel(invEl), invGrid = document.getElementById('inv-grid'), invTabsEl = document.getElementById('inv-tabs');
         const invPick = document.getElementById('inv-pick'), invEqEl = document.getElementById('inv-eq'), invMe = document.getElementById('inv-me'), invCount = document.getElementById('inv-count');
         panels.inv = invP;
-        const INV_TABS = [['all', 'All'], ['w', 'Weapons'], ['o', 'Clothes'], ['b', 'Boards'], ['c', 'Cards'], ['f', 'Furniture'], ['t', 'Tools'], ['l', 'Loot']];
+        const INV_TABS = [['all', 'All'], ['w', 'Weapons'], ['o', 'Clothes'], ['b', 'Boards'], ['c', 'Cards'], ['f', 'Furniture'], ['t', 'Tools'], ['l', 'Loot'], ['a', 'Armor']];
         const iv = { tab: 'all', sel: '', note: '' };
         const invTabBtns = INV_TABS.map(([id, name]) => { const b = el('button', 'inv-tab', { type: 'button', 'data-itab': id, 'aria-pressed': 'false' }); b.textContent = name; invTabsEl.appendChild(b); return b; });
         const invCv = (w, h, draw) => { const cv = el('canvas', '', { width: w, height: h, 'aria-hidden': 'true' }); const c = cv.getContext('2d'); if (c) {
@@ -45880,6 +45880,16 @@
             D.bag.forEach((w, i) => out.push({ key: 'w:' + (w.u || i), cat: 'w', name: w.name, sub: weaponLine(w) + (CLASSES[D.cls] && !CLASSES[D.cls].likes.includes(w.t) ? ' · not for your class' : '') + ' · ' + weaponFrom(w), r: w.r, n: 0, on: i === D.eq, tip: weaponTip(w),
                 draw: () => weaponCanvas(w, 72), acts: [[i === D.eq ? 'In hand' : 'Hold', () => { if (i === D.eq)
                             return ''; D.eq = i; sfx.tick(); paintDunHud(); return w.name + ' is in your hand.'; }, i === D.eq]] }));
+            D.worn = D.worn || { h: null, b: null };
+            D.arm = D.arm || [];
+            ['h', 'b'].forEach(sl => {
+                const p = D.worn[sl];
+                if (p)
+                    out.push({ key: 'a:' + p.u, cat: 'a', name: armorName(p), sub: armorLine(p) + ' · wearing it', r: p.r, n: 0, on: true, draw: () => armorCanvas(p, 72),
+                        acts: [['Take off', () => { const t = dunAct('unwear', sl); paintDunHud(); return t; }, D.arm.length >= DUN.ARM]] });
+            });
+            D.arm.forEach((p, i) => out.push({ key: 'a:' + p.u, cat: 'a', name: armorName(p), sub: armorLine(p), r: p.r, n: 0, on: false, draw: () => armorCanvas(p, 72),
+                acts: [['Wear', () => { const t = dunAct('wear', i); paintDunHud(); return t; }]] }));
             G.outfits.forEach((o, i) => {
                 const on = wornOutfit(o);
                 out.push({ key: 'o:' + outfitKey(o) + ':' + i, cat: 'o', name: o.name, sub: (Number.isInteger(o.r) && RARITIES[o.r] ? RARITIES[o.r][0] + ' outfit' : 'Outfit') + (on ? ' · wearing it' : ''), r: Number.isInteger(o.r) ? o.r : -1, n: 0, on,
