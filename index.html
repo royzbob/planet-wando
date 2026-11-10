@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794311975';
+<script>window.WANDO_BUILD = '1794312090';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17619,7 +17619,7 @@
             { id: 'sanct', name: 'Sanctuary', lv: 10, mp: 24, cd: 22, blurb: 'You and friends near you take half damage for 6 seconds.' },
             { id: 'renew', name: 'Renew', lv: 14, mp: 22, cd: 16, blurb: 'You and friends near you heal a little every second for 6 seconds.' },
             { id: 'nova', name: 'Holy Nova', lv: 18, mp: 28, cd: 12, blurb: 'A burst of light: hurts monsters around you and heals friends.' },
-            { id: 'divine', name: 'Divine Light', lv: 24, mp: 40, cd: 30, blurb: 'Fully heal yourself and every friend near you.' }]
+            { id: 'divine', name: 'Divine Light', lv: 24, mp: 40, cd: 30, blurb: 'Fully heal yourself and every friend near you, and pick up any who are down.' }]
     };
     const HEALS = ['heal', 'mend', 'bless', 'sanct', 'renew', 'divine'];
     const DUNGEONS = [
@@ -17820,7 +17820,7 @@
             mix.push([k, 10 + Math.floor(r() * 40)]); });
         if (mix.length < 2)
             mix.push(['skeleton', 30], ['ghoul', 25]);
-        const bx = r(), boss = [bx < 0.34 ? 'king' : bx < 0.67 ? 'lord' : 'lich'], ak = Object.keys(AFFIXES), bossAffix = ak[Math.floor(r() * ak.length)];
+        const bx = r(), boss = [bx < 0.25 ? 'king' : bx < 0.5 ? 'lord' : bx < 0.75 ? 'lich' : 'queen'], ak = Object.keys(AFFIXES), bossAffix = ak[Math.floor(r() * ak.length)];
         return Object.assign({}, base, { name: 'The ' + adj[0] + ' ' + noun, tint: adj[1], mods, mix, boss, bossAffix, day });
     }
     const DUN_DAILY = [
@@ -29261,8 +29261,14 @@
                 if (hl && hl[0] !== seen.hl) {
                     seen.hl = hl[0];
                     if (Math.hypot(hl[2] - fx, hl[3] - fy) < 340) {
-                        this.coopHeal(hl[1], hl[2], hl[3]);
-                        this.dunPop(fx, fy - 118, p.name + ' healed you!', '#7dff9a');
+                        if (this.downAt) {
+                            if (hl[1] >= 100)
+                                this.reviveNow(p.name, 0.7);
+                        }
+                        else {
+                            this.coopHeal(hl[1], hl[2], hl[3]);
+                            this.dunPop(fx, fy - 118, p.name + ' healed you!', '#7dff9a');
+                        }
                     }
                 }
                 if (bf && bf[0] !== seen.bf) {
@@ -29432,21 +29438,26 @@
             g.strokePath();
             if (this.reviveT >= DOWN.need) {
                 const who = party.find(p => !p.dn && Math.hypot(p.x - fx, p.y - fy) < DOWN.reach);
-                this.downAt = 0;
-                this.fallen = 0;
-                this.dunOver = false;
-                g.clear();
-                this.iframes = 2;
-                Dn.hp = Math.round(dunMaxHp(Dn) * DOWN.hp);
-                this.noteUntil = 0;
-                this.note((who ? who.name : 'A friend') + ' picked you up!', '#7dff9a');
-                sfx.chime();
-                this.dunRing(fx, fy, 80, 0x7dff9a);
-                if (ui.onDun)
-                    ui.onDun();
+                this.reviveNow(who ? who.name : 'A friend', DOWN.hp);
             }
             else if (left <= 0 || !party.length)
                 this.koOut();
+        }
+        reviveNow(by, frac) {
+            const Dn = G.dun, fx = this.pz.x, fy = this.pz.y + FOOT;
+            this.downAt = 0;
+            this.fallen = 0;
+            this.dunOver = false;
+            if (this.reviveG)
+                this.reviveG.clear();
+            this.iframes = 2;
+            Dn.hp = Math.round(dunMaxHp(Dn) * frac);
+            this.noteUntil = 0;
+            this.note(by + ' picked you up!', '#7dff9a');
+            sfx.chime();
+            this.dunRing(fx, fy, 80, 0x7dff9a);
+            if (ui.onDun)
+                ui.onDun();
         }
         dunGo(room, d) {
             const Dn = G.dun;
