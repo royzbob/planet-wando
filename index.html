@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794347119';
+<script>window.WANDO_BUILD = '1794347159';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2092,6 +2092,7 @@
   .wmap.zoomed .wmap-board { width: 210%; }
   .wmap.zoomed .wmap-frame > .wmap-card { z-index: 5; }
   @media (max-width: 640px) { .wmap-zoomb { display: block; } }
+  .wmap-frame:has(.wmap-card:not([hidden])) .wmap-zoomb, .wmap-frame:has(.wmap-card:not([hidden])) .wmap-key { display: none; }
   @media (max-width: 640px) { .wmap-spot[data-wgo="trade"] { margin-top: 7px; margin-left: 12px; } .wmap-spot[data-wgo="beach"] { margin-top: -7px; } .wmap-spot[data-wgo="dance"] { margin-left: 8px; } }
   .wmap-spot.found .wmap-pill { background: #7dff9a; box-shadow: 0 0 0 3px #fff, 0 2px 0 #120b3a; }
   .wmap-find { width: 200px; max-width: 100%; padding: 4px 10px; border: 2px solid #120b3a; border-radius: 999px; background: #fff8e3; color: #2a1a6a; font: 700 12.5px/1.3 var(--font-body); }
@@ -2115,6 +2116,7 @@
   .wmap-card-foot { display: flex; gap: 6px; align-items: center; }
   .wmap-card-foot small { font: 700 11px/1.2 var(--font-body); opacity: 0.75; }
   .wmap-card-go { flex: 1; }
+  .wmap-card-chip.done { background: #c8f2c8; }
   .wmap-card-who { cursor: pointer; color: #2a1a6a; } .wmap-card-who:hover, .wmap-card-who:focus-visible { background: var(--sun); outline: none; }
   .wmap-card-foot .btn { padding: 4px 12px; font-size: 14px; min-height: 0; }
   @media (max-width: 640px), (max-height: 500px) { .wmap-card { left: 5px; right: 5px; bottom: 5px; width: auto; padding: 5px 8px; gap: 3px; border-width: 2px; border-radius: 10px; } .wmap-card.left { left: 5px; } .wmap-card.top { bottom: auto; top: 5px; } .wmap-card-t { font-size: 13px; } .wmap-card-p { font-size: 10px; } .wmap-card-p.blurb, .wmap-card-row small:not(.keep) { display: none; } .wmap-card .wmap-ev, .wmap-card-chip { font-size: 9px; padding: 0 5px; border-width: 1.5px; } .wmap-card-foot .btn { padding: 3px 10px; font-size: 12px; min-height: 0; } }
@@ -46906,6 +46908,11 @@
             if (L && L.blurb) kids.push(node('p', 'wmap-card-p blurb', L.blurb));
             const seenN = new Set(), inside = Object.keys(LOCS).filter(k => k !== 'home' && LOCS[k].home === loc && LOCS[k].interior && LOCS[k].name && !seenN.has(LOCS[k].name) && seenN.add(LOCS[k].name));
             if (inside.length) { const row = node('div', 'wmap-card-row'); row.append(node('small', '', tap ? 'Go inside:' : 'Inside:'), ...inside.map(k => { if (!tap) return node('span', 'wmap-card-chip', LOCS[k].name); const b = el('button', 'wmap-card-chip wmap-card-who', { type: 'button', 'data-win': k, title: 'Straight into ' + LOCS[k].name }); b.textContent = LOCS[k].name; return b; })); kids.push(row); }
+            if (loc === 'dungeon') try {                                // the crypt: today's dungeons, and which you have done today
+                const day = dayNumber(), Dn = G.dun || {}, row = node('div', 'wmap-card-row'); row.appendChild(node('small', 'keep', 'Today:'));
+                DUNGEONS.forEach((d, i) => { if (!d.rooms && !d.daily) return; const g = dunDef(i, day), done = d.daily ? Dn.daily === day : !!(Dn.cl && Dn.cl.day === day && Dn.cl.d.includes(i)); row.appendChild(node('span', 'wmap-card-chip' + (done ? ' done' : ''), (done ? '✓ ' : '') + g.name)); });
+                kids.push(row);
+            } catch (e) { }
             const ev = (D.E.ev[loc] || []);
             if (ev.length) { const row = node('div', 'wmap-card-row'); ev.forEach(x => row.appendChild(node('span', 'wmap-ev' + (x.live ? ' live' : '') + (x.car ? ' wmap-car' : '') + (x.cls || ''), x.txt))); kids.push(row); }
             const fr = D.F[loc] || [], n = D.N[loc] || 0, names = (wmapNames[loc] || []).slice(0, 6);
