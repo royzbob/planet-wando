@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794347038';
+<script>window.WANDO_BUILD = '1794347107';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -47085,6 +47085,7 @@
             (jobs || []).forEach(j => { dot(j.x, j.y, 7, j.ready ? '#3fbf5f' : '#ffd84d', '#120b3a'); c.fillStyle = j.ready ? '#fff' : '#2a1a6a'; c.font = '900 11px sans-serif'; c.textAlign = 'center'; c.fillText(j.ready ? '✓' : '!', X(j.x), Y(j.y) + 0.5); c.textAlign = 'left'; });    // who has a job for you
             others.forEach(p => dot(p.x, p.y, p.friend ? 5 : 4, p.friend ? '#ffd84d' : '#5ec8ff', '#120b3a'));
             if (me) {
+                if (Number.isFinite(me.a)) { const x = X(me.x), y = Y(me.y), p = (r, a) => [x + Math.cos(me.a + a) * r, y + Math.sin(me.a + a) * r]; c.beginPath(); c.moveTo(...p(18, 0)); c.lineTo(...p(9, 0.95)); c.lineTo(...p(9, -0.95)); c.closePath(); c.fillStyle = '#ff3d6e'; c.fill(); c.lineWidth = 1.5; c.strokeStyle = '#120b3a'; c.stroke(); }    // which way you face
                 dot(me.x, me.y, 7, '#fff', '#ff3d6e');
             }
             c.restore();
@@ -47118,7 +47119,7 @@
             catch (e) { }
             let car = null;
             try { car = wmapCar(); } catch (e) { }
-            wmGeo = wmDraw(c, wmEl.width, wmEl.height, car && car.loc === loc ? Object.assign({}, s.D, { car }) : s.D, roads, spots, { x: s.pz.x, y: s.pz.y + FOOT }, others, hot, jobs);
+            wmGeo = wmDraw(c, wmEl.width, wmEl.height, car && car.loc === loc ? Object.assign({}, s.D, { car }) : s.D, roads, spots, { x: s.pz.x, y: s.pz.y + FOOT, a: s.view === 'side' ? (s.flip < 0 ? Math.PI : 0) : s.view === 'front' ? Math.PI / 2 : s.view === 'back' ? -Math.PI / 2 : NaN }, others, hot, jobs);
         }
         setInterval(wmPaint, 250);
         wmEl.addEventListener('mousemove', e => {
