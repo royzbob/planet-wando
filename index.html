@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794347299';
+<script>window.WANDO_BUILD = '1794353732';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -442,6 +442,41 @@
   .plate:has(svg:hover, .plate-name:hover, .plate-area:hover) { filter: brightness(1.06); }
   .world-mini { position: absolute; top: 96px; left: 16px; width: 180px; height: 120px; border: 2px solid var(--ink); border-radius: 10px; background: rgba(18, 11, 58, 0.55); box-shadow: 0 3px 0 var(--plate-shadow); cursor: crosshair; }
   .world-mini[hidden] { display: none; }
+  .mp3 { position: absolute; right: 16px; bottom: calc(var(--dock-h) + 12px); z-index: 55; width: 290px; box-sizing: border-box; padding: 8px 10px 9px; display: flex; flex-direction: column; gap: 6px;
+    border: 3px solid #120b3a; border-radius: 16px; background: linear-gradient(#3a2a8a, #221660); color: #fff; box-shadow: 0 4px 0 #120b3a, 0 10px 24px rgba(0, 0, 0, 0.35); font: 700 12px/1.25 var(--font-body); }
+  .mp3[hidden] { display: none; }
+  .mp3.drop { outline: 3px dashed #ffd84d; outline-offset: 3px; }
+  .mp3-top { display: flex; align-items: center; gap: 8px; }
+  .mp3-disc { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 2px solid #120b3a; background: radial-gradient(circle, #fff8e3 0 14%, #120b3a 15% 19%, #ff3d6e 20% 44%, #ffd84d 45% 47%, #2a1a6a 48%); }
+  .mp3.on .mp3-disc { animation: mp3-spin 2.4s linear infinite; }
+  @keyframes mp3-spin { to { transform: rotate(360deg); } }
+  .mp3-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .mp3-info b { font: 800 13.5px/1.2 var(--font-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mp3-info small { font: 700 10.5px/1.2 var(--font-body); opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mp3-ic { flex: none; min-width: 28px; height: 28px; padding: 0 5px; border: 2px solid #120b3a; border-radius: 9px; background: rgba(255, 255, 255, 0.14); color: #fff; font: 800 13px/1 var(--font-body); cursor: pointer; }
+  .mp3-ic:hover, .mp3-ic:focus-visible { background: #ffd84d; color: #2a1a6a; outline: none; }
+  .mp3-ic[aria-pressed="true"] { background: #7dff9a; color: #2a1a6a; }
+  .mp3-big { min-width: 38px; height: 34px; background: #ffd84d; color: #2a1a6a; font-size: 15px; }
+  .mp3-row { display: flex; align-items: center; gap: 5px; }
+  .mp3-time { flex: none; min-width: 34px; font: 800 10.5px/1 var(--font-body); opacity: 0.85; }
+  .mp3-seek { width: 100%; margin: 0; accent-color: #ffd84d; }
+  .mp3-vol { flex: 1; min-width: 40px; margin: 0 0 0 2px; accent-color: #7dff9a; }
+  .mp3-list { margin: 0; padding: 0; list-style: none; max-height: 132px; overflow: auto; border-radius: 9px; background: rgba(0, 0, 0, 0.22); }
+  .mp3-list:empty { display: none; }
+  .mp3-list li { display: flex; align-items: center; gap: 4px; padding: 3px 4px 3px 8px; cursor: pointer; }
+  .mp3-list li:hover { background: rgba(255, 255, 255, 0.1); }
+  .mp3-list li.on { background: rgba(255, 216, 77, 0.25); color: #ffe680; }
+  .mp3-list li span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mp3-list li button { flex: none; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #fff; opacity: 0.6; cursor: pointer; font: 800 12px/1 var(--font-body); }
+  .mp3-list li button:hover { opacity: 1; background: #ff3d6e; }
+  .mp3-foot { justify-content: space-between; }
+  .mp3-foot small { font: 700 10px/1.2 var(--font-body); opacity: 0.75; text-align: right; }
+  .mp3-add { flex: none; padding: 4px 10px; border: 2px solid #120b3a; border-radius: 999px; background: #7dff9a; color: #2a1a6a; font: 800 12px/1.2 var(--font-body); cursor: pointer; }
+  .mp3-add:focus-within { outline: 3px solid #ffd84d; }
+  .mp3.mini { width: auto; max-width: 260px; padding: 5px 8px; }
+  .mp3.mini .mp3-body, .mp3.mini #mp3-x { display: none; }
+  .mp3.mini .mp3-disc { width: 26px; height: 26px; }
+  @media (max-width: 640px) { .mp3 { right: 8px; left: 8px; width: auto; bottom: calc(var(--dock-h) + 8px); } .mp3.mini { left: auto; } .mp3-list { max-height: 96px; } }
   .arrive { position: absolute; left: 50%; top: 15%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; text-align: center; z-index: 5; animation: arrive-in 3.2s ease both; }
   .arrive b { font: 800 clamp(22px, 4.4vw, 40px)/1.05 var(--font-display); color: #fff; letter-spacing: 0.04em; text-shadow: 0 3px 0 #120b3a, 0 0 18px rgba(18, 11, 58, 0.55); -webkit-text-stroke: 1.5px #120b3a; }
   .arrive small { font: 800 clamp(12px, 1.9vw, 16px)/1.2 var(--font-body); color: #fff8d8; text-shadow: 0 2px 0 #120b3a, 0 0 8px #120b3a; }
@@ -2621,6 +2656,31 @@
   </div>
 
   <div id="arrive" class="arrive" aria-hidden="true" hidden><b id="arrive-name"></b><small id="arrive-blurb"></small><span id="arrive-ev" class="arrive-ev"></span></div>
+  <section id="mp3" class="mp3" aria-label="My music player" hidden>
+    <div class="mp3-top">
+      <span class="mp3-disc" aria-hidden="true"></span>
+      <div class="mp3-info"><b id="mp3-title">No songs yet</b><small id="mp3-sub">Add songs from your computer</small></div>
+      <button id="mp3-min" class="mp3-ic" type="button" aria-label="Make the player small" title="Make small">▁</button>
+      <button id="mp3-x" class="mp3-ic" type="button" aria-label="Close the player (stops the music)" title="Close">✕</button>
+    </div>
+    <div class="mp3-body">
+      <input id="mp3-seek" class="mp3-seek" type="range" min="0" max="1000" value="0" aria-label="Song position">
+      <div class="mp3-row">
+        <span id="mp3-time" class="mp3-time">0:00</span>
+        <button id="mp3-shuf" class="mp3-ic" type="button" aria-pressed="false" aria-label="Shuffle" title="Shuffle">🔀</button>
+        <button id="mp3-prev" class="mp3-ic" type="button" aria-label="Previous song" title="Previous">⏮</button>
+        <button id="mp3-play" class="mp3-ic mp3-big" type="button" aria-label="Play" title="Play / pause">▶</button>
+        <button id="mp3-next" class="mp3-ic" type="button" aria-label="Next song" title="Next">⏭</button>
+        <button id="mp3-rep" class="mp3-ic" type="button" aria-pressed="true" aria-label="Repeat the playlist" title="Repeat">🔁</button>
+        <input id="mp3-vol" class="mp3-vol" type="range" min="0" max="100" value="70" aria-label="Player volume" title="Volume">
+      </div>
+      <ol id="mp3-list" class="mp3-list"></ol>
+      <div class="mp3-row mp3-foot">
+        <label class="mp3-add">＋ Add songs<input id="mp3-file" type="file" accept="audio/*,.mp3,.m4a,.ogg,.wav,.flac" multiple hidden></label>
+        <small>Or drop files here. They stay on this computer.</small>
+      </div>
+    </div>
+  </section>
   <canvas id="world-mini" class="world-mini" width="270" height="180" title="Minimap: click to walk there" aria-hidden="true" hidden></canvas>
 
   <section id="chatbox" class="chatbox" aria-label="Chat box">
@@ -2800,6 +2860,7 @@
         <button id="snd-fx" type="button" aria-pressed="true">Sound effects</button>
         <label class="snd-vol">Music volume <input id="snd-vol" type="range" min="0" max="100" value="60"></label>
         <label class="snd-vol">Effects volume <input id="snd-fvol" type="range" min="0" max="100" value="70"></label>
+        <button id="mp3-open" class="snd-plain" type="button">🎧 My music player (songs from your computer)</button>
         <button id="fbk-open" class="snd-plain" type="button">✉️ Send feedback or report a bug</button>
         <b class="snd-head">Show</b>
         <button type="button" data-hud="chat" aria-pressed="true">Chat box</button>
@@ -7055,17 +7116,23 @@
     const DJ_STYLE = { cycle: 16, enter: { beat: 4, bass: 4, lead: 8 } };
     const TRACKS = [
         { name: 'Neon Skyline', by: 'Pixel', style: 'House', bpm: 126, root: 57, major: false, prog: [0, 5, 2, 6], wave: 'square',
-            kick: 'x---x---x---x---', clap: '----x-------x---', hat: '--x---x---x---x-', bass: '--x---x---x---x-', melody: '7.7.5.4.2.4.5...7.7.9.7.5.4.2...' },
+            kick: 'x---x---x---x---', clap: '----x-------x---', hat: '--x---x---x---x-', bass: '--x---x---x---x-', melody: '7.7.5.4.2.4.5...7.7.9.7.5.4.2...',
+            melody2: '7...6.4.2...4...' + '5...7.5.3...5.3.' + '4.5.7.9.7...4...' + '6...4.6.8...6.4.' },
         { name: 'Starfish Drift', by: 'Echo', style: 'Chill', bpm: 100, root: 60, major: true, prog: [0, 4, 5, 3], wave: 'triangle',
-            kick: 'x-----x---x-----', clap: '----x-------x---', hat: 'x-x-x-x-x-x-x-x-', bass: 'x--x--x---x-x---', melody: '4...2...0.2.4...5...4...2.0.2...' },
+            kick: 'x-----x---x-----', clap: '----x-------x---', hat: 'x-x-x-x-x-x-x-x-', bass: 'x--x--x---x-x---', melody: '4...2...0.2.4...5...4...2.0.2...',
+            melody2: '7.......9.......' + '7.....5.4.......' + '5.......3.......' + '4.....6.4...2...' },
         { name: 'Cosmo Run', by: 'Blaze', style: 'Electro', bpm: 124, root: 62, major: false, prog: [0, 3, 5, 4], wave: 'sawtooth',
-            kick: 'x---x---x---x-x-', clap: '----x-------x---', hat: 'x-xxx-xxx-xxx-xx', bass: 'x-xx-xx-x-xx-xx-', melody: '0.2.4.7.4.2.0.2.4.7.9.7.4.2.4...' },
+            kick: 'x---x---x---x-x-', clap: '----x-------x---', hat: 'x-xxx-xxx-xxx-xx', bass: 'x-xx-xx-x-xx-xx-', melody: '0.2.4.7.4.2.0.2.4.7.9.7.4.2.4...',
+            melody2: '7...5.3.1...3.5.' + '6...4...6.8.6...' + '4.2.0...2...4...' + '5...7.9...7.5...' },
         { name: 'Meadow Lights', by: 'Jazz', style: 'Future bass', bpm: 110, root: 53, major: true, prog: [0, 5, 3, 4], wave: 'square',
-            kick: 'x-----x-x-------', clap: '----x-------x---', hat: '--x---x---x-x-x-', bass: 'x-----x-x-----x-', melody: '4.4.5.4.2...0.2.4.4.5.7.5.4.2...' },
+            kick: 'x-----x-x-------', clap: '----x-------x---', hat: '--x---x---x-x-x-', bass: 'x-----x-x-----x-', melody: '4.4.5.4.2...0.2.4.4.5.7.5.4.2...',
+            melody2: '9...9...7...4...' + '7.4.2.4.7...4...' + '9...7.5.9...7...' + '8...6...8.9.8...' },
         { name: 'Golden Nautilus', by: 'Tempo', style: 'Trance', bpm: 128, root: 52, major: false, prog: [5, 6, 0, 0], wave: 'sawtooth',
-            kick: 'x---x---x---x---', clap: '----x-------x---', hat: '--x---x---x---x-', bass: '-xxx-xxx-xxx-xxx', melody: '7...4.5.7...9.7.5...4.2.4...0...' },
+            kick: 'x---x---x---x---', clap: '----x-------x---', hat: '--x---x---x---x-', bass: '-xxx-xxx-xxx-xxx', melody: '7...4.5.7...9.7.5...4.2.4...0...',
+            melody2: '7...4...2...4...' + '5...7...9...7...' + '5...3...5...7...' + '6...4.2.1...4...' },
         { name: 'Midnight Shuttle', by: 'Glitch', style: 'Synthwave', bpm: 104, root: 55, major: false, prog: [0, 6, 5, 4], wave: 'triangle',
-            kick: 'x-------x-x-----', clap: '----x-------x---', hat: 'x-x-x-x-x-x-x-x-', bass: 'x-x-x-x-x-x-x-x-', melody: '0.0.7.0.5.0.4.0.2.0.4.0.5.4.2...' }
+            kick: 'x-------x-x-----', clap: '----x-------x---', hat: 'x-x-x-x-x-x-x-x-', bass: 'x-x-x-x-x-x-x-x-', melody: '0.0.7.0.5.0.4.0.2.0.4.0.5.4.2...',
+            melody2: '4.4.7.4.9...7...' + '7.5.7.9...7.5...' + '6.4.2.4.6...4...' + '8...6...4...6...' }
     ].map(t => Object.assign({}, DJ_STYLE, t));
     const TRACK_BARS = 32;
     const BGM = {
@@ -7099,7 +7166,8 @@
             hat: '----x-------x---', hatVol: 0.5, bass: 'x-------x---x---', bassWave: 'triangle', bassVol: 0.16, bassLen: 4, bassCut: 600, bassOct: -1, pad: 'soft', padVol: 0.022,
             arp: 'x---x---x---x---', arpWave: 'sine', arpVol: 0.05, arpOct: 1, arpLen: 2.5,
             wave: 'triangle', pluck: true, leadVol: 0.08, leadLen: 2.6, echo: 0.25,
-            melody: '0.2.4...2.4.7...' + '5.3.5...3...1...' + '1.3.5...4.3.1...' + '4.6.4...1.......' },
+            melody: '0.2.4...2.4.7...' + '5.3.5...3...1...' + '1.3.5...4.3.1...' + '4.6.4...1.......',
+            melody2: '4...2.0.2...4...' + '7...5.3.5.......' + '3.5.6...5.3.1...' + '6...4...2...4...' },
         arcade: { name: 'Insert Coin', bpm: 124, root: 57, major: false, prog: [0, 5, 2, 6], gain: 0.85,
             kick: 'x---x---x---x---', kickVol: 0.6, clap: '----x-------x---', clapVol: 0.3, hat: 'x-x-x-x-x-x-x-x-', hatVol: 0.6, ohat: '--------------x-',
             bass: 'x-7-x-7-x-7-x-7-', bassWave: 'square', bassVol: 0.13, bassLen: 0.9, bassCut: 900, pad: null,
@@ -7110,41 +7178,49 @@
             kick: 'x-----x-x-------', kickVol: 0.5, clap: '----x-------x---', clapVol: 0.16, hat: 'x-x-x-x-x-x-x-x-', hatVol: 0.5,
             bass: 'x-x-x-xxx-x-x-xx', bassWave: 'square', bassVol: 0.11, bassLen: 0.8, bassCut: 1100, pad: 'soft', padVol: 0.03,
             wave: 'triangle', leadVol: 0.07, leadLen: 1.4, echo: 0.22,
-            melody: '4.5.7...7.9.7...' + '4.2.4...2.......' + '5.4.5.7.9...7...' + '4.....2.4.......' }
+            melody: '4.5.7...7.9.7...' + '4.2.4...2.......' + '5.4.5.7.9...7...' + '4.....2.4.......',
+            melody2: '9...7...4...7...' + '8...6...4.6.8...' + '7.9.7.5...4...5.' + '5...3...5.7.5...' }
     };
     BGM.cave = { name: 'Deep Echoes', bpm: 72, root: 50, major: false, prog: [0, 5, 3, 4], gain: 0.85,
         kick: 'x---------------', kickVol: 0.25, bass: 'x-------x-------', bassWave: 'sine', bassVol: 0.17, bassLen: 7, bassOct: -1, pad: 'swell', padVol: 0.04,
         arp: 'x-----x---x-----', arpWave: 'sine', arpVol: 0.04, arpOct: 2, arpLen: 1.1,
         wave: 'triangle', pluck: true, leadVol: 0.07, leadLen: 4, echo: 0.55,
-        melody: '0.......2...3...' + '5.......3...2...' + '7.......5...3...' + '2.......0.......' };
+        melody: '0.......2...3...' + '5.......3...2...' + '7.......5...3...' + '2.......0.......',
+        melody2: '4.......7.......' + '7.......5...4...' + '5.......3...5...' + '4.......6...4...' };
     BGM.dungeon = { name: 'Down Below', bpm: 100, root: 45, major: false, prog: [0, 5, 6, 4], gain: 0.85,
         kick: 'x-------x-x-----', kickVol: 0.45, clap: '--------x-------', clapVol: 0.12, hat: '----x-------x---', hatVol: 0.4,
         bass: 'x--x--x-x--x--x-', bassWave: 'sawtooth', bassVol: 0.16, bassCut: 420, bassOct: -1, pad: 'saw', padVol: 0.02,
         wave: 'square', leadVol: 0.04, leadLen: 2.6, echo: 0.4,
-        melody: '0...3...2...0...' + '5...3...2...1...' + '0...3...7...5...' + '4...2...1...0...' };
+        melody: '0...3...2...0...' + '5...3...2...1...' + '0...3...7...5...' + '4...2...1...0...',
+        melody2: '4...4...7...4...' + '5...7...9...7...' + '6...8...6...4...' + '4...6...4...2...' };
     BGM.station = { name: 'Orbit', bpm: 88, root: 52, major: false, prog: [0, 5, 3, 4], gain: 0.85,
         kick: 'x-------x-------', kickVol: 0.3, hat: '----x-------x---', hatVol: 0.35, bass: 'x-------x-------', bassWave: 'sine', bassVol: 0.16, bassLen: 6, bassOct: -1, pad: 'swell', padVol: 0.05,
         arp: 'x-x-x-x-x-x-x-x-', arpWave: 'sine', arpVol: 0.04, arpOct: 1, arpLen: 1.2, wave: 'triangle', pluck: true, leadVol: 0.06, leadLen: 4, echo: 0.5,
-        melody: '4.......7.......' + '5.......4...2...' + '0.......2...4...' + '7.......5.......' };
+        melody: '4.......7.......' + '5.......4...2...' + '0.......2...4...' + '7.......5.......',
+        melody2: '2.......4.......' + '7.......9.......' + '5.......3...5...' + '4.......2.......' };
     BGM.candy = { name: 'Sugar Pop', bpm: 132, root: 62, major: true, prog: [0, 4, 5, 3], gain: 0.8,
         kick: 'x---x---x---x---', kickVol: 0.45, clap: '----x-------x---', clapVol: 0.22, hat: '--x---x---x---x-', hatVol: 0.6,
         bass: 'x-x---x-x-x---x-', bassWave: 'square', bassVol: 0.12, bassLen: 0.9, bassCut: 900, pad: null, stab: '--x---x---x---x-', stabKind: 'ep', stabVol: 0.04,
         wave: 'square', leadVol: 0.06, leadLen: 1.2, echo: 0.2,
-        melody: '7.9.7.4.5.4.2...' + '4.5.7...9.7.5...' + '7.9.9.7.5.4.2...' + '5.4.2.4.0.......' };
+        melody: '7.9.7.4.5.4.2...' + '4.5.7...9.7.5...' + '7.9.9.7.5.4.2...' + '5.4.2.4.0.......',
+        melody2: '9.7.4.7.9...7...' + '8.6.4.6.8...6...' + '9.7.5.7.9.7.5...' + '7.5.3.5.7.......' };
     BGM.neon = { name: 'Synth City', bpm: 118, root: 50, major: false, prog: [0, 6, 5, 4], gain: 0.85,
         kick: 'x---x---x---x---', kickVol: 0.55, clap: '----x-------x---', clapVol: 0.24, hat: 'x-x-x-x-x-x-x-x-', hatVol: 0.45,
         bass: 'xxxxxxxxxxxxxxxx', bassWave: 'sawtooth', bassVol: 0.14, bassLen: 0.6, bassCut: 700, pad: 'saw', padVol: 0.035,
         arp: 'x-xxx-xxx-xxx-xx', arpWave: 'square', arpVol: 0.022, arpOct: 1, arpLen: 0.7, wave: 'sawtooth', leadVol: 0.05, leadLen: 2.4, echo: 0.38,
-        melody: '7...5...4...2...' + '4...5...7...9...' + '9...7...5...4...' + '5...4...2.......' };
+        melody: '7...5...4...2...' + '4...5...7...9...' + '9...7...5...4...' + '5...4...2.......',
+        melody2: '4...7...9...7...' + '8...6...4...6...' + '7...5...9...7...' + '6...4...6...8...' };
     BGM.ice = { name: 'Snowglobe', bpm: 96, root: 64, major: true, prog: [0, 5, 3, 4], gain: 0.8,
         hat: '--x---x---x---x-', hatVol: 0.3, bass: 'x-------x-------', bassWave: 'sine', bassVol: 0.14, bassLen: 5, bassOct: -1, pad: 'soft', padVol: 0.035,
         arp: 'x-x-x-x-x-x-x-x-', arpWave: 'triangle', arpVol: 0.05, arpOct: 2, arpLen: 1.4, wave: 'sine', pluck: true, leadVol: 0.09, leadLen: 3, echo: 0.45,
-        melody: '4.5.7...4.2.0...' + '2.4.5...2.0.....' + '0.2.4...7.5.4...' + '5.4.2...0.......' };
+        melody: '4.5.7...4.2.0...' + '2.4.5...2.0.....' + '0.2.4...7.5.4...' + '5.4.2...0.......',
+        melody2: '7.9.7...4...2...' + '7.5.4...5...7...' + '5.7.9...7.5.3...' + '4.6.8...6.4.2...' };
     BGM.jungle = { name: 'Canopy Drums', bpm: 104, root: 55, major: false, prog: [0, 3, 5, 4], gain: 0.85,
         kick: 'x--x--x-x--x--x-', kickVol: 0.5, clap: '------x-------x-', clapVol: 0.16, hat: 'x-xxx-xxx-xxx-xx', hatVol: 0.4,
         bass: 'x--x--x---x--x--', bassWave: 'triangle', bassVol: 0.18, bassLen: 1.4, bassCut: 600, bassOct: -1, pad: 'swell', padVol: 0.03,
         wave: 'sine', leadVol: 0.08, leadLen: 2.6, echo: 0.35,
-        melody: '0...3.5.7...5...' + '3...2.0.2.......' + '7...5.3.5...7...' + '5...3.2.0.......' };
+        melody: '0...3.5.7...5...' + '3...2.0.2.......' + '7...5.3.5...7...' + '5...3.2.0.......',
+        melody2: '7...7.9.7...4...' + '5...3.5.7...5...' + '9...7.5.7...9...' + '8...6.4.6...4...' };
     const BGM_FOR = { motors: 'mall', station: 'station', candy: 'candy', neon: 'neon', ice: 'ice', iceshack: 'ice', jungle: 'jungle', trade: 'bakery', dungeon: 'dungeon', cave: 'cave', green: 'green', beach: 'beach', tackleshop: 'beach', mall: 'mall', skateshop: 'mall', hovershop: 'mall', hatshop: 'mall', charmshop: 'mall', arcade: 'arcade', furnish: 'shop', petshop: 'shop', home: 'bakery', dance: 'dance', bakery: 'bakery', tailor: 'shop', florist: 'shop' };
     const CONCERT = { name: 'Supernova Live', bpm: 140, root: 54, major: false, prog: [0, 5, 3, 6], gain: 1.25, enter: { bass: 2, stab: 4, lead: 8 }, riser: 8,
         kick: 'x---x---x---x---', clap: '----x-------x---', clapVol: 0.36, hat: 'x-xxx-xxx-xxx-xx', ohat: '--x---x---x---x-',
@@ -7159,8 +7235,8 @@
             bass: '', bassWave: 'square', bassVol: 0.2, bassLen: 1.7, bassCut: 420, bassOct: -2, sub: 0,
             pad: 'saw', padVol: 0.04, stab: '', stabKind: 'ep', stabVol: 0.05,
             arp: '', arpWave: 'square', arpVol: 0.03, arpOct: 1, arpLen: 1.2,
-            wave: 'square', pluck: false, melody: '', leadVol: 0.07, leadLen: 2.4, leadOct: 1, echo: 0.4, ocean: 0 };
-        let ctx = null, master = null, noise = null, timer = 0, cur = null, fading = [];
+            wave: 'square', pluck: false, melody: '', melody2: '', leadVol: 0.07, leadLen: 2.4, leadOct: 1, echo: 0.4, ocean: 0, verb: 0.24, harmony: true, fill: true };
+        let ctx = null, master = null, noise = null, timer = 0, cur = null, fading = [], verbIn = null;
         let armed = false, hidden = false, volume = 0.6, last = 0;
         const want = { scene: null, dj: -1, concert: false };
         const MINOR = [0, 2, 3, 5, 7, 8, 10], MAJOR = [0, 2, 4, 5, 7, 9, 11];
@@ -7169,7 +7245,8 @@
         const api = { onChange: null };
         const changed = () => { if (api.onChange)
             api.onChange(); };
-        const level = () => (AUDIO.muted || hidden ? 0 : volume * 0.5);
+        let userOn = false;
+        const level = () => (AUDIO.muted || hidden || userOn ? 0 : volume * 0.5);
         const target = () => (want.concert ? CONCERT : want.dj >= 0 ? TRACKS[want.dj] : AUDIO.music && want.scene ? BGM[want.scene] || null : null);
         function voice(type, freq, t, dur, peak, dest, detune) {
             const o = ctx.createOscillator(), g = ctx.createGain();
@@ -7203,7 +7280,7 @@
             I.duck.gain.setValueAtTime(0.35, t);
             I.duck.gain.linearRampToValueAtTime(1, t + 0.24);
         }
-        function hit(I, t, highpass, dur, peak) {
+        function hit(I, t, highpass, dur, peak, pan) {
             const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
             s.buffer = noise;
             f.type = 'highpass';
@@ -7212,7 +7289,7 @@
             g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
             s.connect(f);
             f.connect(g);
-            g.connect(I.out);
+            g.connect(pan ? panTo(I.out, pan) : I.out);
             s.start(t, Math.random() * 0.5, dur + 0.05);
         }
         const chordTones = T => (T.seventh ? [0, 2, 4, 6] : [0, 2, 4]);
@@ -7221,6 +7298,7 @@
             f.type = 'lowpass';
             f.frequency.value = T.pad === 'saw' ? 1150 : 1500;
             f.connect(T.pad === 'saw' ? I.duck : I.out);
+            if (I.send) f.connect(I.send);
             const tone = (type, freq, cents, peak, rise, hold, end) => {
                 const o = ctx.createOscillator(), g = ctx.createGain();
                 o.type = type;
@@ -7316,7 +7394,16 @@
             const d = noise.getChannelData(0);
             for (let i = 0; i < d.length; i++)
                 d[i] = Math.random() * 2 - 1;
+            try {                                                    // a room for the music to ring in: a soft reverb everything shares
+                const len = Math.floor(ctx.sampleRate * 2.4), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+                for (let ch = 0; ch < 2; ch++) { const v = ir.getChannelData(ch); for (let i = 0; i < len; i++) v[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.8) * (i < ctx.sampleRate * 0.012 ? i / (ctx.sampleRate * 0.012) : 1); }
+                const conv = ctx.createConvolver(), lo = ctx.createBiquadFilter();
+                conv.buffer = ir; lo.type = 'lowpass'; lo.frequency.value = 5200;
+                verbIn = ctx.createGain(); verbIn.gain.value = 0.9;
+                verbIn.connect(lo); lo.connect(conv); conv.connect(master);
+            } catch (e) { verbIn = null; }
         }
+        const panTo = (node, p) => { if (!ctx.createStereoPanner) return node; const k = String(Math.round(p * 100)), P = node._pans || (node._pans = {}); if (!P[k]) { P[k] = ctx.createStereoPanner(); P[k].pan.value = p; P[k].connect(node); } return P[k]; };     // (one panner per spot, kept)
         function spawn(track, delay, fadeIn) {
             const T = Object.assign({}, TRACK_DEFAULTS, track), t0 = ctx.currentTime + delay;
             const out = ctx.createGain(), duck = ctx.createGain(), bassLP = ctx.createBiquadFilter(), leadBus = ctx.createGain();
@@ -7340,7 +7427,10 @@
                 feedback.connect(echo);
                 echo.connect(out);
             }
-            const I = { track, T, out, duck, bassLP, leadBus, step: 0, arpN: 0, nextTime: t0, startTime: t0, stopAt: Infinity, nodes: [] };
+            const send = ctx.createGain();
+            send.gain.value = verbIn ? T.verb : 0;
+            if (verbIn) { send.connect(verbIn); leadBus.connect(send); }
+            const I = { track, T, out, duck, bassLP, leadBus, send, step: 0, arpN: 0, nextTime: t0, startTime: t0, stopAt: Infinity, nodes: [] };
             if (T.ocean)
                 ocean(I, t0);
             return I;
@@ -7351,6 +7441,7 @@
             I.out.gain.cancelScheduledValues(now);
             I.out.gain.setValueAtTime(Math.max(0.0001, I.out.gain.value), now);
             I.out.gain.linearRampToValueAtTime(0.0001, now + fade);
+            if (I.send) { I.send.gain.cancelScheduledValues(now); I.send.gain.setValueAtTime(I.send.gain.value, now); I.send.gain.linearRampToValueAtTime(0, now + fade); }
             fading.push(I);
         }
         function dispose(I) {
@@ -7360,6 +7451,7 @@
             catch (e) { } });
             try {
                 I.out.disconnect();
+                if (I.send) I.send.disconnect();
             }
             catch (e) { }
         }
@@ -7377,9 +7469,11 @@
                 if (s === 0 && T.pad && on('stab'))
                     pad(I, t, chord, sd * 16);
                 if (T.hat[s] === 'x')
-                    hit(I, t, 7000, 0.04, (s % 4 === 2 ? 0.15 : 0.08) * T.hatVol);
+                    hit(I, t, 7000, 0.04, (s % 4 === 2 ? 0.15 : 0.08) * T.hatVol * (0.85 + Math.random() * 0.3), s % 8 < 4 ? -0.25 : 0.25);
                 if (T.ohat[s] === 'x')
-                    hit(I, t, 5200, 0.2, 0.07 * T.hatVol);
+                    hit(I, t, 5200, 0.2, 0.07 * T.hatVol, 0.3);
+                if (T.fill && T.kick && bar % 8 === 7 && s >= 12 && on('beat'))      // a little drum fill into every eighth bar
+                    hit(I, t, 1300, 0.1, T.clapVol * (0.45 + 0.18 * (s - 12)), (s - 13.5) * 0.2);
                 if (on('beat')) {
                     if (T.kick[s] === 'x')
                         kick(I, t);
@@ -7397,11 +7491,19 @@
                     stab(I, t, chord);
                 if (T.arp[s] === 'x') {
                     const f = hz(midi(T, chord + [0, 2, 4, 7, 4, 2][I.arpN++ % 6], T.arpOct));
-                    (T.arpWave === 'sine' ? pluck : voice)(T.arpWave, f, t, sd * T.arpLen, T.arpVol, I.leadBus);
+                    (T.arpWave === 'sine' ? pluck : voice)(T.arpWave, f, t, sd * T.arpLen, T.arpVol, panTo(I.leadBus, I.arpN % 2 ? -0.35 : 0.35));
                 }
-                const ch = T.melody ? T.melody[I.step % T.melody.length] : '.';
-                if (ch !== '.' && on('lead'))
-                    (T.pluck ? pluck : voice)(T.wave, hz(midi(T, Number(ch), T.leadOct)), t, sd * T.leadLen, T.leadVol, I.leadBus);
+                const L = T.melody ? T.melody.length : 0, pass = L ? Math.floor(I.step / L) : 0;
+                const mel = T.melody2 && T.melody2.length === L && pass % 4 === 2 ? T.melody2 : T.melody;     // the tune goes A A B A, not the same four bars forever
+                const ch = mel ? mel[I.step % L] : '.';
+                if (ch !== '.' && on('lead')) {
+                    const f = hz(midi(T, Number(ch), T.leadOct));
+                    (T.pluck ? pluck : voice)(T.wave, f, t, sd * T.leadLen, T.leadVol * (0.9 + Math.random() * 0.15), I.leadBus);
+                    if (!T.pluck && T.wave !== 'sine')
+                        voice(T.wave, f, t, sd * T.leadLen, T.leadVol * 0.4, panTo(I.leadBus, 0.3), 9);     // (a second, slightly out-of-tune voice: a fuller lead)
+                    if (T.harmony && pass % 4 === 3)
+                        voice(T.pluck || T.wave === 'square' ? 'triangle' : T.wave, hz(midi(T, Number(ch) - 2, T.leadOct)), t, sd * T.leadLen, T.leadVol * 0.42, panTo(I.leadBus, -0.3));     // (and a harmony the last time round)
+                }
                 if (T.riser && bar % T.riser === T.riser - 1) {
                     if (s === 0)
                         riser(I, t, sd * 16);
@@ -7518,6 +7620,7 @@
         api.refresh = () => { api.setVolume(volume); if (armed)
             scenic(); };
         api.hide = h => { hidden = !!h; api.setVolume(volume); };
+        api.user = on => { userOn = !!on; if (master) master.gain.setTargetAtTime(level(), ctx.currentTime, on ? 0.25 : 0.8); };     // your own songs are playing: the game's music steps aside
         api.beat = (per = 1) => (cur && ctx ? Math.max(0, Math.floor(((ctx.currentTime - cur.startTime) / (60 / cur.T.bpm)) * per)) : null);
         return api;
     })();
@@ -48866,6 +48969,110 @@
             catch (e) { } clockPing(); }, paint: timesPaint, fame: timesFame };
         document.getElementById('times-close').addEventListener('click', () => timesP.close());
         document.getElementById('clock-news').addEventListener('click', () => { document.getElementById('clock-pop').hidden = true; ui.times.open(); });
+        // ── My music player: songs from your own computer, played while you play. They are kept in this browser (IndexedDB), never sent anywhere. ──
+        const mp3El = document.getElementById('mp3'), mp3Audio = new Audio(), mp3 = { list: [], i: -1, shuffle: false, repeat: true, mini: false, vol: 0.7 };
+        mp3Audio.preload = 'auto';
+        const mp3Q = id => document.getElementById(id);
+        const mp3Name = n => String(n || 'Song').replace(/\.[a-z0-9]{2,5}$/i, '').replace(/[_]+/g, ' ').slice(0, 80);
+        const mp3Fmt = t => (Number.isFinite(t) ? Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0') : '0:00');
+        try { const p = JSON.parse(localStorage.getItem('wando-mp3') || '{}'); mp3.shuffle = !!p.shuffle; mp3.repeat = p.repeat !== false; mp3.vol = Number.isFinite(p.vol) ? clamp(p.vol, 0, 1) : 0.7; mp3.mini = !!p.mini; } catch (e) { }
+        const mp3Prefs = () => { try { localStorage.setItem('wando-mp3', JSON.stringify({ shuffle: mp3.shuffle, repeat: mp3.repeat, vol: mp3.vol, mini: mp3.mini })); } catch (e) { } };
+        const mp3Db = (() => {                                       // (a small store of the song files, so the playlist is still here next time)
+            let dbp = null;
+            const open = () => dbp || (dbp = new Promise((res, rej) => { try { const r = indexedDB.open('wando-mp3', 1); r.onupgradeneeded = () => r.result.createObjectStore('songs', { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch (e) { rej(e); } }));
+            const tx = (mode, fn) => open().then(db => new Promise((res, rej) => { const t = db.transaction('songs', mode), st = t.objectStore('songs'), out = fn(st); t.oncomplete = () => res(out && out.result); t.onerror = () => rej(t.error); }));
+            return { all: () => tx('readonly', st => st.getAll()), put: song => tx('readwrite', st => st.put(song)), del: id => tx('readwrite', st => st.delete(id)) };
+        })();
+        function mp3Paint() {
+            const S = mp3.list[mp3.i];
+            mp3Q('mp3-title').textContent = S ? S.name : mp3.list.length ? 'Pick a song' : 'No songs yet';
+            mp3Q('mp3-sub').textContent = S ? (mp3.i + 1) + ' of ' + mp3.list.length + (mp3Audio.paused ? ' · paused' : ' · playing') : mp3.list.length ? mp3.list.length + ' songs' : 'Add songs from your computer';
+            mp3Q('mp3-play').textContent = mp3Audio.paused ? '▶' : '❚❚';
+            mp3Q('mp3-play').setAttribute('aria-label', mp3Audio.paused ? 'Play' : 'Pause');
+            mp3Q('mp3-shuf').setAttribute('aria-pressed', mp3.shuffle ? 'true' : 'false');
+            mp3Q('mp3-rep').setAttribute('aria-pressed', mp3.repeat ? 'true' : 'false');
+            mp3Q('mp3-vol').value = String(Math.round(mp3.vol * 100));
+            mp3El.classList.toggle('on', !mp3Audio.paused);
+            mp3El.classList.toggle('mini', mp3.mini);
+            mp3Q('mp3-min').textContent = mp3.mini ? '▢' : '▁';
+            mp3Q('mp3-min').setAttribute('aria-label', mp3.mini ? 'Make the player big' : 'Make the player small');
+            const ol = mp3Q('mp3-list');
+            ol.replaceChildren(...mp3.list.map((S2, i) => { const li = el('li', i === mp3.i ? 'on' : '', { 'data-i': String(i), title: S2.name }); const x = el('button', '', { type: 'button', 'data-del': String(i), 'aria-label': 'Remove ' + S2.name, title: 'Remove' }); x.textContent = '✕'; li.append(node('span', '', (i === mp3.i && !mp3Audio.paused ? '♪ ' : '') + S2.name), x); return li; }));
+            try { if ('mediaSession' in navigator && S) navigator.mediaSession.metadata = new MediaMetadata({ title: S.name, artist: 'My music', album: 'Planet Wando' }); } catch (e) { }
+        }
+        function mp3Load(i, play) {
+            if (!mp3.list.length) return;
+            mp3.i = ((i % mp3.list.length) + mp3.list.length) % mp3.list.length;
+            const S = mp3.list[mp3.i];
+            if (!S.url) S.url = URL.createObjectURL(S.blob);
+            mp3Audio.src = S.url;
+            if (play) mp3Play(); else mp3Paint();
+        }
+        function mp3Play() {
+            if (!mp3.list.length) { mp3Q('mp3-file').click(); return; }
+            if (mp3.i < 0) { mp3Load(mp3.shuffle ? Math.floor(Math.random() * mp3.list.length) : 0, true); return; }
+            const p = mp3Audio.play(); if (p && p.catch) p.catch(() => { mp3Paint(); });
+        }
+        function mp3Step(d) {
+            if (!mp3.list.length) return;
+            if (mp3.shuffle && mp3.list.length > 1) { let j = mp3.i; while (j === mp3.i) j = Math.floor(Math.random() * mp3.list.length); mp3Load(j, true); return; }
+            const j = mp3.i + d;
+            if (j >= mp3.list.length && !mp3.repeat) { mp3Audio.pause(); mp3Audio.currentTime = 0; mp3Paint(); return; }
+            mp3Load(j, true);
+        }
+        async function mp3Add(files) {
+            const ok = [...(files || [])].filter(f => f && (/^audio\//.test(f.type) || /\.(mp3|m4a|aac|ogg|oga|wav|flac|opus|webm)$/i.test(f.name)) && f.size < 60 * 1024 * 1024);
+            if (!ok.length) { mp3Q('mp3-sub').textContent = 'Those aren\'t song files (try .mp3).'; return; }
+            const was = mp3.list.length;
+            for (const f of ok.slice(0, 100)) {
+                const S = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), name: mp3Name(f.name), blob: f, at: Date.now() };
+                mp3.list.push(S);
+                try { await mp3Db.put({ id: S.id, name: S.name, blob: f, at: S.at }); } catch (e) { }
+            }
+            if (mp3.i < 0 || mp3Audio.paused && was === 0) mp3Load(was, true); else mp3Paint();
+        }
+        function mp3Del(i) {
+            const S = mp3.list[i]; if (!S) return;
+            if (S.url) URL.revokeObjectURL(S.url);
+            mp3.list.splice(i, 1);
+            mp3Db.del(S.id).catch(() => { });
+            if (i === mp3.i) { mp3Audio.pause(); mp3Audio.removeAttribute('src'); mp3.i = -1; if (mp3.list.length) mp3Load(Math.min(i, mp3.list.length - 1), false); }
+            else if (i < mp3.i) mp3.i--;
+            mp3Paint();
+        }
+        let mp3Loaded = false;
+        function mp3Show(on) {
+            mp3El.hidden = !on;
+            if (on && !mp3Loaded) { mp3Loaded = true; mp3Db.all().then(rows => { (rows || []).sort((a, b) => a.at - b.at).forEach(r => { if (r && r.blob && !mp3.list.some(x => x.id === r.id)) mp3.list.push({ id: r.id, name: r.name, blob: r.blob, at: r.at }); }); mp3Paint(); }).catch(() => mp3Paint()); }
+            if (!on) { mp3Audio.pause(); }
+            mp3Paint();
+        }
+        mp3Audio.volume = mp3.vol;
+        mp3Audio.addEventListener('play', () => { music.user(true); mp3Paint(); });
+        mp3Audio.addEventListener('pause', () => { music.user(false); mp3Paint(); });
+        mp3Audio.addEventListener('ended', () => { music.user(false); mp3Step(1); });
+        mp3Audio.addEventListener('error', () => { if (mp3Audio.src) { mp3Q('mp3-sub').textContent = 'This song can\'t be played here.'; music.user(false); } });
+        mp3Audio.addEventListener('timeupdate', () => { const d = mp3Audio.duration; mp3Q('mp3-time').textContent = mp3Fmt(mp3Audio.currentTime); if (Number.isFinite(d) && d > 0 && !mp3El.dataset.seeking) mp3Q('mp3-seek').value = String(Math.round(1000 * mp3Audio.currentTime / d)); });
+        mp3Q('mp3-seek').addEventListener('input', e => { mp3El.dataset.seeking = '1'; const d = mp3Audio.duration; if (Number.isFinite(d)) mp3Q('mp3-time').textContent = mp3Fmt(d * e.target.value / 1000); });
+        mp3Q('mp3-seek').addEventListener('change', e => { delete mp3El.dataset.seeking; const d = mp3Audio.duration; if (Number.isFinite(d)) mp3Audio.currentTime = d * e.target.value / 1000; });
+        mp3Q('mp3-play').addEventListener('click', () => { if (mp3Audio.paused) mp3Play(); else mp3Audio.pause(); });
+        mp3Q('mp3-prev').addEventListener('click', () => { if (mp3Audio.currentTime > 3) mp3Audio.currentTime = 0; else mp3Step(-1); });
+        mp3Q('mp3-next').addEventListener('click', () => mp3Step(1));
+        mp3Q('mp3-shuf').addEventListener('click', () => { mp3.shuffle = !mp3.shuffle; mp3Prefs(); mp3Paint(); });
+        mp3Q('mp3-rep').addEventListener('click', () => { mp3.repeat = !mp3.repeat; mp3Prefs(); mp3Paint(); });
+        mp3Q('mp3-vol').addEventListener('input', e => { mp3.vol = clamp(e.target.value / 100, 0, 1); mp3Audio.volume = mp3.vol; mp3Prefs(); });
+        mp3Q('mp3-min').addEventListener('click', () => { mp3.mini = !mp3.mini; mp3Prefs(); mp3Paint(); });
+        mp3Q('mp3-x').addEventListener('click', () => mp3Show(false));
+        mp3El.querySelector('.mp3-top').addEventListener('click', e => { if (mp3.mini && !e.target.closest('button')) { mp3.mini = false; mp3Prefs(); mp3Paint(); } });
+        mp3Q('mp3-file').addEventListener('change', e => { mp3Add(e.target.files); e.target.value = ''; });
+        mp3Q('mp3-list').addEventListener('click', e => { const d = e.target.closest('[data-del]'); if (d) { mp3Del(Number(d.dataset.del)); return; } const li = e.target.closest('[data-i]'); if (li) mp3Load(Number(li.dataset.i), true); });
+        mp3El.addEventListener('dragover', e => { e.preventDefault(); mp3El.classList.add('drop'); });
+        mp3El.addEventListener('dragleave', () => mp3El.classList.remove('drop'));
+        mp3El.addEventListener('drop', e => { e.preventDefault(); mp3El.classList.remove('drop'); mp3Add(e.dataTransfer && e.dataTransfer.files); });
+        ['keydown', 'keyup', 'keypress'].forEach(t => mp3El.addEventListener(t, e => { if (e.target.closest('input, button') && e.key !== 'Escape') e.stopPropagation(); }));     // (arrow keys on its sliders don't walk you about)
+        mp3Q('mp3-open').addEventListener('click', () => { mp3Show(mp3El.hidden); const sp = document.getElementById('sound-pop'); if (sp && !mp3El.hidden) { const b = document.getElementById('sound-btn'); if (b && !sp.hidden) b.click(); } });
+        try { if ('mediaSession' in navigator) { navigator.mediaSession.setActionHandler('play', () => mp3Play()); navigator.mediaSession.setActionHandler('pause', () => mp3Audio.pause()); navigator.mediaSession.setActionHandler('nexttrack', () => mp3Step(1)); navigator.mediaSession.setActionHandler('previoustrack', () => mp3Step(-1)); } } catch (e) { }
+        ui.mp3 = { show: mp3Show, add: mp3Add, state: () => mp3, audio: mp3Audio };
         const EXPLORE_PAY = 60;
         const explorePlaces = () => Object.keys(WMAP_LABELS).filter(k => k !== 'home' && LOCS[k]);
         function explorerVisit(loc) {                                   // set foot in every place on the map today: a little bonus
@@ -48890,7 +49097,7 @@
         ui.wmap = { open: wmapOpen, close: wmapClose, go: wmapGo, paint: wmapPaint, btns: wmapBtns, panel: wmapP, el: wmapEl, note: wmapNote };
         ui.chat = { lines: chatLines, line: chatLine, min: chatMin, el: chatBoxEl };
         const CMD_HELP = ['/wave /dance /sit /jump /cheer /spin: do an emote (and any dance you own, like /robot)', '/who: who is on your server', '/server Starfall: switch server (or /server 2)',
-            '/settings: sound, screen, chat box and feedback', '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/join Name: join their fight in the crypt', '/crypt: your crypt record', '/where Name: where a player is', '/mute Name and /unmute Name'];
+            '/settings: sound, screen, chat box and feedback', '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/join Name: join their fight in the crypt', '/mp3: your own music player', '/crypt: your crypt record', '/where Name: where a player is', '/mute Name and /unmute Name'];
         const GO_WORDS = { beach: 'beach', starfish: 'beach', mall: 'mall', cosmo: 'mall', cave: 'cave', crystal: 'cave', mine: 'cave', trade: 'trade', manor: 'trade', trading: 'trade', dance: 'dance', club: 'dance', ice: 'ice', frost: 'ice', frostwood: 'ice', lake: 'ice', crypt: 'dungeon', dungeon: 'dungeon', hollow: 'dungeon', home: 'home', house: 'home', green: 'green', village: 'green', town: 'green' };
         function chatCommand(raw) {
             const say = t => chatLine('', t, 'sys'), parts = raw.slice(1).trim().split(/\s+/), cmd = (parts.shift() || '').toLowerCase(), rest = parts.join(' '), s = scene();
@@ -48971,7 +49178,8 @@
                 say(hit.name + ' is ' + (hit.loc === 'home' ? 'at a house' : (L.interior ? 'in the ' + L.name + ' at ' + LOCS[L.home].name : 'at ' + L.name)) + (other ? ', on ' + srvById(hit.sv).name : '') + '.');
                 return true;
             }
-            if (cmd === 'crypt' || cmd === 'stats') {
+            if (cmd === 'mp3' || cmd === 'player' || cmd === 'mymusic') { if (ui.mp3) ui.mp3.show(true); return true; }
+      if (cmd === 'crypt' || cmd === 'stats') {
                 const D = G.dun, k = D.kills || {}, total = Object.values(k).reduce((t, n) => t + (n | 0), 0), top = Object.keys(k).sort((a, b) => k[b] - k[a])[0];
                 say((CLASSES[D.cls] ? CLASSES[D.cls].name + ', level ' + D.level : 'No class yet') + ' · ' + total + ' monsters beaten' + (top && MONSTERS[top] ? ' (most: ' + MONSTERS[top].name + ' x' + k[top] + ')' : '') + ' · ' + (D.done || []).length + ' crypts cleared · deepest Endless floor ' + (D.best || 0) + ' · ' + D.bag.length + ' weapons, ' + (D.chests || 0) + ' chests opened.');
                 return true;
