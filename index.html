@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794314766';
+<script>window.WANDO_BUILD = '1794346198';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -1231,6 +1231,7 @@
   .joy-ghost { left: max(78px, calc(env(safe-area-inset-left) + 70px)); top: auto; bottom: calc(var(--dock-h) + 130px); margin: 0 0 -55px -55px; opacity: .45; }
   html[data-screen="pc"] .joy, html[data-hidejoy="1"] .joy { display: none !important; }
   .joy[hidden] { display: none; }
+  #app:has([role="dialog"]:not([hidden]):not(#gate)) .joy-ghost { display: none; }
   html[data-hidechat="1"] .chatbox { display: none !important; }
   html[data-hideplate="1"] .plate { display: none !important; }
   .sound-pop .snd-plain::after { content: none !important; }
@@ -2067,6 +2068,23 @@
   .wmap-spot:hover .wmap-pill, .wmap-spot:focus-visible .wmap-pill { background: var(--sun); transform: scale(1.08); }
   .wmap-spot:focus-visible { outline: none; }
   .wmap-spot.here .wmap-pill { background: #ffe680; }
+  .wmap-spot.picked .wmap-pill { background: var(--sun); transform: scale(1.1); box-shadow: 0 0 0 3px #fff, 0 2px 0 #120b3a; }
+  .wmap-card { position: absolute; right: 10px; bottom: 10px; z-index: 3; width: min(300px, calc(100% - 20px)); max-height: calc(100% - 20px); overflow: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;
+    border: 3px solid #120b3a; border-radius: 14px; background: #fff8e3; color: #2a1a6a; box-shadow: 0 4px 0 rgba(18, 11, 58, 0.5); pointer-events: none; text-shadow: none; }
+  .wmap-card.left { right: auto; left: 10px; }
+  .wmap-card.tap { pointer-events: auto; }
+  .wmap-card[hidden] { display: none; }
+  .wmap-card-t { font: 800 17px/1.15 var(--font-display); }
+  .wmap-card-here { align-self: flex-start; padding: 1px 8px; border-radius: 8px; background: #ff3d6e; color: #fff; font: 800 11px/1.4 var(--font-display); }
+  .wmap-card-p { margin: 0; font: 700 12.5px/1.35 var(--font-body); }
+  .wmap-card-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  .wmap-card-row small { font: 800 11px/1 var(--font-body); }
+  .wmap-card-chip { padding: 1px 8px; border: 2px solid #2a1a6a; border-radius: 999px; background: #fff; font: 800 11px/1.4 var(--font-body); }
+  .wmap-card .wmap-ev { font-size: 11px; white-space: normal; }
+  .wmap-card-foot { display: flex; gap: 6px; align-items: center; }
+  .wmap-card-foot small { font: 700 11px/1.2 var(--font-body); opacity: 0.75; }
+  .wmap-card-go { flex: 1; }
+  @media (max-width: 640px), (max-height: 500px) { .wmap-card { left: 5px; right: 5px; bottom: 5px; width: auto; padding: 5px 8px; gap: 3px; border-width: 2px; border-radius: 10px; } .wmap-card.left { left: 5px; } .wmap-card.top { bottom: auto; top: 5px; } .wmap-card-t { font-size: 13px; } .wmap-card-p { font-size: 10px; } .wmap-card-p.blurb, .wmap-card-row small { display: none; } .wmap-card .wmap-ev, .wmap-card-chip { font-size: 9px; padding: 0 5px; border-width: 1.5px; } .wmap-card-foot .btn { padding: 3px 10px; font-size: 12px; min-height: 0; } }
   @media (max-width: 560px) { .wmap-pill { padding: 1px 6px; font-size: 10px; border-width: 1.5px; } .wmap-n { font-size: 9px; padding: 0 5px; } .wmap-spot::before { width: 80px; height: 60px; } }   
   .wmap-n { padding: 0 7px; border: 2px solid #120b3a; border-radius: 999px; background: #3fbf5f; color: #fff; font: 800 11px/1.45 var(--font-body); white-space: nowrap; }
   .wmap-you {
@@ -2910,6 +2928,7 @@
     <div class="wmap-board">
       <canvas id="wmap-cv" width="1600" height="992" aria-hidden="true"></canvas>
       <div id="wmap-spots" class="wmap-spots" role="group" aria-label="Places"></div>
+      <div id="wmap-card" class="wmap-card" role="status" hidden></div>
     </div>
     <p id="wmap-soon" class="wmap-soon" hidden></p>
     <div class="wmap-line"><p id="wmap-today" class="wmap-soon wmap-today" hidden></p><label class="wmap-opt" title="Show the minimap while you walk"><input id="wmap-mini" type="checkbox"> Minimap</label></div>
@@ -18145,6 +18164,7 @@
         const run = v.run && typeof v.run === 'object' ? v.run : {};
         out.run = { d: int(run.d, 0, DUNGEONS.length - 1, 0), room: int(run.room, 0, 999, 0), boons: Object.keys(BOONS).filter(k => Array.isArray(run.boons) && run.boons.includes(k)) };
         out.daily = int(v.daily, 0, 1e7, 0);
+        out.cl = v.cl && typeof v.cl === 'object' && Number.isInteger(v.cl.day) && Array.isArray(v.cl.d) ? { day: v.cl.day, d: v.cl.d.filter(n => Number.isInteger(n) && n >= 0 && n < 50).slice(0, 20) } : { day: 0, d: [] };
         out.found = Array.from(new Set((Array.isArray(v.found) ? v.found : []).filter(i => Number.isInteger(i) && armoryDef(i)).concat(out.bag.map(w => w.c)))).slice(0, 5000);
         out.wk = int(v.wk, -999, 99999, -999);
         const tv = v.trade && typeof v.trade === 'object' ? v.trade : null;
@@ -29222,6 +29242,10 @@
                 else {
                     if (!Dn.done.includes(Dn.run.d))
                         Dn.done.push(Dn.run.d), Dn.done.sort((a, b) => a - b);
+                    if (!Dn.cl || Dn.cl.day !== day)
+                        Dn.cl = { day, d: [] };
+                    if (!Dn.cl.d.includes(Dn.run.d))
+                        Dn.cl.d.push(Dn.run.d);
                     coins = 150 * (Dn.run.d + 1);
                     xp = 80 * (Dn.run.d + 1);
                 }
@@ -44295,13 +44319,13 @@
             rows.push(node('div', 'mine-row mine-top', 'Today\'s dungeons (all new every day)'));
             DUNGEONS.forEach((base, i) => {
                 const Dg = dunDef(i, day), open = dunOpenTo(D, i), li = node('div', 'mine-row' + (open ? '' : ' dun-locked')), text = node('div', 'mine-text'), b = el('button', 'btn', { type: 'button', 'data-d': String(i) });
-                const plan = roomPlan(Dg, day), done = Dg.daily ? D.daily === day : D.done.includes(i);
+                const plan = roomPlan(Dg, day), done = Dg.daily ? D.daily === day : !!(D.cl && D.cl.day === day && D.cl.d.includes(i));
                 let blurb = Dg.daily ? 'Today: ' + Dg.mods.map(k => DELVE_MODS[k].name + ' (' + DELVE_MODS[k].blurb.replace(/\.$/, '').toLowerCase() + ')').join(', ') + '. Its boss is ' + AFFIXES[Dg.bossAffix].name.toLowerCase() + '. Made to your level.' : Dg.blurb + ' For level ' + Dg.lv + ' and up.';
                 if (plan)
                     blurb += ' Rooms: ' + plan.map(t => (t === 'boss' ? 'Boss' : ROOM_TYPES[t].name)).join(' → ') + '.';
                 else
                     blurb += ' Your best: floor ' + D.best + '.';
-                text.append(node('b', '', (Dg.daily ? 'Daily Delve: ' : '') + Dg.name + (done ? (Dg.daily ? ' · done today' : ' · cleared') : '')), node('small', '', blurb));
+                text.append(node('b', '', (Dg.daily ? 'Daily Delve: ' : '') + Dg.name + (done ? ' · done today' : '')), node('small', '', blurb));
                 b.textContent = open ? 'Enter' : '🔒 Locked';
                 if (!open)
                     text.appendChild(node('small', 'dun-from', 'Clear ' + dunDef(Dg.daily ? 0 : i - 1, day).name + ' first to open it.'));
@@ -46740,7 +46764,7 @@
                 B.n.title = (wmapNames[loc] || []).slice(0, 12).join(', ');
             });
             try {
-                const E = wmapEvents(), F = wmapFriends(), now = Date.now();
+                const E = wmapEvents(), F = wmapFriends(), now = Date.now(); wmapLast = { E, F, N };
                 Object.keys(wmapBtns).forEach(loc => {
                     const B = wmapBtns[loc], kids = [];
                     const L = E.ev[loc] || [];
@@ -46760,7 +46784,7 @@
                 tEl.hidden = false;
             } catch (e) { }
             const at = s ? s.loc : G.loc;
-            wmapNote.textContent = wmapEl.dataset.say || ((LOCS[at] && LOCS[at].interior && at !== 'home' ? 'You are in the ' + LOCS[at].name + ', at ' + LOCS[here].name + '.' : 'You are at ' + (at === 'home' ? 'your house' : LOCS[at] ? LOCS[at].name : 'Planet Wando') + '.') + ' Click a place to go there.');
+            wmapNote.textContent = wmapEl.dataset.say || ((LOCS[at] && LOCS[at].interior && at !== 'home' ? 'You are in the ' + LOCS[at].name + ', at ' + LOCS[here].name + '.' : 'You are at ' + (at === 'home' ? 'your house' : LOCS[at] ? LOCS[at].name : 'Planet Wando') + '.') + (TOUCH_FIRST ? ' Tap a place to see what is there.' : ' Click a place to go there.'));
         }
         function wmapOpen() {
             for (const k in panels)
@@ -46773,7 +46797,7 @@
             wmapP.open();
             mapBtn.setAttribute('aria-expanded', 'true');
         }
-        function wmapClose() { wmapP.close(); mapBtn.setAttribute('aria-expanded', 'false'); }
+        function wmapClose() { wmapP.close(); mapBtn.setAttribute('aria-expanded', 'false'); try { wmapCardShow(''); } catch (e) { } }
         function wmapGo(loc) {
             const s = scene();
             if (!s || !(loc in WMAP_LABELS))
@@ -46791,10 +46815,50 @@
             s.travelTo(loc);
             return '';
         }
+        let wmapLast = null, wmapPick = '';
+        const wmapCard = document.getElementById('wmap-card');
+        function wmapCardShow(loc, tap) {
+            if (!loc || !wmapBtns[loc]) { wmapCard.hidden = true; wmapPick = ''; Object.values(wmapBtns).forEach(B => B.b.classList.remove('picked')); return; }
+            wmapPick = loc;
+            Object.keys(wmapBtns).forEach(k => wmapBtns[k].b.classList.toggle('picked', k === loc));
+            const L = LOCS[loc], s = scene(), here = wmapWhere(s ? s.loc : G.loc) === loc, D = wmapLast || { E: { ev: {} }, F: {}, N: {} };
+            const kids = [node('b', 'wmap-card-t', loc === 'home' ? 'My House' : L.name)];
+            if (here) kids.push(node('span', 'wmap-card-here', 'You are here'));
+            if (L && L.blurb) kids.push(node('p', 'wmap-card-p blurb', L.blurb));
+            const inside = [...new Set(Object.keys(LOCS).filter(k => k !== 'home' && LOCS[k].home === loc && LOCS[k].interior && LOCS[k].name).map(k => LOCS[k].name))];
+            if (inside.length) { const row = node('div', 'wmap-card-row'); row.append(node('small', '', 'Inside:'), ...inside.map(n => node('span', 'wmap-card-chip', n))); kids.push(row); }
+            const ev = (D.E.ev[loc] || []);
+            if (ev.length) { const row = node('div', 'wmap-card-row'); ev.forEach(x => row.appendChild(node('span', 'wmap-ev' + (x.live ? ' live' : '') + (x.car ? ' wmap-car' : '') + (x.cls || ''), x.txt))); kids.push(row); }
+            const fr = D.F[loc] || [], n = D.N[loc] || 0, names = (wmapNames[loc] || []).slice(0, 6);
+            if (fr.length) kids.push(node('p', 'wmap-card-p', '★ Friends: ' + fr.map(f => f.name + (f.away ? ' (other server)' : '')).join(', ')));
+            kids.push(node('p', 'wmap-card-p', n ? n + (n === 1 ? ' player here: ' : ' players here: ') + names.join(', ') + (n > names.length ? ' and more' : '') : 'Nobody else is here right now.'));
+            const foot = node('div', 'wmap-card-foot');
+            if (tap) {
+                const go = el('button', 'btn wmap-card-go', { type: 'button', 'data-wgo': loc }); go.textContent = here ? 'You are here' : 'Go there'; go.disabled = here;
+                const x = el('button', 'btn plain', { type: 'button', 'data-wcard': 'x' }); x.textContent = 'Close';
+                foot.append(go, x);
+            } else foot.appendChild(node('small', '', here ? 'You are here.' : 'Click to go there.'));
+            kids.push(foot);
+            wmapCard.replaceChildren(...kids);
+            const fx = WMAP_LABELS[loc] ? WMAP_LABELS[loc][0] : 0.5;
+            wmapCard.classList.toggle('left', fx > 0.5);
+            wmapCard.classList.toggle('top', (WMAP_LABELS[loc] ? WMAP_LABELS[loc][1] : 0) > 0.45);
+            wmapCard.classList.toggle('tap', !!tap);
+            wmapCard.hidden = false;
+        }
+        wmapCard.addEventListener('click', e => {
+            if (e.target.closest('[data-wcard]')) { wmapCardShow(''); return; }
+            const b = e.target.closest('[data-wgo]'); if (!b) return;
+            const why = wmapGo(b.dataset.wgo); wmapCardShow('');
+            if (why) { wmapEl.dataset.say = why; wmapPaint(); delete wmapEl.dataset.say; }
+        });
+        wmapSpots.addEventListener('mouseover', e => { if (TOUCH_FIRST || wmapCard.classList.contains('tap')) return; const b = e.target.closest('[data-wgo]'); if (b && b.dataset.wgo !== wmapPick) wmapCardShow(b.dataset.wgo, false); });
+        wmapSpots.addEventListener('mouseleave', () => { if (!wmapCard.classList.contains('tap')) wmapCardShow(''); });
         wmapSpots.addEventListener('click', e => {
             const b = e.target.closest('[data-wgo]');
-            if (!b)
-                return;
+            if (!b) { if (wmapCard.classList.contains('tap')) wmapCardShow(''); return; }
+            if (TOUCH_FIRST && wmapPick !== b.dataset.wgo) { wmapCardShow(b.dataset.wgo, true); return; }     // a phone: the first tap says what is there; Go (or a second tap) goes
+            wmapCardShow('');
             const why = wmapGo(b.dataset.wgo);
             if (why) {
                 wmapEl.dataset.say = why;
