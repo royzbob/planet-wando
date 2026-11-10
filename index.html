@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346523';
+<script>window.WANDO_BUILD = '1794346568';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -31783,7 +31783,7 @@
                 if (!REDUCED)
                     this.tweens.add({ targets: mark, y: n.y - 105, duration: 520, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
                 this.displays.push({ x: n.x, y: n.y + 26, id, kind: 'npc', near: true, tag: this.tag(n.x, n.y + 22, 'E · Talk', 9300, 11), hit: new Phaser.Geom.Rectangle(n.x - 26, n.y - 86, 52, 96) });
-                this.askers.push({ id, mark, text: null });
+                this.askers.push({ id, mark, text: null, x: n.x, y: n.y });
             });
             this.errandMarks();
         }
@@ -46968,7 +46968,7 @@
             localStorage.setItem(WM_KEY, wmOn ? '1' : '0');
         }
         catch (e) { } wmPaint(); });
-        function wmDraw(c, W, H, D, roads, spots, me, others, hot) {
+        function wmDraw(c, W, H, D, roads, spots, me, others, hot, jobs) {
             const B0 = D.bounds || { x: 0, y: 0, w: D.w, h: D.h }, vh = Math.min(D.h, Math.max(B0.y + B0.h + 420, me ? me.y + 260 : 0)), V = { x: 0, y: 0, w: D.w, h: vh };
             const k = Math.min(W / V.w, H / V.h), ox = (W - V.w * k) / 2, oy = (H - V.h * k) / 2, X = x => ox + (x - V.x) * k, Y = y => oy + (y - V.y) * k;
             c.clearRect(0, 0, W, H);
@@ -47027,6 +47027,7 @@
             });
             if (D.car) { c.fillStyle = '#3fa7f5'; c.strokeStyle = '#120b3a'; c.lineWidth = 2; c.beginPath(); c.rect(X(D.car.x) - 6, Y(D.car.y) - 4, 12, 8); c.fill(); c.stroke(); }
             (hot || []).forEach(h => { const t = (Date.now() % 1000) / 1000; c.beginPath(); c.arc(X(h.x), Y(h.y), 8 + t * 14, 0, Math.PI * 2); c.lineWidth = 3; c.strokeStyle = 'rgba(255,61,110,' + (1 - t).toFixed(2) + ')'; c.stroke(); dot(h.x, h.y, 5, '#ff3d6e', '#120b3a'); });
+            (jobs || []).forEach(j => { dot(j.x, j.y, 7, j.ready ? '#3fbf5f' : '#ffd84d', '#120b3a'); c.fillStyle = j.ready ? '#fff' : '#2a1a6a'; c.font = '900 11px sans-serif'; c.textAlign = 'center'; c.fillText(j.ready ? '✓' : '!', X(j.x), Y(j.y) + 0.5); c.textAlign = 'left'; });    // who has a job for you
             others.forEach(p => dot(p.x, p.y, p.friend ? 5 : 4, p.friend ? '#ffd84d' : '#5ec8ff', '#120b3a'));
             if (me) {
                 dot(me.x, me.y, 7, '#fff', '#ff3d6e');
@@ -47049,7 +47050,9 @@
             const others = (ui.others ? ui.others(loc) : []).filter(p => !p.mine && Number.isFinite(p.x) && Number.isFinite(p.y)).map(p => ({ x: p.x, y: p.y, friend: !!(p.uid && fr.has(p.uid)), name: (p.uid && fr.has(p.uid) ? '★ ' : '') + p.name }));
             const roads = (ROADS[loc] || []).map(r => ({ x: r.x, y: r.y, side: r.side, label: LOCS[r.to] ? LOCS[r.to].name.split(' ').pop() : '' }));
             const spots = (s.hotspots || []).filter(h => Number.isFinite(h.x) && Number.isFinite(h.y) && h.kind !== 'road').map(h => ({ x: h.x, y: h.y, door: h.kind === 'door' || h.kind === 'shop', name: h.door && LOCS[h.door] ? LOCS[h.door].name : WM_NAMES[h.kind] || '' }));
-            wmSpots = spots.filter(p => p.name).concat(others);
+            const jobs = [];
+            try { (s.askers || []).forEach(a => { if (!Number.isFinite(a.x)) return; const q = errandNow(a.id); if (q.state === 'new' || q.state === 'ready') jobs.push({ x: a.x, y: a.y, ready: q.state === 'ready', name: ERRANDS[a.id].name + (q.state === 'ready' ? ': your reward is waiting' : ' has a job for you') }); }); } catch (e) { }
+            wmSpots = spots.filter(p => p.name).concat(others, jobs);
             const hot = [];
             try {
                 if (loc === 'green' && rainOn())
@@ -47060,7 +47063,7 @@
             catch (e) { }
             let car = null;
             try { car = wmapCar(); } catch (e) { }
-            wmGeo = wmDraw(c, wmEl.width, wmEl.height, car && car.loc === loc ? Object.assign({}, s.D, { car }) : s.D, roads, spots, { x: s.pz.x, y: s.pz.y + FOOT }, others, hot);
+            wmGeo = wmDraw(c, wmEl.width, wmEl.height, car && car.loc === loc ? Object.assign({}, s.D, { car }) : s.D, roads, spots, { x: s.pz.x, y: s.pz.y + FOOT }, others, hot, jobs);
         }
         setInterval(wmPaint, 250);
         wmEl.addEventListener('mousemove', e => {
