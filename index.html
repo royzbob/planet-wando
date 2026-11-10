@@ -46773,7 +46773,7 @@
             localStorage.setItem(WM_KEY, wmOn ? '1' : '0');
         }
         catch (e) { } wmPaint(); });
-        function wmDraw(c, W, H, D, roads, spots, me, others) {
+        function wmDraw(c, W, H, D, roads, spots, me, others, hot) {
             const B0 = D.bounds || { x: 0, y: 0, w: D.w, h: D.h }, vh = Math.min(D.h, Math.max(B0.y + B0.h + 420, me ? me.y + 260 : 0)), V = { x: 0, y: 0, w: D.w, h: vh };
             const k = Math.min(W / V.w, H / V.h), ox = (W - V.w * k) / 2, oy = (H - V.h * k) / 2, X = x => ox + (x - V.x) * k, Y = y => oy + (y - V.y) * k;
             c.clearRect(0, 0, W, H);
@@ -46830,6 +46830,7 @@
                 c.fillStyle = '#fff';
                 c.fillText(t, tx, ty);
             });
+            (hot || []).forEach(h => { const t = (Date.now() % 1000) / 1000; c.beginPath(); c.arc(X(h.x), Y(h.y), 8 + t * 14, 0, Math.PI * 2); c.lineWidth = 3; c.strokeStyle = 'rgba(255,61,110,' + (1 - t).toFixed(2) + ')'; c.stroke(); dot(h.x, h.y, 5, '#ff3d6e', '#120b3a'); });
             others.forEach(p => dot(p.x, p.y, p.friend ? 5 : 4, p.friend ? '#ffd84d' : '#5ec8ff', '#120b3a'));
             if (me) {
                 dot(me.x, me.y, 7, '#fff', '#ff3d6e');
@@ -46851,7 +46852,15 @@
             const others = (ui.others ? ui.others(loc) : []).filter(p => !p.mine && Number.isFinite(p.x) && Number.isFinite(p.y)).map(p => ({ x: p.x, y: p.y, friend: !!(p.uid && fr.has(p.uid)) }));
             const roads = (ROADS[loc] || []).map(r => ({ x: r.x, y: r.y, side: r.side, label: LOCS[r.to] ? LOCS[r.to].name.split(' ').pop() : '' }));
             const spots = (s.hotspots || []).filter(h => Number.isFinite(h.x) && Number.isFinite(h.y) && h.kind !== 'road').map(h => ({ x: h.x, y: h.y, door: h.kind === 'door' || h.kind === 'shop' }));
-            wmGeo = wmDraw(c, wmEl.width, wmEl.height, s.D, roads, spots, { x: s.pz.x, y: s.pz.y + FOOT }, others);
+            const hot = [];
+            try {
+                if (loc === 'green' && rainOn())
+                    hot.push({ x: PLAZA.x, y: PLAZA.y });
+                if (loc === 'dance' && showOn() && s.D.floor)
+                    hot.push({ x: s.D.floor.x + s.D.floor.cols * s.D.floor.size / 2, y: s.D.floor.y + s.D.floor.rows * s.D.floor.size / 2 });
+            }
+            catch (e) { }
+            wmGeo = wmDraw(c, wmEl.width, wmEl.height, s.D, roads, spots, { x: s.pz.x, y: s.pz.y + FOOT }, others, hot);
         }
         setInterval(wmPaint, 250);
         wmEl.addEventListener('click', e => {
