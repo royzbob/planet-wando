@@ -46889,7 +46889,8 @@
             c.restore();
             return { k, ox, oy, V };
         }
-        let wmGeo = null;
+        let wmGeo = null, wmSpots = [];
+        const WM_NAMES = { shop: 'Shovel Shop', carlot: 'Wando Motors car lot', claw: 'Claw machine', cupcake: 'Cupcake Chaos', dancestudio: 'Dance studio', dj: 'DJ booth', feedducks: 'Feed the ducks', ferris: 'Big Wheel', florist: 'Flower orders', iceshack: 'Ice Fishing Shack', mine: 'The seam', missions: 'Missions board', news: 'Wando Times', pets: 'Pet shop', planetshop: 'Planet shop', recycleyard: 'Recycling Yard', recycle: 'Recycling', sandcastle: 'Sandcastle', ship: 'Spaceship', tackle: 'Tackle Shop', tailor: 'Tailor', wish: 'Wishing fountain', wheelspot: 'Prize Wheel', mazechest: 'Maze prize', harveststand: 'Harvest stand', feast: 'Harvest Feast', dungate: 'Crypt gate', dunshop: 'Grizzle', cardshop: 'Card counter', guestbook: 'Guestbook', presents: 'Presents', candyswap: 'Candy swap', pgame: 'Planet game', hopper: 'Hopper' };
         function wmPaint() {
             const s = scene(), loc = s ? s.loc : null, D = loc ? LOCS[loc] : null;
             const fh = document.getElementById('fish-hud'), gt = document.getElementById('gate'), show = !!(wmOn && (!gt || gt.hidden) && D && s.D && !D.interior && loc !== 'home' && loc !== 'dungeon' && s.pz && D.w && D.h && (!fh || fh.hidden));
@@ -46902,7 +46903,8 @@
             const fr = new Set((G.friends || []).filter(f => f.ok).map(f => f.id));
             const others = (ui.others ? ui.others(loc) : []).filter(p => !p.mine && Number.isFinite(p.x) && Number.isFinite(p.y)).map(p => ({ x: p.x, y: p.y, friend: !!(p.uid && fr.has(p.uid)) }));
             const roads = (ROADS[loc] || []).map(r => ({ x: r.x, y: r.y, side: r.side, label: LOCS[r.to] ? LOCS[r.to].name.split(' ').pop() : '' }));
-            const spots = (s.hotspots || []).filter(h => Number.isFinite(h.x) && Number.isFinite(h.y) && h.kind !== 'road').map(h => ({ x: h.x, y: h.y, door: h.kind === 'door' || h.kind === 'shop' }));
+            const spots = (s.hotspots || []).filter(h => Number.isFinite(h.x) && Number.isFinite(h.y) && h.kind !== 'road').map(h => ({ x: h.x, y: h.y, door: h.kind === 'door' || h.kind === 'shop', name: h.door && LOCS[h.door] ? LOCS[h.door].name : WM_NAMES[h.kind] || '' }));
+            wmSpots = spots.filter(p => p.name);
             const hot = [];
             try {
                 if (loc === 'green' && rainOn())
@@ -46916,6 +46918,17 @@
             wmGeo = wmDraw(c, wmEl.width, wmEl.height, car && car.loc === loc ? Object.assign({}, s.D, { car }) : s.D, roads, spots, { x: s.pz.x, y: s.pz.y + FOOT }, others, hot);
         }
         setInterval(wmPaint, 250);
+        wmEl.addEventListener('mousemove', e => {
+            if (!wmGeo)
+                return;
+            const r = wmEl.getBoundingClientRect(), x = wmGeo.V.x + ((e.clientX - r.left) / r.width * wmEl.width - wmGeo.ox) / wmGeo.k, y = wmGeo.V.y + ((e.clientY - r.top) / r.height * wmEl.height - wmGeo.oy) / wmGeo.k;
+            let best = null, bd = 14 / wmGeo.k * (wmEl.width / r.width);
+            wmSpots.forEach(p => { const d = Math.hypot(p.x - x, p.y - y); if (d < bd) {
+                bd = d;
+                best = p;
+            } });
+            wmEl.title = best ? best.name + ' (click to walk there)' : 'Minimap: click to walk there';
+        });
         wmEl.addEventListener('click', e => {
             const s = scene(), D = s && s.D;
             if (!s || !D || !wmGeo || busy() || !s.setTarget)
