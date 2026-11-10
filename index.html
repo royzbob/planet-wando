@@ -46615,17 +46615,21 @@
             you.hidden = true;
             n.hidden = true;
             const tags = node('span', 'wmap-tags' + (['beach', 'dungeon', 'ice', 'dance', 'trade'].includes(loc) ? ' up' : ''), '');
-            if (LOCS[loc] && LOCS[loc].blurb)
-                b.title = LOCS[loc].blurb;
+            if (LOCS[loc] && LOCS[loc].blurb) {
+                const inside = Object.keys(LOCS).filter(k => k !== 'home' && LOCS[k].home === loc && LOCS[k].interior && LOCS[k].name).map(k => LOCS[k].name);
+                b.title = LOCS[loc].blurb + (inside.length ? '\nInside: ' + [...new Set(inside)].join(', ') : '');
+            }
             b.append(you, pill, n, tags);
             wmapSpots.appendChild(b);
             wmapBtns[loc] = { b, you, n, tags };
         });
         const wmapWhere = loc => (loc === 'home' || !LOCS[loc] ? loc : LOCS[loc].home || loc);
+        const wmapNames = {};
         function wmapCounts() {
             const out = {};
+            Object.keys(wmapNames).forEach(k => delete wmapNames[k]);
             net.peers.forEach(p => { if (p.mine || !p.loc)
-                return; const w = wmapWhere(p.loc); out[w] = (out[w] || 0) + 1; });
+                return; const w = wmapWhere(p.loc); out[w] = (out[w] || 0) + 1; (wmapNames[w] = wmapNames[w] || []).push(p.name); });
             return out;
         }
         function wmapEvents(now = new Date()) {
@@ -46680,6 +46684,7 @@
                 B.b.hidden = loc === 'home' && !G.home.owned;
                 B.n.hidden = !n;
                 B.n.textContent = n + (n === 1 ? ' player' : ' players');
+                B.n.title = (wmapNames[loc] || []).slice(0, 12).join(', ');
             });
             try {
                 const E = wmapEvents(), F = wmapFriends(), now = Date.now();
