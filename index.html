@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794311571';
+<script>window.WANDO_BUILD = '1794311646';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -44009,9 +44009,20 @@
         dq('dun-attack').addEventListener('click', e => { const s = scene(); if (s && s.dunStrike)
             s.dunStrike(); if (e.detail > 0)
             dq('dun-attack').blur(); });
-        dunSkillBtns.forEach((b, i) => b.addEventListener('click', e => { const s = scene(); if (s && s.dunSkill)
-            s.dunSkill(i); paintDunHud(); if (e.detail > 0)
-            b.blur(); }));
+        dunSkillBtns.forEach((b, i) => {
+            let hold = 0, held = false;
+            b.addEventListener('pointerdown', () => { held = false; clearTimeout(hold); hold = setTimeout(() => { held = true; const S = dunSlots(G.dun)[i], s = scene(); if (S && s) {
+                s.noteUntil = 0;
+                s.note(S.name + ' (' + S.mp + ' mana): ' + S.blurb, '#9bbcff');
+            } }, 450); });
+            ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, () => clearTimeout(hold)));
+            b.addEventListener('click', e => { if (held) {
+                held = false;
+                return;
+            } const s = scene(); if (s && s.dunSkill)
+                s.dunSkill(i); paintDunHud(); if (e.detail > 0)
+                b.blur(); });
+        });
         dunPotionBtn.addEventListener('click', e => { dunDrink(); if (e.detail > 0)
             dunPotionBtn.blur(); });
         dunManaBtn.addEventListener('click', e => { dunDrink('mana'); if (e.detail > 0)
@@ -47864,7 +47875,7 @@
         ui.wmap = { open: wmapOpen, close: wmapClose, go: wmapGo, paint: wmapPaint, btns: wmapBtns, panel: wmapP, el: wmapEl, note: wmapNote };
         ui.chat = { lines: chatLines, line: chatLine, min: chatMin, el: chatBoxEl };
         const CMD_HELP = ['/wave /dance /sit /jump /cheer /spin: do an emote (and any dance you own, like /robot)', '/who: who is on your server', '/server Starfall: switch server (or /server 2)',
-            '/settings: sound, screen, chat box and feedback', '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/mute Name and /unmute Name'];
+            '/settings: sound, screen, chat box and feedback', '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/join Name: join their fight in the crypt', '/mute Name and /unmute Name'];
         const GO_WORDS = { beach: 'beach', starfish: 'beach', mall: 'mall', cosmo: 'mall', cave: 'cave', crystal: 'cave', mine: 'cave', trade: 'trade', manor: 'trade', trading: 'trade', dance: 'dance', club: 'dance', ice: 'ice', frost: 'ice', frostwood: 'ice', lake: 'ice', crypt: 'dungeon', dungeon: 'dungeon', hollow: 'dungeon', home: 'home', house: 'home', green: 'green', village: 'green', town: 'green' };
         function chatCommand(raw) {
             const say = t => chatLine('', t, 'sys'), parts = raw.slice(1).trim().split(/\s+/), cmd = (parts.shift() || '').toLowerCase(), rest = parts.join(' '), s = scene();
@@ -47913,6 +47924,17 @@
                 }
                 if (ui.srv)
                     ui.srv.switch(S.id);
+                return true;
+            }
+            if (cmd === 'join' || cmd === 'fight') {
+                const p = byName(rest);
+                if (!p) {
+                    say(rest ? 'Nobody called ' + rest + ' is on your server.' : 'Join who? /join Name');
+                    return true;
+                }
+                const line = ui.dunJoin ? ui.dunJoin(p) : '';
+                if (line)
+                    say(line);
                 return true;
             }
             if (cmd === 'go' || cmd === 'warp' || cmd === 'tp') {
