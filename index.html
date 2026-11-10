@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346606';
+<script>window.WANDO_BUILD = '1794346636';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -438,6 +438,8 @@
     pointer-events: none;
   }
   .plate svg { width: 30px; height: 30px; flex: none; }
+  .plate svg, .plate .plate-name, .plate .plate-area { pointer-events: auto; cursor: pointer; }
+  .plate:has(svg:hover, .plate-name:hover, .plate-area:hover) { filter: brightness(1.06); }
   .world-mini { position: absolute; top: 96px; left: 16px; width: 180px; height: 120px; border: 2px solid var(--ink); border-radius: 10px; background: rgba(18, 11, 58, 0.55); box-shadow: 0 3px 0 var(--plate-shadow); cursor: crosshair; }
   .world-mini[hidden] { display: none; }
   .arrive { position: absolute; left: 50%; top: 15%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; text-align: center; z-index: 5; animation: arrive-in 3.2s ease both; }
@@ -46374,6 +46376,8 @@
                 tell('Send your friend this link: ' + GAME_LINK);
             }
         });
+        document.querySelector('.plate').addEventListener('click', e => { if (e.target.closest('#plate-srv') || G.loc === 'dungeon' && G.dun.run && G.dun.run.room) return; if (ui.wmap) { if (ui.wmap.panel.isOpen()) ui.wmap.close(); else if (!busy()) ui.wmap.open(); } });     // the place's name: the map
+        document.querySelector('.plate').title = 'Open the map (M)';
         document.getElementById('plate-srv').addEventListener('click', e => { if (netPop.hidden)
             netBtn.click(); if (e.detail > 0)
             e.currentTarget.blur(); });
