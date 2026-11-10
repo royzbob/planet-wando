@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794310803';
+<script>window.WANDO_BUILD = '1794310901';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -28879,8 +28879,9 @@
             G.coins += coins;
             Dn.kills[m.kind] = (Dn.kills[m.kind] || 0) + 1;
             this.dunPop(m.x, m.y - 40, '+' + coins + 'c', '#ffe066');
-            this.dunPop(this.pz.x + (Math.random() - 0.5) * 30, this.pz.y + FOOT - 104, '+' + m.xp + ' XP', '#7fe8ff');
-            const ups = dunGainXp(Dn, m.xp);
+            const xp = (this.party || []).length ? Math.round(m.xp * 1.2) : m.xp;
+            this.dunPop(this.pz.x + (Math.random() - 0.5) * 30, this.pz.y + FOOT - 104, '+' + xp + ' XP' + (xp > m.xp ? ' (party)' : ''), '#7fe8ff');
+            const ups = dunGainXp(Dn, xp);
             if (ups) {
                 Dn.hp = dunMaxHp(Dn);
                 Dn.mp = dunMaxMp(Dn);
@@ -45470,6 +45471,20 @@
             if (!net.quiet)
                 net.peers.forEach((p, id) => { if (!now.has(id) && p.uid && G.friends.some(f => f.ok && f.id === p.uid))
                     chatLine('', 'Your friend ' + p.name + ' has left Planet Wando.', 'sys'); });
+            if (!net.quiet)
+                now.forEach((p, id) => {
+                    const was = net.peers.get(id), fr = p.uid && G.friends.some(f => f.ok && f.id === p.uid);
+                    if (!fr || p.mine || p.loc !== 'dungeon' || !(p.fl > 0) || (was && was.loc === 'dungeon' && was.fl > 0))
+                        return;
+                    const Dg = DUNGEONS[Math.floor(p.fl / 1000) - 1];
+                    if (!Dg)
+                        return;
+                    const at = net.toldRun = net.toldRun || {};
+                    if (Date.now() - (at[p.uid] || 0) < 10 * 60000)
+                        return;
+                    at[p.uid] = Date.now();
+                    chatLine('', '⚔️ Your friend ' + p.name + ' is fighting in ' + dunDef(Math.floor(p.fl / 1000) - 1, dayNumber()).name + '. Join them from the Dungeon Gate or your player list!', 'sys');
+                });
             net.peers = now;
             paintNet();
         }
