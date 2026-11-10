@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794311323';
+<script>window.WANDO_BUILD = '1794311459';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2144,7 +2144,8 @@
   .tray-sw span { font: 800 11px/1.1 var(--font-body); }
   .tray-sw[aria-pressed="true"] i { outline: 3px solid var(--sun); outline-offset: 2px; }
   #app[data-loc="dungeon"] .plate { display: none; }
-  #app[data-loc="dungeon"] .hint { display: none; }      
+  #app[data-loc="dungeon"] .hint { display: none; }
+  @media (max-width: 820px) { #app:has(.shop:not([hidden])) .dun-hud { visibility: hidden; } }           
   .dun-map { position: absolute; top: 112px; left: 10px; width: 126px; height: 91px; border: 2px solid #d8a43a; border-radius: 6px; background: rgba(10, 6, 16, 0.78); pointer-events: none; }
   .dun-hud.has-map .dun-party { top: 212px; }
   .dun-hud { position: absolute; inset: 0; bottom: var(--dock-h); display: block; max-width: none; transform: none; left: 0; pointer-events: none; }
@@ -43861,11 +43862,11 @@
                 classOpen(true);
                 return;
             }
-            const day = dayNumber(), rows = [];
+            const day = dayNumber(), rows = [], later = [];
             if (D.bounty.day !== day)
                 D.bounty = { day, p: [0, 0, 0], got: [0, 0, 0] };
             const wk = armoryWeek();
-            rows.push(node('p', 'pet-hint', 'New in the Armory this week: ' + armoryTheme(wk).name + ', 12 weapons. They only drop from bosses, elites, mimics, big chests and the Daily Delve, and not often. Each weekly set drops for ' + ARMORY_RETIRE + ' weeks, then retires: after that, only trading gets you one. Clearing the Delve also wins a prize from the new outfits, boards and furniture.'));
+            later.push(node('p', 'pet-hint', 'New in the Armory this week: ' + armoryTheme(wk).name + ', 12 weapons. They only drop from bosses, elites, mimics, big chests and the Daily Delve, and not often. Each weekly set drops for ' + ARMORY_RETIRE + ' weeks, then retires: after that, only trading gets you one. Clearing the Delve also wins a prize from the new outfits, boards and furniture.'));
             const fights = [];
             net.peers.forEach(p => { if (!p.mine && p.loc === 'dungeon' && p.fl > 0 && p.dg && p.dg.day === day && DUNGEONS[Math.floor(p.fl / 1000) - 1])
                 fights.push(p); });
@@ -43879,12 +43880,12 @@
                     rows.push(li);
                 });
             }
-            rows.push(node('div', 'mine-row mine-top', 'Today\'s bounties'));
+            later.push(node('div', 'mine-row mine-top', 'Today\'s bounties'));
             bountiesToday(day).forEach((bi, i) => {
                 const Bt = BOUNTIES[bi], li = node('div', 'mine-row' + (D.bounty.got[i] ? ' dun-locked' : '')), text = node('div', 'mine-text');
                 text.append(node('b', '', (D.bounty.got[i] ? '✓ ' : '') + Bt.text), node('small', '', (D.bounty.got[i] ? 'Done! ' : D.bounty.p[i] + ' of ' + Bt.n + ' · ') + Bt.coins + ' Coins'));
                 li.appendChild(text);
-                rows.push(li);
+                later.push(li);
             });
             {
                 const lb = node('p', 'pet-hint', 'Deepest in the Endless Crypt: reading the record books...');
@@ -43900,7 +43901,7 @@
                         lb.textContent = t.length ? 'Deepest in the Endless Crypt: ' + t.slice(0, 5).map((r, i) => (i + 1) + '. ' + r.name + ' (floor ' + r.eb + ')').join('  ') + (me >= 5 ? '  ·  You: #' + (me + 1) : '') : 'Nobody has been down the Endless Crypt yet. Be the first!';
                     }).catch(() => { });
                 }
-                rows.push(lb);
+                later.push(lb);
             }
             rows.push(node('div', 'mine-row mine-top', 'Today\'s dungeons (all new every day)'));
             DUNGEONS.forEach((base, i) => {
@@ -43912,12 +43913,16 @@
                 else
                     blurb += ' Your best: floor ' + D.best + '.';
                 text.append(node('b', '', (Dg.daily ? 'Daily Delve: ' : '') + Dg.name + (done ? (Dg.daily ? ' · done today' : ' · cleared') : '')), node('small', '', blurb));
-                b.textContent = open ? 'Enter' : Dg.daily ? 'Clear ' + dunDef(0, day).name + ' first' : 'Clear ' + dunDef(i - 1, day).name + ' first';
+                b.textContent = open ? 'Enter' : '🔒 Locked';
+                if (!open)
+                    text.appendChild(node('small', 'dun-from', 'Clear ' + dunDef(Dg.daily ? 0 : i - 1, day).name + ' first to open it.'));
                 b.disabled = !open || !D.cls;
                 li.append(text, b);
                 rows.push(li);
             });
-            gateList.replaceChildren(...rows);
+            const news = later.shift();
+            later.push(news);
+            gateList.replaceChildren(...rows, ...later);
             dq('dungate-msg').textContent = D.cls ? (D.level < 3 && !D.done.length ? 'Start with the Goblin Warrens. Click to attack where you click, or click a monster to keep at it.' : 'Pick a dungeon.') : '';
             gateP.open();
         }
