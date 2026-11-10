@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794314284';
+<script>window.WANDO_BUILD = '1794314387';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -29202,22 +29202,29 @@
             return out;
         }
         wayArrow() {
-            const t = this.stairs && this.stairs.open ? this.stairs : this.portal, g = this.wayG || (this.wayG = this.add.graphics().setDepth(9600));
+            const g = this.wayG || (this.wayG = this.add.graphics().setDepth(9600));
             g.clear();
-            if (!t || this.dunOver)
+            if (this.dunOver)
                 return;
+            const way = this.stairs && this.stairs.open ? this.stairs : this.portal, ts = [];
+            if (way)
+                ts.push([way.x, way.y, way === this.portal ? 0xb06bff : 0x7dff9a]);
+            (this.party || []).forEach(p => { if (p.dn)
+                ts.push([p.x, p.y, 0xff4a4a]); });
             const cam = this.cameras.main, V = cam.worldView, z = typeof cam.zoom === 'number' && cam.zoom > 0 ? cam.zoom : 1, pad = 46 / z;
             if (!V || !V.width)
                 return;
-            if (t.x > V.x + pad && t.x < V.right - pad && t.y > V.y + pad && t.y < V.bottom - pad)
-                return;
-            const cx = V.centerX, cy = V.centerY, dx = t.x - cx, dy = t.y - cy, k = Math.min(Math.abs((V.width / 2 - pad) / (dx || 1e-6)), Math.abs((V.height / 2 - pad) / (dy || 1e-6)));
-            const x = cx + dx * k, y = cy + dy * k, a = Math.atan2(dy, dx), r = 18 / z, pulse = REDUCED ? 1 : 0.75 + 0.25 * Math.sin(this.time.now / 160);
-            const pt = (ang, len) => ({ x: x + Math.cos(a + ang) * len, y: y + Math.sin(a + ang) * len });
-            g.fillStyle(0x0a0610, 0.7);
-            g.fillCircle(x, y, r * 1.25);
-            g.fillStyle(t === this.portal ? 0xb06bff : 0x7dff9a, pulse);
-            g.fillTriangle(pt(0, r).x, pt(0, r).y, pt(2.5, r).x, pt(2.5, r).y, pt(-2.5, r).x, pt(-2.5, r).y);
+            const r = 18 / z, pulse = REDUCED ? 1 : 0.75 + 0.25 * Math.sin(this.time.now / 160);
+            ts.forEach(([tx, ty, col]) => {
+                if (tx > V.x + pad && tx < V.right - pad && ty > V.y + pad && ty < V.bottom - pad)
+                    return;
+                const cx = V.centerX, cy = V.centerY, dx = tx - cx, dy = ty - cy, k = Math.min(Math.abs((V.width / 2 - pad) / (dx || 1e-6)), Math.abs((V.height / 2 - pad) / (dy || 1e-6)));
+                const x = cx + dx * k, y = cy + dy * k, a = Math.atan2(dy, dx), pt = (ang, len) => [x + Math.cos(a + ang) * len, y + Math.sin(a + ang) * len];
+                g.fillStyle(0x0a0610, 0.7);
+                g.fillCircle(x, y, r * 1.25);
+                g.fillStyle(col, pulse);
+                g.fillTriangle(...pt(0, r), ...pt(2.5, r), ...pt(-2.5, r));
+            });
         }
         dunPing(x, y, who) {
             this.pings = (this.pings || []).filter(q => q.until > this.time.now).concat([{ x, y, until: this.time.now + 4000 }]);
