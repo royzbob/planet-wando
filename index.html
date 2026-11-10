@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794353732';
+<script>window.WANDO_BUILD = '1794353871';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -442,6 +442,22 @@
   .plate:has(svg:hover, .plate-name:hover, .plate-area:hover) { filter: brightness(1.06); }
   .world-mini { position: absolute; top: 96px; left: 16px; width: 180px; height: 120px; border: 2px solid var(--ink); border-radius: 10px; background: rgba(18, 11, 58, 0.55); box-shadow: 0 3px 0 var(--plate-shadow); cursor: crosshair; }
   .world-mini[hidden] { display: none; }
+  .pane-stats { flex: 1; min-width: 0; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
+  .profile-main:has(#pane-stats:not([hidden])) .portrait { display: none; }
+  .pane-stats[hidden] { display: none; }
+  .st-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .st-tile { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 4px; border: 2px solid var(--ink, #2a1a6a); border-radius: 12px; background: #fff8e3; color: #2a1a6a; text-align: center; }
+  .st-tile .st-ic { font-size: 18px; line-height: 1; }
+  .st-tile b { font: 800 16px/1.15 var(--font-display); }
+  .st-tile small { font: 700 10.5px/1.15 var(--font-body); opacity: 0.8; }
+  .st-row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 4px; border-bottom: 1px dashed rgba(42, 26, 106, 0.25); font: 700 12.5px/1.35 var(--font-body); }
+  .st-row b { text-align: right; }
+  .st-kills { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; }
+  .st-h { font: 800 13px/1.2 var(--font-display); }
+  .st-bar { display: grid; grid-template-columns: 110px 1fr 40px; align-items: center; gap: 6px; font: 700 11.5px/1.2 var(--font-body); }
+  .st-bar i { display: block; height: 10px; border-radius: 5px; background: linear-gradient(90deg, #ff6a6a, #ff3d6e); border: 1.5px solid #2a1a6a; }
+  .st-bar b { text-align: right; }
+  .st-note { margin: 4px 0 0; font: 700 10.5px/1.3 var(--font-body); opacity: 0.7; }
   .mp3 { position: absolute; right: 16px; bottom: calc(var(--dock-h) + 12px); z-index: 55; width: 290px; box-sizing: border-box; padding: 8px 10px 9px; display: flex; flex-direction: column; gap: 6px;
     border: 3px solid #120b3a; border-radius: 16px; background: linear-gradient(#3a2a8a, #221660); color: #fff; box-shadow: 0 4px 0 #120b3a, 0 10px 24px rgba(0, 0, 0, 0.35); font: 700 12px/1.25 var(--font-body); }
   .mp3[hidden] { display: none; }
@@ -621,7 +637,7 @@
     font: 800 13px/1.3 var(--font-body); white-space: nowrap;
   }
   .coins svg { width: 18px; height: 18px; }
-  .tabs { flex: none; display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--ink); border-radius: 12px; overflow: hidden; }
+  .tabs { flex: none; display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid var(--ink); border-radius: 12px; overflow: hidden; }
   .tab {
     padding: 5px 0; border: 0;
     background: transparent; color: var(--ink);
@@ -2703,6 +2719,7 @@
     <div class="tabs" role="tablist" aria-label="Profile sections">
       <button id="tab-profile" class="tab" type="button" role="tab" data-tab="profile" aria-selected="true" aria-controls="pane-profile">Profile</button>
       <button id="tab-wardrobe" class="tab" type="button" role="tab" data-tab="wardrobe" aria-selected="false" aria-controls="pane-wardrobe">Wardrobe</button>
+      <button id="tab-stats" class="tab" type="button" role="tab" data-tab="stats" aria-selected="false" aria-controls="pane-stats">Stats</button>
     </div>
     <div class="profile-main">
       <div class="portrait">
@@ -2714,6 +2731,7 @@
         <h3>Badges</h3>
         <ul id="badge-list" class="badge-list"></ul>
       </div>
+      <div id="pane-stats" class="pane-stats" role="tabpanel" aria-labelledby="tab-stats" hidden></div>
       <div id="pane-wardrobe" class="pane-wardrobe" role="tabpanel" aria-labelledby="tab-wardrobe" hidden>
         <p class="free-note"><span class="free-tag">New</span> Hats, hair, tops, shoes and more.</p>
         <div id="wardrobe-body" class="wardrobe-body"></div>
@@ -4601,6 +4619,10 @@
             f.gb = v.gb.filter(e => e && typeof e.n === 'string' && typeof e.t === 'string' && Number.isFinite(e.at)).slice(0, 30).map(e => ({ n: cleanText(e.n, 16), t: cleanText(e.t, 80), at: e.at }));
         if (Number.isInteger(v.party))
             f.party = v.party;
+        if (v.st && typeof v.st === 'object') {                      // lifetime stats: playtime (s), days played, last day, Coins earned, knock-outs, Explorer days
+            const n = (x, hi) => (Number.isFinite(x) ? clamp(Math.floor(x), 0, hi) : 0);
+            f.st = { pt: n(v.st.pt, 1e9), dp: n(v.st.dp, 1e5), ld: n(v.st.ld, 1e7), ce: n(v.st.ce, 1e12), ko: n(v.st.ko, 1e7), ex: n(v.st.ex, 1e5), since: n(v.st.since, 1e7) };
+        }
         if (v.ex && typeof v.ex === 'object' && Number.isInteger(v.ex.day) && Array.isArray(v.ex.v))
             f.ex = { day: v.ex.day, v: v.ex.v.filter(k => typeof k === 'string' && k.length < 20).slice(0, 20), paid: !!v.ex.paid };
         if (Array.isArray(v.dances))
@@ -23303,6 +23325,7 @@
             ai: q.loc === 'trade' && q.ai && typeof q.ai === 'object' ? q.ai : null,
             lv: Number.isInteger(q.lv) ? clamp(q.lv, 1, 50) : 0,
             cl: Number.isInteger(q.cl) && Object.keys(CLASSES)[q.cl] ? Object.keys(CLASSES)[q.cl] : '',
+            sx: Array.isArray(q.sx) && q.sx.length === 2 && q.sx.every(v => Number.isInteger(v) && v >= 0) ? [Math.min(q.sx[0], 1e6), Math.min(q.sx[1], 1e8)] : null,
             ti: Number.isInteger(q.ti) && q.ti > 0 && q.ti < PLAYER_TITLES.length ? q.ti : 0,
             tb: q.loc === 'trade' && Number.isInteger(q.tb) ? clamp(q.tb, 0, 99999) : 0,
             card: Number.isInteger(q.card) && collDef('c', q.card) ? q.card : -1,
@@ -38677,7 +38700,7 @@
                 closePhone();
         };
         const tabs = card.querySelectorAll('[role="tab"]');
-        const panes = { profile: document.getElementById('pane-profile'), wardrobe: document.getElementById('pane-wardrobe') };
+        const panes = { profile: document.getElementById('pane-profile'), wardrobe: document.getElementById('pane-wardrobe'), stats: document.getElementById('pane-stats') };
         card.querySelector('.tabs').addEventListener('click', e => {
             const t = e.target.closest('[role="tab"]');
             if (!t)
@@ -38685,6 +38708,8 @@
             tabs.forEach(x => x.setAttribute('aria-selected', String(x === t)));
             for (const name in panes)
                 panes[name].hidden = name !== t.dataset.tab;
+            if (t.dataset.tab === 'stats' && ui.statsPaint)
+                ui.statsPaint();
             if (e.detail > 0)
                 t.blur();
         });
@@ -38694,6 +38719,7 @@
             card.classList.add('closing');
             closeTimer = setTimeout(() => { card.hidden = true; card.classList.remove('closing'); }, REDUCED ? 0 : 150);
         };
+        ui.openProfile = openProfile;
         const toggleProfile = () => (card.hidden || card.classList.contains('closing') ? openProfile() : closeProfile());
         ui.onAvatarClick = toggleProfile;
         ui.onEmote = setEmoteUI;
@@ -46159,7 +46185,7 @@
                 return null;
             return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
                 boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, sh: G.riding && !s.boating && shineOn() ? 1 : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
-                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), sp: s.spar ? [Math.max(0, Math.round(s.spar.hp)), s.spar.max] : 0, pv: s.spar && s.pvOut ? s.pvOut : 0, sl: s.sparLost || 0, bo: s.fish && s.bobber && s.bobber.visible ? [Math.round(s.bobber.x), Math.round(s.bobber.y), s.fish.state === 'bite' || s.fish.state === 'reel' ? 1 : 0] : 0, dn: s.loc === 'dungeon' && s.downAt ? 1 : 0, lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, cl: G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
+                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), sp: s.spar ? [Math.max(0, Math.round(s.spar.hp)), s.spar.max] : 0, pv: s.spar && s.pvOut ? s.pvOut : 0, sl: s.sparLost || 0, bo: s.fish && s.bobber && s.bobber.visible ? [Math.round(s.bobber.x), Math.round(s.bobber.y), s.fish.state === 'bite' || s.fish.state === 'reel' ? 1 : 0] : 0, dn: s.loc === 'dungeon' && s.downAt ? 1 : 0, lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, cl: G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1, sx: ui.statsShare ? ui.statsShare() : 0, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
         }
         const netHeld = s => { const D = G.dun, w = s.loc === 'dungeon' && D && D.eq >= 0 ? D.bag[D.eq] : null; return w && Number.isInteger(w.c) ? w.c : -1; };
         const netArmor = s => { const W = s.loc === 'dungeon' && G.dun && G.dun.worn; return W && (W.h || W.b) ? [W.h ? [W.h.a, W.h.r] : 0, W.b ? [W.b.a, W.b.r] : 0] : 0; };
@@ -47471,7 +47497,7 @@
             pcardWho = p;
             pcardNote.textContent = '';
             const d = p.card >= 0 ? collDef('c', p.card) : null;
-            pcardPaint(p.name, p.card, p.look, (p.lv ? (CLASSES[p.cl] ? CLASSES[p.cl].name : 'Fighter') + ' level ' + p.lv + ' · ' : '') + 'at the ' + (LOCS[p.loc] ? LOCS[p.loc].name : 'town') + (d ? ' · card: ' + d.name : '') + (p.ad ? ' · "' + p.ad + '"' : ''));
+            pcardPaint(p.name, p.card, p.look, (p.lv ? (CLASSES[p.cl] ? CLASSES[p.cl].name : 'Fighter') + ' level ' + p.lv + ' · ' : '') + 'at the ' + (LOCS[p.loc] ? LOCS[p.loc].name : 'town') + (d ? ' · card: ' + d.name : '') + (p.sx ? ' · ⏱ ' + p.sx[0] + 'h played · ⚔️ ' + p.sx[1].toLocaleString() + ' monsters beaten' : '') + (p.ad ? ' · "' + p.ad + '"' : ''));
             const friend = typeof friendOf === 'function' && p.uid ? friendOf(p.uid) : null;
             document.getElementById('pcard-friend').hidden = !p.uid || !!friend;
             document.getElementById('pcard-trade').hidden = !p.uid;
@@ -49073,6 +49099,49 @@
         mp3Q('mp3-open').addEventListener('click', () => { mp3Show(mp3El.hidden); const sp = document.getElementById('sound-pop'); if (sp && !mp3El.hidden) { const b = document.getElementById('sound-btn'); if (b && !sp.hidden) b.click(); } });
         try { if ('mediaSession' in navigator) { navigator.mediaSession.setActionHandler('play', () => mp3Play()); navigator.mediaSession.setActionHandler('pause', () => mp3Audio.pause()); navigator.mediaSession.setActionHandler('nexttrack', () => mp3Step(1)); navigator.mediaSession.setActionHandler('previoustrack', () => mp3Step(-1)); } } catch (e) { }
         ui.mp3 = { show: mp3Show, add: mp3Add, state: () => mp3, audio: mp3Audio };
+        // ── Stats: playtime, monsters beaten, fish, Coins earned and the rest (kept in G.fan.st; the crypt and fish counts come from their own saves) ──
+        const ST = () => { const F = G.fan; if (!F.st) F.st = { pt: 0, dp: 0, ld: 0, ce: 0, ko: 0, ex: 0, since: dayNumber() }; if (!F.st.since) F.st.since = dayNumber(); return F.st; };
+        const BOSS_KINDS = ['king', 'lord', 'lich', 'queen'];
+        let stCoins = null;
+        setInterval(() => {                                           // every 10 seconds: time played (not while away), new days, Coins earned
+            if (!G.fan || !account.made) return;
+            const st = ST(), day = dayNumber();
+            if (!isIdle()) st.pt += 10;
+            if (st.ld !== day) { st.ld = day; st.dp++; }
+            if (stCoins !== null && G.coins > stCoins) st.ce += G.coins - stCoins;
+            stCoins = G.coins;
+        }, 10000);
+        { const was = ui.onDied; ui.onDied = by => { try { ST().ko++; } catch (e) { } if (was) was(by); }; }
+        const stKills = () => { const k = (G.dun && G.dun.kills) || {}; let all = 0, boss = 0; Object.keys(k).forEach(m => { const n = k[m] | 0; all += n; if (BOSS_KINDS.includes(m)) boss += n; }); return { k, all, boss }; };
+        const stTime = sec => { const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return h ? h + 'h ' + m + 'm' : m + 'm'; };
+        ui.statsShare = () => { try { return [Math.floor(ST().pt / 3600), stKills().all]; } catch (e) { return 0; } };
+        function statsPaint() {
+            const pane = document.getElementById('pane-stats'), st = ST(), K = stKills(), D = G.dun || {}, log = G.log || {};
+            let fish = 0, kinds = 0, big = null;
+            Object.keys(log).forEach(id => { const e = log[id]; if (!e) return; fish += e.n | 0; kinds++; const F2 = FISH.find(x => x.id === id); if (F2 && (!big || e.best > big.lb)) big = { name: F2.name, lb: e.best }; });
+            const tile = (ic, v, label) => { const t = node('div', 'st-tile'); t.append(node('span', 'st-ic', ic), node('b', '', v), node('small', '', label)); return t; };
+            const tiles = node('div', 'st-tiles');
+            tiles.append(tile('⏱️', stTime(st.pt), 'played'), tile('📅', String(Math.max(1, st.dp)), st.dp === 1 ? 'day played' : 'days played'), tile('⚔️', K.all.toLocaleString(), 'monsters beaten'),
+                tile('👑', String(K.boss), K.boss === 1 ? 'boss beaten' : 'bosses beaten'), tile('🎣', fish.toLocaleString(), 'fish caught'), tile('🪙', st.ce.toLocaleString(), 'Coins earned'));
+            const rows = [];
+            const row = (label, val) => { const r = node('div', 'st-row'); r.append(node('span', '', label), node('b', '', val)); rows.push(r); };
+            row('Crypt class', CLASSES[D.cls] ? CLASSES[D.cls].name + ', level ' + D.level : 'None yet');
+            row('Dungeons cleared', String((D.done || []).filter(i => DUNGEONS[i] && !DUNGEONS[i].daily && DUNGEONS[i].rooms).length) + ' of ' + DUNGEONS.filter(d => d.rooms && !d.daily).length);
+            row('Deepest Endless floor', String(D.best || 0));
+            row('Chests opened', String(D.chests || 0));
+            row('Knocked out', st.ko + (st.ko === 1 ? ' time' : ' times'));
+            row('Fish species found', kinds + ' of ' + FISH.length);
+            if (big) row('Biggest catch', big.name + ', ' + (Math.round(big.lb * 10) / 10) + ' lb');
+            row('Explorer days', String(st.ex));
+            row('Friends', String((G.friends || []).filter(f => f.ok).length));
+            row('Coins now', G.coins.toLocaleString());
+            const top = Object.keys(K.k).filter(m => MONSTERS[m] && K.k[m] > 0).sort((a, b) => K.k[b] - K.k[a]).slice(0, 6);
+            const kills = node('div', 'st-kills');
+            if (top.length) { kills.append(node('b', 'st-h', 'Most beaten')); top.forEach(m => { const r = node('div', 'st-bar'), w = Math.max(6, Math.round(100 * K.k[m] / K.k[top[0]])); const bar = node('i', ''); bar.style.width = w + '%'; r.append(node('span', '', MONSTERS[m].name), bar, node('b', '', String(K.k[m]))); kills.append(r); }); }
+            pane.replaceChildren(tiles, ...rows, kills, node('p', 'st-note', 'Counting since ' + (st.since ? new Date((st.since) * 86400000 + 43200000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'today') + '. Others see your hours and monster count on your player card.'));
+        }
+        ui.statsPaint = statsPaint;
+        ui.statsOpen = () => { const b = document.getElementById('tab-stats'); if (ui.openProfile) ui.openProfile(); else { const av = document.querySelector('.avatar-btn, #avatar'); if (av) av.click(); } if (b) b.click(); };
         const EXPLORE_PAY = 60;
         const explorePlaces = () => Object.keys(WMAP_LABELS).filter(k => k !== 'home' && LOCS[k]);
         function explorerVisit(loc) {                                   // set foot in every place on the map today: a little bonus
@@ -49083,7 +49152,7 @@
             F.ex.v.push(w);
             const n = F.ex.v.filter(k => all.includes(k)).length;
             if (n >= all.length && !F.ex.paid) {
-                F.ex.paid = true; G.coins += EXPLORE_PAY; sfx.chime();
+                F.ex.paid = true; G.coins += EXPLORE_PAY; sfx.chime(); try { ST().ex++; } catch (e) { }
                 chatLine('', '🗺️ Explorer! You visited all ' + all.length + ' places on the map today: +' + EXPLORE_PAY + ' Coins.', 'sys');
                 paintState(); saveGame();
             } else if (n === all.length - 1 && !F.ex.paid) { const left = all.find(k => !F.ex.v.includes(k)); chatLine('', '🗺️ Explorer: one place left today, ' + (LOCS[left] ? LOCS[left].name : left) + '! Visit it for ' + EXPLORE_PAY + ' Coins.', 'sys'); }
@@ -49097,7 +49166,7 @@
         ui.wmap = { open: wmapOpen, close: wmapClose, go: wmapGo, paint: wmapPaint, btns: wmapBtns, panel: wmapP, el: wmapEl, note: wmapNote };
         ui.chat = { lines: chatLines, line: chatLine, min: chatMin, el: chatBoxEl };
         const CMD_HELP = ['/wave /dance /sit /jump /cheer /spin: do an emote (and any dance you own, like /robot)', '/who: who is on your server', '/server Starfall: switch server (or /server 2)',
-            '/settings: sound, screen, chat box and feedback', '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/join Name: join their fight in the crypt', '/mp3: your own music player', '/crypt: your crypt record', '/where Name: where a player is', '/mute Name and /unmute Name'];
+            '/settings: sound, screen, chat box and feedback', '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/join Name: join their fight in the crypt', '/mp3: your own music player', '/crypt: your crypt record', '/stats: your playtime, kills and more', '/where Name: where a player is', '/mute Name and /unmute Name'];
         const GO_WORDS = { beach: 'beach', starfish: 'beach', mall: 'mall', cosmo: 'mall', cave: 'cave', crystal: 'cave', mine: 'cave', trade: 'trade', manor: 'trade', trading: 'trade', dance: 'dance', club: 'dance', ice: 'ice', frost: 'ice', frostwood: 'ice', lake: 'ice', crypt: 'dungeon', dungeon: 'dungeon', hollow: 'dungeon', home: 'home', house: 'home', green: 'green', village: 'green', town: 'green' };
         function chatCommand(raw) {
             const say = t => chatLine('', t, 'sys'), parts = raw.slice(1).trim().split(/\s+/), cmd = (parts.shift() || '').toLowerCase(), rest = parts.join(' '), s = scene();
@@ -49179,7 +49248,8 @@
                 return true;
             }
             if (cmd === 'mp3' || cmd === 'player' || cmd === 'mymusic') { if (ui.mp3) ui.mp3.show(true); return true; }
-      if (cmd === 'crypt' || cmd === 'stats') {
+      if (cmd === 'stats' || cmd === 'playtime') { if (ui.statsOpen) ui.statsOpen(); return true; }
+      if (cmd === 'crypt') {
                 const D = G.dun, k = D.kills || {}, total = Object.values(k).reduce((t, n) => t + (n | 0), 0), top = Object.keys(k).sort((a, b) => k[b] - k[a])[0];
                 say((CLASSES[D.cls] ? CLASSES[D.cls].name + ', level ' + D.level : 'No class yet') + ' · ' + total + ' monsters beaten' + (top && MONSTERS[top] ? ' (most: ' + MONSTERS[top].name + ' x' + k[top] + ')' : '') + ' · ' + (D.done || []).length + ' crypts cleared · deepest Endless floor ' + (D.best || 0) + ' · ' + D.bag.length + ' weapons, ' + (D.chests || 0) + ' chests opened.');
                 return true;
