@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794270200';
+<script>window.WANDO_BUILD = '1794270378';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -34018,6 +34018,8 @@
             this.pz.x = at.x;
             this.pz.y = at.y - FOOT;
             this.flip = at.f || 1;
+            (this.hotspots || []).forEach(h => { if (h.door || h.room)
+                h.inside = Math.hypot(at.x - h.x, at.y - h.y) < h.r; });
             G.park = null;
             G.riding = true;
             sfx.key();
@@ -34031,10 +34033,31 @@
                 ui.onState();
             return true;
         }
+        parkClear(x, y) {
+            const B = this.D.bounds;
+            for (let k = 0; k < 4; k++) {
+                const h = (this.hotspots || []).find(q => (q.door || q.room) && q.r > 0 && Math.hypot(x - q.x, y - q.y) < q.r + 70);
+                if (!h)
+                    break;
+                let dx = x - h.x, dy = y - h.y, l = Math.hypot(dx, dy);
+                if (l < 8) {
+                    dx = 0;
+                    dy = 1;
+                    l = 1;
+                }
+                const want = h.r + 90;
+                x = h.x + dx / l * want;
+                y = h.y + Math.max(0.35, dy / l) * want;
+                x = clamp(x, B.x + 70, B.x + B.w - 70);
+                y = clamp(y, B.y + 40, B.y + B.h - 10);
+            }
+            return { x, y };
+        }
         carParkHere() {
             if (!G.board || G.board.kind !== 'car')
                 return;
-            G.park = CAR_LOCS.includes(this.loc) && this.pz ? cleanPark({ id: G.board.id, loc: this.loc, x: this.pz.x, y: this.pz.y + FOOT, f: this.flip < 0 ? -1 : 1 }) : null;
+            const spot = this.pz ? this.parkClear(this.pz.x, this.pz.y + FOOT) : null;
+            G.park = CAR_LOCS.includes(this.loc) && spot ? cleanPark({ id: G.board.id, loc: this.loc, x: spot.x, y: spot.y, f: this.flip < 0 ? -1 : 1 }) : null;
             G.riding = false;
             sfx.thud();
             saveGame();
@@ -34043,7 +34066,15 @@
             this.carParkedShow();
         }
         carParkedShow() {
-            const car = G.board, at = car && car.kind === 'car' && !G.riding ? carSpotOf(car) : null, want = at && at.loc === this.loc ? car.id + '|' + at.x + ',' + at.y + ',' + at.f : '';
+            const car = G.board;
+            if (car && car.kind === 'car' && !G.riding && G.park && G.park.id === car.id && G.park.loc === this.loc) {
+                const c = this.parkClear(G.park.x, G.park.y);
+                if (Math.hypot(c.x - G.park.x, c.y - G.park.y) > 1) {
+                    G.park = cleanPark(Object.assign({}, G.park, { x: c.x, y: c.y })) || G.park;
+                    saveGame();
+                }
+            }
+            const at = car && car.kind === 'car' && !G.riding ? carSpotOf(car) : null, want = at && at.loc === this.loc ? car.id + '|' + at.x + ',' + at.y + ',' + at.f : '';
             if (want === this.parkFor)
                 return;
             this.parkFor = want;
