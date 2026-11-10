@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794312363';
+<script>window.WANDO_BUILD = '1794312577';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2482,6 +2482,7 @@
 .boss-intro.out{opacity:0}
 @keyframes bossIn{from{opacity:0;transform:scaleX(.4)}}
 @media (prefers-reduced-motion:reduce){.boss-intro{animation:none}}
+.gbook-form{display:flex;gap:6px;margin:0 0 8px}.gbook-form input{flex:1;min-width:0;padding:7px 9px;border:2px solid #8a5a34;border-radius:8px;font:700 13px var(--font-body)}
 .died{position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;background:radial-gradient(ellipse at center,rgba(70,0,0,.55),rgba(8,0,0,.9));animation:diedIn .45s ease-out;transition:opacity .6s}
 .died b{font:900 clamp(44px,12vw,78px)/1 "Baloo 2","Trebuchet MS",sans-serif;color:#ff3b3b;letter-spacing:4px;text-shadow:0 5px 0 #3a0000,0 0 26px rgba(255,30,30,.6)}
 .died small{font:800 16px "Baloo 2","Trebuchet MS",sans-serif;color:#ffd0c8;text-shadow:0 2px 0 #3a0000}
@@ -3224,6 +3225,17 @@
     <div class="shop-body">
       <div id="dungate-list" class="pets-body"></div>
       <p id="dungate-msg" class="deed-msg" role="status"></p>
+    </div>
+  </section>
+  <section id="gbook" class="shop furn mine" role="dialog" aria-labelledby="gbook-title" hidden>
+    <header class="shop-head">
+      <h2 id="gbook-title"><span>📖 Guestbook</span></h2>
+      <button id="gbook-close" class="profile-close" type="button" aria-label="Close"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg></button>
+    </header>
+    <div class="shop-body">
+      <form id="gbook-form" class="gbook-form" autocomplete="off" hidden><input id="gbook-text" type="text" maxlength="80" placeholder="Write something nice!"><button class="btn" type="submit">Sign</button></form>
+      <div id="gbook-list" class="pets-body"></div>
+      <p id="gbook-msg" class="deed-msg" role="status"></p>
     </div>
   </section>
   <section id="coll" class="shop furn coll" role="dialog" aria-labelledby="coll-title" hidden>
@@ -4408,6 +4420,8 @@
             f.shows = Math.min(v.shows, 1e6);
         if (Number.isInteger(v.last))
             f.last = v.last;
+        if (Array.isArray(v.gb))
+            f.gb = v.gb.filter(e => e && typeof e.n === 'string' && typeof e.t === 'string' && Number.isFinite(e.at)).slice(0, 30).map(e => ({ n: cleanText(e.n, 16), t: cleanText(e.t, 80), at: e.at }));
         if (Number.isInteger(v.party))
             f.party = v.party;
         if (Array.isArray(v.dances))
@@ -31585,6 +31599,21 @@
             this.homeBack.spot = this.hotspots[this.hotspots.length - 1];
             this.homeBack.hit = this.homeBack.spot.hit;
             this.hotspot('door', cx, D.h - 50, 26, new Phaser.Geom.Rectangle(cx - 60, D.h - 92, 120, 92), { door: D.home });
+            bake(this, 'gbook', 48, 60, c => {
+                inked(c, '#7a4f32', '#1d1424', 2, q => rr(q, 20, 26, 8, 30, 2));
+                inked(c, '#6a4228', '#1d1424', 2, q => rr(q, 12, 52, 24, 6, 3));
+                inked(c, '#8a5a34', '#1d1424', 2, q => { q.moveTo(4, 26); q.lineTo(44, 26); q.lineTo(40, 14); q.lineTo(8, 14); q.closePath(); });
+                inked(c, '#fff8e8', '#1d1424', 1.6, q => { q.moveTo(8, 22); q.quadraticCurveTo(16, 10, 24, 18); q.quadraticCurveTo(32, 10, 40, 22); q.lineTo(24, 24); q.closePath(); });
+                c.strokeStyle = '#8a7a9a';
+                c.lineWidth = 1;
+                [[12, 18, 20, 16], [12, 20, 21, 18], [28, 16, 36, 18], [27, 18, 36, 20]].forEach(([a, b, x, y]) => { c.beginPath(); c.moveTo(a, b); c.lineTo(x, y); c.stroke(); });
+                c.fillStyle = '#c8323c';
+                c.fillRect(23, 18, 2, 10);
+            });
+            this.add.image(cx + 130, D.h - 46, 'gbook').setOrigin(0.5, 1).setScale(1.1 / TEX).setDepth(D.h - 46);
+            this.tag(cx + 130, D.h - 40, 'Guestbook', -400, 10);
+            this.hotspot('guestbook', cx + 130, D.h - 40, 40, new Phaser.Geom.Rectangle(cx + 104, D.h - 116, 52, 76));
+            this.reserve(cx + 130, D.h - 70, 40);
             this.homeDoors = [-1, 1].map(dir => {
                 const x = dir > 0 ? F.x + F.w - 10 : F.x + 10, img = this.add.image(dir > 0 ? D.w - 70 : 70, Y, 'sidedoor').setOrigin(0, 0.5).setScale(dir / TEX, 1 / TEX).setDepth(-890);
                 this.hotspot('room', x + dir * 4, Y, 24, new Phaser.Geom.Rectangle(0, 0, 0, 0), { room: dir });
@@ -38408,7 +38437,7 @@
         const unread = () => soc.mail.filter(m => !m.mine && m.at > (G.seen[m.from] || 0)).length + soc.reqs.length;
         function mailRead(d) {
             const b = d && d.exists !== false && typeof d.data === 'function' ? d.data() : null;
-            if (!b || typeof b !== 'object' || !['pm', 'req', 'ok', 'bye', 'trade', 'gift'].includes(b.k))
+            if (!b || typeof b !== 'object' || !['pm', 'req', 'ok', 'bye', 'trade', 'gift', 'gb'].includes(b.k))
                 return null;
             if (typeof b.from !== 'string' || !UID_OK.test(b.from) || typeof b.to !== 'string' || !UID_OK.test(b.to) || !Number.isFinite(b.at))
                 return null;
@@ -38542,6 +38571,15 @@
                     act(m);
                     if (Date.now() - m.at < TRADE.WAIT)
                         tradeInvited(m);
+                    return;
+                }
+                if (m.k === 'gb') {
+                    act(m);
+                    if (isFriend(m.from) && m.text && !(G.fan.gb || []).some(e => e.at === m.at && e.n === m.name)) {
+                        G.fan.gb = [{ n: m.name, t: m.text, at: m.at }].concat(G.fan.gb || []).slice(0, 30);
+                        changed = true;
+                        tell.push('📖 ' + m.name + ' signed your guestbook: "' + m.text + '"');
+                    }
                     return;
                 }
                 if (m.k === 'gift') {
@@ -45244,7 +45282,51 @@
         ui.trade = { tr, TRADE, mine: tradeMine, ask: tradeAsk, answer: tradeAnswer, offer: tradeOffer, coins: tradeCoins, ready: tradeReady, close: tradeClose, resume: tradeResume, invited: tradeInvited };
         const panels = { coll: collP, trade: tradeP, dun: dunP, dunclass: classP, dungate: gateP, dunshrine: shrineP, pets: petsP, petcare: careP, mine: mineP, npc: npcP, ship: travelP, shop: shopP, dj: djP, hover: hoverP, skate: skateP, tailor: tailorP, cupcake: cupP, tackle: tackleP, gear: specP, arcade: arcP, deed: deedP, furn: furnP };
         const plainCard = b => Object.assign(b, { plain: true });
+        const gbookEl = document.getElementById('gbook'), gbookP = makePanel(gbookEl);
+        function gbookOpen() {
+            const s = scene(), visiting = !!(s && s.loc === 'home' && !s.homeMine && s.homeHost), list = document.getElementById('gbook-list'), form = document.getElementById('gbook-form'), msg = document.getElementById('gbook-msg');
+            form.hidden = !visiting;
+            msg.textContent = '';
+            if (visiting) {
+                list.replaceChildren(node('p', 'pet-hint', isFriend(s.homeHost) ? 'Leave ' + (s.homeName || 'your friend') + ' a note in their guestbook. They will see it next time they play.' : 'Only friends can sign this guestbook.'));
+                form.querySelector('button').disabled = !isFriend(s.homeHost) || !socialOn();
+            }
+            else {
+                const gb = G.fan.gb || [];
+                list.replaceChildren(...(gb.length ? gb.map(e => { const li = node('div', 'mine-row'), t = node('div', 'mine-text'); t.append(node('b', '', e.n), node('small', '', '"' + e.t + '"'), node('small', 'dun-from', new Date(e.at).toLocaleDateString())); li.appendChild(t); return li; }) : [node('p', 'pet-hint', 'Nobody has signed yet. When friends visit your house, they can leave you a note here.')]));
+            }
+            for (const k in panels)
+                if (panels[k] !== gbookP)
+                    panels[k].close();
+            gbookP.open();
+        }
+        document.getElementById('gbook-close').addEventListener('click', () => gbookP.close());
+        document.getElementById('gbook-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const s = scene(), inp = document.getElementById('gbook-text'), msg = document.getElementById('gbook-msg'), text = chatSafe(cleanText(inp.value, 80));
+            if (!s || !s.homeHost || !text)
+                return;
+            const k = 'gbook:' + s.homeHost;
+            if (Date.now() - (G.fan.gbs && G.fan.gbs[k] || 0) < 60000) {
+                msg.textContent = 'You just signed it! Wait a minute to sign again.';
+                return;
+            }
+            const ok = await mailSend(s.homeHost, 'gb', text);
+            msg.textContent = ok ? 'Signed! ' + (s.homeName || 'They') + ' will see it.' : 'Could not sign it right now.';
+            if (ok) {
+                inp.value = '';
+                sfx.chime();
+                G.fan.gbs = Object.assign({}, G.fan.gbs, { [k]: Date.now() });
+            }
+        });
         ui.onHotspot = (kind, inside, data) => {
+            if (kind === 'guestbook') {
+                if (inside)
+                    gbookOpen();
+                else
+                    gbookP.close();
+                return;
+            }
             if (kind === 'dungate') {
                 if (inside) {
                     for (const k in panels)
