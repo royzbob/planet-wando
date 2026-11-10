@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794270945';
+<script>window.WANDO_BUILD = '1794309229';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2163,6 +2163,8 @@
   .dun-plate .dun-floor { color: #c8bca0; text-align: left; font-size: 11px; }
   .dun-plate .dun-boons { color: #7dffe0; font-size: 11px; }
   .dun-party { position: absolute; top: 132px; left: 10px; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; pointer-events: none; }
+  .dun-party .party-hp { display: block; height: 5px; margin: 2px 0 1px; border-radius: 3px; background: rgba(0, 0, 0, 0.55); overflow: hidden; }
+  .dun-party .party-hp b { display: block; height: 100%; border-radius: 3px; transition: width 0.25s; }
   .dun-party li { padding: 1px 8px; border-left: 4px solid #c8102e; border-radius: 3px; background: rgba(20, 16, 28, 0.7); color: #fff; font: 800 12.5px/1.4 var(--font-display); text-shadow: 1px 1px 0 #000; }
   .dun-right { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; }
   .dun-hud .dun-skill {
@@ -18043,7 +18045,7 @@
     }
     function drawSkillIcon(c, id) {
         const bgNew = { smite: '#d8a43a', mend: '#3fbf5f', bless: '#e8b84a', sanct: '#7a9ad8', renew: '#2fa86a', nova: '#e8d070', divine: '#f0c040', slam: '#a8742a', warcry: '#d84a2a', cleave: '#8a2a3a', quake: '#7a5a2a', pierce: '#2f6a8a', snare: '#4a8a2a', rain: '#2a6a4a', swift: '#2aa8a0', chain: '#5a6ad8', blink: '#8a4ad8', meteor: '#c8501e', ward: '#4a6aa8' }[id];
-        id = { smite: 'fire', mend: 'heal', bless: 'hawk', sanct: 'skin', renew: 'heal', nova: 'whirl', divine: 'heal', slam: 'whirl', warcry: 'hawk', cleave: 'sword', quake: 'whirl', pierce: 'volley', snare: 'leap', rain: 'volley', swift: 'leap', chain: 'frost', blink: 'leap', meteor: 'fire', ward: 'skin' }[id] || id;
+        const own = id;
         const ink = '#1d1424', bg = bgNew || { charge: '#c8323c', whirl: '#c8323c', skin: '#8a90a4', volley: '#3f8a3a', leap: '#3f8a3a', hawk: '#d8a43a', fire: '#e8602a', frost: '#3fa7f5', heal: '#3fbf5f' }[id] || '#6a4a8a';
         c.save();
         c.lineJoin = c.lineCap = 'round';
@@ -18059,7 +18061,125 @@
         c.fill();
         const W = '#fff8e8', line = (pts, w, col) => { c.strokeStyle = col || W; c.lineWidth = w; c.beginPath(); pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.stroke(); };
         const blade = (x0, y0, x1, y1, w) => { line([[x0, y0], [x1, y1]], w + 3, ink); line([[x0, y0], [x1, y1]], w, '#e8ecf4'); };
-        if (id === 'sword' || id === 'fist') {
+        const star = (x, y, r, n, col) => inked(c, col || W, ink, 1.2, q => { for (let i = 0; i < n * 2; i++) {
+            const a = i * Math.PI / n - Math.PI / 2, rr = i % 2 ? r * 0.45 : r;
+            i ? q.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr) : q.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+        } q.closePath(); });
+        const arrow = (x0, y0, x1, y1, w) => { line([[x0, y0], [x1, y1]], w || 2.5); const a = Math.atan2(y1 - y0, x1 - x0); inked(c, W, ink, 1, q => { q.moveTo(x1 + Math.cos(a) * 6, y1 + Math.sin(a) * 6); q.lineTo(x1 + Math.cos(a + 2.4) * 6, y1 + Math.sin(a + 2.4) * 6); q.lineTo(x1 + Math.cos(a - 2.4) * 6, y1 + Math.sin(a - 2.4) * 6); q.closePath(); }); };
+        const heart = (x, y, r, col) => inked(c, col, ink, 1.6, q => { q.moveTo(x, y + r * 0.9); q.bezierCurveTo(x - r * 1.5, y - r * 0.2, x - r * 0.7, y - r * 1.3, x, y - r * 0.45); q.bezierCurveTo(x + r * 0.7, y - r * 1.3, x + r * 1.5, y - r * 0.2, x, y + r * 0.9); });
+        if (own === 'slam') {
+            line([[8, 35], [40, 35]], 3);
+            [[24, 35, 14, 42], [24, 35, 34, 42], [24, 35, 24, 44]].forEach(([a, b, x, y]) => line([[a, b], [x, y]], 2, '#ffd84d'));
+            line([[30, 6], [24, 22]], 4, '#8a5a34');
+            inked(c, '#c8ccd8', ink, 1.6, q => rr(q, 14, 20, 20, 12, 3));
+        }
+        else if (own === 'warcry') {
+            inked(c, W, ink, 1.6, q => { q.moveTo(10, 14); q.lineTo(22, 18); q.lineTo(22, 26); q.lineTo(10, 30); q.closePath(); });
+            [8, 14, 20].forEach((r, i) => { c.strokeStyle = W; c.lineWidth = 2.6 - i * 0.4; c.beginPath(); c.arc(20, 22, r, -0.7, 0.7); c.stroke(); });
+        }
+        else if (own === 'cleave') {
+            c.strokeStyle = 'rgba(255,248,232,.85)';
+            c.lineWidth = 6;
+            c.beginPath();
+            c.arc(24, 26, 15, Math.PI * 1.05, Math.PI * 1.95);
+            c.stroke();
+            blade(16, 34, 36, 10, 4);
+            line([[12, 30], [20, 38]], 4, '#ffd84d');
+        }
+        else if (own === 'quake') {
+            line([[6, 30], [42, 30]], 3, '#8a5a34');
+            line([[24, 6], [20, 16], [27, 22], [21, 30], [26, 40]], 3.2);
+            [[10, 22], [36, 20], [38, 36]].forEach(([x, y]) => inked(c, '#b8a080', ink, 1.2, q => q.arc(x, y, 3.2, 0, TAU)));
+        }
+        else if (own === 'pierce') {
+            [[8, 34], [12, 40], [14, 30]].forEach(([x, y]) => line([[x, y], [x - 4, y + 4]], 2, 'rgba(255,248,232,.7)'));
+            arrow(12, 36, 36, 10, 3.4);
+        }
+        else if (own === 'snare') {
+            c.strokeStyle = W;
+            c.lineWidth = 2.4;
+            c.beginPath();
+            c.arc(24, 22, 13, 0, TAU);
+            c.stroke();
+            for (let i = -1; i <= 1; i++) {
+                line([[24 + i * 8, 10], [24 + i * 8, 34]], 1.6);
+                line([[12, 22 + i * 8], [36, 22 + i * 8]], 1.6);
+            }
+        }
+        else if (own === 'rain')
+            [14, 24, 34].forEach((x, i) => arrow(x, 6 + (i % 2) * 6, x, 30 + (i % 2) * 6, 2.2));
+        else if (own === 'swift') {
+            [12, 24].forEach(x => inked(c, W, ink, 1.4, q => { q.moveTo(x, 10); q.lineTo(x + 12, 22); q.lineTo(x, 34); q.lineTo(x + 4, 22); q.closePath(); }));
+        }
+        else if (own === 'chain') {
+            inked(c, '#fff3a0', ink, 1.4, q => { q.moveTo(28, 4); q.lineTo(14, 24); q.lineTo(23, 24); q.lineTo(17, 40); q.lineTo(34, 18); q.lineTo(25, 18); q.closePath(); });
+        }
+        else if (own === 'blink') {
+            [[12, 30, 2], [18, 26, 2.6], [24, 22, 3.2]].forEach(([x, y, r]) => { c.fillStyle = 'rgba(255,248,232,.75)'; c.beginPath(); c.arc(x, y, r, 0, TAU); c.fill(); });
+            star(33, 15, 9, 4);
+        }
+        else if (own === 'meteor') {
+            [[6, 20], [10, 10], [16, 6]].forEach(([x, y]) => line([[x, y], [x + 12, y + 12]], 2.4, 'rgba(255,200,120,.8)'));
+            inked(c, '#ff7a3c', '#7a2a0a', 1.6, q => q.arc(30, 28, 9, 0, TAU));
+            c.fillStyle = '#ffd84d';
+            c.beginPath();
+            c.arc(28, 26, 4, 0, TAU);
+            c.fill();
+        }
+        else if (own === 'ward') {
+            inked(c, '#9bbcff', ink, 1.8, q => { q.moveTo(24, 6); q.lineTo(38, 12); q.quadraticCurveTo(38, 30, 24, 38); q.quadraticCurveTo(10, 30, 10, 12); q.closePath(); });
+            star(24, 21, 8, 5, '#ffffff');
+        }
+        else if (own === 'smite') {
+            line([[24, 4], [24, 20]], 5, 'rgba(255,248,200,.9)');
+            star(24, 26, 12, 6, '#fff3a0');
+        }
+        else if (own === 'mend') {
+            heart(24, 22, 12, '#ff6b8a');
+            line([[24, 15], [24, 27]], 3);
+            line([[18, 21], [30, 21]], 3);
+        }
+        else if (own === 'bless') {
+            c.strokeStyle = '#fff3a0';
+            c.lineWidth = 3;
+            c.beginPath();
+            c.ellipse(24, 12, 11, 4, 0, 0, TAU);
+            c.stroke();
+            star(14, 28, 6, 4);
+            star(32, 30, 7, 4);
+            star(24, 24, 4, 4);
+        }
+        else if (own === 'sanct') {
+            inked(c, 'rgba(155,188,255,.55)', '#e8f0ff', 2.2, q => { q.arc(24, 34, 17, Math.PI, 0); q.closePath(); });
+            inked(c, W, ink, 1.2, q => { q.arc(24, 24, 3.4, 0, TAU); });
+            line([[24, 28], [24, 34]], 3);
+        }
+        else if (own === 'renew') {
+            inked(c, '#7dff9a', ink, 1.6, q => { q.moveTo(24, 36); q.quadraticCurveTo(8, 24, 22, 8); q.quadraticCurveTo(38, 20, 24, 36); });
+            line([[24, 34], [23, 14]], 1.6, ink);
+            c.strokeStyle = W;
+            c.lineWidth = 2.4;
+            c.beginPath();
+            c.arc(24, 22, 18, -0.4, 1.2);
+            c.stroke();
+        }
+        else if (own === 'nova') {
+            for (let i = 0; i < 12; i++) {
+                const a = i * Math.PI / 6;
+                line([[24 + Math.cos(a) * 7, 22 + Math.sin(a) * 7], [24 + Math.cos(a) * 17, 22 + Math.sin(a) * 17]], i % 2 ? 1.8 : 3, '#fff3a0');
+            }
+            inked(c, '#ffffff', ink, 1.2, q => q.arc(24, 22, 6, 0, TAU));
+        }
+        else if (own === 'divine') {
+            for (let i = 0; i < 8; i++) {
+                const a = i * Math.PI / 4;
+                line([[24 + Math.cos(a) * 11, 21 + Math.sin(a) * 11], [24 + Math.cos(a) * 19, 21 + Math.sin(a) * 19]], 2.4, '#fff3a0');
+            }
+            inked(c, '#ffd84d', ink, 1.4, q => q.arc(24, 21, 9, 0, TAU));
+            line([[24, 15], [24, 27]], 2.6);
+            line([[18, 21], [30, 21]], 2.6);
+        }
+        else if (id === 'sword' || id === 'fist') {
             blade(13, 35, 34, 12, 4);
             line([[10, 30], [18, 38]], 4, '#ffd84d');
             line([[10, 38], [14, 34]], 4, '#8a5a34');
@@ -22773,6 +22893,8 @@
             lift: Number.isFinite(q.lift) ? clamp(Math.round(q.lift), 0, 60) : 0,
             fl: Number.isInteger(q.fl) ? clamp(q.fl, 0, 99999) : 0,
             dg: q.loc === 'dungeon' ? coopIn(q.dg) : null,
+            hp: q.loc === 'dungeon' && Array.isArray(q.hp) && Number.isFinite(q.hp[0]) && Number.isFinite(q.hp[1]) && q.hp[1] > 0 ? [clamp(Math.round(q.hp[0]), 0, 99999), clamp(Math.round(q.hp[1]), 1, 99999), Number.isInteger(q.hp[2]) && Object.keys(CLASSES)[q.hp[2]] ? Object.keys(CLASSES)[q.hp[2]] : ''] : null,
+            sw: q.loc === 'dungeon' && Array.isArray(q.sw) && Number.isInteger(q.sw[0]) && Number.isInteger(q.sw[2]) ? [q.sw[0], q.sw[1] < 0 ? -1 : 1, q.sw[2], typeof q.sw[3] === 'string' && /^[a-z]{2,10}$/.test(q.sw[3]) ? q.sw[3] : ''] : null,
             hw: q.loc === 'dungeon' && Number.isInteger(q.hw) && q.hw >= 0 && armoryDef(q.hw) ? q.hw : -1,
             ar: q.loc === 'dungeon' && Array.isArray(q.ar) ? [0, 1].map(i => { const v = q.ar[i]; return Array.isArray(v) && Number.isInteger(v[0]) && ARMOR_SETS[v[0]] && Number.isInteger(v[1]) && v[1] >= 0 && v[1] <= 4 ? { a: v[0], s: i ? 'b' : 'h', r: v[1], q: 100 } : null; }) : null,
             bd: q.bd && typeof q.bd === 'object' ? cleanBoard(q.bd) : null,
@@ -28185,6 +28307,8 @@
             const { dx, dy, fx, cy } = this.dunAim(tx, ty), fy = cy + 22;
             this.dunAtkAt = now + T.cool * 1000;
             this.swingStart = now;
+            this.swingN = ((this.swingN || 0) + 1) % 1000;
+            this.swingDir = dx >= 0 ? 1 : -1;
             const hit = (m, mul, push) => { if (this.dunMissed(m))
                 return; const r = this.dunHitRoll(mul); this.monHurt(m, r.d, r.crit, dx, dy, push); };
             let n = 0;
@@ -28241,6 +28365,8 @@
                 sfx.buzz();
                 return false;
             }
+            this.castN = ((this.castN || 0) + 1) % 1000;
+            this.castId = S.id;
             Dn.mp -= S.mp;
             this.cds[i] = now + S.cd * 1000 * (this.boon('focus') ? 0.7 : 1) * (now < (this.buff.swift || 0) ? 0.5 : 1);
             this.swingStart = now;
@@ -29060,6 +29186,62 @@
             return true;
         }
         shrineOffer() { const Dn = G.dun; return shrineChoices(this.dunDay || dayNumber(), Dn.run.d, Dn.run.room, Dn.run.boons); }
+        hallWay(m, tx, ty, time) {
+            const HL = this.halls, R = HL.rects;
+            if (m.wayAt && time < m.wayAt)
+                return m.way;
+            m.wayAt = time + 220 + Math.random() * 80;
+            const clear = (x0, y0, x1, y1) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 24); for (let i = 1; i < n; i++)
+                if (!HL.walk(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, 12))
+                    return false; return true; };
+            if (clear(m.x, m.y, tx, ty))
+                return (m.way = null);
+            if (!HL.links) {
+                HL.links = R.map(() => []);
+                R.forEach((a, i) => R.forEach((b, j) => {
+                    if (j <= i)
+                        return;
+                    const x0 = Math.max(a.x, b.x), x1 = Math.min(a.x + a.w, b.x + b.w), y0 = Math.max(a.y, b.y), y1 = Math.min(a.y + a.h, b.y + b.h);
+                    if (x1 >= x0 && y1 >= y0) {
+                        const door = { x: (x0 + x1) / 2, y: (y0 + y1) / 2 };
+                        HL.links[i].push({ to: j, door });
+                        HL.links[j].push({ to: i, door });
+                    }
+                }));
+            }
+            const inR = (x, y) => { let best = -1; R.forEach((q, i) => { if (best < 0 && x >= q.x && x <= q.x + q.w && y >= q.y && y <= q.y + q.h)
+                best = i; }); return best; };
+            const a = inR(m.x, m.y), b = inR(tx, ty);
+            if (a < 0 || b < 0 || a === b)
+                return (m.way = null);
+            const prev = new Map([[a, null]]), q = [a];
+            while (q.length && !prev.has(b)) {
+                const c = q.shift();
+                HL.links[c].forEach(L => { if (!prev.has(L.to)) {
+                    prev.set(L.to, { from: c, door: L.door });
+                    q.push(L.to);
+                } });
+            }
+            if (!prev.has(b))
+                return (m.way = null);
+            const doors = [];
+            let at = b;
+            while (prev.get(at)) {
+                doors.unshift(prev.get(at).door);
+                at = prev.get(at).from;
+            }
+            let pick = doors[0] || null;
+            for (let i = doors.length - 1; i >= 0; i--)
+                if (clear(m.x, m.y, doors[i].x, doors[i].y)) {
+                    pick = doors[i];
+                    break;
+                }
+            if (pick && Math.hypot(pick.x - m.x, pick.y - m.y) < 24) {
+                const i = doors.indexOf(pick);
+                pick = doors[i + 1] || { x: tx, y: ty };
+            }
+            return (m.way = pick);
+        }
         dunFree(m) {
             const B = this.D.bounds;
             this.dunWalls.forEach(w => { const dx = m.x - w.x, dy = m.y - w.y, d = Math.hypot(dx, dy), need = w.r + 16 * m.size; if (d < need) {
@@ -29172,7 +29354,16 @@
                     continue;
                 const foe = foes.length > 1 ? foes.reduce((a, b) => (Math.hypot(b.x - m.x, b.y - m.y) < Math.hypot(a.x - m.x, a.y - m.y) ? b : a)) : foes[0];
                 const tx = foe.x, ty = foe.y, me = foe.me;
-                const dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+                const dx = tx - m.x, dy = ty - m.y, d = Math.hypot(dx, dy) || 1;
+                let ux = dx / d, uy = dy / d;
+                if (m.aggro && !m.fly && this.halls && !this.halls.open) {
+                    const wp = this.hallWay(m, tx, ty, time);
+                    if (wp) {
+                        const wl = Math.hypot(wp.x - m.x, wp.y - m.y) || 1;
+                        ux = (wp.x - m.x) / wl;
+                        uy = (wp.y - m.y) / wl;
+                    }
+                }
                 if (!m.aggro && d < notice && this.hallSee(m.x, m.y, tx, ty))
                     this.monAlert(m);
                 if (m.aggro && me && d < DUN.CALM)
@@ -36191,6 +36382,28 @@
                 }
                 else if (o.board)
                     o.board.setVisible(false);
+                if (p.sw) {
+                    if (o.castN !== undefined && p.sw[2] !== o.castN && this.dunRing) {
+                        const col = { heal: 0x7dff9a, mend: 0x7dff9a, renew: 0x7dff9a, divine: 0xfff0a0, nova: 0xfff0a0, bless: 0xffd84d, sanct: 0x9bbcff, fire: 0xff7a3c, meteor: 0xff7a3c, frost: 0x9be7ff, chain: 0x9bbcff }[p.sw[3]] || 0xffffff;
+                        this.dunRing(o.x, o.y, 70, col);
+                    }
+                    o.castN = p.sw[2];
+                    o.swN = o.swN === undefined ? p.sw[0] : o.swN;
+                    if (p.sw[0] !== o.swN && !(p.hw >= 0))
+                        o.swN = p.sw[0];
+                }
+                if (this.loc === 'dungeon' && p.hp) {
+                    if (!o.hpG)
+                        o.hpG = this.add.graphics();
+                    const f = clamp(p.hp[0] / p.hp[1], 0, 1), bx = o.x - 22, by = o.img.y - 112;
+                    o.hpG.clear().setVisible(true).setDepth(9470);
+                    o.hpG.fillStyle(0x000000, 0.7);
+                    o.hpG.fillRect(bx - 1, by - 1, 46, 7);
+                    o.hpG.fillStyle(f > 0.5 ? 0x5cd65c : f > 0.25 ? 0xffd84d : 0xff4a4a, 1);
+                    o.hpG.fillRect(bx, by, 44 * f, 5);
+                }
+                else if (o.hpG)
+                    o.hpG.setVisible(false);
                 if (p.hw >= 0 && !car && !p.boat) {
                     if (!o.wpn)
                         o.wpn = this.add.image(0, 0, 'pshadow');
@@ -36199,7 +36412,13 @@
                         const w = weaponOf(armoryDef(p.hw), null, 'PEERWPN0', 100);
                         o.wpn.setTexture(bakeWeapon(this, w)).setOrigin(28 / 80, 54 / 80).setScale(0.8 / TEX);
                     }
-                    o.wpn.setVisible(true).setPosition(o.img.x + 16, o.img.y - 30).setRotation(0.35).setDepth(o.y + 0.3);
+                    if (p.sw && o.swN !== undefined && p.sw[0] !== o.swN) {
+                        o.swAt = time;
+                        o.swDir = p.sw[1];
+                        o.swN = p.sw[0];
+                    }
+                    const sp = o.swAt ? (time - o.swAt) / 260 : 1, swing = sp < 1 ? Math.sin(sp * Math.PI) : 0, sd = o.swDir || 1;
+                    o.wpn.setVisible(true).setFlipX(sd < 0).setPosition(o.img.x + 16 * sd, o.img.y - 30 + swing * 8).setRotation(sd * (0.35 + swing * 1.5 - (sp < 0.3 ? sp * 2 : 0))).setDepth(o.y + 0.3);
                 }
                 else if (o.wpn)
                     o.wpn.setVisible(false);
@@ -36269,6 +36488,8 @@
                         o.board.destroy();
                     if (o.wpn)
                         o.wpn.destroy();
+                    if (o.hpG)
+                        o.hpG.destroy();
                     if (o.adPic)
                         o.adPic.destroy();
                     if (o.ad)
@@ -36887,7 +37108,7 @@
             }
             const coneUp = Date.now() < TREAT.until && TREAT.i >= 0 && !boating && !this.mineNodes && !this.dun;
             const held = !rodUp && !digging && this.view !== 'back' ? (this.mineNodes ? this.mineHeld() : this.dun ? this.dunHeld() : coneUp ? { key: bakeCone(this, TREAT.i, clamp(2 - Math.floor(((TREAT.until - Date.now()) / 1000) / Math.max(1, TREAT.secs) * 3), 0, 2)), cone: true } : null) : null;
-            P.mtool.setVisible(!!held);
+            P.mtool.setVisible(!!held && !this.bedUntil && !this.fallen);
             if (!(held && held.weapon) && this.mtoolLayer === 'R' && this.upper.moveBelow) {
                 this.upper.moveBelow(P.armR, P.torso);
                 this.mtoolLayer = '';
@@ -42761,6 +42982,26 @@
         } return cv; };
         const weaponCanvas = (w, n) => { const cv = el('canvas', '', { width: n || 96, height: n || 96, 'aria-hidden': 'true' }), c = cv.getContext('2d'); c.setTransform((n || 96) / 72, 0, 0, (n || 96) / 72, (n || 96) / 6, (n || 96) / 6); drawWeapon(c, w); return cv; };
         const dunWhere = () => { const D = G.dun, Dg = dunDef(D.run.d, dayNumber()); return !D.run.room ? 'Camp' : Dg.rooms ? Dg.name + ' · ' + (D.run.room >= Dg.rooms ? 'the boss' : 'room ' + D.run.room + ' of ' + Dg.rooms) : Dg.name + ' · floor ' + D.run.room; };
+        let partySig = '';
+        function paintCrew(party) {
+            party = party || (ui.others ? ui.others('dungeon') : []);
+            const sig = party.slice(0, 6).map(p => p.id + p.name + p.lv + (p.hp ? p.hp.join() : '')).join('|');
+            if (sig === partySig)
+                return;
+            partySig = sig;
+            dq('dun-party').replaceChildren(...party.slice(0, 6).map(p => {
+                const li = node('li', 'party-row'), f = p.hp ? clamp(p.hp[0] / p.hp[1], 0, 1) : -1, C = p.hp && CLASSES[p.hp[2]];
+                li.append(node('span', '', p.name + (p.lv ? ' (' + p.lv + ')' : '') + (C ? ' · ' + C.name : '')));
+                if (f >= 0) {
+                    const bar = node('i', 'party-hp'), fill = node('b', '');
+                    fill.style.width = Math.round(f * 100) + '%';
+                    fill.style.background = f > 0.5 ? '#5cd65c' : f > 0.25 ? '#ffd84d' : '#ff4a4a';
+                    bar.appendChild(fill);
+                    li.appendChild(bar);
+                }
+                return li;
+            }));
+        }
         function paintDunSkills() {
             const D = G.dun, s = scene(), now = s && s.time ? s.time.now : 0, list = dunSlots(D);
             const boss = s && s.mons ? s.mons.find(m => m.boss && !m.dead && m.aggro) : null, bossEl = dq('dun-boss');
@@ -42816,7 +43057,7 @@
             dq('dun-name').textContent = G.name || 'You';
             dq('dun-bad').textContent = D.run.room ? 'Bad Guys: ' + left : 'Camp';
             const party = ui.others ? ui.others('dungeon') : [];
-            dq('dun-party').replaceChildren(...party.slice(0, 6).map(p => node('li', '', p.name + (p.lv ? ' (' + p.lv + ')' : ''))));
+            paintCrew(party);
             const atkFace = w ? w.t : 'fist', atk = dq('dun-attack');
             if (atk.dataset.face !== atkFace) {
                 atk.dataset.face = atkFace;
@@ -42899,8 +43140,21 @@
                 top.append(node('span', '', 'Your collection: ' + out.filter(d => have.has(d.id)).length + ' of ' + out.length + ' designs. This week: ' + armoryTheme(wk).name + '.'));
                 rows.push(top);
                 const bar = node('div', 'dun-filters');
-                [['week', 'This week'], ['sword', 'Swords'], ['hammer', 'Hammers'], ['bow', 'Bows'], ['staff', 'Staffs'], ['legend', 'Legends'], ['retired', 'Retired']].forEach(([id, name]) => { const b = el('button', 'furn-cat', { type: 'button', 'data-act': 'af', 'data-i': id, 'aria-pressed': String(F === id) }); b.textContent = name; bar.appendChild(b); });
+                [['week', 'This week'], ['sword', 'Swords'], ['hammer', 'Hammers'], ['bow', 'Bows'], ['staff', 'Staffs'], ['legend', 'Legends'], ['retired', 'Retired'], ['armor', 'Armor']].forEach(([id, name]) => { const b = el('button', 'furn-cat', { type: 'button', 'data-act': 'af', 'data-i': id, 'aria-pressed': String(F === id) }); b.textContent = name; bar.appendChild(b); });
                 rows.push(bar);
+                if (F === 'armor') {
+                    const got = new Set(D.afound || []);
+                    rows.push(node('p', 'pet-hint', 'Armor pieces found: ' + got.size + ' of ' + ARMOR_SETS.length * 2 + '. Bosses, elites, mimics and chests drop it, now and then.'));
+                    ARMOR_SETS.forEach((S, a) => ['h', 'b'].forEach(sl => {
+                        const has = got.has(a * 2 + (sl === 'b' ? 1 : 0)), p = { a, s: sl, r: 0, q: 100 }, li = node('div', 'mine-row dun-row' + (has ? '' : ' dun-unknown')), text = node('div', 'mine-text');
+                        text.append(node('b', '', has ? armorName(p) : '???'), node('small', '', (sl === 'h' ? 'Helm' : 'Body armor') + ' · tier ' + (S.tier + 1) + (has ? ' · armor ' + armorStats(p).def + ' (Common) up to ' + armorStats(Object.assign({}, p, { r: 4 })).def + ' (Legendary)' : '')));
+                        const cv = armorCanvas(p, 72);
+                        if (!has)
+                            cv.style.filter = 'brightness(0) opacity(.35)';
+                        li.append(cv, text);
+                        rows.push(li);
+                    }));
+                }
                 if (F === 'retired' && !shown.length)
                     rows.push(node('p', 'pet-hint', 'Nothing has retired yet. A weekly set drops for ' + ARMORY_RETIRE + ' weeks; after that, the only way to get one is to trade for it.'));
                 shown.forEach(d => {
@@ -43458,7 +43712,7 @@
             }
         });
         ui.onDun = paintDunHud;
-        ui.onDunTick = paintDunSkills;
+        ui.onDunTick = () => { paintDunSkills(); paintCrew(); };
         ui.onDunClass = classOpen;
         ui.onDied = () => {
             const d = document.createElement('div');
@@ -44817,7 +45071,7 @@
                 return null;
             return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
                 boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, sh: G.riding && !s.boating && shineOn() ? 1 : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
-                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
+                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
         }
         const netHeld = s => { const D = G.dun, w = s.loc === 'dungeon' && D && D.eq >= 0 ? D.bag[D.eq] : null; return w && Number.isInteger(w.c) ? w.c : -1; };
         const netArmor = s => { const W = s.loc === 'dungeon' && G.dun && G.dun.worn; return W && (W.h || W.b) ? [W.h ? [W.h.a, W.h.r] : 0, W.b ? [W.b.a, W.b.r] : 0] : 0; };
