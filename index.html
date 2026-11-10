@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794314463';
+<script>window.WANDO_BUILD = '1794314541';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -28347,8 +28347,15 @@
         dunEvent(type, data) {
             if (ui.onEvent)
                 ui.onEvent(type, data);
-            const Dn = G.dun;
-            bountyEvent(Dn, this.dunDay || dayNumber(), type, data).forEach(Bt => {
+            const Dn = G.dun, day = this.dunDay || dayNumber(), was = Dn.bounty && Dn.bounty.day === day ? Dn.bounty.p.slice() : [0, 0, 0];
+            const fin = bountyEvent(Dn, day, type, data);
+            bountiesToday(day).forEach((bi, i) => {
+                const B = BOUNTIES[bi], p = Dn.bounty.p[i];
+                if (!B || Dn.bounty.got[i] || p === was[i] || B.n < 4 || Math.floor(p * 4 / B.n) === Math.floor(was[i] * 4 / B.n) || !this.pz)
+                    return;
+                this.dunPop(this.pz.x, this.pz.y + FOOT - 140, 'Bounty ' + p + '/' + B.n + ': ' + B.text, '#ffd84d');
+            });
+            fin.forEach(Bt => {
                 G.coins += Bt.coins;
                 dunGainXp(Dn, Bt.coins >> 1);
                 this.time.delayedCall(700, () => { this.noteUntil = 0; this.note('Bounty done: ' + Bt.text + '! +' + Bt.coins + ' Coins', '#ffd84d'); });
