@@ -46728,7 +46728,7 @@
                 B.b.classList.toggle('here', loc === here);
                 B.b.hidden = loc === 'home' && !G.home.owned;
                 B.n.hidden = !n;
-                B.n.textContent = n + (n === 1 ? ' player' : ' players');
+                B.n.textContent = (n >= 3 && n === Math.max(...Object.values(N)) ? '🔥 ' : '') + n + (n === 1 ? ' player' : ' players');
                 B.n.title = (wmapNames[loc] || []).slice(0, 12).join(', ');
             });
             try {
