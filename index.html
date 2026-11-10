@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794309732';
+<script>window.WANDO_BUILD = '1794309852';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -38151,8 +38151,8 @@
                 return;
             const I = (G.pj || {}).ice, gp = G.fan.pbest && G.fan.pbest.green;
             const row = { name: cleanText(G.name, 16), al: anglerLevel(G.angler.xp).L, cl: G.dun.level || 1, sp: FISH.filter(f => G.log[f.id]).length, cd: G.found.c.length, st: G.login.stars || 0,
-                ib: I ? Math.round(Math.max(0, ...Object.values(I.log).map(L => L.best || 0)) * 10) : 0, ir: I ? farmRank(I.xp) : 0, gp: gp ? Math.round(gp * 10) : 0, dw: G.fan.dw || 0, at: Date.now() };
-            const sig = [row.name, row.al, row.cl, row.sp, row.cd, row.st, row.ib, row.ir, row.gp, row.dw].join('|');
+                ib: I ? Math.round(Math.max(0, ...Object.values(I.log).map(L => L.best || 0)) * 10) : 0, ir: I ? farmRank(I.xp) : 0, gp: gp ? Math.round(gp * 10) : 0, dw: G.fan.dw || 0, eb: G.dun.best || 0, wc: (G.dun.found || []).length, at: Date.now() };
+            const sig = [row.name, row.al, row.cl, row.sp, row.cd, row.st, row.ib, row.ir, row.gp, row.dw, row.eb, row.wc].join('|');
             if (sig === fame.last)
                 return;
             fame.last = sig;
@@ -38173,7 +38173,7 @@
                 (snap && snap.docs ? snap.docs : []).forEach(d => {
                     const b = typeof d.data === 'function' ? d.data() : null, id = String(d.id), name = b ? cleanText(b.name, 16) : '';
                     if (name && UID_OK.test(id) && !out.some(x => x.id === id))
-                        out.push({ id, name, al: n(b.al, 50), cl: n(b.cl, 50), sp: n(b.sp, FISH.length), cd: n(b.cd, 999), st: n(b.st, 9999), ib: n(b.ib, 9990), ir: n(b.ir, 20), gp: n(b.gp, 99990), dw: n(b.dw, 99999) });
+                        out.push({ id, name, al: n(b.al, 50), cl: n(b.cl, 50), sp: n(b.sp, FISH.length), cd: n(b.cd, 999), st: n(b.st, 9999), ib: n(b.ib, 9990), ir: n(b.ir, 20), gp: n(b.gp, 99990), dw: n(b.dw, 99999), eb: n(b.eb, 999), wc: n(b.wc, 5000) });
                 });
                 return out;
             }
@@ -43697,6 +43697,22 @@
                 li.appendChild(text);
                 rows.push(li);
             });
+            {
+                const lb = node('p', 'pet-hint', 'Deepest in the Endless Crypt: reading the record books...');
+                if (ui.fame) {
+                    ui.fame.put();
+                    ui.fame.get().then(all => {
+                        if (!all) {
+                            lb.textContent = 'Sign in to see the deepest divers in the Endless Crypt.';
+                            return;
+                        }
+                        const t = all.filter(r => r.eb > 0).sort((a, b) => b.eb - a.eb || a.name.localeCompare(b.name));
+                        const me = t.findIndex(r => r.id === soc.uid);
+                        lb.textContent = t.length ? 'Deepest in the Endless Crypt: ' + t.slice(0, 5).map((r, i) => (i + 1) + '. ' + r.name + ' (floor ' + r.eb + ')').join('  ') + (me >= 5 ? '  ·  You: #' + (me + 1) : '') : 'Nobody has been down the Endless Crypt yet. Be the first!';
+                    }).catch(() => { });
+                }
+                rows.push(lb);
+            }
             rows.push(node('div', 'mine-row mine-top', 'Today\'s dungeons (all new every day)'));
             DUNGEONS.forEach((base, i) => {
                 const Dg = dunDef(i, day), open = dunOpenTo(D, i), li = node('div', 'mine-row' + (open ? '' : ' dun-locked')), text = node('div', 'mine-text'), b = el('button', 'btn', { type: 'button', 'data-d': String(i) });
@@ -47606,7 +47622,7 @@
             const top = (k, label, unit, fmt, low) => { const t = rows.filter(r => r[k] > 0).sort((a, b) => (low ? a[k] - b[k] : b[k] - a[k]) || a.name.localeCompare(b.name)).slice(0, 3); return t.length ? P(label + ': ' + t.map((r, i) => (i + 1) + '. ' + r.name + ' (' + unit + (fmt ? fmt(r[k]) : r[k]) + ')').join('  ')) : null; };
             const tenth = v => (v / 10).toFixed(1);
             box.replaceChildren(node('h4', '', 'Hall of Fame'), ...[top('al', 'Top anglers', 'Lv '), top('cl', 'Crypt heroes', 'Lv '), top('sp', 'Fish finders', ''), top('cd', 'Card collectors', ''), top('st', 'Star hunters', ''),
-                top('ib', 'Biggest ice fish', '', v => tenth(v) + ' lb'), top('ir', 'Ice anglers', 'Rank '), top('gp', 'Grand Prix', '', v => tenth(v) + 's', true), top('dw', 'Frostwood Derby wins', '', v => v + (v === 1 ? ' win' : ' wins'))].filter(Boolean));
+                top('ib', 'Biggest ice fish', '', v => tenth(v) + ' lb'), top('ir', 'Ice anglers', 'Rank '), top('gp', 'Grand Prix', '', v => tenth(v) + 's', true), top('dw', 'Frostwood Derby wins', '', v => v + (v === 1 ? ' win' : ' wins')), top('eb', 'Deepest in the Endless Crypt', 'floor '), top('wc', 'Weapon collectors', '', v => v + ' designs')].filter(Boolean));
             return rows;
         }
         let timesRead = -1;
