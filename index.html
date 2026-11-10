@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794354795';
+<script>window.WANDO_BUILD = '1794354958';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -34122,7 +34122,15 @@
                     this.cells.push({ img, i, j, glow: 0 });
                 }
             this.prop('dj', 800, 236, 112 / 120, { solids: [[-70, -30, 34], [0, -30, 34], [70, -30, 34]] });
-            this.label(800, 236 - 118, 'DJ Booth', '#3a0f6e');
+            bake(this, 'dj_host', CW, CHA, c => {                     // DJ Volt, behind the decks, headphones on
+                c.translate(0, AV_TOP);
+                drawFigure(c, palette(Object.assign({}, DEFAULT_LOOK, NPC_LOOKS[4 % NPC_LOOKS.length], { hat: 0 })));
+                c.lineCap = 'round'; c.strokeStyle = '#120b3a'; c.lineWidth = 6; c.beginPath(); c.ellipse(48, 40, 35, 38, 0, Math.PI, TAU); c.stroke();
+                c.strokeStyle = '#ff3df2'; c.lineWidth = 3; c.stroke();
+                [[12, 33], [76, 33]].forEach(([cx, cy]) => { c.fillStyle = '#120b3a'; c.beginPath(); rr(c, cx - 1, cy - 1, 10, 20, 4); c.fill(); c.fillStyle = '#ff3df2'; c.beginPath(); rr(c, cx + 1, cy + 1, 6, 16, 3); c.fill(); c.fillStyle = '#00e5ff'; c.fillRect(cx + 3, cy + 6, 2, 6); });
+            });
+            this.djHost = { img: this.add.image(800, 186, 'dj_host').setOrigin(0.5, FEET_OA).setScale(1 / TEX).setDepth(200), x: 800, y: 186 };
+            this.label(800, 236 - 150, 'DJ Volt · DJ Booth', '#3a0f6e');
             this.hotspot('dj', 800, 276, 72, new Phaser.Geom.Rectangle(690, 124, 220, 112));
             const face = on => c => {
                 inked(c, on ? '#3a0a2e' : '#1a1038', on ? '#ffe066' : '#ff3df2', 2.5, k => rr(k, 6, 6, 188, 84, 18));
@@ -36942,6 +36950,7 @@
             const cur = !showing && ui.clubSong ? ui.clubSong() : null, S = this.djStage || (this.djStage = { key: '', objs: [], nova: null, b1: null, b2: null, lbl: null });
             let bp = null; try { bp = ui.clubBeatPos ? ui.clubBeatPos() : null; } catch (e) { }
             this.clubLasers(time, !!cur || showing, bp);
+            this.djHostTick(time, !!cur || showing, bp);
             if (!cur) { if (S.key) { S.objs.forEach(o => o.destroy()); S.objs = []; S.key = ''; } return; }
             const x = 800, y = 480;
             if (S.key !== cur.key) {
@@ -36964,6 +36973,13 @@
             S.b1.setY(y - 2 - Math.abs(Math.sin(Math.PI * p + 0.5)) * 10).setAngle(sway * 7);
             S.b2.setY(y - 2 - Math.abs(Math.sin(Math.PI * p - 0.5)) * 10).setAngle(-sway * 7);
             S.spot.setAlpha(0.3 + 0.25 * (1 - bounce));
+        }
+        djHostTick(time, on, bp) {                                  // DJ Volt: nods along, works the decks, throws a hand up now and then; on the beat when a song is on
+            const H = this.djHost; if (!H || !H.img || !H.img.active || REDUCED) return;
+            const p = bp !== null ? bp : time / (on ? 470 : 900), b = Math.abs(Math.sin(Math.PI * p)), phrase = Math.floor(p / 8) % 4;
+            const nod = on ? b * 5 : b * 2, lean = on ? (phrase === 1 ? Math.sin(Math.PI * p) * 7 : phrase === 3 ? -4 : Math.sin(Math.PI * p * 0.5) * 3) : Math.sin(time * 0.0015) * 2;
+            const scratch = on && phrase === 2 ? Math.sin(Math.PI * p * 2) * 5 : 0;
+            H.img.setPosition(H.x + scratch, H.y - nod - (on && phrase === 3 && b > 0.6 ? 6 : 0)).setAngle(lean).setFlipX(on && phrase === 1 && Math.floor(p) % 2 === 1);
         }
         clubLasers(time, on, bp) {                                  // lasers over the floor while a song plays: they sweep, change colour and flash on the beat
             if (!on || REDUCED) { if (this.lasers) { this.lasers.destroy(); this.lasers = null; } return; }
