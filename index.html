@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794354146';
+<script>window.WANDO_BUILD = '1794354258';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -1229,7 +1229,7 @@
   .dock-badge { top: -7px; bottom: auto; background: #fff8e3; }
   .dock-badge.ready { background: var(--berry); color: #fff; }
   .slot.empty svg, .slot.empty canvas { opacity: 0.35; }
-  #sound-btn .sound-off, #sound-btn[aria-pressed="true"] .sound-on { display: none; }
+  #sound-btn .sound-off { display: none; }
   #sound-btn[aria-pressed="true"] .sound-off { display: inline; }
   .dock .pip { top: -8px; right: -8px; }
   .dock .chat {
@@ -1260,9 +1260,23 @@
     font: 800 13px/1.2 var(--font-display); white-space: nowrap; cursor: pointer;
   }
   .emote-pop button[aria-pressed="true"] { background: var(--ink); color: var(--cream); }
-  .sound-pop { right: 0; width: 230px; flex-direction: column; align-items: stretch; z-index: 60; }
-  .sound-pop button::after { content: ': off'; } .sound-pop button[aria-pressed="true"]::after { content: ': on'; }
-  .snd-vol { display: flex; flex-direction: column; gap: 4px; font: 800 12px/1.2 var(--font-display); color: var(--ink); }
+  .sound-pop { right: 0; width: 290px; flex-direction: column; align-items: stretch; flex-wrap: nowrap; gap: 8px; z-index: 300; max-height: calc(100vh - var(--dock-h) - 40px); overflow: auto; }
+  .sound-pop .snd-card { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 12px; background: #fff; }
+  .sound-pop .snd-sec { font: 800 12.5px/1.2 var(--font-display); color: var(--ink); margin-bottom: 2px; flex-basis: 100%; }
+  .sound-pop .snd-sw, .sound-pop .snd-sw[aria-pressed] { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 5px 2px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); font: 800 13px/1.2 var(--font-body); text-align: left; cursor: pointer; }
+  .sound-pop .snd-sw[aria-pressed]:hover { background: rgba(0, 0, 0, 0.06); }
+  .sound-pop .snd-sw:focus-visible { outline: 3px solid var(--sun, #ffd84d); }
+  .sound-pop .snd-sw i { flex: none; position: relative; width: 40px; height: 22px; border: 2px solid var(--ink); border-radius: 999px; background: #d9d4e4; transition: background 0.15s; }
+  .sound-pop .snd-sw i::after { content: ''; position: absolute; top: 1px; left: 1px; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 1px solid var(--ink); transition: transform 0.15s; }
+  .sound-pop .snd-sw[aria-pressed="true"] i { background: #3fbf5f; }
+  .sound-pop .snd-sw[aria-pressed="true"] i::after { transform: translateX(18px); }
+  .sound-pop .snd-sw::after { content: none !important; }
+  .snd-vol { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 2px 4px; font: 700 11.5px/1.2 var(--font-body); color: var(--ink); opacity: 0.85; }
+  .snd-vol input { flex: 1; max-width: 140px; accent-color: #3fbf5f; }
+  .sound-pop .snd-link { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; margin-top: 4px; padding: 6px 10px; border: 2px solid var(--ink); border-radius: 10px; background: var(--sun, #ffd84d); color: var(--ink); font: 800 12.5px/1.2 var(--font-body); text-align: left; white-space: normal; }
+  .sound-pop .snd-link small { font: 700 10.5px/1.2 var(--font-body); opacity: 0.75; }
+  body:has(#sound-pop:not([hidden])) .dock-hub { z-index: 0; }
+  .sound-pop .snd-quiet { margin-top: 0; background: transparent; border-style: dashed; }
   .emote-pop { flex-wrap: wrap; width: 292px; max-width: calc(100vw - 24px); box-sizing: border-box; }
   .emote-pop button.throw-btn { background: #7fd0ff; }
   .dance-moves { display: contents; }
@@ -1283,10 +1297,10 @@
     .dock .clock-text span { display: none; }
   }
   @media (max-width: 540px) { #app { --dock-h: 164px; } .emote-pop { right: auto; left: 0; } }
-  .scr-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font: 800 12px/1.2 var(--font-display); color: var(--ink); }
+  .scr-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 0; font: 800 12px/1.2 var(--font-display); color: var(--ink); }
   .scr-pick b { flex-basis: 100%; }
   .gate-scr b { flex-basis: auto; margin-right: 4px; }
-  .scr-pick .scr-btn { flex: 1 1 auto; min-height: 36px; padding: 6px 8px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); font: 800 12px/1.1 var(--font-body); cursor: pointer; }
+  .scr-pick .scr-btn { flex: 1 1 auto; min-height: 32px; padding: 6px 8px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); font: 800 12px/1.1 var(--font-body); cursor: pointer; }
   .scr-pick .scr-btn::after { content: none !important; }
   .scr-pick .scr-btn[aria-pressed="true"] { background: var(--sun, #ffd84d); }
   html[data-screen="pc"] .tpad { display: none !important; }
@@ -1299,7 +1313,7 @@
   html[data-hidechat="1"] .chatbox { display: none !important; }
   html[data-hideplate="1"] .plate { display: none !important; }
   .sound-pop .snd-plain::after { content: none !important; }
-  .sound-pop .snd-title { margin-top: 0; font-size: 14px; }
+  .sound-pop .snd-title { margin-top: 0; font-size: 15px; }
   .sound-pop .snd-head { font: 800 12px/1.2 var(--font-display); color: var(--ink); margin-top: 4px; }
   html[data-screen="phone"] #ride-btn { display: none !important; }      
   html[data-screen="phone"] .dig-btn small { display: none; }
@@ -2880,26 +2894,33 @@
         <span id="clock-q" class="dock-badge">0/3</span>
       </button>
       <button id="sound-btn" class="dock-btn" type="button" aria-pressed="false" aria-label="Sound off" title="Sound on or off">
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.500h3.500L12 5.500v13l-4.500-4H4z" fill="currentColor"/><path class="sound-on" d="M15.500 9a4.500 4.500 0 0 1 0 6M18 6.500a8 8 0 0 1 0 11"/><path class="sound-off" d="M16 9.500l5 5M21 9.500l-5 5"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.8l1.6 2.3 2.8-.6.9 2.7 2.6 1.2-.6 2.8 1.9 2.1-1.9 2.1.6 2.8-2.6 1.2-.9 2.7-2.8-.6L12 21.2l-1.6-2.3-2.8.6-.9-2.7-2.6-1.2.6-2.8L2.8 12l1.9-2.1-.6-2.8 2.6-1.2.9-2.7 2.8.6z"/><circle cx="12" cy="12" r="3.4"/><path class="sound-off" d="M17.5 17.5l4 4M21.5 17.5l-4 4" stroke-width="2.4"/></svg>
         <span id="sound-tag" class="dock-badge" hidden>FX</span>
       </button>
       <div id="sound-pop" class="emote-pop sound-pop" role="group" aria-label="Sound and settings" hidden>
-        <b class="snd-head snd-title">⚙️ Sound and settings</b>
-        <button id="snd-music" type="button" aria-pressed="true">Music</button>
-        <button id="snd-fx" type="button" aria-pressed="true">Sound effects</button>
-        <label class="snd-vol">Music volume <input id="snd-vol" type="range" min="0" max="100" value="60"></label>
-        <label class="snd-vol">Effects volume <input id="snd-fvol" type="range" min="0" max="100" value="70"></label>
-        <button id="mp3-open" class="snd-plain" type="button">🎧 My music player (songs from your computer)</button>
-        <button id="fbk-open" class="snd-plain" type="button">✉️ Send feedback or report a bug</button>
-        <b class="snd-head">Show</b>
-        <button type="button" data-hud="chat" aria-pressed="true">Chat box</button>
-        <button type="button" data-hud="plate" aria-pressed="true">Place sign (top left)</button>
-        <button type="button" data-hud="joy" aria-pressed="true">🕹️ Joystick (phone)</button>
-        <div class="scr-pick" role="group" aria-label="Screen"><b>Playing on</b>
+        <b class="snd-head snd-title">⚙️ Settings</b>
+        <div class="snd-card">
+          <b class="snd-sec">🔊 Sound</b>
+          <button id="snd-music" class="snd-sw" type="button" aria-pressed="true"><span>Music</span><i aria-hidden="true"></i></button>
+          <label class="snd-vol"><span>Music volume</span><input id="snd-vol" type="range" min="0" max="100" value="60"></label>
+          <button id="snd-fx" class="snd-sw" type="button" aria-pressed="true"><span>Sound effects</span><i aria-hidden="true"></i></button>
+          <label class="snd-vol"><span>Effects volume</span><input id="snd-fvol" type="range" min="0" max="100" value="70"></label>
+          <button id="mp3-open" class="snd-plain snd-link" type="button">🎧 My music player <small>songs from your computer</small></button>
+        </div>
+        <div class="snd-card">
+          <b class="snd-sec">👀 Show on screen</b>
+          <button type="button" class="snd-sw" data-hud="chat" aria-pressed="true"><span>Chat box</span><i aria-hidden="true"></i></button>
+          <button type="button" class="snd-sw" data-hud="plate" aria-pressed="true"><span>Place sign (top left)</span><i aria-hidden="true"></i></button>
+          <button type="button" class="snd-sw" data-hud="joy" aria-pressed="true"><span>Joystick (phone)</span><i aria-hidden="true"></i></button>
+        </div>
+        <div class="snd-card">
+        <div class="scr-pick" role="group" aria-label="Screen"><b class="snd-sec">🖥️ Playing on</b>
           <button class="scr-btn" type="button" data-scr="auto" aria-pressed="true">Auto</button>
           <button class="scr-btn" type="button" data-scr="phone" aria-pressed="false">📱 Phone / tablet</button>
           <button class="scr-btn" type="button" data-scr="pc" aria-pressed="false">💻 Computer</button>
         </div>
+        </div>
+        <button id="fbk-open" class="snd-plain snd-link snd-quiet" type="button">✉️ Send feedback or report a bug</button>
       </div>
       <button id="phone-btn" class="dock-btn" type="button" aria-label="Phone" aria-controls="phone" aria-expanded="false" title="Phone">
         <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><rect x="8.6" y="5" width="6.8" height="5.6" rx="1"/><path d="M9 14h.01M12 14h.01M15 14h.01M9 17.5h.01M12 17.5h.01M15 17.5h.01"/></svg>
