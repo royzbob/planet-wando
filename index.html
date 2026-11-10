@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794347244';
+<script>window.WANDO_BUILD = '1794347299';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -4540,6 +4540,8 @@
             f.gb = v.gb.filter(e => e && typeof e.n === 'string' && typeof e.t === 'string' && Number.isFinite(e.at)).slice(0, 30).map(e => ({ n: cleanText(e.n, 16), t: cleanText(e.t, 80), at: e.at }));
         if (Number.isInteger(v.party))
             f.party = v.party;
+        if (v.ex && typeof v.ex === 'object' && Number.isInteger(v.ex.day) && Array.isArray(v.ex.v))
+            f.ex = { day: v.ex.day, v: v.ex.v.filter(k => typeof k === 'string' && k.length < 20).slice(0, 20), paid: !!v.ex.paid };
         if (Array.isArray(v.dances))
             f.dances = DANCES.filter(d => d.price && v.dances.includes(d.id)).map(d => d.id);
         if (Array.isArray(v.planets))
@@ -46012,6 +46014,7 @@
             paintMineHud();
             paintWater(null);
             questHappened('visit', { loc });
+            try { explorerVisit(loc); } catch (e) { }
             if (SCENE_NOW && SCENE_NOW.loc === loc && SCENE_NOW.road)
                 questHappened('road', { loc });
             music.setScene(G.riding && G.board && G.board.kind === 'car' && CAR_LOCS.includes(loc) ? 'radio' : BGM_FOR[loc]);
@@ -46864,6 +46867,8 @@
                 }
                 const day = dayNumber(), tEl = document.getElementById('wmap-today'), sp = starPlace(day), spH = LOCS[sp] ? (LOCS[sp].home || sp) : 'green', cz = catchOfDay(day).zone;
                 const todo = [['⭐ ' + starName(), G.login && G.login.star === day, spH], ['🎣 Catch of the Day', G.angler && G.angler.cotd === day, cz === 'pond' ? 'green' : cz === 'lagoon' ? 'dungeon' : 'beach'], ['⚔️ Daily Delve', G.dun && G.dun.daily === day, 'dungeon'], ['🎡 Prize Wheel', G.login && G.login.spin === day, 'green']];
+                try { const all = explorePlaces(), ex = G.fan && G.fan.ex && G.fan.ex.day === day ? G.fan.ex : null, n = ex ? ex.v.filter(k => all.includes(k)).length : 0, next = all.find(k => !(ex && ex.v.includes(k)));
+                    todo.push(['🗺️ Explorer ' + n + '/' + all.length, !!(ex && ex.paid), next || 'green']); } catch (e) { }
                 try { if (G.dun && G.dun.cls) { const got = G.dun.bounty && G.dun.bounty.day === day ? G.dun.bounty.got.filter(Boolean).length : 0, n = bountiesToday(day).length; if (n) todo.push(['📜 Bounties ' + got + '/' + n, got >= n, 'dungeon']); } } catch (e) { }
                 tEl.replaceChildren(node('b', '', 'Today: '), ...todo.map(([t, ok, loc]) => { const b = el('button', 'wmap-soon-b' + (ok ? ' done' : ''), { type: 'button', 'data-wgo': loc, title: ok ? 'Done today!' : 'Go to ' + LOCS[loc].name }); b.textContent = (ok ? '✓ ' : '') + t; return b; }));
                 tEl.hidden = false;
@@ -48861,6 +48866,21 @@
             catch (e) { } clockPing(); }, paint: timesPaint, fame: timesFame };
         document.getElementById('times-close').addEventListener('click', () => timesP.close());
         document.getElementById('clock-news').addEventListener('click', () => { document.getElementById('clock-pop').hidden = true; ui.times.open(); });
+        const EXPLORE_PAY = 60;
+        const explorePlaces = () => Object.keys(WMAP_LABELS).filter(k => k !== 'home' && LOCS[k]);
+        function explorerVisit(loc) {                                   // set foot in every place on the map today: a little bonus
+            const day = dayNumber(), F = G.fan, w = wmapWhere(loc), all = explorePlaces();
+            if (!F || !all.includes(w)) return;
+            if (!F.ex || F.ex.day !== day) F.ex = { day, v: [], paid: false };
+            if (F.ex.v.includes(w)) return;
+            F.ex.v.push(w);
+            const n = F.ex.v.filter(k => all.includes(k)).length;
+            if (n >= all.length && !F.ex.paid) {
+                F.ex.paid = true; G.coins += EXPLORE_PAY; sfx.chime();
+                chatLine('', '🗺️ Explorer! You visited all ' + all.length + ' places on the map today: +' + EXPLORE_PAY + ' Coins.', 'sys');
+                paintState(); saveGame();
+            } else if (n === all.length - 1 && !F.ex.paid) { const left = all.find(k => !F.ex.v.includes(k)); chatLine('', '🗺️ Explorer: one place left today, ' + (LOCS[left] ? LOCS[left].name : left) + '! Visit it for ' + EXPLORE_PAY + ' Coins.', 'sys'); }
+        }
         let roadNewsAt = 0, roadNewsC = null;
         ui.roadNews = loc => {                                        // for the signs over the roads: the big thing on over there (or how many are there)
             if (!roadNewsC || Date.now() - roadNewsAt > 2500) { roadNewsAt = Date.now(); const N = wmapCounts(), E = wmapEvents(); roadNewsC = { N, E }; }
