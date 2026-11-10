@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346813';
+<script>window.WANDO_BUILD = '1794346857';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -46886,8 +46886,8 @@
             if (sale) kids.push(node('p', 'wmap-card-p', 'Your own house to decorate, on the Village Green. ' + HOME.PRICE + ' Coins' + (G.coins < HOME.PRICE ? ' (you have ' + G.coins + ')' : '') + '.'));
             if (here) kids.push(node('span', 'wmap-card-here', 'You are here'));
             if (L && L.blurb) kids.push(node('p', 'wmap-card-p blurb', L.blurb));
-            const inside = [...new Set(Object.keys(LOCS).filter(k => k !== 'home' && LOCS[k].home === loc && LOCS[k].interior && LOCS[k].name).map(k => LOCS[k].name))];
-            if (inside.length) { const row = node('div', 'wmap-card-row'); row.append(node('small', '', 'Inside:'), ...inside.map(n => node('span', 'wmap-card-chip', n))); kids.push(row); }
+            const seenN = new Set(), inside = Object.keys(LOCS).filter(k => k !== 'home' && LOCS[k].home === loc && LOCS[k].interior && LOCS[k].name && !seenN.has(LOCS[k].name) && seenN.add(LOCS[k].name));
+            if (inside.length) { const row = node('div', 'wmap-card-row'); row.append(node('small', '', tap ? 'Go inside:' : 'Inside:'), ...inside.map(k => { if (!tap) return node('span', 'wmap-card-chip', LOCS[k].name); const b = el('button', 'wmap-card-chip wmap-card-who', { type: 'button', 'data-win': k, title: 'Straight into ' + LOCS[k].name }); b.textContent = LOCS[k].name; return b; })); kids.push(row); }
             const ev = (D.E.ev[loc] || []);
             if (ev.length) { const row = node('div', 'wmap-card-row'); ev.forEach(x => row.appendChild(node('span', 'wmap-ev' + (x.live ? ' live' : '') + (x.car ? ' wmap-car' : '') + (x.cls || ''), x.txt))); kids.push(row); }
             const fr = D.F[loc] || [], n = D.N[loc] || 0, names = (wmapNames[loc] || []).slice(0, 6);
@@ -46949,6 +46949,9 @@
         wmapFind.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); wmapSearch(true); } if (e.key !== 'Escape') e.stopPropagation(); });
         wmapCard.addEventListener('click', e => {
             if (e.target.closest('[data-wcard]')) { wmapCardShow(''); return; }
+            const inn = e.target.closest('[data-win]');
+            if (inn) { const k = inn.dataset.win, s = scene(), L = LOCS[k], why = !s || !L ? 'You cannot get there from here.' : busy() ? 'Finish what you are doing first.' : s.loc === 'dungeon' && G.dun.run && G.dun.run.room ? 'You\'re in a dungeon! Get back to camp first.' : s.loc === k ? 'You are already here.' : '';
+                wmapCardShow(''); if (why) { wmapEl.dataset.say = why; wmapPaint(); delete wmapEl.dataset.say; return; } wmapClose(); sfx.whoosh(); s.travelTo(k); return; }     // straight into a shop
             const who = e.target.closest('[data-pid]'); if (who) { wmapClose(); if (ui.pcard) ui.pcard.open(who.dataset.pid); return; }
             const b = e.target.closest('[data-wgo]'); if (!b) return;
             const why = wmapGo(b.dataset.wgo); wmapCardShow('');
