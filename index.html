@@ -19,7 +19,7 @@
         appId: '1:616998407653:web:4f6218ddc9c60a4636b30c'
     };
     var ROOM = 'main';
-    var PRESENCE_MS = 250;
+    var PRESENCE_MS = 120;
     var HEARTBEAT_MS = 20000;
     var STALE_MS = 75000;
     var SAVE_MS = 20000;
@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794270378';
+<script>window.WANDO_BUILD = '1794270945';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2258,6 +2258,7 @@
   .adbox { position: absolute; left: 50%; bottom: calc(var(--dock-h) + 12px); transform: translateX(-50%); display: flex; align-items: center; gap: 6px; padding: 6px 8px; width: min(560px, calc(100% - 24px)); box-sizing: border-box;
     border: 3px solid #5a3418; border-radius: 12px; background: linear-gradient(#f6ead2, #e8d4a8); box-shadow: 0 4px 0 #2a1408, 0 8px 18px rgba(0, 0, 0, 0.35); color: #3a1f10; }
   .adbox label { font: 800 13px/1 var(--font-display); white-space: nowrap; }
+  .adbox select { max-width: 150px; padding: 6px 4px; border: 2px solid #8a5a34; border-radius: 8px; font: 700 12px var(--font-body); background: #fff; color: #3a1f10; }
   .adbox input { flex: 1; min-width: 0; padding: 6px 8px; border: 2px solid #8a5a34; border-radius: 8px; font: 700 13px var(--font-body); background: #fff; color: #3a1f10; }
   .adbox button { padding: 6px 10px; border: 2px solid #3a1f10; border-radius: 8px; background: linear-gradient(#a8442a, #7a2a18); color: #fff3d6; font: 800 12px/1.2 var(--font-body); cursor: pointer; white-space: nowrap; }
   .adbox button#ad-down { background: linear-gradient(#8a7a6a, #5a4a3a); }
@@ -2781,6 +2782,7 @@
   <form id="adbox" class="adbox" autocomplete="off" hidden>
     <label for="ad-input">Your sign</label>
     <input id="ad-input" type="text" maxlength="40" placeholder="What are you trading? e.g. Selling a Legend board">
+    <select id="ad-item" aria-label="Show a picture of"><option value="">📷 No picture</option></select>
     <button id="ad-put" type="submit">Put up</button>
     <button id="ad-down" type="button">Take down</button>
   </form>
@@ -4557,6 +4559,7 @@
     const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const DEV = { touch: false };
     const IDLE = { at: Date.now(), AFTER: 3 * 60000 };
+    const PEER_DELAY = 160;
     const NET_AWAY = { hiddenAt: 0, HIDDEN: 60000, IDLE: 15 * 60000 };
     try {
         document.addEventListener('visibilitychange', () => { NET_AWAY.hiddenAt = document.hidden ? Date.now() : 0; if (!document.hidden)
@@ -22770,6 +22773,10 @@
             lift: Number.isFinite(q.lift) ? clamp(Math.round(q.lift), 0, 60) : 0,
             fl: Number.isInteger(q.fl) ? clamp(q.fl, 0, 99999) : 0,
             dg: q.loc === 'dungeon' ? coopIn(q.dg) : null,
+            hw: q.loc === 'dungeon' && Number.isInteger(q.hw) && q.hw >= 0 && armoryDef(q.hw) ? q.hw : -1,
+            ar: q.loc === 'dungeon' && Array.isArray(q.ar) ? [0, 1].map(i => { const v = q.ar[i]; return Array.isArray(v) && Number.isInteger(v[0]) && ARMOR_SETS[v[0]] && Number.isInteger(v[1]) && v[1] >= 0 && v[1] <= 4 ? { a: v[0], s: i ? 'b' : 'h', r: v[1], q: 100 } : null; }) : null,
+            bd: q.bd && typeof q.bd === 'object' ? cleanBoard(q.bd) : null,
+            ai: q.loc === 'trade' && q.ai && typeof q.ai === 'object' ? q.ai : null,
             lv: Number.isInteger(q.lv) ? clamp(q.lv, 1, 50) : 0,
             ti: Number.isInteger(q.ti) && q.ti > 0 && q.ti < PLAYER_TITLES.length ? q.ti : 0,
             tb: q.loc === 'trade' && Number.isInteger(q.tb) ? clamp(q.tb, 0, 99999) : 0,
@@ -28571,7 +28578,7 @@
                 m.called = true;
                 const kinds = m.kind === 'lich' ? ['skeleton', 'skelarcher', 'skeleton'] : m.kind === 'lord' ? ['ghoul', 'ghoul', 'wraith'] : ['goblin', 'archer', 'goblin'];
                 const diff = roomDiff(G.dun.run.d, Math.max(1, G.dun.run.room), G.dun.level);
-                kinds.forEach((k, i) => { const a = (i / kinds.length) * TAU, o = this.monPut(k, m.x + Math.cos(a) * 110, m.y + Math.sin(a) * 70, diff); o.aggro = true; this.dunFree(o); this.dunRing(o.x, o.y, 40, 0xb06bff); });
+                kinds.forEach((k, i) => { const a = (i / kinds.length) * TAU, gx = m.x + Math.cos(a) * 110, gy = m.y + Math.sin(a) * 70, ok = !this.halls || this.halls.walk(gx, gy), o = this.monPut(k, ok ? gx : m.x + (i - 1) * 30, ok ? gy : m.y + 20, diff); o.aggro = true; this.dunFree(o); this.dunRing(o.x, o.y, 40, 0xb06bff); });
                 this.dunPop(m.x, m.y - 120 * m.size, m.kind === 'lich' ? 'Rise, my servants!' : 'To me!', '#ff9a9a', true);
                 sfx.buzz();
                 this.cleared = false;
@@ -28686,12 +28693,30 @@
                 ui.onDun();
             saveGame();
         }
+        dunSpawnSpot(r) {
+            const HL = this.halls;
+            if (!HL || HL.open || !HL.rooms || !HL.rooms.length)
+                return null;
+            const fx = this.pz.x, fy = this.pz.y + FOOT;
+            for (let i = 0; i < 80; i++) {
+                const R = HL.rooms[Math.floor(r() * HL.rooms.length)], x = R.x + 50 + r() * Math.max(10, R.w - 100), y = R.y + 60 + r() * Math.max(10, R.h - 110);
+                if (HL.walk(x, y) && Math.hypot(x - fx, y - fy) > 220 && Math.hypot(x - fx, y - fy) < 900 && this.free(x, y, 30))
+                    return { x, y };
+            }
+            return null;
+        }
         dunWave() {
             const B = this.D.bounds, r = this.waveRand || Math.random, kinds = this.waves.shift(), Dn = G.dun, diff = roomDiff(Dn.run.d, Dn.run.room, Dn.level);
             this.waveAt = 0;
             this.waveN++;
             kinds.forEach((kind, i) => {
-                const side = i % 3, x = side === 0 ? B.x + 60 : side === 1 ? B.x + B.w - 60 : B.x + 100 + r() * (B.w - 200), y = side === 2 ? B.y + 60 : B.y + 120 + r() * (B.h - 380);
+                const side = i % 3;
+                let x = side === 0 ? B.x + 60 : side === 1 ? B.x + B.w - 60 : B.x + 100 + r() * (B.w - 200), y = side === 2 ? B.y + 60 : B.y + 120 + r() * (B.h - 380);
+                const sp = this.dunSpawnSpot(r);
+                if (sp) {
+                    x = sp.x;
+                    y = sp.y;
+                }
                 const m = this.monPut(kind, x, y, diff, eliteRoll(r, diff, (this.mods || []).includes('champs') ? 3 : 1));
                 m.aggro = true;
                 this.dunFree(m);
@@ -33249,7 +33274,7 @@
                 }
                 if (this.dun && this.dunClick(wp.x, wp.y))
                     return;
-                if (this.others && ui.onPeerClick)
+                if (this.others && ui.onPeerClick && !(this.dun && G.dun.run.room))
                     for (const [id, o] of this.others)
                         if (Math.abs(wp.x - o.x) < 24 && wp.y < o.y + 8 && wp.y > o.y - 88) {
                             ui.onPeerClick(id);
@@ -36094,13 +36119,14 @@
                 }
                 else
                     o.carEnd = '';
-                const key = p.boat ? BOAT_LEVELS[p.boat].tex : car ? 'peercar_' + p.lookKey + '_' + p.car + (o.carEnd ? '_' + o.carEnd : '') : 'peer_' + p.lookKey;
+                const arm = p.ar && (p.ar[0] || p.ar[1]) ? { h: p.ar[0], b: p.ar[1] } : null, armKey = arm ? '_ar' + p.ar.map(v => (v ? v.a + '.' + v.r : '-')).join('') : '';
+                const key = p.boat ? BOAT_LEVELS[p.boat].tex : car ? 'peercar_' + p.lookKey + '_' + p.car + (o.carEnd ? '_' + o.carEnd : '') : 'peer_' + p.lookKey + armKey;
                 if (o.key !== key) {
                     o.key = key;
                     if (car)
                         bake(this, key, 130, 150, c => (o.carEnd ? drawCarEndWith(c, car, palette(p.look), o.carEnd) : drawCarWith(c, car, palette(p.look))));
                     else if (!p.boat)
-                        bake(this, key, CW, CHA, c => { c.translate(0, AV_TOP); drawFigure(c, palette(p.look)); });
+                        bake(this, key, CW, CHA, c => { c.translate(0, AV_TOP); drawFigure(c, palette(arm ? Object.assign({}, p.look, { armor: arm }) : p.look)); });
                     o.img.setTexture(key).setScale(1 / TEX).setOrigin(0.5, p.boat ? 0.8 : car ? 140 / 150 : FEET_OA);
                 }
                 if (car && Math.abs(p.x - o.x) > 2)
@@ -36117,7 +36143,32 @@
                     o.tag.setText(shown);
                     this.pillFit(o.tag);
                 }
-                const dx = p.x - o.x, dy = p.y - o.y, d = Math.hypot(dx, dy), k = d > 420 ? 1 : Math.min(1, dt * 9), moving = d > 3 && !p.boat && !car;
+                if (p.x !== o.px || p.y !== o.py) {
+                    if (o.px === undefined || Math.hypot(p.x - o.px, p.y - o.py) > 300)
+                        o.hist = [];
+                    (o.hist = o.hist || []).push({ t: time, x: p.x, y: p.y });
+                    if (o.hist.length > 6)
+                        o.hist.shift();
+                    o.vx = p.x - (o.px === undefined ? p.x : o.px);
+                    o.px = p.x;
+                    o.py = p.y;
+                }
+                let tx = p.x, ty = p.y;
+                const H = o.hist || [], rt = time - PEER_DELAY;
+                for (let q = H.length - 1; q > 0; q--)
+                    if (H[q - 1].t <= rt) {
+                        if (rt < H[q].t) {
+                            const u = (rt - H[q - 1].t) / Math.max(1, H[q].t - H[q - 1].t);
+                            tx = H[q - 1].x + (H[q].x - H[q - 1].x) * u;
+                            ty = H[q - 1].y + (H[q].y - H[q - 1].y) * u;
+                        }
+                        break;
+                    }
+                if (H.length > 1 && rt < H[0].t) {
+                    tx = H[0].x;
+                    ty = H[0].y;
+                }
+                const dx = tx - o.x, dy = ty - o.y, d = Math.hypot(dx, dy), k = d > 420 ? 1 : Math.min(1, dt * 18), moving = (d > 2 || (H.length > 1 && rt < H[H.length - 1].t)) && !p.boat && !car;
                 o.x += dx * k;
                 o.y += dy * k;
                 const hop = REDUCED ? 0 : moving ? Math.abs(Math.sin(time * 0.014)) * 3 : ['dance', 'party', 'disco', 'floss'].includes(p.em) ? Math.abs(Math.sin(time * 0.013)) * 8 : p.em === 'jump' || p.em === 'superstar' ? Math.abs(Math.sin(time * 0.009)) * 22 : p.em === 'cheer' || p.em === 'robot' ? Math.abs(Math.sin(time * 0.012)) * 5 : p.em === 'breakdance' ? -10 : 0;
@@ -36125,6 +36176,33 @@
                     .setAngle(REDUCED || moving ? 0 : p.em === 'wave' || p.em === 'cheer' ? Math.sin(time * 0.012) * 5 : p.em === 'party' || p.em === 'floss' || p.em === 'twist' ? Math.sin(time * 0.01) * 10 : p.em === 'robot' ? (Math.floor(time / 260) % 2 ? 6 : -6) : p.em === 'moonwalk' ? -8 : p.em === 'disco' ? (Math.floor(time / 420) % 2 ? -7 : 7) : 0)
                     .setScale((car ? (o.carEnd ? 1 : o.carFace || 1) : !REDUCED && (p.em === 'spin' || p.em === 'breakdance') && !moving ? Math.cos(time * (p.em === 'spin' ? 0.012 : 0.02)) || 0.01 : 1) / TEX, 1 / TEX);
                 o.shadow.setPosition(o.x, o.y + 1).setVisible(!p.boat);
+                const bd = !car && !p.boat ? p.bd : null;
+                if (bd) {
+                    if (!o.board)
+                        o.board = this.add.image(0, 0, 'pshadow');
+                    if (o.boardId !== bd.id) {
+                        o.boardId = bd.id;
+                        bakeBoard(this, bd);
+                        o.board.setTexture('board_' + bd.id).setOrigin(0.5, 0.5).setScale(1 / TEX);
+                    }
+                    const lift = bd.kind === 'skate' ? 6 : 12 + (REDUCED ? 0 : Math.sin(time * 0.006 + o.x * 0.01) * 2);
+                    o.board.setVisible(true).setFlipX((o.vx || 0) < 0).setPosition(o.x, o.y - lift + 8).setDepth(o.y - 0.1);
+                    o.img.y -= lift;
+                }
+                else if (o.board)
+                    o.board.setVisible(false);
+                if (p.hw >= 0 && !car && !p.boat) {
+                    if (!o.wpn)
+                        o.wpn = this.add.image(0, 0, 'pshadow');
+                    if (o.wpnC !== p.hw) {
+                        o.wpnC = p.hw;
+                        const w = weaponOf(armoryDef(p.hw), null, 'PEERWPN0', 100);
+                        o.wpn.setTexture(bakeWeapon(this, w)).setOrigin(28 / 80, 54 / 80).setScale(0.8 / TEX);
+                    }
+                    o.wpn.setVisible(true).setPosition(o.img.x + 16, o.img.y - 30).setRotation(0.35).setDepth(o.y + 0.3);
+                }
+                else if (o.wpn)
+                    o.wpn.setVisible(false);
                 this.pillMove(o.tag, o.x, o.y + 7);
                 if (p.pet >= 0 && !p.boat) {
                     if (!o.pet)
@@ -36177,6 +36255,7 @@
                 }
                 if (o.ad)
                     o.ad.setPosition(o.x, o.y - (o.bubble ? 150 : 104));
+                o.adPic = this.adPicShow(o.adPic, o.ad ? p.ai : null, o.x, o.ad ? o.ad.y - o.ad.height - 4 : 0, o.y);
             }
             for (const [id, o] of this.others)
                 if (!seen.has(id)) {
@@ -36186,6 +36265,12 @@
                     o.tag.destroy();
                     if (o.pet)
                         o.pet.destroy();
+                    if (o.board)
+                        o.board.destroy();
+                    if (o.wpn)
+                        o.wpn.destroy();
+                    if (o.adPic)
+                        o.adPic.destroy();
                     if (o.ad)
                         o.ad.destroy();
                     if (o.bob)
@@ -36320,6 +36405,32 @@
             }
             if (this.myAd)
                 this.myAd.setPosition(x, y - (this.bubble ? 150 : 104));
+            if (this.loc === 'trade')
+                this.myAdPic = this.adPicShow(this.myAdPic, this.myAd && ui.myAdItem ? ui.myAdItem() : null, x, this.myAd ? this.myAd.y - this.myAd.height - 4 : 0, y);
+        }
+        adPicShow(img, code, x, top, depth) {
+            const key = code ? 'adpic_' + hashStr(JSON.stringify(code)) : '';
+            if (!key) {
+                if (img)
+                    img.setVisible(false);
+                return img;
+            }
+            if (!this.textures.exists(key)) {
+                const cv = ui.tradePic ? ui.tradePic(code) : null;
+                if (!cv) {
+                    if (img)
+                        img.setVisible(false);
+                    return img;
+                }
+                this.textures.addCanvas(key, cv);
+            }
+            if (!img)
+                img = this.add.image(0, 0, key);
+            if (img.texture.key !== key)
+                img.setTexture(key);
+            const sz = 62, tw = img.width || 112;
+            img.setOrigin(0.5, 1).setScale(sz / tw).setPosition(x, top).setDepth(9551).setVisible(true);
+            return img;
         }
         adSign(text) {
             return this.add.text(0, 0, text, { fontFamily: '"Baloo 2", "Trebuchet MS", sans-serif', fontSize: '12px', fontStyle: '800', color: '#ffe9a8', backgroundColor: '#5a3418', padding: { x: 7, y: 3 }, align: 'center', wordWrap: { width: 180 } })
@@ -43613,6 +43724,36 @@
             : t === 'gold' ? { name: n => n + ' golden flower' + (n === 1 ? '' : 's'), r: 3, have: () => G.fan.ggd || 0, add: n => { G.fan.ggd = clamp((G.fan.ggd || 0) + n, 0, 9999); } }
                 : t === 'trash' ? { name: n => 'Trash bag (' + n + ' piece' + (n === 1 ? '' : 's') + ')', r: 0, have: () => G.fan.gtr || 0, add: n => { G.fan.gtr = clamp((G.fan.gtr || 0) + n, 0, 999); } } : null);
         const tradeItemOut = it => (it.k === 'a' ? { k: 'a', a: it.obj.a, s: it.obj.s, r: it.obj.r, q: it.obj.q, u: it.u } : it.k === 'k' ? { k: 'k', kc: it.obj.kc, u: it.u } : it.k === 't' ? { k: 't', d: it.obj.d, u: it.u } : it.k === 'g' ? { k: 'g', t: it.obj.t, n: it.obj.n, u: it.u } : it.k === 'w' ? { k: 'w', c: it.c, u: it.u, q: it.q } : it.k === 'm' ? { k: 'm', t: it.obj.t, u: it.u } : it.k === 'f' ? { k: 'f', c: it.obj.c, u: it.u } : it.k === 'p' ? { k: 'p', o: it.obj, u: it.u } : it.k === 'h' ? { k: 'h', t: it.obj.t, c: it.obj.c, u: it.u } : { k: it.k, c: it.obj.c, u: it.u });
+        function tradePicOf(w) {
+            const sq = draw => { const cv = el('canvas', '', { width: 112, height: 112 }); const c = cv.getContext('2d'); if (c) {
+                c.fillStyle = '#fff8e8';
+                c.fillRect(0, 0, 112, 112);
+                c.strokeStyle = RARITIES[w.r || 0][1];
+                c.lineWidth = 8;
+                c.strokeRect(4, 4, 104, 104);
+                draw(c, cv);
+            } return cv; };
+            try {
+                if (w.k === 'w')
+                    return sq(c => { c.save(); c.translate(16, 16); c.scale(80 / 72, 80 / 72); drawWeapon(c, w); c.restore(); });
+                if (w.k === 'a')
+                    return sq(c => { c.save(); c.translate(8, 8); c.scale(2, 2); drawArmorIcon(c, w.obj); c.restore(); });
+                if (w.k === 't')
+                    return sq(c => drawToolPic(c, w.obj.d, 112));
+                const other = w.k === 'k' ? (() => { const cv = el('canvas', '', { width: 112, height: 112 }); drawCarTile(cv, w.obj); return cv; })()
+                    : w.k === 'h' || w.k === 'm' ? (() => { const cv = el('canvas', '', { width: 112, height: 112 }); drawFurnTile(cv, FURN_BY[w.obj.t], w.k === 'm' ? 0 : w.obj.c); return cv; })()
+                        : w.k === 'p' ? (() => { const cv = el('canvas', '', { width: 66, height: 72 }); drawPortrait(cv, Object.assign({}, look, { outfit: w.obj })); return cv; })()
+                            : ['o', 'b', 'c', 'f'].includes(w.k) ? collCanvas(w.k, collDef(w.k, w.k === 'f' ? w.obj.c - FURN_COLL : w.obj.c)) : null;
+                if (!other)
+                    return null;
+                return sq(c => { const k = Math.min(96 / other.width, 96 / other.height); c.drawImage(other, 56 - other.width * k / 2, 56 - other.height * k / 2, other.width * k, other.height * k); });
+            }
+            catch (e) {
+                return null;
+            }
+        }
+        ui.tradePic = code => { const it = tradeItemIn(code); return it ? tradePicOf(it) : null; };
+        ui.myAdItem = () => net.adItem || null;
         function tradeMine() {
             const out = G.dun.bag.map(w => Object.assign({}, w, { k: 'w' }));
             (G.dun.arm || []).forEach(p => out.push({ k: 'a', u: p.u, name: armorName(p), r: p.r, obj: p }));
@@ -44676,8 +44817,12 @@
                 return null;
             return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
                 boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, sh: G.riding && !s.boating && shineOn() ? 1 : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
-                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
+                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
         }
+        const netHeld = s => { const D = G.dun, w = s.loc === 'dungeon' && D && D.eq >= 0 ? D.bag[D.eq] : null; return w && Number.isInteger(w.c) ? w.c : -1; };
+        const netArmor = s => { const W = s.loc === 'dungeon' && G.dun && G.dun.worn; return W && (W.h || W.b) ? [W.h ? [W.h.a, W.h.r] : 0, W.b ? [W.b.a, W.b.r] : 0] : 0; };
+        const netBoard = s => { const b = G.board; if (!G.riding || !b || b.kind === 'car' || s.boating)
+            return 0; return Number.isInteger(b.c) ? { c: b.c, u: b.u } : { id: b.id, name: b.name, speed: b.speed, deck: b.deck, trim: b.trim, glow: b.glow, kind: b.kind, design: b.design, wheels: b.wheels }; };
         function netPush() {
             if (!net.room)
                 return;
@@ -45706,7 +45851,20 @@
             sc.noteUntil = 0;
             sc.note('Your sign is up!', '#ffe9a8');
         } });
-        document.getElementById('ad-down').addEventListener('click', () => { net.ad = ''; adInput.value = ''; });
+        document.getElementById('ad-down').addEventListener('click', () => { net.ad = ''; adInput.value = ''; net.adItem = null; adItem.value = ''; });
+        const adItem = document.getElementById('ad-item');
+        const adItemFill = () => {
+            const list = tradeMine().filter(it => it.k !== 'g'), keep = adItem.value;
+            adItem.replaceChildren(...[['', '📷 No picture']].concat(list.slice(0, 120).map(it => [it.k + ':' + it.u, it.name])).map(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; return o; }));
+            adItem.value = list.some(it => it.k + ':' + it.u === keep) ? keep : '';
+            adItem._list = list;
+        };
+        adItem.addEventListener('focus', adItemFill);
+        adItem.addEventListener('pointerdown', adItemFill);
+        adItem.addEventListener('change', () => { const it = (adItem._list || []).find(x => x.k + ':' + x.u === adItem.value); net.adItem = it ? tradeItemOut(it) : null; const sc = scene(); if (sc && it) {
+            sc.noteUntil = 0;
+            sc.note('Your sign shows your ' + it.name + '.', '#ffe9a8');
+        } });
         adInput.addEventListener('keydown', e => { if (e.key === 'Escape')
             adInput.blur(); });
         const locWas2 = ui.onLoc;
