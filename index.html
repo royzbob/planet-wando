@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794312725';
+<script>window.WANDO_BUILD = '1794312993';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2149,6 +2149,10 @@
   .dun-map { position: absolute; top: 112px; left: 10px; width: 126px; height: 91px; border: 2px solid #d8a43a; border-radius: 6px; background: rgba(10, 6, 16, 0.78); pointer-events: none; }
   .dun-hud.has-map .dun-party { top: 212px; }
   .dun-hud { position: absolute; inset: 0; bottom: var(--dock-h); display: block; max-width: none; transform: none; left: 0; pointer-events: none; }
+  .dun-hud::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .4s; box-shadow: inset 0 0 70px 18px rgba(200, 20, 30, 0.55); }
+  .dun-hud.low::before { opacity: 1; animation: dun-low 1.1s ease-in-out infinite; }
+  @keyframes dun-low { 50% { opacity: 0.45; } }
+  @media (prefers-reduced-motion: reduce) { .dun-hud.low::before { animation: none; } }     
   .dun-hud > * { pointer-events: auto; }
   .dun-plate {
     position: absolute; top: 10px; left: 10px; width: 230px; box-sizing: border-box; display: flex; flex-direction: column; gap: 3px;
@@ -3295,6 +3299,7 @@
       <span id="dun-bad" class="dun-bad">Bad Guys: 0</span>
       <button id="dun-mana" class="dun-flask mp" type="button" title="Mana potion (M)"><span>0</span></button>
       <span id="dun-weapon" class="dun-weapon">Fists</span>
+      <button id="dun-swap" class="dun-small" type="button" title="Swap weapon (Q)" aria-label="Swap weapon" hidden>⇄</button>
     </div>
   </div>
   <div id="mine-hud" class="mine-hud" hidden>
@@ -43515,6 +43520,7 @@
                 return;
             dunHpBar.style.width = Math.round(100 * clamp(D.hp / max, 0, 1)) + '%';
             dunHpText.textContent = Math.ceil(D.hp) + ' / ' + max;
+            dunHud.classList.toggle('low', D.hp > 0 && D.hp / max < 0.25);
             dunMpBar.style.width = Math.round(100 * clamp(D.mp / mmax, 0, 1)) + '%';
             dunMpText.textContent = Math.floor(D.mp) + ' / ' + mmax;
             dunXpBar.style.width = Math.round(100 * D.xp / xpFor(D.level)) + '%';
@@ -43547,6 +43553,7 @@
             dunBoonsEl.title = D.run.boons.map(k => BOONS[k].name + ': ' + BOONS[k].blurb).join('\n');
             dq('dun-weapon').textContent = w ? w.name : 'Fists';
             dq('dun-weapon').style.color = w ? RARITIES[w.r][1] : '';
+            dq('dun-swap').hidden = D.bag.length < 2;
             paintDunSkills();
             if (dunP.isOpen())
                 paintDun();
@@ -44192,6 +44199,11 @@
             return '';
         }
         ui.dunSwap = dunSwap;
+        ui.paintDunHud = paintDunHud;
+        dq('dun-swap').addEventListener('click', () => { const t = dunSwap(), s = scene(); if (t && s) {
+            s.noteUntil = 0;
+            s.note(t, '#ffe9a8');
+        } });
         window.addEventListener('keydown', e => {
             if ((e.key === 'q' || e.key === 'Q') && G.loc === 'dungeon' && !isTyping() && !busy() && !e.ctrlKey && !e.metaKey && !e.altKey) {
                 const t = dunSwap(), s = scene();
