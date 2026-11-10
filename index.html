@@ -2065,6 +2065,32 @@
   }
   .wmap-you::after { content: ''; position: absolute; left: 50%; top: 100%; margin-left: -7px; border: 7px solid transparent; border-top-color: #120b3a; }
   @keyframes wmap-bob { to { transform: translate(-50%, -7px); } }
+  .wmap-tags { position: absolute; left: 50%; top: calc(100% + 3px); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none; z-index: 1; }
+  .wmap-tags.up { top: auto; bottom: calc(100% + 3px); }
+  .wmap-tags[hidden] { display: none; }
+  .wmap-ev { padding: 0 7px; border: 2px solid #120b3a; border-radius: 999px; background: #2a1a6a; color: #fff; font: 800 10.5px/1.45 var(--font-body); white-space: nowrap; box-shadow: 0 1px 0 #120b3a; }
+  .wmap-ev.live { background: #ff3d6e; animation: wmap-live 0.8s ease-in-out infinite alternate; }
+  .wmap-ev.wmap-fr { background: #ffd84d; color: #2a1a6a; }
+  @keyframes wmap-live { to { background: #ff7a9a; } }
+  .wmap-soon { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin: 0; font: 700 13px/1.3 var(--font-body); text-shadow: 0 1px 0 #120b3a; }
+  .wmap-soon[hidden] { display: none; }
+  .wmap-soon-b { padding: 2px 10px; border: 2px solid #120b3a; border-radius: 999px; background: rgba(255, 255, 255, 0.16); color: #fff; font: 800 12px/1.3 var(--font-body); cursor: pointer; }
+  .wmap-soon-b:hover, .wmap-soon-b:focus-visible { background: var(--sun); color: #2a1a6a; outline: none; }
+  @media (max-width: 640px) { .wmap-ev { font-size: 8.5px; padding: 0 4px; border-width: 1.5px; } .wmap-tags .wmap-ev:not(.live):not(.wmap-fr) { display: none; } .wmap-soon, .wmap-soon-b { font-size: 10.5px; } }
+  @media (max-height: 500px) {
+    .wmap { padding: 6px 10px 8px; gap: 4px; border-radius: 16px; }
+    .wmap-head h2 { font-size: 15px; }
+    .wmap-x { width: 28px; height: 28px; }
+    .wmap-board { width: min(100%, calc((100vh - var(--dock-h) - 96px) * 1.613)); }
+    .wmap-pill { padding: 1px 6px; font-size: 10px; border-width: 1.5px; }
+    .wmap-n { font-size: 9px; padding: 0 4px; }
+    .wmap-spot::before { width: 64px; height: 44px; }
+    .wmap-you { bottom: calc(100% + 24px); font-size: 10px; }
+    .wmap-ev { font-size: 8px; padding: 0 4px; border-width: 1.5px; }
+    .wmap-tags .wmap-ev:not(.live):not(.wmap-fr) { display: none; }
+    .wmap-note { font-size: 11px; }
+    .wmap-soon, .wmap-soon-b { font-size: 10px; }
+  }
   .wmap-note { margin: 0; text-align: center; font: 700 14px/1.3 var(--font-body); text-shadow: 0 1px 0 #120b3a; }
   @media (max-width: 640px) {
     .wmap-pill { padding: 1px 6px; font-size: 10.5px; }
@@ -2073,7 +2099,7 @@
     .wmap-you { bottom: calc(100% + 26px); font-size: 10px; }
     .wmap-head h2 { font-size: 17px; }
   }
-  @media (prefers-reduced-motion: reduce) { .wmap, .wmap.closing, .wmap-you { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .wmap, .wmap.closing, .wmap-you, .wmap-ev.live { animation: none; } }
   .inv {
     position: absolute; left: 50%; top: calc((100% - var(--dock-h)) / 2); transform: translate(-50%, -50%);
     width: min(720px, calc(100% - 20px)); max-height: calc(100% - var(--dock-h) - 14px); box-sizing: border-box;
@@ -2863,6 +2889,7 @@
       <canvas id="wmap-cv" width="1600" height="992" aria-hidden="true"></canvas>
       <div id="wmap-spots" class="wmap-spots" role="group" aria-label="Places"></div>
     </div>
+    <p id="wmap-soon" class="wmap-soon" hidden></p>
     <p id="wmap-note" class="wmap-note" aria-live="polite">Click a place to go there.</p>
   </section>
 
@@ -46570,9 +46597,12 @@
             const you = node('span', 'wmap-you', 'You are here'), pill = node('span', 'wmap-pill', loc === 'home' ? 'My House' : LOCS[loc].name), n = node('span', 'wmap-n', '');
             you.hidden = true;
             n.hidden = true;
-            b.append(you, pill, n);
+            const tags = node('span', 'wmap-tags' + (['beach', 'dungeon', 'ice', 'dance', 'trade'].includes(loc) ? ' up' : ''), '');
+            if (LOCS[loc] && LOCS[loc].blurb)
+                b.title = LOCS[loc].blurb;
+            b.append(you, pill, n, tags);
             wmapSpots.appendChild(b);
-            wmapBtns[loc] = { b, you, n };
+            wmapBtns[loc] = { b, you, n, tags };
         });
         const wmapWhere = loc => (loc === 'home' || !LOCS[loc] ? loc : LOCS[loc].home || loc);
         function wmapCounts() {
@@ -46581,6 +46611,38 @@
                 return; const w = wmapWhere(p.loc); out[w] = (out[w] || 0) + 1; });
             return out;
         }
+        function wmapEvents(now = new Date()) {
+            const day = dayNumber(now), ev = {}, up = [];
+            const add = (loc, txt, live) => { if (loc) (ev[loc] = ev[loc] || []).push({ txt, live: !!live }); };
+            const nextAt = (min, every) => { const n = new Date(now.getTime()); const m = now.getMinutes(); n.setSeconds(0, 0); n.setMinutes(m - (((m - min) % every) + every) % every + every); return n; };
+            if (showOn(now)) add('dance', '🎤 ' + SHOW.name + ' NOW', true); else up.push([showNext(now), '🎤 ' + SHOW.name, 'dance']);
+            if (rainOn(now)) add('green', '🪙 Coin Rain NOW', true); else up.push([nextAt(RAIN.from, 60), '🪙 Coin Rain', 'green']);
+            if (derbyOn(now)) add('ice', '🏁 Fishing Derby NOW', true); else up.push([nextAt(0, DERBY.every), '🏁 Fishing Derby', 'ice']);
+            if (feastOn(now)) add('green', '🦃 Harvest Feast', true);
+            else if (harvestOn()) add('green', '🌰 Acorns to find', false);
+            try { if (trickOn()) add('green', '🎃 Trick or treat!', true); } catch (e) { }
+            try { if (!G.dun || G.dun.daily !== day) add('dungeon', '⚔️ ' + dailyDelve(day).name, false); } catch (e) { }
+            try { const c = catchOfDay(day); if (!G.angler || G.angler.cotd !== day) add(c.zone === 'pond' ? 'green' : c.zone === 'lagoon' ? 'dungeon' : 'beach', '🎣 Catch of the Day: ' + c.name, false); } catch (e) { }
+            try { if (!G.login || G.login.star !== day) { const sp = starPlace(day), h = LOCS[sp] ? (LOCS[sp].home || sp) : sp; add(h, '⭐ ' + starName() + ' hiding here', false); } } catch (e) { }
+            try { if (weatherNow(now) === 'rain') ['beach', 'green'].forEach(l => add(l, '🌧️ Rain: fish bite faster', false)); } catch (e) { }
+            Object.keys(ev).forEach(k => ev[k].sort((a, b) => b.live - a.live));
+            return { ev, up: up.sort((a, b) => a[0] - b[0]) };
+        }
+        function wmapFriends() {
+            const out = {};
+            (G.friends || []).forEach(f => { if (!f.ok || !net.far || !net.far.get)
+                return; const p = net.far.get(f.id); if (!p || !p.loc)
+                return; const w = wmapWhere(p.loc); (out[w] = out[w] || []).push({ name: f.name || p.name, away: p.sv && p.sv !== SRV.id ? p.sv : '' }); });
+            return out;
+        }
+        const wmapSoon = document.getElementById('wmap-soon');
+        wmapSoon.addEventListener('click', e => { const b = e.target.closest('[data-wgo]'); if (!b)
+            return; const why = wmapGo(b.dataset.wgo); if (why) {
+            wmapEl.dataset.say = why;
+            wmapPaint();
+            delete wmapEl.dataset.say;
+        } });
+        setInterval(() => { if (wmapP.isOpen()) wmapPaint(); }, 5000);
         function wmapPaint() {
             if (!wmapDrawn) {
                 const cv = document.getElementById('wmap-cv'), c = cv.getContext('2d');
@@ -46602,6 +46664,21 @@
                 B.n.hidden = !n;
                 B.n.textContent = n + (n === 1 ? ' player' : ' players');
             });
+            try {
+                const E = wmapEvents(), F = wmapFriends(), now = Date.now();
+                Object.keys(wmapBtns).forEach(loc => {
+                    const B = wmapBtns[loc], kids = [];
+                    (E.ev[loc] || []).slice(0, 2).forEach(x => kids.push(node('span', 'wmap-ev' + (x.live ? ' live' : ''), x.txt)));
+                    const fr = F[loc] || [];
+                    if (fr.length) { const t = node('span', 'wmap-ev wmap-fr', '★ ' + fr.slice(0, 2).map(f => f.name).join(', ') + (fr.length > 2 ? ' +' + (fr.length - 2) : '')); t.title = fr.map(f => f.name + (f.away ? ' (on another server)' : '')).join('\n'); kids.push(t); }
+                    B.tags.replaceChildren(...kids);
+                    B.tags.hidden = !kids.length || B.b.hidden;
+                });
+                const soon = E.up.filter(u => u[0] - now < 61 * 60000).slice(0, 3);
+                wmapSoon.replaceChildren(...(soon.length ? [node('b', '', 'Coming up: ')] : []), ...soon.map(([t, txt, loc], i) => { const mins = Math.max(1, Math.round((t - now) / 60000)), b = el('button', 'wmap-soon-b', { type: 'button', 'data-wgo': loc, title: 'Go to ' + LOCS[loc].name });
+                    b.textContent = txt + ' · ' + (mins <= 15 ? 'in ' + mins + ' min' : t.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })); return b; }));
+                wmapSoon.hidden = !soon.length;
+            } catch (e) { }
             const at = s ? s.loc : G.loc;
             wmapNote.textContent = wmapEl.dataset.say || ((LOCS[at] && LOCS[at].interior && at !== 'home' ? 'You are in the ' + LOCS[at].name + ', at ' + LOCS[here].name + '.' : 'You are at ' + (at === 'home' ? 'your house' : LOCS[at] ? LOCS[at].name : 'Planet Wando') + '.') + ' Click a place to go there.');
         }
