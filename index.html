@@ -46905,6 +46905,19 @@
             chatMin(true);
         ui.onChatLine = (name, text, mine) => chatLine(name, text, mine ? 'me' : 'them');
         const locWas = ui.onLoc;
+        const EV_WAS = { show: null, rain: null, derby: null };
+        setInterval(() => {
+            const gt = document.getElementById('gate');
+            if (gt && !gt.hidden)
+                return;
+            const s = scene(), here = wmapWhere(s ? s.loc : G.loc), now = new Date();
+            [['show', showOn(now), 'dance', '🎤 ' + SHOW.name + ' has started at the Neon Dance House!', 'dance'], ['rain', rainOn(now), 'green', '🪙 Coin Rain has started on the Village Green!', 'green'], ['derby', derbyOn(now), 'ice', '🏁 The Fishing Derby has started at Frostwood Lake!', 'ice']].forEach(([k, on, loc, text, word]) => {
+                const was = EV_WAS[k];
+                EV_WAS[k] = on;
+                if (was === false && on && here !== loc)
+                    chatLine('', text + ' Open the map (M) or type /go ' + word + '.', 'sys');
+            });
+        }, 5000);
         let arriveT = 0, arriveLast = '';
         function arriveShow(loc) {
             const D = LOCS[loc], box = document.getElementById('arrive');
