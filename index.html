@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794347159';
+<script>window.WANDO_BUILD = '1794347244';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -27038,6 +27038,7 @@
     class WorldScene extends Phaser.Scene {
         constructor(loc) { super(loc); this.loc = loc; }
         init(data) {
+            this.roadTags = []; this.roadNewsT = null;
             this.saved = (data && data.player) || null;
             this.from = (data && data.from) || null;
             this.road = !!(data && data.road);
@@ -27335,7 +27336,17 @@
             [-54, 54].forEach(dx => this.solid(R.x + dx, R.y - 2, 10));
             const name = (D2 && D2.name) || R.to, arrow = { w: '⬅ ', e: '', n: '⬆ ', s: '⬇ ' }[R.side] || '', after = R.side === 'e' ? ' ➡' : '';
             const t = this.pillTag(R.x, R.y - 178, arrow + name + after, 9300, '#2a1a6a');
+            (this.roadTags = this.roadTags || []).push({ t, base: arrow + name + after, to: R.to, shown: '', y: R.y - 178 });     // (what's on over there: see roadNews)
+            if (!this.roadNewsT) { this.roadNewsT = this.time.addEvent({ delay: 3000, loop: true, callback: () => this.roadNews() }); this.time.delayedCall(400, () => this.roadNews()); }
             this.hotspot('road', R.x, R.y - 12, 34, new Phaser.Geom.Rectangle(R.x - 70, R.y - 150, 140, 160), { door: R.to, road: true, tagText: t });
+        }
+        roadNews() {
+            (this.roadTags || []).forEach(r => {
+                let news = '';
+                try { news = ui.roadNews ? ui.roadNews(r.to) : ''; } catch (e) { }
+                if (news === r.shown || !r.t || !r.t.active) return;
+                r.shown = news; r.t.setText(r.base + (news ? '\n' + news : '')); const up = news ? 18 : 0; r.t.setY(r.y + 3 - up); if (r.t.pill) r.t.pill.setY(r.y - up); this.pillFit(r.t);
+            });
         }
         addSign(S) {
             this.prop('signpost', S.x, S.y, 90 / 96, { shadow: [8, -3, 56, 20], solids: [[0, -6, 9]] });
@@ -48850,6 +48861,12 @@
             catch (e) { } clockPing(); }, paint: timesPaint, fame: timesFame };
         document.getElementById('times-close').addEventListener('click', () => timesP.close());
         document.getElementById('clock-news').addEventListener('click', () => { document.getElementById('clock-pop').hidden = true; ui.times.open(); });
+        let roadNewsAt = 0, roadNewsC = null;
+        ui.roadNews = loc => {                                        // for the signs over the roads: the big thing on over there (or how many are there)
+            if (!roadNewsC || Date.now() - roadNewsAt > 2500) { roadNewsAt = Date.now(); const N = wmapCounts(), E = wmapEvents(); roadNewsC = { N, E }; }
+            const w = wmapWhere(loc), live = (roadNewsC.E.ev[w] || []).find(x => x.live || / in \d+ min$/.test(x.txt)), n = roadNewsC.N[w] || 0;
+            return live ? live.txt : n ? n + (n === 1 ? ' player there' : ' players there') : '';
+        };
         ui.wmap = { open: wmapOpen, close: wmapClose, go: wmapGo, paint: wmapPaint, btns: wmapBtns, panel: wmapP, el: wmapEl, note: wmapNote };
         ui.chat = { lines: chatLines, line: chatLine, min: chatMin, el: chatBoxEl };
         const CMD_HELP = ['/wave /dance /sit /jump /cheer /spin: do an emote (and any dance you own, like /robot)', '/who: who is on your server', '/server Starfall: switch server (or /server 2)',
