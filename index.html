@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346668';
+<script>window.WANDO_BUILD = '1794346710';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -46739,7 +46739,7 @@
             const out = {};
             (G.friends || []).forEach(f => { if (!f.ok || !net.far || !net.far.get)
                 return; const p = net.far.get(f.id); if (!p || !p.loc)
-                return; const w = p.loc === 'home' ? '_home' : wmapWhere(p.loc); (out[w] = out[w] || []).push({ name: f.name || p.name, away: p.sv && p.sv !== SRV.id ? p.sv : '' }); });
+                return; const w = p.loc === 'home' ? '_home' : wmapWhere(p.loc); (out[w] = out[w] || []).push({ id: f.id, name: f.name || p.name, away: p.sv && p.sv !== SRV.id ? p.sv : '' }); });
             return out;
         }
         const wmapSoon = document.getElementById('wmap-soon');
@@ -46751,7 +46751,11 @@
             wmapPaint();
             delete wmapEl.dataset.say;
         } };
-        document.getElementById('wmap-fr').addEventListener('click', e => wmapSoon.onclickGo(e));
+        document.getElementById('wmap-fr').addEventListener('click', e => {
+            const v = e.target.closest('[data-visit]');
+            if (v) { if (!v.dataset.visit) return; if (busy() && !wmapP.isOpen()) return; wmapClose(); houseVisit(v.dataset.visit).then(msg => { if (msg) chatLine('', msg, 'sys'); }); return; }
+            wmapSoon.onclickGo(e);
+        });
         wmapSoon.addEventListener('click', e => { const b = e.target.closest('[data-wgo]'); if (!b)
             return; const why = wmapGo(b.dataset.wgo); if (why) {
             wmapEl.dataset.say = why;
@@ -46822,7 +46826,7 @@
                 {
                     const frEl = document.getElementById('wmap-fr'), list = [];
                     Object.keys(F).forEach(loc => F[loc].forEach(f => list.push([f, loc])));
-                    frEl.replaceChildren(...(list.length ? [node('b', '', '★ Friends: ')] : []), ...list.slice(0, 6).map(([f, loc]) => { if (!LOCS[loc] || loc === 'home') return node('span', 'wmap-soon-b wmap-frb', f.name + ' · at their house'); const b = el('button', 'wmap-soon-b wmap-frb', { type: 'button', 'data-wgo': loc, title: f.away ? f.name + ' is on another server' : 'Go to ' + (loc === 'home' ? 'their house' : LOCS[loc] ? LOCS[loc].name : loc) }); b.textContent = f.name + ' · ' + (LOCS[loc] ? LOCS[loc].name : 'away') + (f.away ? ' (other server)' : ''); return b; }));
+                    frEl.replaceChildren(...(list.length ? [node('b', '', '★ Friends: ')] : []), ...list.slice(0, 6).map(([f, loc]) => { if (!LOCS[loc] || loc === 'home') { const v = el('button', 'wmap-soon-b wmap-frb', { type: 'button', 'data-visit': f.id || '', title: 'Visit ' + f.name + '\'s house' }); v.textContent = f.name + ' · at home: visit'; return v; } const b = el('button', 'wmap-soon-b wmap-frb', { type: 'button', 'data-wgo': loc, title: f.away ? f.name + ' is on another server' : 'Go to ' + (loc === 'home' ? 'their house' : LOCS[loc] ? LOCS[loc].name : loc) }); b.textContent = f.name + ' · ' + (LOCS[loc] ? LOCS[loc].name : 'away') + (f.away ? ' (other server)' : ''); return b; }));
                     frEl.hidden = !list.length;
                 }
                 const day = dayNumber(), tEl = document.getElementById('wmap-today'), sp = starPlace(day), spH = LOCS[sp] ? (LOCS[sp].home || sp) : 'green', cz = catchOfDay(day).zone;
