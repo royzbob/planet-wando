@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794310901';
+<script>window.WANDO_BUILD = '1794311005';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17331,11 +17331,18 @@
             rr = 3;
         return { a: pool[Math.floor(r() * pool.length)], s: r() < 0.5 ? 'h' : 'b', r: rr, u: serial(r), q: 92 + Math.floor(r() * 17) };
     }
-    function dunArmor(D) { let def = 0, hp = 0; ['h', 'b'].forEach(k => { const p = D && D.worn && D.worn[k]; if (p) {
-        const st = armorStats(p);
-        def += st.def;
-        hp += st.hp;
-    } }); return { def, hp, cut: def / (def + 100) }; }
+    function dunArmor(D) {
+        let def = 0, hp = 0;
+        ['h', 'b'].forEach(k => { const p = D && D.worn && D.worn[k]; if (p) {
+            const st = armorStats(p);
+            def += st.def;
+            hp += st.hp;
+        } });
+        const W = D && D.worn, set = !!(W && W.h && W.b && W.h.a === W.b.a);
+        if (set)
+            def = Math.round(def * 1.2);
+        return { def, hp, cut: def / (def + 100), set: set ? ARMOR_SETS[W.h.a].name : '' };
+    }
     function armorLine(p) { const st = armorStats(p); return RARITIES[p.r][0] + ' ' + (p.s === 'h' ? 'helm' : 'body armor') + ' · tier ' + (ARMOR_SETS[p.a].tier + 1) + ' · armor ' + st.def + (st.hp ? ' · +' + st.hp + ' health' : ''); }
     function drawHelm(c, S, view) {
         const side = view === 'side', back = view === 'back', cx = side ? 47 : 48, m = S.main, t = S.trim, ln = ink(m), lw = 2.2, hi = lighten(m, 0.4);
@@ -17645,10 +17652,17 @@
             let k = f >= 3 && x < 0.3 + Math.min(0.2, f * 0.02) ? 'ghoul' : f >= 2 && x > 0.78 ? (f >= 6 && x > 0.93 ? 'shaman' : 'archer') : f >= 4 && x > 0.62 ? 'slime' : f >= 2 && x > 0.52 ? 'bat' : 'goblin';
             if (f >= 3 && y < Math.min(0.5, f * 0.04))
                 k = f >= 8 && y < 0.1 ? 'knight' : f >= 6 && y < 0.2 ? 'wraith' : y < 0.3 && f >= 4 ? 'skelarcher' : 'skeleton';
+            const z = rand();
+            if (f >= 2 && z < 0.1)
+                k = 'spider';
+            else if (f >= 7 && z > 0.92)
+                k = 'mummy';
+            else if (f >= 9 && z > 0.86 && z <= 0.92)
+                k = 'imp';
             out.push(k);
         }
         if (f % 5 === 0)
-            out.push(f % 10 === 0 ? 'lord' : f % 15 === 0 ? 'lich' : 'king');
+            out.push(f % 10 === 0 ? 'lord' : f % 15 === 0 ? 'lich' : f % 20 === 5 && f > 5 ? 'queen' : 'king');
         return out;
     }
     const roomDiff = (di, room, lv) => { const me = Math.max(1, (lv || 1) - 1); return DUNGEONS[di].daily ? me + (room - 1) * 0.6 : DUNGEONS[di].rooms ? Math.max(DUNGEONS[di].diff, me) + (room - 1) * 0.8 : Math.max(DUNGEONS[di].diff, me) + room - 1; };
@@ -43444,7 +43458,7 @@
             }
             else if (dn.tab === 'armor') {
                 const A = dunArmor(D), top = node('div', 'mine-row mine-top');
-                top.append(node('span', '', 'Armor ' + A.def + ' (takes ' + Math.round(A.cut * 100) + '% off every hit)' + (A.hp ? ' · +' + A.hp + ' health' : '') + ' · ' + (D.arm || []).length + ' of ' + DUN.ARM + ' in your bag · collection: ' + (D.afound || []).length + ' of ' + ARMOR_SETS.length * 2));
+                top.append(node('span', '', 'Armor ' + A.def + (A.set ? ' (full ' + A.set + ' set: +20%)' : '') + ' (takes ' + Math.round(A.cut * 100) + '% off every hit)' + (A.hp ? ' · +' + A.hp + ' health' : '') + ' · ' + (D.arm || []).length + ' of ' + DUN.ARM + ' in your bag · collection: ' + (D.afound || []).length + ' of ' + ARMOR_SETS.length * 2));
                 rows.push(top);
                 const armRow = (p, btns) => {
                     const li = node('div', 'mine-row dun-row'), text = node('div', 'mine-text'), nm = node('b', '', armorName(p));
