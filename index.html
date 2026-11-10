@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794312184';
+<script>window.WANDO_BUILD = '1794312363';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2476,6 +2476,12 @@
     .cb-turn { width: 34px; height: 34px; font-size: 15px; }
     .cb-title { font-size: clamp(22px, 5vw, 34px); }
   }
+.boss-intro{position:fixed;left:0;right:0;top:22%;z-index:8999;display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 10px;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(30,0,10,.82) 20%,rgba(30,0,10,.82) 80%,transparent);animation:bossIn .5s ease-out;transition:opacity .6s}
+.boss-intro b{font:900 clamp(30px,8vw,56px)/1.05 "Baloo 2","Trebuchet MS",sans-serif;color:#ffd84d;text-align:center;text-shadow:0 4px 0 #5a0010,0 0 22px rgba(255,80,40,.6)}
+.boss-intro small{font:800 14px "Baloo 2","Trebuchet MS",sans-serif;color:#ffb0a0;letter-spacing:2px;text-transform:uppercase}
+.boss-intro.out{opacity:0}
+@keyframes bossIn{from{opacity:0;transform:scaleX(.4)}}
+@media (prefers-reduced-motion:reduce){.boss-intro{animation:none}}
 .died{position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;pointer-events:none;background:radial-gradient(ellipse at center,rgba(70,0,0,.55),rgba(8,0,0,.9));animation:diedIn .45s ease-out;transition:opacity .6s}
 .died b{font:900 clamp(44px,12vw,78px)/1 "Baloo 2","Trebuchet MS",sans-serif;color:#ff3b3b;letter-spacing:4px;text-shadow:0 5px 0 #3a0000,0 0 26px rgba(255,30,30,.6)}
 .died small{font:800 16px "Baloo 2","Trebuchet MS",sans-serif;color:#ffd0c8;text-shadow:0 2px 0 #3a0000}
@@ -4550,7 +4556,8 @@
         { id: 'armored', name: 'Knight in Armor', icon: '🛡️', how: 'Wear a full armor set: the helm and body of one set', got: G => !!dunArmor(G.dun).set },
         { id: 'forger', name: 'Forgemaster', icon: '🔨', how: 'Forge an Epic weapon at Grizzle\'s', got: G => !!((G.dun.forged || 0) & 8) },
         { id: 'medic', name: 'Field Medic', icon: '💚', how: 'Pick up 5 friends who are down in the crypt', got: G => (G.dun.revives || 0) >= 5 },
-        { id: 'abyss', name: 'Abyss Diver', icon: '🕳️', how: 'Reach floor 25 of the Endless Crypt', got: G => (G.dun.best || 0) >= 25 }
+        { id: 'abyss', name: 'Abyss Diver', icon: '🕳️', how: 'Reach floor 25 of the Endless Crypt', got: G => (G.dun.best || 0) >= 25 },
+        { id: 'ringchamp', name: 'Ring Champion', icon: '🥊', how: 'Win 10 matches in the Sparring Ring', got: G => (G.dun.sparW || 0) >= 10 }
     ];
     const titleIdx = id => Math.max(0, PLAYER_TITLES.findIndex(t => t.id === id));
     const titleGot = (G, t) => { try {
@@ -18079,6 +18086,7 @@
         out.best = int(v.best, 0, 999, 0);
         out.forged = int(v.forged, 0, 31, 0);
         out.revives = int(v.revives, 0, 99999, 0);
+        out.sparW = int(v.sparW, 0, 99999, 0);
         out.free = Object.keys(CLASSES).filter(k => Array.isArray(v.free) && v.free.includes(k));
         out.potions = int(v.potions, 0, 99, 0);
         out.big = int(v.big, 0, 99, 0);
@@ -28147,6 +28155,8 @@
                 const roomLabel = this.label(D.w / 2, 300, Dg.rooms ? Dg.name + ': ' + (last ? 'the boss' : 'room ' + room + ' of ' + Dg.rooms + ', ' + what) : Dg.name + ': floor ' + room + (room % 5 === 0 ? ' (a boss waits here)' : type === 'fight' ? '' : ', ' + what), '#3a1a2a');
                 if (!Dg.rooms)
                     Dn.best = Math.max(Dn.best, room);
+                if (last && Dg.boss && ui.onBossIntro)
+                    this.time.delayedCall(400, () => ui.onBossIntro(Dg.boss.map(k => (Dg.bossAffix ? AFFIXES[Dg.bossAffix].name + ' ' : '') + MONSTERS[k].name), Dg.name));
                 const pad = D.pad, nearPad = (x, y, r) => Math.hypot(x - pad.x, y - pad.y) < r;
                 const HL = this.halls = HALLS.on ? hallLayout(rand, B, pad) : { rooms: [{ x: B.x, y: B.y, w: B.w, h: B.h, cx: B.x + B.w / 2, cy: B.y + B.h / 2 }], halls: [], rects: [], walk: () => true, open: true }, key = 'halls_' + day + '_' + Dg.id + '_' + room;
                 if (!HL.open)
@@ -29299,7 +29309,13 @@
             const g = this.add.image(x, y - 10, 'glow').setDisplaySize(70, 70).setTint(it ? parseInt(RARITIES[it.r][1].slice(1), 16) : pot === 'mana' ? 0x4a8aff : 0xff5a7a).setAlpha(0.45).setBlendMode(Phaser.BlendModes.ADD).setDepth(7001);
             if (!REDUCED)
                 this.tweens.add({ targets: img, y: y - 16, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
-            this.drops.push({ x, y, w, arm, pot: pot || 'potion', img, g });
+            let beam = null;
+            if (it && it.r >= 3) {
+                beam = this.add.image(x, y - 10, 'glow').setOrigin(0.5, 0.95).setDisplaySize(26, 260).setTint(parseInt(RARITIES[it.r][1].slice(1), 16)).setAlpha(0.55).setBlendMode(Phaser.BlendModes.ADD).setDepth(7001);
+                if (!REDUCED)
+                    this.tweens.add({ targets: beam, alpha: 0.25, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
+            }
+            this.drops.push({ x, y, w, arm, pot: pot || 'potion', img, g, beam });
         }
         dunOpen(ch) {
             const Dn = G.dun, f = roomDiff(Dn.run.d, Math.max(1, Dn.run.room), Dn.level), mods = this.mods || [], fort = this.boon('fortune') ? 15 : 0;
@@ -30018,6 +30034,10 @@
                 }
                 dr.img.destroy();
                 dr.g.destroy();
+                if (dr.beam) {
+                    this.tweens.killTweensOf(dr.beam);
+                    dr.beam.destroy();
+                }
                 if (ui.onDun)
                     ui.onDun();
                 saveGame();
@@ -36765,8 +36785,15 @@
                         p.pv[1].forEach(([who, d]) => { if (who === account.uid || who === 'n:' + G.name)
                             this.sparHit(d, p.name); });
                     o.pvN = p.pv ? p.pv[0] : (o.pvN === undefined ? 0 : o.pvN);
-                    if (p.sl && o.slN !== undefined && p.sl[0] !== o.slN)
+                    if (p.sl && o.slN !== undefined && p.sl[0] !== o.slN) {
                         chatLineSys('🥊 ' + p.sl[1] + ' beat ' + p.name + ' in the Sparring Ring!');
+                        if (p.sl[1] === G.name) {
+                            G.dun.sparW = (G.dun.sparW || 0) + 1;
+                            this.noteUntil = 0;
+                            this.note('You won! (' + G.dun.sparW + ' wins)', '#ffd84d');
+                            saveGame();
+                        }
+                    }
                     o.slN = p.sl ? p.sl[0] : (o.slN === undefined ? 0 : o.slN);
                 }
                 if (this.loc === 'dungeon' && (p.hp || p.sp) && !p.dn) {
@@ -44219,6 +44246,19 @@
         }
         ui.onDunTick = () => { paintDunSkills(); paintCrew(); paintMap(); };
         ui.onDunClass = classOpen;
+        ui.onBossIntro = (names, where) => {
+            const d = document.createElement('div');
+            d.className = 'boss-intro';
+            d.setAttribute('role', 'status');
+            const sm = document.createElement('small'), b = document.createElement('b');
+            sm.textContent = where + ' · the end';
+            b.textContent = names.join(' & ');
+            d.append(sm, b);
+            document.body.appendChild(d);
+            sfx.buzz();
+            setTimeout(() => d.classList.add('out'), 2200);
+            setTimeout(() => d.remove(), 2900);
+        };
         ui.onDied = () => {
             const d = document.createElement('div');
             d.className = 'died';
