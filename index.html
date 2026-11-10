@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794313495';
+<script>window.WANDO_BUILD = '1794313620';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -29113,6 +29113,22 @@
             if (this.cleared)
                 return;
             this.cleared = true;
+            if ((this.party || []).length)
+                try {
+                    const byId = this.monById || new Map(), rows = [['You', this.mons.reduce((t, m) => t + Math.min(m.max, m.mine || 0), 0)]];
+                    this.party.forEach(p => { const h = p.dg.h || []; let t = 0; for (let i = 0; i + 1 < h.length; i += 2) {
+                        const m = byId.get(h[i]);
+                        if (m)
+                            t += m.max * Math.min(1000, h[i + 1]) / 1000;
+                    } rows.push([String(p.name || 'Friend').slice(0, 14), t]); });
+                    const all = rows.reduce((t, r) => t + r[1], 0);
+                    if (all > 0)
+                        this.time.delayedCall(1400, () => { if (!this.sys || !this.sys.isActive || this.sys.isActive()) {
+                            this.noteUntil = 0;
+                            this.note('Damage this room: ' + rows.sort((a, b) => b[1] - a[1]).map(r => r[0] + ' ' + Math.round(100 * r[1] / all) + '%').join(' · '), '#9be0ff');
+                        } });
+                }
+                catch (e) { }
             if (this.roomKind === 'ambush') {
                 const c = this.dunChest(this.D.w / 2, this.D.bounds.y + 300);
                 c.luck = 15;
@@ -30034,7 +30050,10 @@
                     if (Dn.eq < 0)
                         Dn.eq = Dn.bag.length - 1;
                     this.noteUntil = 0;
-                    this.note('Found: ' + dr.w.name + ' (' + RARITIES[dr.w.r][0] + ')', RARITIES[dr.w.r][1]);
+                    {
+                        const held = Dn.bag[Dn.eq], likes = CLASSES[Dn.cls] ? CLASSES[Dn.cls].likes : null, better = held && held !== dr.w && dr.w.dmg > held.dmg && (!likes || likes.includes(dr.w.t));
+                        this.note('Found: ' + dr.w.name + ' (' + RARITIES[dr.w.r][0] + ')' + (better ? ' · hits harder than yours! ' + (TOUCH_FIRST ? 'Tap ⇄' : 'Q') + ' to swap' : ''), RARITIES[dr.w.r][1]);
+                    }
                     sfx.pickup(dr.w.r >= 3 ? 'legendary' : dr.w.r >= 1 ? 'rare' : 'common');
                     if (ui.onEvent)
                         ui.onEvent('loot', { r: dr.w.r });
