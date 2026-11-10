@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346198';
+<script>window.WANDO_BUILD = '1794346293';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2068,6 +2068,11 @@
   .wmap-spot:hover .wmap-pill, .wmap-spot:focus-visible .wmap-pill { background: var(--sun); transform: scale(1.08); }
   .wmap-spot:focus-visible { outline: none; }
   .wmap-spot.here .wmap-pill { background: #ffe680; }
+  .wmap-spots.finding .wmap-spot:not(.found) { opacity: 0.35; }
+  .wmap-spot.found .wmap-pill { background: #7dff9a; box-shadow: 0 0 0 3px #fff, 0 2px 0 #120b3a; }
+  .wmap-find { width: 230px; max-width: 100%; padding: 4px 10px; border: 2px solid #120b3a; border-radius: 999px; background: #fff8e3; color: #2a1a6a; font: 700 12.5px/1.3 var(--font-body); }
+  .wmap-find:focus { outline: 3px solid var(--sun); outline-offset: 1px; }
+  @media (max-width: 640px), (max-height: 500px) { .wmap-find { width: 100%; font-size: 12px; padding: 3px 9px; } }
   .wmap-spot.picked .wmap-pill { background: var(--sun); transform: scale(1.1); box-shadow: 0 0 0 3px #fff, 0 2px 0 #120b3a; }
   .wmap-card { position: absolute; right: 10px; bottom: 10px; z-index: 3; width: min(300px, calc(100% - 20px)); max-height: calc(100% - 20px); overflow: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;
     border: 3px solid #120b3a; border-radius: 14px; background: #fff8e3; color: #2a1a6a; box-shadow: 0 4px 0 rgba(18, 11, 58, 0.5); pointer-events: none; text-shadow: none; }
@@ -2084,6 +2089,7 @@
   .wmap-card-foot { display: flex; gap: 6px; align-items: center; }
   .wmap-card-foot small { font: 700 11px/1.2 var(--font-body); opacity: 0.75; }
   .wmap-card-go { flex: 1; }
+  .wmap-card-foot .btn { padding: 4px 12px; font-size: 14px; min-height: 0; }
   @media (max-width: 640px), (max-height: 500px) { .wmap-card { left: 5px; right: 5px; bottom: 5px; width: auto; padding: 5px 8px; gap: 3px; border-width: 2px; border-radius: 10px; } .wmap-card.left { left: 5px; } .wmap-card.top { bottom: auto; top: 5px; } .wmap-card-t { font-size: 13px; } .wmap-card-p { font-size: 10px; } .wmap-card-p.blurb, .wmap-card-row small { display: none; } .wmap-card .wmap-ev, .wmap-card-chip { font-size: 9px; padding: 0 5px; border-width: 1.5px; } .wmap-card-foot .btn { padding: 3px 10px; font-size: 12px; min-height: 0; } }
   @media (max-width: 560px) { .wmap-pill { padding: 1px 6px; font-size: 10px; border-width: 1.5px; } .wmap-n { font-size: 9px; padding: 0 5px; } .wmap-spot::before { width: 80px; height: 60px; } }   
   .wmap-n { padding: 0 7px; border: 2px solid #120b3a; border-radius: 999px; background: #3fbf5f; color: #fff; font: 800 11px/1.45 var(--font-body); white-space: nowrap; }
@@ -2931,7 +2937,7 @@
       <div id="wmap-card" class="wmap-card" role="status" hidden></div>
     </div>
     <p id="wmap-soon" class="wmap-soon" hidden></p>
-    <div class="wmap-line"><p id="wmap-today" class="wmap-soon wmap-today" hidden></p><label class="wmap-opt" title="Show the minimap while you walk"><input id="wmap-mini" type="checkbox"> Minimap</label></div>
+    <div class="wmap-line"><input id="wmap-find" class="wmap-find" type="search" placeholder="🔍 Find a shop, person or thing" aria-label="Find on the map" autocomplete="off" enterkeyhint="search"><p id="wmap-today" class="wmap-soon wmap-today" hidden></p><label class="wmap-opt" title="Show the minimap while you walk"><input id="wmap-mini" type="checkbox"> Minimap</label></div>
     <p id="wmap-note" class="wmap-note" aria-live="polite">Click a place to go there.</p>
   </section>
 
@@ -28434,6 +28440,14 @@
                     ui.onState();
             });
         }
+        clearSpot(y0) {
+            const H = this.halls;
+            if (!H || H.open || !H.rooms || !H.rooms.length)
+                return { x: this.D.w / 2, y: y0 };
+            const fx = this.pz ? this.pz.x : 0, fy = this.pz ? this.pz.y + FOOT : 0;
+            const R = H.rooms.find(q => fx >= q.x && fx <= q.x + q.w && fy >= q.y && fy <= q.y + q.h) || H.rooms[H.rooms.length - 1];
+            return { x: R.x + R.w / 2, y: R.y + R.h / 2 - 10 };
+        }
         dunChest(x, y, big) {
             const ch = { x, y, big: !!big, open: false, mimic: false, img: this.add.image(x, y, 'chest_0').setOrigin(0.5, 48 / 52).setScale((big ? 1.4 : 1) / TEX).setDepth(y), hit: new Phaser.Geom.Rectangle(x - 34, y - 52, 68, 58) };
             ch.shadow = this.shadowAt(x + 3, y - 1, 64, 18);
@@ -29209,7 +29223,7 @@
                 }
                 catch (e) { }
             if (this.roomKind === 'ambush') {
-                const c = this.dunChest(this.D.w / 2, this.D.bounds.y + 300);
+                const at = this.clearSpot(this.D.bounds.y + 300), c = this.dunChest(at.x, at.y);
                 c.luck = 15;
                 this.add.image(c.x, c.y - 20, 'glow').setDisplaySize(140, 100).setTint(0xffd84d).setAlpha(0.3).setBlendMode(Phaser.BlendModes.ADD).setDepth(7001);
             }
@@ -29223,7 +29237,7 @@
                 this.note(this.roomKind === 'ambush' ? 'Ambush beaten! Free chest!' : 'Room cleared! The stairs down are open.', '#7dff9a');
             }
             else if (!this.stairs && !this.portal) {
-                const x = this.D.w / 2, y = 560, first = Dg.daily ? Dn.daily !== day : !Dn.done.includes(Dn.run.d);
+                const at = this.clearSpot(560), x = at.x, y = at.y, first = Dg.daily ? Dn.daily !== day : !Dn.done.includes(Dn.run.d);
                 const big = this.dunChest(x - 120, y + 40, true);
                 if (Dg.daily && first)
                     big.luck = 55;
@@ -46797,7 +46811,7 @@
             wmapP.open();
             mapBtn.setAttribute('aria-expanded', 'true');
         }
-        function wmapClose() { wmapP.close(); mapBtn.setAttribute('aria-expanded', 'false'); try { wmapCardShow(''); } catch (e) { } }
+        function wmapClose() { wmapP.close(); mapBtn.setAttribute('aria-expanded', 'false'); try { wmapCardShow(''); if (wmapFind.value) { wmapFind.value = ''; wmapSearch(false); } } catch (e) { } }
         function wmapGo(loc) {
             const s = scene();
             if (!s || !(loc in WMAP_LABELS))
@@ -46846,6 +46860,33 @@
             wmapCard.classList.toggle('tap', !!tap);
             wmapCard.hidden = false;
         }
+        const wmapFind = document.getElementById('wmap-find');
+        function wmapIndex() {                                    // what can be found at each place: its shops, who gives out jobs there, who is there now
+            const ix = {};
+            const add = (loc, label, text) => { if (!wmapBtns[loc] || !label) return; (ix[loc] = ix[loc] || []).push([label, (label + ' ' + (text || '')).toLowerCase()]); };
+            Object.keys(wmapBtns).forEach(loc => { if (loc === 'home') add(loc, 'My House', 'home house decorate'); else if (LOCS[loc]) add(loc, LOCS[loc].name, LOCS[loc].blurb); });
+            Object.keys(LOCS).forEach(k => { const L = LOCS[k]; if (k !== 'home' && L.interior && L.home && L.name) add(L.home, L.name, L.blurb); });
+            try { Object.keys(ERRANDS).forEach(id => { const E = ERRANDS[id]; add(wmapWhere(E.loc), E.name, 'job errand ' + (E.place || '')); }); } catch (e) { }
+            Object.keys(wmapNames).forEach(loc => wmapNames[loc].forEach(n => add(loc, n, 'player')));
+            try { const F = wmapFriends(); Object.keys(F).forEach(loc => F[loc].forEach(f => add(loc, f.name, 'friend'))); } catch (e) { }
+            try { const E = wmapEvents().ev; Object.keys(E).forEach(loc => E[loc].forEach(x => add(loc, x.txt.replace(/^\S+\s/, ''), ''))); } catch (e) { }
+            return ix;
+        }
+        function wmapSearch(go) {
+            const q = wmapFind.value.trim().toLowerCase(), on = q.length >= 2, ix = on ? wmapIndex() : {}, hits = [];
+            Object.keys(wmapBtns).forEach(loc => {
+                const m = on ? (ix[loc] || []).filter(([, t]) => t.includes(q)) : [];
+                wmapBtns[loc].b.classList.toggle('found', m.length > 0);
+                if (m.length) hits.push([loc, m]);
+            });
+            wmapSpots.classList.toggle('finding', on);
+            if (!on) { wmapPaint(); return; }
+            const where = loc => (loc === 'home' ? 'your house' : LOCS[loc].name);
+            wmapNote.textContent = hits.length ? hits.slice(0, 3).map(([loc, m]) => { const all = [...new Set(m.map(x => x[0]))].filter(n => n !== where(loc)), names = all.filter(n => !all.some(o => o !== n && n.startsWith(o + ' '))).slice(0, 2); return (names.length ? names.join(', ') + ' at ' : '') + where(loc); }).join(' · ') + (hits.length > 3 ? ' · and more' : '') : 'Nothing called "' + wmapFind.value.trim() + '" on the map.';
+            if (go && hits.length) wmapCardShow(hits[0][0], true);
+        }
+        wmapFind.addEventListener('input', () => wmapSearch(false));
+        wmapFind.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); wmapSearch(true); } if (e.key !== 'Escape') e.stopPropagation(); });
         wmapCard.addEventListener('click', e => {
             if (e.target.closest('[data-wcard]')) { wmapCardShow(''); return; }
             const b = e.target.closest('[data-wgo]'); if (!b) return;
