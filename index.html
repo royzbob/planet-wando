@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794309531';
+<script>window.WANDO_BUILD = '1794309732';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17298,6 +17298,7 @@
     }
     const DUN = { W: 1800, H: 1300, IFRAMES: 0.3, REGEN: 1.2, CALM: 320, REST: 4, POT_CD: 6, HIT: 0.9, DODGE: 0.04, BLOCK: 1, PACK: 260, BAG: 40, STASH: 120, LOOT: 4, ARM: 24, ASTASH: 60, POTION: 40, POTION_HEAL: 50, BIG_POTION: 110, BIG_HEAL: 100, MANA_POTION: 35, MANA_HEAL: 60, FIST: 4, PTS: 3, OFF: 0.7, CLICK_MS: 220 };
     let KO_BED = false;
+    const DOWN = { wait: 15, need: 2.5, reach: 90, hp: 0.4 };
     let LOOT_SHOUT = [0, '', 0];
     const ARMOR_SETS = [
         { name: 'Leather', helm: 'Cap', body: 'Vest', tier: 0, main: '#8a5a34', trim: '#c89a5a', look: 'cap' },
@@ -22903,6 +22904,7 @@
             hp: q.loc === 'dungeon' && Array.isArray(q.hp) && Number.isFinite(q.hp[0]) && Number.isFinite(q.hp[1]) && q.hp[1] > 0 ? [clamp(Math.round(q.hp[0]), 0, 99999), clamp(Math.round(q.hp[1]), 1, 99999), Number.isInteger(q.hp[2]) && Object.keys(CLASSES)[q.hp[2]] ? Object.keys(CLASSES)[q.hp[2]] : ''] : null,
             sw: q.loc === 'dungeon' && Array.isArray(q.sw) && Number.isInteger(q.sw[0]) && Number.isInteger(q.sw[2]) ? [q.sw[0], q.sw[1] < 0 ? -1 : 1, q.sw[2], typeof q.sw[3] === 'string' && /^[a-z]{2,10}$/.test(q.sw[3]) ? q.sw[3] : ''] : null,
             lt: q.loc === 'dungeon' && Array.isArray(q.lt) && Number.isInteger(q.lt[0]) && Number.isInteger(q.lt[2]) && q.lt[2] >= 3 && q.lt[2] <= 4 ? [q.lt[0], chatSafe(cleanText(q.lt[1], 30)), q.lt[2]] : null,
+            dn: q.loc === 'dungeon' && q.dn === 1 ? 1 : 0,
             hw: q.loc === 'dungeon' && Number.isInteger(q.hw) && q.hw >= 0 && armoryDef(q.hw) ? q.hw : -1,
             ar: q.loc === 'dungeon' && Array.isArray(q.ar) ? [0, 1].map(i => { const v = q.ar[i]; return Array.isArray(v) && Number.isInteger(v[0]) && ARMOR_SETS[v[0]] && Number.isInteger(v[1]) && v[1] >= 0 && v[1] <= 4 ? { a: v[0], s: i ? 'b' : 'h', r: v[1], q: 100 } : null; }) : null,
             bd: q.bd && typeof q.bd === 'object' ? cleanBoard(q.bd) : null,
@@ -28133,6 +28135,9 @@
             this.dunOver = false;
             this.bedUntil = 0;
             this.fallen = 0;
+            this.downAt = 0;
+            this.reviveT = 0;
+            this.reviveG = null;
             this.swingStart = -1e9;
             this.dunHpShown = -1;
             this.dunTold = 0;
@@ -29167,6 +29172,19 @@
             if (ui.onDun)
                 ui.onDun();
             if (Dn.hp <= 0) {
+                if (!this.downAt && (this.party || []).length) {
+                    this.goDown();
+                    return;
+                }
+                this.koOut();
+            }
+        }
+        koOut() {
+            const Dn = G.dun;
+            {
+                this.downAt = 0;
+                if (this.reviveG)
+                    this.reviveG.clear();
                 this.dunOver = true;
                 KO_BED = true;
                 if (ui.onDied)
@@ -29181,6 +29199,56 @@
                     ui.onEvent('ko', {});
                 this.time.delayedCall(2300, () => { this.leaving = false; this.travelTo('dungeon', true); });
             }
+        }
+        goDown() {
+            const Dn = G.dun, now = this.time.now;
+            this.downAt = now;
+            this.reviveT = 0;
+            this.dunOver = true;
+            this.fallen = now;
+            Dn.hp = 0;
+            this.dunTarget = null;
+            this.noteUntil = 0;
+            this.note('You\'re down! A friend can pick you up: they stand by you.', '#ff9a9a');
+            sfx.buzz();
+            if (!REDUCED)
+                this.cameras.main.flash(200, 120, 0, 0);
+            if (ui.onDun)
+                ui.onDun();
+        }
+        downTick(dt, time, fx, fy) {
+            const Dn = G.dun, party = this.party || [];
+            const near = party.some(p => !p.dn && Math.hypot(p.x - fx, p.y - fy) < DOWN.reach);
+            this.reviveT = near ? this.reviveT + dt : Math.max(0, this.reviveT - dt * 0.5);
+            const g = this.reviveG || (this.reviveG = this.add.graphics().setDepth(9460)), left = Math.max(0, DOWN.wait - (time - this.downAt) / 1000);
+            g.clear();
+            g.lineStyle(5, 0x000000, 0.5);
+            g.strokeCircle(fx, fy - 30, 30);
+            g.lineStyle(5, 0x7dff9a, 1);
+            g.beginPath();
+            g.arc(fx, fy - 30, 30, -Math.PI / 2, -Math.PI / 2 + TAU * clamp(this.reviveT / DOWN.need, 0, 1));
+            g.strokePath();
+            g.lineStyle(3, 0xff6b6b, 0.9);
+            g.beginPath();
+            g.arc(fx, fy - 30, 38, -Math.PI / 2, -Math.PI / 2 + TAU * left / DOWN.wait);
+            g.strokePath();
+            if (this.reviveT >= DOWN.need) {
+                const who = party.find(p => !p.dn && Math.hypot(p.x - fx, p.y - fy) < DOWN.reach);
+                this.downAt = 0;
+                this.fallen = 0;
+                this.dunOver = false;
+                g.clear();
+                this.iframes = 2;
+                Dn.hp = Math.round(dunMaxHp(Dn) * DOWN.hp);
+                this.noteUntil = 0;
+                this.note((who ? who.name : 'A friend') + ' picked you up!', '#7dff9a');
+                sfx.chime();
+                this.dunRing(fx, fy, 80, 0x7dff9a);
+                if (ui.onDun)
+                    ui.onDun();
+            }
+            else if (left <= 0 || !party.length)
+                this.koOut();
         }
         dunGo(room, d) {
             const Dn = G.dun;
@@ -29380,7 +29448,11 @@
             let near = false;
             const notice = mods.includes('dark') ? 230 : 380;
             this.coopTick(dt, fx, fy);
-            const foes = [{ x: fx, y: fy, me: true }].concat(this.party.map(p => ({ x: p.x, y: p.y, me: false })));
+            if (this.downAt)
+                this.downTick(dt, time, fx, fy);
+            const foes = (this.downAt ? [] : [{ x: fx, y: fy, me: true }]).concat(this.party.filter(p => !p.dn).map(p => ({ x: p.x, y: p.y, me: false })));
+            if (!foes.length)
+                foes.push({ x: fx, y: fy, me: false });
             for (const m of this.mons) {
                 if (m.dead)
                     continue;
@@ -29432,7 +29504,7 @@
                         m.t = 0.4;
                     }
                 }
-                else if (this.dunOver) { }
+                else if (this.dunOver && !this.downAt) { }
                 else if (m.state === 'wind') {
                     m.t -= dt;
                     if (m.t <= 0) {
@@ -36428,7 +36500,25 @@
                     if (p.sw[0] !== o.swN && !(p.hw >= 0))
                         o.swN = p.sw[0];
                 }
-                if (this.loc === 'dungeon' && p.hp) {
+                if (p.dn) {
+                    o.img.setAngle(-90).setPosition(o.x + 42, o.y - 12);
+                    if (!o.dnTag)
+                        o.dnTag = this.pillTag(o.x, o.y - 70, 'Help! Stand by me', 9490, '#c8102e');
+                    this.pillMove(o.dnTag, o.x, o.y - 60);
+                    o.dnTag.setVisible(true);
+                    o.dnTag.pill.setVisible(true);
+                    if (!o.dnG)
+                        o.dnG = this.add.graphics().setDepth(o.y - 1);
+                    const close = this.pz && Math.hypot(this.pz.x - o.x, this.pz.y + FOOT - o.y) < DOWN.reach;
+                    o.dnG.clear().lineStyle(4, close ? 0x7dff9a : 0xff6b6b, 0.5 + 0.4 * Math.abs(Math.sin(time * 0.006))).strokeEllipse(o.x, o.y, DOWN.reach * 2, DOWN.reach * 0.9);
+                }
+                else if (o.dnTag) {
+                    o.dnTag.setVisible(false);
+                    o.dnTag.pill.setVisible(false);
+                    if (o.dnG)
+                        o.dnG.clear();
+                }
+                if (this.loc === 'dungeon' && p.hp && !p.dn) {
                     if (!o.hpG)
                         o.hpG = this.add.graphics();
                     const f = clamp(p.hp[0] / p.hp[1], 0, 1), bx = o.x - 22, by = o.img.y - 112;
@@ -36440,7 +36530,7 @@
                 }
                 else if (o.hpG)
                     o.hpG.setVisible(false);
-                if (p.hw >= 0 && !car && !p.boat) {
+                if (p.hw >= 0 && !car && !p.boat && !p.dn) {
                     if (!o.wpn)
                         o.wpn = this.add.image(0, 0, 'pshadow');
                     if (o.wpnC !== p.hw) {
@@ -36526,6 +36616,12 @@
                         o.wpn.destroy();
                     if (o.hpG)
                         o.hpG.destroy();
+                    if (o.dnTag) {
+                        o.dnTag.pill.destroy();
+                        o.dnTag.destroy();
+                    }
+                    if (o.dnG)
+                        o.dnG.destroy();
                     if (o.adPic)
                         o.adPic.destroy();
                     if (o.ad)
@@ -45142,7 +45238,7 @@
                 return null;
             return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
                 boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, sh: G.riding && !s.boating && shineOn() ? 1 : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
-                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
+                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), dn: s.loc === 'dungeon' && s.downAt ? 1 : 0, lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
         }
         const netHeld = s => { const D = G.dun, w = s.loc === 'dungeon' && D && D.eq >= 0 ? D.bag[D.eq] : null; return w && Number.isInteger(w.c) ? w.c : -1; };
         const netArmor = s => { const W = s.loc === 'dungeon' && G.dun && G.dun.worn; return W && (W.h || W.b) ? [W.h ? [W.h.a, W.h.r] : 0, W.b ? [W.b.a, W.b.r] : 0] : 0; };
