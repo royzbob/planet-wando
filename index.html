@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794354258';
+<script>window.WANDO_BUILD = '1794354502';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -7687,6 +7687,7 @@
             scenic(); };
         api.hide = h => { hidden = !!h; api.setVolume(volume); };
         api.user = on => { userOn = !!on; if (master) master.gain.setTargetAtTime(level(), ctx.currentTime, on ? 0.25 : 0.8); };     // your own songs are playing: the game's music steps aside
+        api.beatPos = () => (cur && ctx && !userOn ? Math.max(0, (ctx.currentTime - cur.startTime) / (60 / cur.T.bpm)) : null);
         api.beat = (per = 1) => (cur && ctx ? Math.max(0, Math.floor(((ctx.currentTime - cur.startTime) / (60 / cur.T.bpm)) * per)) : null);
         return api;
     })();
@@ -23369,6 +23370,7 @@
             ai: q.loc === 'trade' && q.ai && typeof q.ai === 'object' ? q.ai : null,
             lv: Number.isInteger(q.lv) ? clamp(q.lv, 1, 50) : 0,
             cl: Number.isInteger(q.cl) && Object.keys(CLASSES)[q.cl] ? Object.keys(CLASSES)[q.cl] : '',
+            jp: Number.isInteger(q.jp) ? clamp(q.jp, 0, 999) : 0,
             dj: q.loc === 'dance' && Array.isArray(q.dj) && q.dj.length === 6 && typeof q.dj[0] === 'string' && /^[a-z0-9]{6,24}$/i.test(q.dj[0]) && typeof q.dj[1] === 'string' && Number.isInteger(q.dj[2]) && q.dj[2] > 0 && q.dj[2] <= 900 && Number.isFinite(q.dj[3]) && (q.dj[4] === 0 || q.dj[4] === 1) && Number.isInteger(q.dj[5]) && q.dj[5] > 0 && q.dj[5] <= 30 ? [q.dj[0], cleanText(q.dj[1], 40), q.dj[2], q.dj[3], q.dj[4], q.dj[5]] : null,
             sx: Array.isArray(q.sx) && q.sx.length === 2 && q.sx.every(v => Number.isInteger(v) && v >= 0) ? [Math.min(q.sx[0], 1e6), Math.min(q.sx[1], 1e8)] : null,
             ti: Number.isInteger(q.ti) && q.ti > 0 && q.ti < PLAYER_TITLES.length ? q.ti : 0,
@@ -27211,7 +27213,7 @@
     class WorldScene extends Phaser.Scene {
         constructor(loc) { super(loc); this.loc = loc; }
         init(data) {
-            this.roadTags = []; this.roadNewsT = null;
+            this.roadTags = []; this.roadNewsT = null; this.djStage = null;
             this.saved = (data && data.player) || null;
             this.from = (data && data.from) || null;
             this.road = !!(data && data.road);
@@ -27458,6 +27460,8 @@
                     out.SPACE = 'Honk';
                 else if (this.loc === 'beach' && G.shovel && !this.boating && !this.fish && !this.onPier())
                     out.SPACE = 'Dig';
+                else if (this.loc === 'dance')
+                    out.SPACE = 'Jump';
                 if (this.fish)
                     out.F = this.fish.state === 'bite' ? 'Strike!' : 'Reel';
                 if (G.board && G.board.kind === 'car' && !this.boating)
@@ -34435,6 +34439,10 @@
                     }
                     return;
                 }
+                if (this.loc === 'dance') {                          // the club: jump about (and others see it)
+                    if (this.time.now - (this.hopAt || 0) > 430) { this.hopAt = this.time.now; this.hops = ((this.hops || 0) + 1) % 1000; sfx.whoosh(); }
+                    return;
+                }
                 if (this.loc !== 'beach')
                     return;
                 if (this.boating || this.fish || this.onPier())
@@ -35590,6 +35598,12 @@
             this.tweens.killTweensOf(this.avatar);
             this.avatar.setScale(1);
             this.tweens.add({ targets: this.avatar, scaleX: { from: 1.16, to: 1 }, scaleY: { from: 0.86, to: 1 }, duration: 380, ease: 'Back.out' });
+        }
+        danceClock(time) {                                          // the clock dances use: one beat = 330.7 ms of it, with the beat on the landing
+            if (this.loc !== 'dance' || REDUCED) return time;
+            let p = null;
+            try { p = ui.djBeatPos ? ui.djBeatPos() : null; if (p === null) p = music.beatPos ? music.beatPos() : null; } catch (e) { p = null; }
+            return p === null ? time : p * 330.7;
         }
         setEmote(kind) {
             if (this.seated) {
@@ -36850,6 +36864,7 @@
             }
             else
                 S.t = 0;
+            this.djStageTick(time, on);
             this.talentTick(time, dt);
             if (time > S.partyAt && this.emoteOn && DANCE_PARTY.includes(this.emoteKind)) {
                 S.partyAt = time + 2000;
@@ -36866,6 +36881,31 @@
                         ui.onState();
                 }
             }
+        }
+        djStageTick(time, showing) {                                 // a player's song at the booth: Nova Starr comes out and dances to it, on the beat
+            const cur = !showing && ui.djCurrent ? ui.djCurrent() : null, S = this.djStage || (this.djStage = { key: '', objs: [], nova: null, b1: null, b2: null, lbl: null });
+            if (!cur) { if (S.key) { S.objs.forEach(o => o.destroy()); S.objs = []; S.key = ''; } return; }
+            const x = 800, y = 480;
+            if (S.key !== cur.key) {
+                S.objs.forEach(o => o.destroy()); S.objs = [];
+                this.bakeStage();
+                const add = o => { S.objs.push(o); return o; }, ADD = Phaser.BlendModes.ADD;
+                add(this.add.image(x, y + 12, 'stage_riser').setOrigin(0.5, 0.75).setScale(1 / TEX).setDepth(y - 30));
+                S.nova = add(this.add.image(x, y - 4, 'novastar').setOrigin(0.5, FEET_OA).setScale(1.35 / TEX).setDepth(y));
+                S.b1 = add(this.add.image(x - 100, y - 2, 'backup_1').setOrigin(0.5, FEET_OA).setScale(1.05 / TEX).setDepth(y - 1));
+                S.b2 = add(this.add.image(x + 100, y - 2, 'backup_6').setOrigin(0.5, FEET_OA).setScale(1.05 / TEX).setDepth(y - 1));
+                S.lbl = add(this.label(x, y - 170, SHOW.star + ' spins ' + (cur.me ? 'your' : cur.name + '\'s') + ' song: ' + String(cur.title).slice(0, 28), '#3a0f6e'));
+                S.spot = add(this.add.image(x, y - 50, 'spot').setDisplaySize(380, 240).setTint(0xfff0c0).setAlpha(0.4).setBlendMode(ADD).setDepth(y + 1));
+                S.key = cur.key;
+                this.noteUntil = 0; this.note(SHOW.star + ' is spinning ' + (cur.me ? 'your song!' : cur.name + '\'s song!'), '#ff7ad9');
+            }
+            if (REDUCED) return;
+            let p = ui.djBeatPos ? ui.djBeatPos() : null; if (p === null) p = time / 500;
+            const bounce = Math.abs(Math.sin(Math.PI * p)), sway = Math.sin(Math.PI * p);
+            S.nova.setY(y - 4 - bounce * 14).setScale(1.35 / TEX * (1 + (bounce < 0.15 ? (0.15 - bounce) * 0.5 : 0)), 1.35 / TEX * (1 - (bounce < 0.15 ? (0.15 - bounce) * 0.6 : 0)));
+            S.b1.setY(y - 2 - Math.abs(Math.sin(Math.PI * p + 0.5)) * 10).setAngle(sway * 7);
+            S.b2.setY(y - 2 - Math.abs(Math.sin(Math.PI * p - 0.5)) * 10).setAngle(-sway * 7);
+            S.spot.setAlpha(0.3 + 0.25 * (1 - bounce));
         }
         talentTick(time, dt) {
             const T = this.talentSpot;
@@ -36939,8 +36979,7 @@
             if (ui.onState)
                 ui.onState();
         }
-        showStart() {
-            const S = this.show, ADD = Phaser.BlendModes.ADD, x = 800, y = 480;
+        bakeStage() {                                               // the stage, Nova Starr and the band (baked once)
             if (!this.textures.exists('stage_riser'))
                 bake(this, 'stage_riser', 300, 70, c => {
                     inked(c, '#2a1a5a', '#0b0718', 2.4, k => rr(k, 4, 14, 292, 50, 10));
@@ -36953,6 +36992,10 @@
             const star = Object.assign({}, DEFAULT_LOOK, { body: 0, skin: 2, fringe: 6, fringeStyle: 5, back: 6, backStyle: 4, top: 4, topStyle: 53, hat: 3, hatStyle: 22, eyes: 4, eyesC: 4, neck: 3, neckC: 4, bottom: 5, legs: 7, shoes: 4, shoeStyle: 9 });
             bake(this, 'novastar', CW, CHA, c => { c.translate(0, AV_TOP); drawFigure(c, palette(star)); c.fillStyle = '#2a2833'; c.fillRect(64, 54, 3, 12); c.fillStyle = '#cfd5e2'; disc(c, 65.5, 52, 3.6); });
             [1, 6].forEach(i => bake(this, 'backup_' + i, CW, CHA, c => { c.translate(0, AV_TOP); drawFigure(c, palette(Object.assign({}, DEFAULT_LOOK, NPC_LOOKS[i], { topStyle: 53, top: i }))); }));
+        }
+        showStart() {
+            const S = this.show, ADD = Phaser.BlendModes.ADD, x = 800, y = 480;
+            this.bakeStage();
             const add = o => { S.objs.push(o); return o; };
             add(this.add.image(x, y + 12, 'stage_riser').setOrigin(0.5, 0.75).setScale(1 / TEX).setDepth(y - 30));
             const nova = add(this.add.image(x, y - 4, 'novastar').setOrigin(0.5, FEET_OA).setScale(1.35 / TEX).setDepth(y));
@@ -37176,7 +37219,10 @@
                 const dx = tx - o.x, dy = ty - o.y, d = Math.hypot(dx, dy), k = d > 420 ? 1 : Math.min(1, dt * 18), moving = (d > 2 || (H.length > 1 && rt < H[H.length - 1].t)) && !p.boat && !car;
                 o.x += dx * k;
                 o.y += dy * k;
-                const hop = REDUCED ? 0 : moving ? Math.abs(Math.sin(time * 0.014)) * 3 : ['dance', 'party', 'disco', 'floss'].includes(p.em) ? Math.abs(Math.sin(time * 0.013)) * 8 : p.em === 'jump' || p.em === 'superstar' ? Math.abs(Math.sin(time * 0.009)) * 22 : p.em === 'cheer' || p.em === 'robot' ? Math.abs(Math.sin(time * 0.012)) * 5 : p.em === 'breakdance' ? -10 : 0;
+                const bt = this.danceClock ? this.danceClock(time) : time;      // (their dancing, on the club's beat too)
+                if (p.jp !== o.jpSeen) { if (o.jpSeen !== undefined && p.jp) o.jpAt = time; o.jpSeen = p.jp; }
+                const ju = o.jpAt ? (time - o.jpAt) / 520 : 2, jumpUp = ju < 1 ? 4 * ju * (1 - ju) * 40 : 0;
+                const hop = jumpUp + (REDUCED ? 0 : moving ? Math.abs(Math.sin(time * 0.014)) * 3 : ['dance', 'party', 'disco', 'floss'].includes(p.em) ? Math.abs(Math.sin(bt * 0.0095)) * 8 : p.em === 'jump' || p.em === 'superstar' ? Math.abs(Math.sin(bt * 0.0095)) * 22 : p.em === 'cheer' || p.em === 'robot' ? Math.abs(Math.sin(bt * 0.0095)) * 5 : p.em === 'breakdance' ? -10 : 0);
                 o.img.setPosition(o.x, o.y - hop - (moving ? 0 : p.lift) + (p.em === 'sit' && !moving ? 6 : 0)).setDepth(o.y)
                     .setAngle(REDUCED || moving ? 0 : p.em === 'wave' || p.em === 'cheer' ? Math.sin(time * 0.012) * 5 : p.em === 'party' || p.em === 'floss' || p.em === 'twist' ? Math.sin(time * 0.01) * 10 : p.em === 'robot' ? (Math.floor(time / 260) % 2 ? 6 : -6) : p.em === 'moonwalk' ? -8 : p.em === 'disco' ? (Math.floor(time / 420) % 2 ? -7 : 7) : 0)
                     .setScale((car ? (o.carEnd ? 1 : o.carFace || 1) : !REDUCED && (p.em === 'spin' || p.em === 'breakdance') && !moving ? Math.cos(time * (p.em === 'spin' ? 0.012 : 0.02)) || 0.01 : 1) / TEX, 1 / TEX);
@@ -37820,13 +37866,14 @@
             this.emoteAmt += ((this.emoteOn ? 1 : 0) - this.emoteAmt) * (1 - Math.exp(-dt * 10));
             const e = this.emoteAmt;
             let legSY = 1;
+            const et = this.danceClock ? this.danceClock(time) : time;     // (in the club, the moves land on the beat)
             if (e > 0.002) {
                 if (this.emoteKind === 'wave') {
-                    P.armR.rotation += (-2.5 + Math.sin(time * 0.013) * 0.4 - P.armR.rotation) * e;
-                    this.rig.rotation += Math.sin(time * 0.0065) * 0.035 * e;
+                    P.armR.rotation += (-2.5 + Math.sin(et * 0.013) * 0.4 - P.armR.rotation) * e;
+                    this.rig.rotation += Math.sin(et * 0.0065) * 0.035 * e;
                 }
                 else if (this.emoteKind === 'dance') {
-                    const ds = Math.sin(time * 0.0095), beat = Math.abs(ds);
+                    const ds = Math.sin(et * 0.0095), beat = Math.abs(ds);
                     this.rig.y -= beat * 6 * e;
                     this.rig.rotation += ds * 0.1 * e;
                     this.rig.setScale(this.rig.scaleX * (1 - (beat - 0.45) * 0.12 * e), this.rig.scaleY * (1 + (beat - 0.45) * 0.16 * e));
@@ -37836,7 +37883,7 @@
                     P.legR.y -= Math.max(0, -ds) * 4 * e;
                 }
                 else if (this.emoteKind === 'jump') {
-                    const j = Math.abs(Math.sin(time * 0.009));
+                    const j = Math.abs(Math.sin(et * 0.009));
                     this.rig.y -= j * 22 * e;
                     if (j < 0.25)
                         this.rig.setScale(this.rig.scaleX * (1 + (0.25 - j) * 0.3 * e), this.rig.scaleY * (1 - (0.25 - j) * 0.4 * e));
@@ -37846,32 +37893,32 @@
                     P.legR.y -= j * 3 * e;
                 }
                 else if (this.emoteKind === 'cheer') {
-                    P.armL.rotation += (2.7 + Math.sin(time * 0.014) * 0.3 - P.armL.rotation) * e;
-                    P.armR.rotation += (-2.7 - Math.sin(time * 0.014 + 1) * 0.3 - P.armR.rotation) * e;
-                    this.rig.y -= Math.abs(Math.sin(time * 0.012)) * 5 * e;
+                    P.armL.rotation += (2.7 + Math.sin(et * 0.014) * 0.3 - P.armL.rotation) * e;
+                    P.armR.rotation += (-2.7 - Math.sin(et * 0.014 + 1) * 0.3 - P.armR.rotation) * e;
+                    this.rig.y -= Math.abs(Math.sin(et * 0.012)) * 5 * e;
                 }
                 else if (this.emoteKind === 'spin') {
-                    this.rig.setScale(this.rig.scaleX * ((Math.cos(time * 0.012) || 0.01) * e + (1 - e)), this.rig.scaleY);
+                    this.rig.setScale(this.rig.scaleX * ((Math.cos(et * 0.012) || 0.01) * e + (1 - e)), this.rig.scaleY);
                     P.armL.rotation += 1.2 * e;
                     P.armR.rotation -= 1.2 * e;
                     this.rig.y -= 2 * e;
                 }
                 else if (this.emoteKind === 'robot') {
-                    const st = Math.floor(time / 260) % 4;
+                    const st = Math.floor(et / 260) % 4;
                     P.armL.rotation += ([1.57, 0, 1.57, 3.1][st] - P.armL.rotation) * e;
                     P.armR.rotation += ([0, -1.57, -3.1, -1.57][st] - P.armR.rotation) * e;
                     this.rig.rotation += (st % 2 ? 0.06 : -0.06) * e;
                     this.rig.y -= (st % 2) * 2 * e;
                 }
                 else if (this.emoteKind === 'party') {
-                    const sw = Math.sin(time * 0.006);
+                    const sw = Math.sin(et * 0.006);
                     P.armL.rotation += (2.6 + sw * 0.4 - P.armL.rotation) * e;
                     P.armR.rotation += (-2.6 + sw * 0.4 - P.armR.rotation) * e;
                     this.rig.rotation += sw * 0.14 * e;
-                    this.rig.y -= Math.abs(Math.sin(time * 0.012)) * 4 * e;
+                    this.rig.y -= Math.abs(Math.sin(et * 0.012)) * 4 * e;
                 }
                 else if (this.emoteKind === 'moonwalk') {
-                    const sl = Math.sin(time * 0.008);
+                    const sl = Math.sin(et * 0.008);
                     this.rig.rotation -= 0.12 * e;
                     P.legL.x += sl * 4 * e;
                     P.legR.x -= sl * 4 * e;
@@ -37881,34 +37928,34 @@
                     P.armR.rotation -= 0.2 * e;
                 }
                 else if (this.emoteKind === 'disco') {
-                    const up = Math.floor(time / 420) % 2;
+                    const up = Math.floor(et / 420) % 2;
                     P.armR.rotation += ((up ? -2.7 : -0.5) - P.armR.rotation) * e;
                     P.armL.rotation += (0.3 - P.armL.rotation) * e;
                     this.rig.rotation += (up ? -0.08 : 0.08) * e;
-                    this.rig.y -= Math.abs(Math.sin(time * 0.0075)) * 5 * e;
+                    this.rig.y -= Math.abs(Math.sin(et * 0.0075)) * 5 * e;
                 }
                 else if (this.emoteKind === 'twist') {
-                    const tw = Math.sin(time * 0.012), low = (Math.sin(time * 0.002) + 1) / 2;
+                    const tw = Math.sin(et * 0.012), low = (Math.sin(et * 0.002) + 1) / 2;
                     this.rig.setScale(this.rig.scaleX * (1 + tw * 0.12 * e), this.rig.scaleY * (1 - low * 0.12 * e));
                     this.rig.rotation += tw * 0.12 * e;
                     P.armL.rotation += 1.2 * e + tw * 0.4 * e;
                     P.armR.rotation -= 1.2 * e - tw * 0.4 * e;
                 }
                 else if (this.emoteKind === 'floss') {
-                    const fl = Math.sin(time * 0.016);
+                    const fl = Math.sin(et * 0.016);
                     P.armL.rotation += fl * 1.1 * e;
                     P.armR.rotation += fl * 1.1 * e;
                     this.rig.rotation -= fl * 0.09 * e;
                 }
                 else if (this.emoteKind === 'breakdance') {
                     this.upper.y += 8 * e;
-                    this.rig.setScale(this.rig.scaleX * ((Math.cos(time * 0.02) || 0.01) * e + (1 - e)), this.rig.scaleY);
+                    this.rig.setScale(this.rig.scaleX * ((Math.cos(et * 0.02) || 0.01) * e + (1 - e)), this.rig.scaleY);
                     P.armL.rotation += 1.6 * e;
                     P.armR.rotation -= 1.6 * e;
                     P.legL.y -= 4 * e;
                 }
                 else if (this.emoteKind === 'superstar') {
-                    const j = Math.abs(Math.sin(time * 0.009));
+                    const j = Math.abs(Math.sin(et * 0.009));
                     this.rig.y -= j * 20 * e;
                     P.armL.rotation += (j * 2.4 - P.armL.rotation * 0) * e;
                     P.armR.rotation -= j * 2.4 * e;
@@ -37928,6 +37975,10 @@
                     P.armL.rotation -= 0.5 * e;
                     P.armR.rotation += 0.3 * e;
                 }
+            }
+            {                                                        // a free jump (Space at the club): up, tuck, land
+                const hu = this.hopAt ? (this.time.now - this.hopAt) / 520 : 2;
+                if (hu < 1) { const h = 4 * hu * (1 - hu); this.rig.y -= h * 40; P.legL.y -= h * 6; P.legR.y -= h * 6; P.armL.rotation += h * 1.4; P.armR.rotation -= h * 1.4; this.shadow.setDisplaySize(44 * (1 - h * 0.35), 20 * (1 - h * 0.35)); if (hu > 0.9) this.rig.setScale(this.rig.scaleX * 1.06, this.rig.scaleY * 0.92); }
             }
             if (this.loc === 'candy' && !this.emoteOn && !this.inCar)
                 this.rig.y -= Math.abs(Math.sin(this.phase * 0.5)) * 18 * this.moveAmt;
@@ -38353,7 +38404,7 @@
                     for (const s2 of this.spots)
                         s2.img.setAlpha(show ? 0.36 : 0.2);
                 }
-                const songBeat = music.beat();
+                const djp = this.loc === 'dance' && ui.djBeatPos ? ui.djBeatPos() : null, songBeat = djp !== null ? Math.floor(djp) : music.beat();
                 const beat = REDUCED ? Math.floor(time / 1500) : songBeat !== null ? songBeat : Math.floor(time / (show ? 430 : 480));
                 if (beat !== this.beat) {
                     this.beat = beat;
@@ -38375,7 +38426,7 @@
                     }
                 }
                 if (show) {
-                    const hb = music.beat(2), half = hb !== null ? hb : Math.floor(time / 215);
+                    const hb = djp !== null ? Math.floor(djp * 2) : music.beat(2), half = hb !== null ? hb : Math.floor(time / 215);
                     if (half !== this.half) {
                         this.half = half;
                         if (half % 2)
@@ -46232,7 +46283,7 @@
                 return null;
             return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
                 boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, sh: G.riding && !s.boating && shineOn() ? 1 : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
-                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), sp: s.spar ? [Math.max(0, Math.round(s.spar.hp)), s.spar.max] : 0, pv: s.spar && s.pvOut ? s.pvOut : 0, sl: s.sparLost || 0, bo: s.fish && s.bobber && s.bobber.visible ? [Math.round(s.bobber.x), Math.round(s.bobber.y), s.fish.state === 'bite' || s.fish.state === 'reel' ? 1 : 0] : 0, dn: s.loc === 'dungeon' && s.downAt ? 1 : 0, lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, cl: G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1, dj: s.loc === 'dance' && ui.djReq ? ui.djReq() : 0, sx: ui.statsShare ? ui.statsShare() : 0, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
+                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), sp: s.spar ? [Math.max(0, Math.round(s.spar.hp)), s.spar.max] : 0, pv: s.spar && s.pvOut ? s.pvOut : 0, sl: s.sparLost || 0, bo: s.fish && s.bobber && s.bobber.visible ? [Math.round(s.bobber.x), Math.round(s.bobber.y), s.fish.state === 'bite' || s.fish.state === 'reel' ? 1 : 0] : 0, dn: s.loc === 'dungeon' && s.downAt ? 1 : 0, lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, cl: G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1, dj: s.loc === 'dance' && ui.djReq ? ui.djReq() : 0, jp: s.loc === 'dance' ? s.hops || 0 : 0, sx: ui.statsShare ? ui.statsShare() : 0, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
         }
         const netHeld = s => { const D = G.dun, w = s.loc === 'dungeon' && D && D.eq >= 0 ? D.bag[D.eq] : null; return w && Number.isInteger(w.c) ? w.c : -1; };
         const netArmor = s => { const W = s.loc === 'dungeon' && G.dun && G.dun.worn; return W && (W.h || W.b) ? [W.h ? [W.h.a, W.h.r] : 0, W.b ? [W.b.a, W.b.r] : 0] : 0; };
@@ -49148,7 +49199,35 @@
         ui.mp3 = { show: mp3Show, add: mp3Add, state: () => mp3, audio: mp3Audio };
         // ── The DJ booth queue: your own song for everyone in the Dance House. The file goes up in pieces to Firestore (djsongs/, or a
         //    fallback spot if those rules aren't published yet); the line itself travels in each player's presence (dj), in the order asked. ──
-        const DJQ = { mine: null, cache: {}, audio: new Audio(), playing: '', told: '', MAX: 15 * 1024 * 1024, PART: 600 * 1024 };
+        const DJQ = { mine: null, cache: {}, audio: new Audio(), playing: '', told: '', cur: null, beats: {}, MAX: 15 * 1024 * 1024, PART: 600 * 1024 };
+        async function djAnalyze(key, url) {                         // find the song's tempo and where its beats fall, so the club can move to it
+            if (DJQ.beats[key]) return;
+            DJQ.beats[key] = { busy: true };
+            try {
+                const ac = sfx.context() || new (window.AudioContext || window.webkitAudioContext)();
+                const buf = await ac.decodeAudioData(await (await fetch(url)).arrayBuffer());
+                const sr = buf.sampleRate, ch = buf.getChannelData(0), hopN = 512, fps = sr / hopN, frames = Math.min(Math.floor(ch.length / hopN) - 1, Math.floor(fps * 90));
+                const env = new Float32Array(frames), on = new Float32Array(frames);
+                for (let f2 = 0; f2 < frames; f2++) { let e2 = 0; const o = f2 * hopN; for (let k = 0; k < hopN * 2 && o + k < ch.length; k += 2) e2 += ch[o + k] * ch[o + k]; env[f2] = Math.log(1e-6 + e2); }
+                for (let f2 = 1; f2 < frames; f2++) on[f2] = Math.max(0, env[f2] - env[f2 - 1]);
+                let best = 0, bestL = fps * 0.5;
+                for (let bpm = 70; bpm <= 180; bpm += 0.5) {
+                    const L = fps * 60 / bpm; let sc = 0;
+                    for (let f2 = 0; f2 + 2 * L < frames; f2 += 2) sc += on[f2] * (on[Math.round(f2 + L)] + 0.5 * on[Math.round(f2 + 2 * L)]);
+                    const w = sc * (1 - Math.abs(bpm - 122) / 400);                      // (a gentle lean to dance tempos)
+                    if (w > best) { best = w; bestL = L; }
+                }
+                let ph = 0, phS = -1;
+                for (let o = 0; o < bestL; o++) { let sc = 0; for (let t2 = o; t2 < frames; t2 += bestL) sc += on[Math.round(t2)]; if (sc > phS) { phS = sc; ph = o; } }
+                DJQ.beats[key] = { period: bestL / fps, phase: ph / fps, bpm: Math.round(600 * fps / bestL) / 10 };
+            } catch (e) { DJQ.beats[key] = { period: 0.5, phase: 0, bpm: 120, guess: true }; }
+        }
+        ui.djBeatPos = () => {                                       // the beat (with its fraction) of the song playing at the booth, or null
+            if (!DJQ.playing || DJQ.audio.paused || G.loc !== 'dance') return null;
+            const B = DJQ.beats[DJQ.playing]; if (!B || !B.period) return null;
+            return Math.max(0, (DJQ.audio.currentTime - B.phase) / B.period);
+        };
+        ui.djCurrent = () => (DJQ.playing && G.loc === 'dance' && DJQ.cur ? DJQ.cur : null);
         DJQ.audio.preload = 'auto';
         const djClock = () => (net.room && net.room.now ? net.room.now() : Date.now());
         const djPartRef = (pt, key, i, uid) => (pt === 0 ? soc.db.doc('djsongs/' + key + '/parts/' + i) : soc.db.doc('trades/dj' + key + 'p' + i + '/sides/' + uid));
@@ -49217,15 +49296,16 @@
                 if (!here) djDrop();
             }
             if (cur) {
-                const next = line.find(e => e.start > now); if (next) djFetch(next).catch(() => { });
+                const next = line.find(e => e.start > now); if (next) djFetch(next).then(u => djAnalyze(next.key, u)).catch(() => { });
+                DJQ.cur = cur;
                 if (DJQ.playing !== cur.key) {
                     DJQ.playing = cur.key; DJQ.audio.pause();
-                    djFetch(cur).then(url => { if (DJQ.playing !== cur.key) return; DJQ.audio.src = url; DJQ.audio.currentTime = Math.max(0, (djClock() - cur.start) / 1000); DJQ.audio.volume = mp3.vol; const p = DJQ.audio.play(); if (p && p.catch) p.catch(() => { }); music.user(true); if (!mp3Audio.paused) mp3Audio.pause(); }).catch(() => { document.getElementById('djq-msg').textContent = cur.name + '\'s song could not be loaded.'; });
+                    djFetch(cur).then(url => { djAnalyze(cur.key, url); if (DJQ.playing !== cur.key) return; DJQ.audio.src = url; DJQ.audio.currentTime = Math.max(0, (djClock() - cur.start) / 1000); DJQ.audio.volume = mp3.vol; const p = DJQ.audio.play(); if (p && p.catch) p.catch(() => { }); music.user(true); if (!mp3Audio.paused) mp3Audio.pause(); }).catch(() => { document.getElementById('djq-msg').textContent = cur.name + '\'s song could not be loaded.'; });
                     if (DJQ.told !== cur.key) { DJQ.told = cur.key; chatLine('', '🎧 Now playing at the DJ booth: ' + cur.title + ' (' + (cur.me ? 'your song' : cur.name + '\'s song') + ')', 'sys'); }
                 } else if (!DJQ.audio.paused && Number.isFinite(DJQ.audio.currentTime)) {
                     const want = (now - cur.start) / 1000; if (Math.abs(DJQ.audio.currentTime - want) > 2) DJQ.audio.currentTime = want;     // (keep in step with everyone)
                 }
-            } else if (DJQ.playing) { DJQ.playing = ''; DJQ.audio.pause(); if (mp3Audio.paused) music.user(false); }
+            } else if (DJQ.playing) { DJQ.playing = ''; DJQ.cur = null; DJQ.audio.pause(); if (mp3Audio.paused) music.user(false); }
             if (!document.getElementById('dj').hidden) djPaint(line, cur);
         }
         function djPaint(line, cur) {
