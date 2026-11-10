@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794313068';
+<script>window.WANDO_BUILD = '1794313495';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -29404,6 +29404,7 @@
                 return;
             }
             this.hurtAt = this.time.now;
+            this.hurtBy = src && src.name ? (src.boss ? 'the ' : /^[AEIOU]/.test(src.name) ? 'an ' : 'a ') + src.name : this.hurtBy;
             if (this.time.now < this.buff.skin)
                 d = Math.ceil(d / 2);
             const cut = dunArmor(Dn).cut;
@@ -29442,7 +29443,8 @@
                 this.dunOver = true;
                 KO_BED = true;
                 if (ui.onDied)
-                    ui.onDied();
+                    ui.onDied(this.hurtBy || '');
+                this.hurtBy = '';
                 this.fallen = this.time.now;
                 Dn.run.room = 0;
                 Dn.run.boons = [];
@@ -29550,9 +29552,12 @@
             if (m.wayAt && time < m.wayAt)
                 return m.way;
             m.wayAt = time + 220 + Math.random() * 80;
-            const clear = (x0, y0, x1, y1) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 24); for (let i = 1; i < n; i++)
-                if (!HL.walk(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, 12))
-                    return false; return true; };
+            const P = this.dunWalls || [], pad = 16 * m.size + 4;
+            const clear = (x0, y0, x1, y1) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 24); for (let i = 1; i < n; i++) {
+                const x = x0 + (x1 - x0) * i / n, y = y0 + (y1 - y0) * i / n;
+                if (!HL.walk(x, y, 12) || P.some(w => Math.hypot(x - w.x, y - w.y) < w.r + pad))
+                    return false;
+            } return true; };
             if (clear(m.x, m.y, tx, ty))
                 return (m.way = null);
             if (!HL.links) {
@@ -29583,12 +29588,18 @@
             }
             if (!prev.has(b))
                 return (m.way = null);
-            const doors = [];
-            let at = b;
+            let doors = [], into = [], at = b;
             while (prev.get(at)) {
                 doors.unshift(prev.get(at).door);
+                into.unshift(R[at]);
                 at = prev.get(at).from;
             }
+            const inside = q => m.x >= q.x && m.x <= q.x + q.w && m.y >= q.y && m.y <= q.y + q.h;
+            for (let i = into.length - 1; i >= 0; i--)
+                if (inside(into[i])) {
+                    doors = doors.slice(i + 1);
+                    break;
+                }
             let pick = doors[0] || null;
             for (let i = doors.length - 1; i >= 0; i--)
                 if (clear(m.x, m.y, doors[i].x, doors[i].y)) {
@@ -29607,6 +29618,11 @@
                 const k = d ? need / d : 1;
                 m.x = w.x + (d ? dx : 1) * k;
                 m.y = w.y + dy * (d ? k : 0);
+                if (d) {
+                    const side = m.slide || (m.slide = Math.random() < 0.5 ? 1 : -1);
+                    m.x += -dy / d * side * 3;
+                    m.y += dx / d * side * 3;
+                }
             } });
             m.x = clamp(m.x, B.x + 20, B.x + B.w - 20);
             m.y = clamp(m.y, B.y + 30, B.y + B.h - 20);
@@ -43716,6 +43732,11 @@
                     b.textContent = 'Sell all Common';
                     top.appendChild(b);
                 }
+                if (D.bag.length > 2) {
+                    const b = el('button', 'btn', { type: 'button', 'data-act': 'sortbag', 'data-i': '0', title: 'Best first' });
+                    b.textContent = 'Sort';
+                    top.appendChild(b);
+                }
                 rows.push(top);
                 if (dn.shop) {
                     const forge = node('div', 'mine-row dun-forge'), txt = node('div', 'mine-text');
@@ -43881,6 +43902,13 @@
                     D.eq--;
                 sfx.coin();
                 return w.name + ' sold for ' + v + ' Coins.';
+            }
+            if (act === 'sortbag') {
+                const keep = D.eq >= 0 ? D.bag[D.eq] : null;
+                D.bag.sort((a, b) => b.r - a.r || b.dmg - a.dmg);
+                D.eq = keep ? D.bag.indexOf(keep) : -1;
+                sfx.tick();
+                return 'Bag sorted, best first.';
             }
             if (act === 'stash' && w && dn.shop) {
                 D.stash = D.stash || [];
@@ -44349,13 +44377,13 @@
             setTimeout(() => d.classList.add('out'), 2200);
             setTimeout(() => d.remove(), 2900);
         };
-        ui.onDied = () => {
+        ui.onDied = by => {
             const d = document.createElement('div');
             d.className = 'died';
             d.setAttribute('role', 'alert');
             const b = document.createElement('b'), sm = document.createElement('small');
             b.textContent = 'YOU DIED';
-            sm.textContent = 'Lost your boons. Off to the infirmary...';
+            sm.textContent = (by ? 'Beaten by ' + by + '. ' : '') + 'Lost your boons. Off to the infirmary...';
             d.append(b, sm);
             document.body.appendChild(d);
             setTimeout(() => d.classList.add('out'), 2300);
