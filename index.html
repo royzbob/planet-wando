@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346922';
+<script>window.WANDO_BUILD = '1794346955';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2075,6 +2075,11 @@
   .wmap-moon { display: none; position: absolute; left: 9%; top: 11.7%; width: 13%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
     background: radial-gradient(circle at 44% 42%, #fffbe6 0 20%, #f4e9b8 27%, #e8d98f 31%, rgba(14, 16, 64, 0.97) 34%, rgba(14, 16, 64, 0.9) 50%, rgba(14, 16, 64, 0) 70%); }
   .wmap.wmap-dark .wmap-moon { display: block; }
+  .wmap-rain { display: none; position: absolute; inset: 0; pointer-events: none; opacity: 0.65;
+    background: repeating-linear-gradient(105deg, transparent 0 14px, rgba(220, 235, 255, 0.6) 14px 15.5px, transparent 15.5px 31px), linear-gradient(rgba(50, 60, 95, 0.35), rgba(50, 60, 95, 0.35)); background-size: 200% 200%, 100% 100%; animation: wmap-rain 0.6s linear infinite; }
+  .wmap.wmap-wet .wmap-rain { display: block; }
+  @keyframes wmap-rain { from { background-position: 0 0, 0 0; } to { background-position: -8px 31px, 0 0; } }
+  @media (prefers-reduced-motion: reduce) { .wmap-rain { animation: none; } }
   .wmap-night { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at 50% 45%, rgba(20, 24, 80, 0.32), rgba(8, 6, 40, 0.62)); transition: opacity 0.6s; }
   .wmap-zoomb { display: none; position: absolute; left: 6px; top: 6px; z-index: 4; width: 34px; height: 34px; padding: 0; border: 2px solid #120b3a; border-radius: 50%; background: #fff8e3; color: #2a1a6a; font: 800 16px/1 var(--font-body); box-shadow: 0 2px 0 #120b3a; cursor: pointer; }
   .wmap.zoomed .wmap-scroll { overflow: auto; max-height: min(64vh, 560px); border-radius: 14px; overscroll-behavior: contain; }
@@ -2951,7 +2956,7 @@
     </header>
     <div class="wmap-frame"><div class="wmap-scroll"><div class="wmap-board">
       <canvas id="wmap-cv" width="1600" height="992" aria-hidden="true"></canvas>
-      <div id="wmap-night" class="wmap-night" aria-hidden="true"></div><div class="wmap-moon" aria-hidden="true"></div>
+      <div id="wmap-night" class="wmap-night" aria-hidden="true"></div><div class="wmap-moon" aria-hidden="true"></div><div class="wmap-rain" aria-hidden="true"></div>
       <div id="wmap-spots" class="wmap-spots" role="group" aria-label="Places"></div>
       <div id="wmap-card" class="wmap-card" role="status" hidden></div>
     </div></div><button id="wmap-zoom" class="wmap-zoomb" type="button" aria-pressed="false" aria-label="Zoom the map">➕</button></div>
@@ -46805,7 +46810,7 @@
                 }
                 wmapDrawn = true;
             }
-            try { const nt = daylight(clockHour()).night; document.getElementById('wmap-night').style.opacity = String(Math.round(clamp(nt, 0, 1) * 100) / 100); wmapEl.classList.toggle('wmap-dark', nt > 0.5); } catch (e) { }     // the map at night, too
+            try { const nt = daylight(clockHour()).night; document.getElementById('wmap-night').style.opacity = String(Math.round(clamp(nt, 0, 1) * 100) / 100); wmapEl.classList.toggle('wmap-dark', nt > 0.5); wmapEl.classList.toggle('wmap-wet', weatherNow() === 'rain'); } catch (e) { }     // the map at night, too
             const s = scene(), here = wmapWhere(s ? s.loc : G.loc), N = wmapCounts();
             Object.keys(wmapBtns).forEach(loc => {
                 const B = wmapBtns[loc], n = N[loc] || 0;
