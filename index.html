@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346787';
+<script>window.WANDO_BUILD = '1794346813';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -46900,7 +46900,7 @@
                 const go = el('button', 'btn wmap-card-go', { type: 'button', 'data-wgo': loc }); go.textContent = here ? 'You are here' : 'Go there'; go.disabled = here;
                 const x = el('button', 'btn plain', { type: 'button', 'data-wcard': 'x' }); x.textContent = 'Close';
                 foot.append(go, x);
-            } else foot.appendChild(node('small', '', here ? 'You are here.' : 'Click to go there.'));
+            } else foot.appendChild(node('small', '', (here ? 'You are here.' : 'Click to go there.') + ' Right-click to keep this open.'));
             kids.push(foot);
             wmapCard.replaceChildren(...kids);
             const fx = WMAP_LABELS[loc] ? WMAP_LABELS[loc][0] : 0.5;
@@ -46956,6 +46956,8 @@
         });
         wmapSpots.addEventListener('mouseover', e => { if (TOUCH_FIRST || wmapCard.classList.contains('tap')) return; const b = e.target.closest('[data-wgo]'); if (b && b.dataset.wgo !== wmapPick) wmapCardShow(b.dataset.wgo, false); });
         wmapSpots.addEventListener('mouseleave', () => { if (!wmapCard.classList.contains('tap')) wmapCardShow(''); });
+        wmapSpots.addEventListener('contextmenu', e => { const b = e.target.closest('[data-wgo]'); if (!b) return; e.preventDefault(); wmapCardShow(b.dataset.wgo, true); });     // right-click: the card stays, with its buttons
+        wmapSpots.addEventListener('focusin', e => { if (TOUCH_FIRST || wmapCard.classList.contains('tap')) return; const b = e.target.closest('[data-wgo]'); if (b && b.matches(':focus-visible')) wmapCardShow(b.dataset.wgo, false); });
         wmapSpots.addEventListener('click', e => {
             const b = e.target.closest('[data-wgo]');
             if (!b) { if (wmapCard.classList.contains('tap')) wmapCardShow(''); return; }
