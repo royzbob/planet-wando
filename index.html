@@ -46653,6 +46653,14 @@
             try { if (!G.login || G.login.star !== day) { const sp = starPlace(day), h = LOCS[sp] ? (LOCS[sp].home || sp) : sp; add(h, '⭐ ' + starName() + ' hiding here', false); } } catch (e) { }
             try { if (weatherNow(now) === 'rain') ['beach', 'green'].forEach(l => add(l, '🌧️ Rain: fish bite faster', false)); } catch (e) { }
             Object.keys(ev).forEach(k => ev[k].sort((a, b) => b.live - a.live));
+            try {
+                const best = {};
+                Object.keys(ERRANDS).forEach(id => { const q = errandNow(id), w = wmapWhere(ERRANDS[id].loc); if (q.state !== 'new' && q.state !== 'ready')
+                    return; if (!best[w] || (q.state === 'ready' && best[w].state !== 'ready'))
+                    best[w] = q; });
+                Object.keys(best).forEach(w => { const q = best[w]; (ev[w] = ev[w] || []).unshift({ txt: q.state === 'ready' ? '✅ ' + q.E.name + ': collect your reward' : '❗ ' + q.E.name + ' has a job', live: false, cls: q.state === 'ready' ? ' wmap-fr' : '' }); });
+            }
+            catch (e) { }
             try { const car = wmapCar(); if (car) (ev[car.loc] = ev[car.loc] || []).push({ txt: '🚗 Your car' + (car.lot ? ' (car lot)' : ''), live: false, car: true }); } catch (e) { }
             return { ev, up: up.sort((a, b) => a[0] - b[0]) };
         }
@@ -46736,7 +46744,7 @@
                 Object.keys(wmapBtns).forEach(loc => {
                     const B = wmapBtns[loc], kids = [];
                     const L = E.ev[loc] || [];
-                    L.filter(x => !x.car).slice(0, 2).concat(L.filter(x => x.car)).forEach(x => kids.push(node('span', 'wmap-ev' + (x.live ? ' live' : '') + (x.car ? ' wmap-car' : ''), x.txt)));
+                    L.filter(x => !x.car).slice(0, 2).concat(L.filter(x => x.car)).forEach(x => kids.push(node('span', 'wmap-ev' + (x.live ? ' live' : '') + (x.car ? ' wmap-car' : '') + (x.cls || ''), x.txt)));
                     const fr = F[loc] || [];
                     if (fr.length) { const t = node('span', 'wmap-ev wmap-fr', '★ ' + fr.slice(0, 2).map(f => f.name).join(', ') + (fr.length > 2 ? ' +' + (fr.length - 2) : '')); t.title = fr.map(f => f.name + (f.away ? ' (on another server)' : '')).join('\n'); kids.push(t); }
                     B.tags.replaceChildren(...kids);
