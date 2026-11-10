@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794312577';
+<script>window.WANDO_BUILD = '1794312725';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2768,7 +2768,7 @@
       <h2 id="help-title">Controls</h2>
       <button id="help-close" class="wmap-x" type="button" aria-label="Close"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></button>
     </header>
-    <ul class="help-keys"><li><kbd>W A S D / arrows</kbd><span>Walk (or click the ground)</span></li><li><kbd>Enter</kbd><span>Chat</span></li><li><kbd>I or 3</kbd><span>Backpack: everything you own</span></li><li><kbd>1, 2</kbd><span>Shovel, fishing rod</span></li><li><kbd>H</kbd><span>Ride (potion in the crypt)</span></li><li><kbd>E</kbd><span>Use / open</span></li><li><kbd>Click water</kbd><span>Cast your line there</span></li><li><kbd>T</kbd><span>Throw something (then click where)</span></li><li><kbd>F</kbd><span>Reel in (flip furniture)</span></li><li><kbd>Space, A, D</kbd><span>Fish on: reel in, pull the rod left or right</span></li><li><kbd>R</kbd><span>Decorating: turn a piece</span></li><li><kbd>Space</kbd><span>Crypt: attack your target</span></li><li><kbd>1, 2, 3</kbd><span>Crypt: your skills</span></li><li><kbd>M</kbd><span>Crypt: mana potion</span></li><li><kbd>B</kbd><span>Crypt: Backpack, weapons</span></li><li><kbd>Esc</kbd><span>Close a card</span></li></ul>
+    <ul class="help-keys"><li><kbd>W A S D / arrows</kbd><span>Walk (or click the ground)</span></li><li><kbd>Enter</kbd><span>Chat</span></li><li><kbd>I or 3</kbd><span>Backpack: everything you own</span></li><li><kbd>1, 2</kbd><span>Shovel, fishing rod</span></li><li><kbd>H</kbd><span>Ride (potion in the crypt)</span></li><li><kbd>Q</kbd><span>Swap weapon in the crypt</span></li><li><kbd>E</kbd><span>Use / open</span></li><li><kbd>Click water</kbd><span>Cast your line there</span></li><li><kbd>T</kbd><span>Throw something (then click where)</span></li><li><kbd>F</kbd><span>Reel in (flip furniture)</span></li><li><kbd>Space, A, D</kbd><span>Fish on: reel in, pull the rod left or right</span></li><li><kbd>R</kbd><span>Decorating: turn a piece</span></li><li><kbd>Space</kbd><span>Crypt: attack your target</span></li><li><kbd>1, 2, 3</kbd><span>Crypt: your skills</span></li><li><kbd>M</kbd><span>Crypt: mana potion</span></li><li><kbd>B</kbd><span>Crypt: Backpack, weapons</span></li><li><kbd>Esc</kbd><span>Close a card</span></li></ul>
     <p class="login-sub">Globe = map. Clock = quests, daily prizes, the Wando Times, the Prize Wheel and the camera.</p>
     <p class="login-sub">Smiley = dances, moves and emotes. Type :) &lt;3 :D ;) :( gg in chat too!</p>
     <p class="login-sub"><b>The crypt with friends:</b> anyone in the same room fights the same monsters. Join a friend from the Dungeon Gate, your player list, or type /join Name. Knocked down? A friend who stands by you picks you up. Hold a skill button to see what it does.</p>
@@ -44174,6 +44174,33 @@
         dunTabs.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b)
             return; dn.tab = b.dataset.tab; dn.note = ''; paintDun(); if (e.detail > 0)
             b.blur(); });
+        function dunSwap() {
+            const D = G.dun, likes = CLASSES[D.cls] ? CLASSES[D.cls].likes : null, n = D.bag.length;
+            if (n < 2)
+                return '';
+            for (let k = 1; k <= n; k++) {
+                const i = (Math.max(0, D.eq) + k) % n, w = D.bag[i];
+                if (!likes || likes.includes(w.t) || k === n) {
+                    if (i === D.eq)
+                        return '';
+                    D.eq = i;
+                    sfx.tick();
+                    paintDunHud();
+                    return w.name + ' is in your hand.';
+                }
+            }
+            return '';
+        }
+        ui.dunSwap = dunSwap;
+        window.addEventListener('keydown', e => {
+            if ((e.key === 'q' || e.key === 'Q') && G.loc === 'dungeon' && !isTyping() && !busy() && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                const t = dunSwap(), s = scene();
+                if (t && s) {
+                    s.noteUntil = 0;
+                    s.note(t, '#ffe9a8');
+                }
+            }
+        });
         dunList.addEventListener('click', e => {
             const b = e.target.closest('[data-act]');
             if (!b || b.disabled)
