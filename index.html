@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794313620';
+<script>window.WANDO_BUILD = '1794313780';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2203,6 +2203,8 @@
   .dun-flask::after { content: ''; position: absolute; inset: 0; background: conic-gradient(rgba(10, 6, 16, 0.7) calc(var(--cd, 0) * 360deg), transparent 0); pointer-events: none; }
   .dun-flask:disabled { filter: saturate(0.4) brightness(0.75); cursor: default; }
   .dun-bad, .dun-weapon { padding: 3px 10px; border: 2px solid #d8a43a; border-radius: 6px; background: rgba(20, 16, 28, 0.82); color: #fff3c8; font: 800 13px/1.3 var(--font-display); text-shadow: 1px 1px 0 #000; }
+  .dun-delta { font: 800 11px/1 var(--font-display); padding: 1px 5px; border-radius: 8px; vertical-align: 1px; }
+  .dun-delta.up { background: #d6f5d0; color: #1f6b1a; } .dun-delta.down { background: #f6dcdc; color: #8a2020; }
   .dun-weapon { font-size: 12px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
   .dun-small { padding: 5px 10px; border: 2px solid #d8a43a; border-radius: 6px; background: linear-gradient(#5a4a32, #2e2418); color: #ffe9a8; font: 800 12px/1.2 var(--font-body); cursor: pointer; text-shadow: 1px 1px 0 #000; }
   @media (max-width: 520px) { .dun-bottom { left: 4px; right: 4px; transform: none; flex-wrap: wrap; justify-content: center; gap: 4px; } .dun-bottom .dun-small, .dun-bottom .dun-bad { font-size: 11px; padding: 3px 6px; } .dun-bottom .dun-flask { width: 44px; height: 44px; font-size: 13px; } .dun-bottom .dun-weapon { display: none; } }     
@@ -43775,6 +43777,12 @@
                     const li = node('div', 'mine-row dun-row' + (i === D.eq ? ' on' : '')), text = node('div', 'mine-text');
                     const nm = node('b', '', w.name);
                     nm.style.color = mix(RARITIES[w.r][1], '#1d1424', 0.35);
+                    const held = D.eq >= 0 && i !== D.eq ? D.bag[D.eq] : null, dd = held ? w.dmg - held.dmg : 0;
+                    if (dd) {
+                        const tag = node('span', 'dun-delta ' + (dd > 0 ? 'up' : 'down'), (dd > 0 ? '▲ +' : '▼ ') + dd);
+                        tag.title = 'Damage compared with the one in your hand';
+                        nm.append(' ', tag);
+                    }
                     text.append(nm, node('small', '', weaponLine(w) + (likes && !likes.includes(w.t) ? ' · not for your class' : '')), node('small', 'dun-from', weaponFrom(w)));
                     li.title = weaponTip(w);
                     li.append(weaponCanvas(w), text);
