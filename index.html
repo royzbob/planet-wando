@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346757';
+<script>window.WANDO_BUILD = '1794346787';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -46833,6 +46833,7 @@
                 }
                 const day = dayNumber(), tEl = document.getElementById('wmap-today'), sp = starPlace(day), spH = LOCS[sp] ? (LOCS[sp].home || sp) : 'green', cz = catchOfDay(day).zone;
                 const todo = [['⭐ ' + starName(), G.login && G.login.star === day, spH], ['🎣 Catch of the Day', G.angler && G.angler.cotd === day, cz === 'pond' ? 'green' : cz === 'lagoon' ? 'dungeon' : 'beach'], ['⚔️ Daily Delve', G.dun && G.dun.daily === day, 'dungeon'], ['🎡 Prize Wheel', G.login && G.login.spin === day, 'green']];
+                try { if (G.dun && G.dun.cls) { const got = G.dun.bounty && G.dun.bounty.day === day ? G.dun.bounty.got.filter(Boolean).length : 0, n = bountiesToday(day).length; if (n) todo.push(['📜 Bounties ' + got + '/' + n, got >= n, 'dungeon']); } } catch (e) { }
                 tEl.replaceChildren(node('b', '', 'Today: '), ...todo.map(([t, ok, loc]) => { const b = el('button', 'wmap-soon-b' + (ok ? ' done' : ''), { type: 'button', 'data-wgo': loc, title: ok ? 'Done today!' : 'Go to ' + LOCS[loc].name }); b.textContent = (ok ? '✓ ' : '') + t; return b; }));
                 tEl.hidden = false;
             } catch (e) { }
@@ -46973,8 +46974,10 @@
             wmapOpen(); if (e.detail > 0)
             mapBtn.blur(); });
         document.getElementById('wmap-close').addEventListener('click', wmapClose);
-        window.addEventListener('keydown', e => { if (e.key === 'Escape' && wmapP.isOpen())
-            wmapClose(); });
+        window.addEventListener('keydown', e => { if (e.key === 'Escape' && wmapP.isOpen()) {
+            if (wmapCard.classList.contains('tap') && !wmapCard.hidden) { wmapCardShow(''); return; }
+            wmapClose();
+        } });
         window.addEventListener('keydown', e => {
             if ((e.key !== 'm' && e.key !== 'M') || e.repeat || e.ctrlKey || e.metaKey || e.altKey || isTyping() || G.loc === 'dungeon')
                 return;
