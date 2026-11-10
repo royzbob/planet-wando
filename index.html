@@ -440,6 +440,13 @@
   .plate svg { width: 30px; height: 30px; flex: none; }
   .world-mini { position: absolute; top: 96px; left: 16px; width: 150px; height: 100px; border: 2px solid var(--ink); border-radius: 10px; background: rgba(18, 11, 58, 0.55); box-shadow: 0 3px 0 var(--plate-shadow); cursor: crosshair; }
   .world-mini[hidden] { display: none; }
+  .arrive { position: absolute; left: 50%; top: 15%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; text-align: center; z-index: 5; animation: arrive-in 3.2s ease both; }
+  .arrive b { font: 800 clamp(22px, 4.4vw, 40px)/1.05 var(--font-display); color: #fff; letter-spacing: 0.04em; text-shadow: 0 3px 0 #120b3a, 0 0 18px rgba(18, 11, 58, 0.55); -webkit-text-stroke: 1.5px #120b3a; }
+  .arrive small { font: 800 clamp(12px, 1.9vw, 16px)/1.2 var(--font-body); color: #fff8d8; text-shadow: 0 2px 0 #120b3a, 0 0 8px #120b3a; }
+  .arrive-ev { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+  .arrive-ev:empty { display: none; }
+  @keyframes arrive-in { 0% { opacity: 0; transform: translate(-50%, -10px); } 12%, 78% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -6px); } }
+  @media (prefers-reduced-motion: reduce) { .arrive { animation: arrive-fade 3.2s linear both; } @keyframes arrive-fade { 0%, 85% { opacity: 1; } 100% { opacity: 0; } } }
   @media (max-width: 620px), (max-height: 500px) { .world-mini { top: 44px; left: 8px; width: 108px; height: 72px; border-radius: 8px; } }
   @media (max-width: 540px) { .world-mini { top: auto; left: auto; right: 8px; bottom: calc(var(--dock-h) + 10px); } }
   @media (max-width: 620px), (max-height: 500px) {          
@@ -2552,6 +2559,7 @@
     </div>
   </div>
 
+  <div id="arrive" class="arrive" aria-hidden="true" hidden><b id="arrive-name"></b><small id="arrive-blurb"></small><span id="arrive-ev" class="arrive-ev"></span></div>
   <canvas id="world-mini" class="world-mini" width="300" height="200" title="Minimap: click to walk there" aria-hidden="true" hidden></canvas>
 
   <section id="chatbox" class="chatbox" aria-label="Chat box">
@@ -46827,7 +46835,7 @@
         let wmGeo = null;
         function wmPaint() {
             const s = scene(), loc = s ? s.loc : null, D = loc ? LOCS[loc] : null;
-            const fh = document.getElementById('fish-hud'), show = !!(wmOn && D && s.D && !D.interior && loc !== 'home' && loc !== 'dungeon' && s.pz && D.w && D.h && (!fh || fh.hidden));
+            const fh = document.getElementById('fish-hud'), gt = document.getElementById('gate'), show = !!(wmOn && (!gt || gt.hidden) && D && s.D && !D.interior && loc !== 'home' && loc !== 'dungeon' && s.pz && D.w && D.h && (!fh || fh.hidden));
             wmEl.hidden = !show;
             if (!show)
                 return;
@@ -46892,7 +46900,25 @@
             chatMin(true);
         ui.onChatLine = (name, text, mine) => chatLine(name, text, mine ? 'me' : 'them');
         const locWas = ui.onLoc;
-        ui.onLoc = loc => { locWas(loc); document.getElementById('app').dataset.loc = loc; const D = LOCS[loc]; chatLine('', 'You are at ' + (loc === 'home' ? 'a house' : D.name) + '.', 'sys'); if (wmapP.isOpen())
+        let arriveT = 0, arriveLast = '';
+        function arriveShow(loc) {
+            const D = LOCS[loc], box = document.getElementById('arrive');
+            if (!box || !D || D.interior || loc === 'home' || loc === arriveLast)
+                return;
+            arriveLast = loc;
+            document.getElementById('arrive-name').textContent = D.name;
+            document.getElementById('arrive-blurb').textContent = D.blurb || '';
+            let evs = [];
+            try { evs = (wmapEvents().ev[loc] || []).slice(0, 2); } catch (e) { }
+            document.getElementById('arrive-ev').replaceChildren(...evs.map(x => node('span', 'wmap-ev' + (x.live ? ' live' : ''), x.txt)));
+            box.hidden = false;
+            box.style.animation = 'none';
+            void box.offsetWidth;
+            box.style.animation = '';
+            clearTimeout(arriveT);
+            arriveT = setTimeout(() => { box.hidden = true; }, 3300);
+        }
+        ui.onLoc = loc => { locWas(loc); document.getElementById('app').dataset.loc = loc; const D = LOCS[loc]; if (D && !D.interior && loc !== 'home') arriveShow(loc); chatLine('', 'You are at ' + (loc === 'home' ? 'a house' : D.name) + '.', 'sys'); if (wmapP.isOpen())
             wmapPaint(); mapBtn.setAttribute('aria-expanded', String(wmapP.isOpen())); };
         motdGet().then(m => { if (m)
             chatLine('', '📣 ' + m, 'sys'); });
