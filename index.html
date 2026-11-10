@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346710';
+<script>window.WANDO_BUILD = '1794346757';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2082,6 +2082,8 @@
   .wmap-find { width: 230px; max-width: 100%; padding: 4px 10px; border: 2px solid #120b3a; border-radius: 999px; background: #fff8e3; color: #2a1a6a; font: 700 12.5px/1.3 var(--font-body); }
   .wmap-find:focus { outline: 3px solid var(--sun); outline-offset: 1px; }
   @media (max-width: 640px), (max-height: 500px) { .wmap-find { width: 100%; font-size: 12px; padding: 3px 9px; } }
+  .wmap-spot.forsale .wmap-pill { background: #ffe9a8; border-style: dashed; font-size: 11px; padding: 0 7px; }
+  .wmap-spot.forsale { z-index: 0; }
   .wmap-spot.picked .wmap-pill { background: var(--sun); transform: scale(1.1); box-shadow: 0 0 0 3px #fff, 0 2px 0 #120b3a; }
   .wmap-card { position: absolute; right: 10px; bottom: 10px; z-index: 3; width: min(300px, calc(100% - 20px)); max-height: calc(100% - 20px); overflow: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;
     border: 3px solid #120b3a; border-radius: 14px; background: #fff8e3; color: #2a1a6a; box-shadow: 0 4px 0 rgba(18, 11, 58, 0.5); pointer-events: none; text-shadow: none; }
@@ -46803,7 +46805,7 @@
                 const B = wmapBtns[loc], n = N[loc] || 0;
                 B.you.hidden = loc !== here;
                 B.b.classList.toggle('here', loc === here);
-                B.b.hidden = loc === 'home' && !G.home.owned;
+                if (loc === 'home') { const sale = !G.home.owned && !(ui.visit && ui.visit()); B.b.classList.toggle('forsale', sale); B.b.querySelector('.wmap-pill').textContent = sale ? '🏠 For sale' : 'My House'; B.b.setAttribute('aria-label', sale ? 'A house for sale on the Village Green' : 'Go to your house'); }
                 B.n.hidden = !n;
                 B.n.textContent = (n >= 3 && n === Math.max(...Object.values(N)) ? '🔥 ' : '') + n + (n === 1 ? ' player' : ' players');
                 B.n.title = (wmapNames[loc] || []).slice(0, 12).join(', ');
@@ -46858,8 +46860,13 @@
                 return 'Finish what you are doing first.';
             if (s.loc === 'dungeon' && G.dun.run && G.dun.run.room)
                 return 'You\'re in a dungeon! Get back to camp first.';
-            if (loc === 'home' && !G.home.owned)
-                return 'You don\'t have a house yet!';
+            if (loc === 'home' && !G.home.owned) {
+                if (s.loc === 'green')
+                    return 'The house for sale is right here on the Village Green: walk up to its sign. It costs ' + HOME.PRICE + ' Coins.';
+                wmapClose(); sfx.whoosh(); s.travelTo('green');
+                setTimeout(() => chatLine('', '🏠 The house for sale is here on the Village Green: walk up to its sign. It costs ' + HOME.PRICE + ' Coins.', 'sys'), 1800);
+                return '';
+            }
             if (loc === s.loc)
                 return 'You are already here.';
             wmapClose();
@@ -46874,7 +46881,8 @@
             wmapPick = loc;
             Object.keys(wmapBtns).forEach(k => wmapBtns[k].b.classList.toggle('picked', k === loc));
             const L = LOCS[loc], s = scene(), here = wmapWhere(s ? s.loc : G.loc) === loc, D = wmapLast || { E: { ev: {} }, F: {}, N: {} };
-            const kids = [node('b', 'wmap-card-t', loc === 'home' ? 'My House' : L.name)];
+            const sale = loc === 'home' && wmapBtns.home.b.classList.contains('forsale'), kids = [node('b', 'wmap-card-t', sale ? 'A house for sale' : loc === 'home' ? 'My House' : L.name)];
+            if (sale) kids.push(node('p', 'wmap-card-p', 'Your own house to decorate, on the Village Green. ' + HOME.PRICE + ' Coins' + (G.coins < HOME.PRICE ? ' (you have ' + G.coins + ')' : '') + '.'));
             if (here) kids.push(node('span', 'wmap-card-here', 'You are here'));
             if (L && L.blurb) kids.push(node('p', 'wmap-card-p blurb', L.blurb));
             const inside = [...new Set(Object.keys(LOCS).filter(k => k !== 'home' && LOCS[k].home === loc && LOCS[k].interior && LOCS[k].name).map(k => LOCS[k].name))];
@@ -46885,7 +46893,7 @@
             if (fr.length) kids.push(node('p', 'wmap-card-p', '★ Friends: ' + fr.map(f => f.name + (f.away ? ' (other server)' : '')).join(', ')));
             const peers = []; try { net.peers.forEach(p => { if (!p.mine && p.loc && wmapWhere(p.loc) === loc && peers.length < 8) peers.push(p); }); } catch (e) { }
             if (tap && peers.length) { const row = node('div', 'wmap-card-row'); row.appendChild(node('small', 'keep', n + (n === 1 ? ' player:' : ' players:'))); peers.forEach(p => { const b = el('button', 'wmap-card-chip wmap-card-who', { type: 'button', 'data-pid': String(p.id), title: 'See ' + p.name + '\'s card' }); b.textContent = p.name; row.appendChild(b); }); kids.push(row); }
-            else kids.push(node('p', 'wmap-card-p', n ? n + (n === 1 ? ' player here: ' : ' players here: ') + names.join(', ') + (n > names.length ? ' and more' : '') : 'Nobody else is here right now.'));
+            else if (loc !== 'home') kids.push(node('p', 'wmap-card-p', n ? n + (n === 1 ? ' player here: ' : ' players here: ') + names.join(', ') + (n > names.length ? ' and more' : '') : 'Nobody else is here right now.'));
             const foot = node('div', 'wmap-card-foot');
             if (tap) {
                 const go = el('button', 'btn wmap-card-go', { type: 'button', 'data-wgo': loc }); go.textContent = here ? 'You are here' : 'Go there'; go.disabled = here;
