@@ -48588,7 +48588,7 @@
         ui.wmap = { open: wmapOpen, close: wmapClose, go: wmapGo, paint: wmapPaint, btns: wmapBtns, panel: wmapP, el: wmapEl, note: wmapNote };
         ui.chat = { lines: chatLines, line: chatLine, min: chatMin, el: chatBoxEl };
         const CMD_HELP = ['/wave /dance /sit /jump /cheer /spin: do an emote (and any dance you own, like /robot)', '/who: who is on your server', '/server Starfall: switch server (or /server 2)',
-            '/settings: sound, screen, chat box and feedback', '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/join Name: join their fight in the crypt', '/crypt: your crypt record', '/mute Name and /unmute Name'];
+            '/settings: sound, screen, chat box and feedback', '/go beach: travel somewhere (beach, mall, cave, trade, dance, ice, crypt, home, green)', '/pm Name hello: message a friend', '/join Name: join their fight in the crypt', '/crypt: your crypt record', '/where Name: where a player is', '/mute Name and /unmute Name'];
         const GO_WORDS = { beach: 'beach', starfish: 'beach', mall: 'mall', cosmo: 'mall', cave: 'cave', crystal: 'cave', mine: 'cave', trade: 'trade', manor: 'trade', trading: 'trade', dance: 'dance', club: 'dance', ice: 'ice', frost: 'ice', frostwood: 'ice', lake: 'ice', crypt: 'dungeon', dungeon: 'dungeon', hollow: 'dungeon', home: 'home', house: 'home', green: 'green', village: 'green', town: 'green' };
         function chatCommand(raw) {
             const say = t => chatLine('', t, 'sys'), parts = raw.slice(1).trim().split(/\s+/), cmd = (parts.shift() || '').toLowerCase(), rest = parts.join(' '), s = scene();
@@ -48648,6 +48648,25 @@
                 const line = ui.dunJoin ? ui.dunJoin(p) : '';
                 if (line)
                     say(line);
+                return true;
+            }
+            if (cmd === 'where' || cmd === 'find') {
+                const k = rest.toLowerCase().trim();
+                if (!k) {
+                    say('Where is who? /where Name');
+                    return true;
+                }
+                let hit = null;
+                (net.far && net.far.forEach ? net.far : new Map()).forEach(p => { if (!hit && p.name && p.name.toLowerCase() === k)
+                    hit = p; });
+                net.peers.forEach(p => { if (!hit && !p.mine && p.name.toLowerCase() === k)
+                    hit = { name: p.name, loc: p.loc, sv: SRV.id }; });
+                if (!hit || !LOCS[hit.loc]) {
+                    say('Nobody called ' + rest + ' is online right now.');
+                    return true;
+                }
+                const L = LOCS[hit.loc], other = hit.sv && hit.sv !== SRV.id;
+                say(hit.name + ' is ' + (hit.loc === 'home' ? 'at a house' : (L.interior ? 'in the ' + L.name + ' at ' + LOCS[L.home].name : 'at ' + L.name)) + (other ? ', on ' + srvById(hit.sv).name : '') + '.');
                 return true;
             }
             if (cmd === 'crypt' || cmd === 'stats') {
