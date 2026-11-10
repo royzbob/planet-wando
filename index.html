@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794310592';
+<script>window.WANDO_BUILD = '1794310724';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17629,6 +17629,7 @@
         lich: { name: 'Bone Lich', hp: 900, dmg: 22, speed: 70, reach: 380, wind: 0.8, cool: 1.6, xp: 260, coins: [120, 180], size: 1.75, boss: true, storm: 380 },
         spider: { name: 'Cave spider', hp: 18, dmg: 5, speed: 210, reach: 36, wind: 0.25, cool: 0.9, xp: 6, coins: [1, 3], size: 0.8 },
         mummy: { name: 'Mummy', hp: 110, dmg: 16, speed: 60, reach: 52, wind: 0.7, cool: 1.6, xp: 24, coins: [6, 12], size: 1.15, armor: 0.2 },
+        queen: { name: 'Spider Queen', hp: 520, dmg: 20, speed: 150, reach: 58, wind: 0.45, cool: 1, xp: 170, coins: [70, 110], size: 1.7, boss: true },
         imp: { name: 'Fire imp', hp: 30, dmg: 9, speed: 130, reach: 300, wind: 0.6, cool: 1.9, xp: 15, coins: [4, 8], size: 0.85, shoot: 300, float: true, bolt: 'fireball' }
     };
     function monsterOn(kind, f) {
@@ -17799,9 +17800,9 @@
         { names: [['Goblin Warrens', '#a8e08a'], ['Mossy Burrows', '#9ad8a0'], ['Mudfang Caves', '#c8b08a'], ['Rattle Pit', '#d8d0b8'], ['Toadstool Hollow', '#e0a8c8'], ['Grubby Tunnels', '#b8c890'], ['Snaggletooth Den', '#e8c890']],
             mix: ['goblin', 'archer', 'skeleton', 'bat', 'shaman', 'slime', 'spider'], must: 'goblin', rooms: [3, 5], bosses: [['king']], twist: 0.3, twists: ['gilded', 'keg'] },
         { names: [['Ghoul Catacombs', '#a8c8e8'], ['Weeping Tombs', '#a8b8d8'], ['Sunken Ossuary', '#98c8c0'], ['Bonechill Vault', '#c8e0f0'], ['Ashen Graves', '#c0b0a8'], ['Moonlit Mausoleum', '#b8b0e8'], ['Rotroot Crypt', '#a8c898']],
-            mix: ['skeleton', 'skelarcher', 'ghoul', 'wraith', 'slime', 'bat', 'goblin', 'mummy', 'spider'], must: 'ghoul', rooms: [4, 5], bosses: [['lord'], ['king']], twist: 0.5, twists: ['gilded', 'keg', 'spiked', 'dark'] },
+            mix: ['skeleton', 'skelarcher', 'ghoul', 'wraith', 'slime', 'bat', 'goblin', 'mummy', 'spider'], must: 'ghoul', rooms: [4, 5], bosses: [['lord'], ['king'], ['queen']], twist: 0.5, twists: ['gilded', 'keg', 'spiked', 'dark'] },
         { names: [['Hollow Depths', '#e8a8a8'], ['Obsidian Halls', '#b8a8c8'], ['Abyssal Throne', '#a8a0d8'], ['Drowned Keep', '#88b8c8'], ['Shadowfang Citadel', '#c8a0b8'], ['Cinder Deep', '#e8b088'], ['Kingsbane Vaults', '#d8c088']],
-            mix: ['knight', 'wraith', 'skeleton', 'skelarcher', 'ghoul', 'shaman', 'bat', 'slime', 'mummy', 'imp'], must: 'knight', rooms: [4, 6], bosses: [['lich', 'lord'], ['lich', 'king'], ['lord', 'king'], ['lich']], twist: 0.6, twists: ['gilded', 'keg', 'spiked', 'dark', 'swarm'] }
+            mix: ['knight', 'wraith', 'skeleton', 'skelarcher', 'ghoul', 'shaman', 'bat', 'slime', 'mummy', 'imp'], must: 'knight', rooms: [4, 6], bosses: [['lich', 'lord'], ['lich', 'king'], ['lord', 'king'], ['lich'], ['queen', 'lord'], ['lich', 'queen']], twist: 0.6, twists: ['gilded', 'keg', 'spiked', 'dark', 'swarm'] }
     ];
     const DUN_DAILY_CACHE = new Map();
     function dunToday(di, day) {
@@ -17919,9 +17920,12 @@
         { id: 'rooms', text: 'Go through 10 rooms', ev: 'room', n: 10, coins: 140 },
         { id: 'shrine', text: 'Take a blessing at a shrine', ev: 'shrine', n: 1, coins: 90 },
         { id: 'mimic', text: 'Defeat a Mimic', ev: 'kill', kinds: ['mimic'], n: 1, coins: 150 },
-        { id: 'delve', text: 'Clear today\'s Daily Delve', ev: 'clear', daily: true, n: 1, coins: 250 }
+        { id: 'delve', text: 'Clear today\'s Daily Delve', ev: 'clear', daily: true, n: 1, coins: 250 },
+        { id: 'spiders', text: 'Squash 15 spiders', ev: 'kill', kinds: ['spider', 'queen'], n: 15, coins: 120, from: 20768 },
+        { id: 'mummies', text: 'Unwrap 8 mummies', ev: 'kill', kinds: ['mummy'], n: 8, coins: 150, from: 20768 },
+        { id: 'imps', text: 'Put out 10 fire imps', ev: 'kill', kinds: ['imp'], n: 10, coins: 140, from: 20768 }
     ];
-    function bountiesToday(day) { const r = rng(dunHash(day, 777)), ids = BOUNTIES.map((_, i) => i), out = []; while (out.length < 3)
+    function bountiesToday(day) { const r = rng(dunHash(day, 777)), ids = BOUNTIES.map((_, i) => i).filter(i => !(BOUNTIES[i].from > day)), out = []; while (out.length < 3)
         out.push(ids.splice(Math.floor(r() * ids.length), 1)[0]); return out; }
     function bountyEvent(D, day, type, data) {
         if (D.bounty.day !== day)
@@ -18271,7 +18275,7 @@
         c.restore();
     }
     function drawMonster(c, kind, swing) {
-        const ink = '#1d1424', k = kind === 'king' ? 'goblin' : kind === 'lord' ? 'ghoul' : kind;
+        const ink = '#1d1424', k = kind === 'king' ? 'goblin' : kind === 'lord' ? 'ghoul' : kind === 'queen' ? 'spider' : kind;
         const skin = k === 'ghoul' ? (kind === 'lord' ? '#a9b8a0' : '#b8c4ae') : kind === 'king' ? '#6fbf4a' : '#7ccf55', dark = mix(skin, ink, 0.4), s = swing ? 1 : 0;
         c.save();
         c.lineCap = c.lineJoin = 'round';
@@ -18531,8 +18535,8 @@
                 c.lineWidth = 2.2;
                 c.stroke();
             }));
-            body('#3a2a34', q => q.ellipse(28, y - 2, 15, 11, 0, 0, TAU));
-            c.fillStyle = '#c8323c';
+            body(kind === 'queen' ? '#4a2a5a' : '#3a2a34', q => q.ellipse(28, y - 2, 15, 11, 0, 0, TAU));
+            c.fillStyle = kind === 'queen' ? '#ffd84d' : '#c8323c';
             c.beginPath();
             c.moveTo(24, y - 6);
             c.lineTo(30, y - 2);
@@ -18545,6 +18549,8 @@
             [[47, y - 5 + up], [51, y - 4 + up], [49, y - 1 + up]].forEach(([x, yy]) => { c.beginPath(); c.arc(x, yy, 1.6, 0, TAU); c.fill(); });
             c.fillStyle = '#f2ead8';
             [[52, y + 2 + up], [55, y + 1 + up]].forEach(([x, yy]) => { c.beginPath(); c.moveTo(x - 1.5, yy); c.lineTo(x, yy + 5 + (s ? 2 : 0)); c.lineTo(x + 1.5, yy); c.fill(); });
+            if (kind === 'queen')
+                body('#ffd84d', q => { q.moveTo(39, y - 9 + up); q.lineTo(40, y - 17 + up); q.lineTo(44, y - 12 + up); q.lineTo(47, y - 19 + up); q.lineTo(50, y - 12 + up); q.lineTo(54, y - 17 + up); q.lineTo(54, y - 8 + up); q.closePath(); });
             c.restore();
             return;
         }
@@ -28822,10 +28828,10 @@
                 return;
             if (!m.called && m.hp < m.max / 2) {
                 m.called = true;
-                const kinds = m.kind === 'lich' ? ['skeleton', 'skelarcher', 'skeleton'] : m.kind === 'lord' ? ['ghoul', 'ghoul', 'wraith'] : ['goblin', 'archer', 'goblin'];
+                const kinds = m.kind === 'lich' ? ['skeleton', 'skelarcher', 'skeleton'] : m.kind === 'lord' ? ['ghoul', 'ghoul', 'wraith'] : m.kind === 'queen' ? ['spider', 'spider', 'spider', 'spider'] : ['goblin', 'archer', 'goblin'];
                 const diff = roomDiff(G.dun.run.d, Math.max(1, G.dun.run.room), G.dun.level);
                 kinds.forEach((k, i) => { const a = (i / kinds.length) * TAU, gx = m.x + Math.cos(a) * 110, gy = m.y + Math.sin(a) * 70, ok = !this.halls || this.halls.walk(gx, gy), o = this.monPut(k, ok ? gx : m.x + (i - 1) * 30, ok ? gy : m.y + 20, diff); o.aggro = true; this.dunFree(o); this.dunRing(o.x, o.y, 40, 0xb06bff); });
-                this.dunPop(m.x, m.y - 120 * m.size, m.kind === 'lich' ? 'Rise, my servants!' : 'To me!', '#ff9a9a', true);
+                this.dunPop(m.x, m.y - 120 * m.size, m.kind === 'lich' ? 'Rise, my servants!' : m.kind === 'queen' ? 'My children!' : 'To me!', '#ff9a9a', true);
                 sfx.buzz();
                 this.cleared = false;
                 if (ui.onDun)
