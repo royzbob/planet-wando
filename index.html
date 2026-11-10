@@ -266,7 +266,8 @@
                 clearTimeout(timer);
                 timer = 0;
             } mine.remove().catch(function () { }); },
-            emit: function () { return Promise.resolve(); }, on: function () { return function () { }; }
+            emit: function () { return Promise.resolve(); }, on: function () { return function () { }; },
+            now: function () { return Date.now() + offset; }
         };
     }
     var AWHY = {
@@ -315,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794353871';
+<script>window.WANDO_BUILD = '1794354146';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -442,6 +443,16 @@
   .plate:has(svg:hover, .plate-name:hover, .plate-area:hover) { filter: brightness(1.06); }
   .world-mini { position: absolute; top: 96px; left: 16px; width: 180px; height: 120px; border: 2px solid var(--ink); border-radius: 10px; background: rgba(18, 11, 58, 0.55); box-shadow: 0 3px 0 var(--plate-shadow); cursor: crosshair; }
   .world-mini[hidden] { display: none; }
+  .djq { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding: 10px; border: 2px solid currentColor; border-radius: 14px; background: rgba(255, 255, 255, 0.08); }
+  .djq-h { font: 800 14px/1.2 var(--font-display); }
+  .djq-now { margin: 0; font: 700 12.5px/1.3 var(--font-body); }
+  .djq-now.on { color: #7dff9a; }
+  .djq-list { margin: 0; padding-left: 20px; font: 700 12px/1.4 var(--font-body); max-height: 110px; overflow: auto; }
+  .djq-list:empty { display: none; }
+  .djq-list li.me { color: #ffd84d; }
+  .djq-pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .djq-pick select { flex: 1; min-width: 140px; padding: 5px 8px; border: 2px solid #120b3a; border-radius: 10px; font: 700 12.5px/1.2 var(--font-body); }
+  .djq-msg { font: 700 11px/1.3 var(--font-body); opacity: 0.8; }
   .pane-stats { flex: 1; min-width: 0; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
   .profile-main:has(#pane-stats:not([hidden])) .portrait { display: none; }
   .pane-stats[hidden] { display: none; }
@@ -3722,6 +3733,18 @@
       <button id="dj-concert" class="dj-btn concert" type="button" aria-pressed="false">Concert Mode</button>
       <button id="dj-beat" class="dj-btn" type="button">Beat Maker</button>
       <label class="dj-vol" for="dj-volume">Volume <input id="dj-volume" type="range" min="0" max="100" value="60"></label>
+    </div>
+    <div class="djq">
+      <b class="djq-h">🎧 Play your own song for the whole club</b>
+      <p id="djq-now" class="djq-now">Nobody's song is on. Be the first!</p>
+      <ol id="djq-list" class="djq-list"></ol>
+      <div class="djq-pick">
+        <select id="djq-song" aria-label="Your song"><option value="">Pick one of your songs…</option></select>
+        <label class="mp3-add djq-add">＋ Song<input id="djq-file" type="file" accept="audio/*,.mp3,.m4a,.ogg,.wav" hidden></label>
+        <button id="djq-go" class="dj-btn" type="button">Queue it</button>
+        <button id="djq-cancel" class="dj-btn" type="button" hidden>Take mine off</button>
+      </div>
+      <small id="djq-msg" class="djq-msg">Everyone in the Dance House hears it. One song each in the line, up to 15 MB.</small>
     </div>
     <p class="travel-foot">Original loops, synthesised in your browser</p>
   </section>
@@ -23325,6 +23348,7 @@
             ai: q.loc === 'trade' && q.ai && typeof q.ai === 'object' ? q.ai : null,
             lv: Number.isInteger(q.lv) ? clamp(q.lv, 1, 50) : 0,
             cl: Number.isInteger(q.cl) && Object.keys(CLASSES)[q.cl] ? Object.keys(CLASSES)[q.cl] : '',
+            dj: q.loc === 'dance' && Array.isArray(q.dj) && q.dj.length === 6 && typeof q.dj[0] === 'string' && /^[a-z0-9]{6,24}$/i.test(q.dj[0]) && typeof q.dj[1] === 'string' && Number.isInteger(q.dj[2]) && q.dj[2] > 0 && q.dj[2] <= 900 && Number.isFinite(q.dj[3]) && (q.dj[4] === 0 || q.dj[4] === 1) && Number.isInteger(q.dj[5]) && q.dj[5] > 0 && q.dj[5] <= 30 ? [q.dj[0], cleanText(q.dj[1], 40), q.dj[2], q.dj[3], q.dj[4], q.dj[5]] : null,
             sx: Array.isArray(q.sx) && q.sx.length === 2 && q.sx.every(v => Number.isInteger(v) && v >= 0) ? [Math.min(q.sx[0], 1e6), Math.min(q.sx[1], 1e8)] : null,
             ti: Number.isInteger(q.ti) && q.ti > 0 && q.ti < PLAYER_TITLES.length ? q.ti : 0,
             tb: q.loc === 'trade' && Number.isInteger(q.tb) ? clamp(q.tb, 0, 99999) : 0,
@@ -46076,6 +46100,8 @@
             paintTravel();
             paintShop();
             paintDj();
+            if (kind === 'dj' && ui.djOpen)
+                ui.djOpen();
             paintHover();
             paintSkate();
             if (kind === 'tailor')
@@ -46185,7 +46211,7 @@
                 return null;
             return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
                 boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, sh: G.riding && !s.boating && shineOn() ? 1 : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
-                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), sp: s.spar ? [Math.max(0, Math.round(s.spar.hp)), s.spar.max] : 0, pv: s.spar && s.pvOut ? s.pvOut : 0, sl: s.sparLost || 0, bo: s.fish && s.bobber && s.bobber.visible ? [Math.round(s.bobber.x), Math.round(s.bobber.y), s.fish.state === 'bite' || s.fish.state === 'reel' ? 1 : 0] : 0, dn: s.loc === 'dungeon' && s.downAt ? 1 : 0, lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, cl: G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1, sx: ui.statsShare ? ui.statsShare() : 0, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
+                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), sp: s.spar ? [Math.max(0, Math.round(s.spar.hp)), s.spar.max] : 0, pv: s.spar && s.pvOut ? s.pvOut : 0, sl: s.sparLost || 0, bo: s.fish && s.bobber && s.bobber.visible ? [Math.round(s.bobber.x), Math.round(s.bobber.y), s.fish.state === 'bite' || s.fish.state === 'reel' ? 1 : 0] : 0, dn: s.loc === 'dungeon' && s.downAt ? 1 : 0, lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, cl: G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1, dj: s.loc === 'dance' && ui.djReq ? ui.djReq() : 0, sx: ui.statsShare ? ui.statsShare() : 0, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
         }
         const netHeld = s => { const D = G.dun, w = s.loc === 'dungeon' && D && D.eq >= 0 ? D.bag[D.eq] : null; return w && Number.isInteger(w.c) ? w.c : -1; };
         const netArmor = s => { const W = s.loc === 'dungeon' && G.dun && G.dun.worn; return W && (W.h || W.b) ? [W.h ? [W.h.a, W.h.r] : 0, W.b ? [W.b.a, W.b.r] : 0] : 0; };
@@ -49099,6 +49125,104 @@
         mp3Q('mp3-open').addEventListener('click', () => { mp3Show(mp3El.hidden); const sp = document.getElementById('sound-pop'); if (sp && !mp3El.hidden) { const b = document.getElementById('sound-btn'); if (b && !sp.hidden) b.click(); } });
         try { if ('mediaSession' in navigator) { navigator.mediaSession.setActionHandler('play', () => mp3Play()); navigator.mediaSession.setActionHandler('pause', () => mp3Audio.pause()); navigator.mediaSession.setActionHandler('nexttrack', () => mp3Step(1)); navigator.mediaSession.setActionHandler('previoustrack', () => mp3Step(-1)); } } catch (e) { }
         ui.mp3 = { show: mp3Show, add: mp3Add, state: () => mp3, audio: mp3Audio };
+        // ── The DJ booth queue: your own song for everyone in the Dance House. The file goes up in pieces to Firestore (djsongs/, or a
+        //    fallback spot if those rules aren't published yet); the line itself travels in each player's presence (dj), in the order asked. ──
+        const DJQ = { mine: null, cache: {}, audio: new Audio(), playing: '', told: '', MAX: 15 * 1024 * 1024, PART: 600 * 1024 };
+        DJQ.audio.preload = 'auto';
+        const djClock = () => (net.room && net.room.now ? net.room.now() : Date.now());
+        const djPartRef = (pt, key, i, uid) => (pt === 0 ? soc.db.doc('djsongs/' + key + '/parts/' + i) : soc.db.doc('trades/dj' + key + 'p' + i + '/sides/' + uid));
+        ui.djReq = () => { const m = DJQ.mine; return m && m.ready ? [m.key, m.title, m.dur, m.st, m.pt, m.n] : 0; };
+        function djLine() {                                          // everyone's requests, in order, each given its start (one after another)
+            const all = [];
+            const add = (r, name, uid, me) => { if (r) all.push({ key: r[0], title: r[1], dur: r[2], st: r[3], pt: r[4], n: r[5], name, uid, me }); };
+            if (DJQ.mine && DJQ.mine.ready) add(ui.djReq(), G.name || 'You', soc.uid, true);
+            net.peers.forEach(p => { if (!p.mine && p.loc === 'dance' && p.dj && p.uid) add(p.dj, p.name, p.uid, false); });
+            all.sort((a, b) => a.st - b.st || (a.key < b.key ? -1 : 1));
+            let end = 0;
+            all.forEach(e => { e.start = Math.max(e.st, end ? end + 1500 : 0); e.end = e.start + e.dur * 1000; end = e.end; });
+            return all;
+        }
+        async function djFetch(e) {                                  // a song's pieces, put back together (once)
+            if (DJQ.cache[e.key]) return DJQ.cache[e.key];
+            const p = (async () => {
+                const parts = [];
+                for (let i = 0; i < e.n; i++) { const d = await djPartRef(e.pt, e.key, i, e.uid).get(); const v = d && d.data && d.data(); if (!v || !v.x || typeof v.x.d !== 'string') throw new Error('missing'); parts.push(v.x.d); }
+                const bin = atob(parts.join('')), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+                return URL.createObjectURL(new Blob([u8], { type: (parts.length && e.mime) || 'audio/mpeg' }));
+            })();
+            DJQ.cache[e.key] = p;
+            p.catch(() => { delete DJQ.cache[e.key]; });
+            return p;
+        }
+        function djDur(blob) { return new Promise(res => { const a = new Audio(), u = URL.createObjectURL(blob); a.preload = 'metadata'; a.onloadedmetadata = () => { const d = a.duration; URL.revokeObjectURL(u); res(Number.isFinite(d) ? d : 0); }; a.onerror = () => { URL.revokeObjectURL(u); res(0); }; a.src = u; }); }
+        async function djQueue(blob, title) {
+            const say = t => { document.getElementById('djq-msg').textContent = t; };
+            if (!socialOn()) { say('Sign in to a Planet Wando account to play songs for the club.'); return; }
+            if (G.loc !== 'dance') { say('Go to the Neon Dance House first.'); return; }
+            if (DJQ.mine) { say('You already have a song in the line. One each!'); return; }
+            if (!blob || blob.size > DJQ.MAX) { say('That song is too big (15 MB at most).'); return; }
+            const dur = Math.round(await djDur(blob));
+            if (!dur || dur > 900) { say(dur ? 'Songs up to 15 minutes, please.' : 'That file can\'t be played.'); return; }
+            const key = (soc.uid.replace(/[^a-z0-9]/gi, '').slice(0, 8) + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)).slice(0, 24);
+            const raw = new Uint8Array(await blob.arrayBuffer()), n = Math.ceil(raw.length / DJQ.PART);
+            DJQ.mine = { key, title: mp3Name(title).slice(0, 40), dur, st: 0, pt: 0, n, ready: false, url: URL.createObjectURL(blob) };
+            DJQ.cache[key] = Promise.resolve(DJQ.mine.url);
+            djPaint();
+            const b64 = i => { let s2 = ''; const c = raw.subarray(i * DJQ.PART, (i + 1) * DJQ.PART); for (let j = 0; j < c.length; j += 32768) s2 += String.fromCharCode.apply(null, c.subarray(j, j + 32768)); return btoa(s2); };
+            for (let pt = 0; pt < 2; pt++) {
+                try {
+                    for (let i = 0; i < n; i++) { say('Sending your song… ' + Math.round(100 * i / n) + '%'); await djPartRef(pt, key, i, soc.uid).set({ by: soc.uid, i, n, x: { d: b64(i) } }); }
+                    DJQ.mine.pt = pt; break;
+                } catch (e) { if (pt === 1 || !DJQ.mine) { say('Your song could not be sent just now. Try again in a moment.'); DJQ.mine = null; djPaint(); return; } }
+            }
+            if (!DJQ.mine) return;
+            const line = djLine(), last = line.length ? line[line.length - 1].end : 0;
+            DJQ.mine.st = Math.max(djClock() + 3000, last + 1500); DJQ.mine.ready = true;
+            say(line.length ? 'You\'re in line! Your song is number ' + (line.length + 1) + '.' : 'Your song is up next!');
+            sfx.chime(); djPaint();
+        }
+        function djDrop() {                                           // your song is over (or taken off): out of the line, pieces cleared away
+            const m = DJQ.mine; if (!m) return;
+            DJQ.mine = null;
+            for (let i = 0; i < m.n; i++) djPartRef(m.pt, m.key, i, soc.uid).delete().catch(() => { });
+            djPaint();
+        }
+        function djTick() {
+            const now = djClock(), line = djLine(), here = G.loc === 'dance', cur = here ? line.find(e => e.start <= now && now < e.end) : null;
+            if (DJQ.mine && DJQ.mine.ready) {
+                const me = line.find(e => e.me);
+                if (me && now >= me.end) djDrop();
+                else if (me && me.start > now + 4000) { const before = line.filter(e => !e.me && e.start < me.start), gapTo = Math.max(now + 3000, before.length ? before[before.length - 1].end + 1500 : 0); if (gapTo < DJQ.mine.st - 1000) DJQ.mine.st = gapTo; }     // (someone ahead left: move up)
+                if (!here) djDrop();
+            }
+            if (cur) {
+                const next = line.find(e => e.start > now); if (next) djFetch(next).catch(() => { });
+                if (DJQ.playing !== cur.key) {
+                    DJQ.playing = cur.key; DJQ.audio.pause();
+                    djFetch(cur).then(url => { if (DJQ.playing !== cur.key) return; DJQ.audio.src = url; DJQ.audio.currentTime = Math.max(0, (djClock() - cur.start) / 1000); DJQ.audio.volume = mp3.vol; const p = DJQ.audio.play(); if (p && p.catch) p.catch(() => { }); music.user(true); if (!mp3Audio.paused) mp3Audio.pause(); }).catch(() => { document.getElementById('djq-msg').textContent = cur.name + '\'s song could not be loaded.'; });
+                    if (DJQ.told !== cur.key) { DJQ.told = cur.key; chatLine('', '🎧 Now playing at the DJ booth: ' + cur.title + ' (' + (cur.me ? 'your song' : cur.name + '\'s song') + ')', 'sys'); }
+                } else if (!DJQ.audio.paused && Number.isFinite(DJQ.audio.currentTime)) {
+                    const want = (now - cur.start) / 1000; if (Math.abs(DJQ.audio.currentTime - want) > 2) DJQ.audio.currentTime = want;     // (keep in step with everyone)
+                }
+            } else if (DJQ.playing) { DJQ.playing = ''; DJQ.audio.pause(); if (mp3Audio.paused) music.user(false); }
+            if (!document.getElementById('dj').hidden) djPaint(line, cur);
+        }
+        function djPaint(line, cur) {
+            line = line || djLine(); const now = djClock(); cur = cur !== undefined ? cur : line.find(e => e.start <= now && now < e.end);
+            const nowEl = document.getElementById('djq-now'), list = document.getElementById('djq-list');
+            nowEl.classList.toggle('on', !!cur);
+            nowEl.textContent = cur ? '▶ ' + cur.title + ' · ' + (cur.me ? 'your song' : cur.name + '\'s song') + ' · ' + mp3Fmt((cur.end - now) / 1000) + ' left' : DJQ.mine && !DJQ.mine.ready ? 'Getting your song ready…' : 'Nobody\'s song is on. Be the first!';
+            list.replaceChildren(...line.filter(e => e !== cur && e.end > now).map(e => { const li = el('li', e.me ? 'me' : '', {}); li.textContent = e.title + ' · ' + (e.me ? 'you' : e.name) + ' · in ' + mp3Fmt(Math.max(0, (e.start - now) / 1000)); return li; }));
+            document.getElementById('djq-cancel').hidden = !DJQ.mine;
+            document.getElementById('djq-go').hidden = !!DJQ.mine;
+            const sel = document.getElementById('djq-song'), keep = sel.value;
+            if (sel.options.length - 1 !== mp3.list.length) { sel.replaceChildren(el('option', '', { value: '' }), ...mp3.list.map((S, i) => { const o = el('option', '', { value: S.id }); o.textContent = S.name; return o; })); sel.options[0].textContent = mp3.list.length ? 'Pick one of your songs…' : 'Add a song with ＋ Song'; sel.value = keep; }
+        }
+        setInterval(() => { try { djTick(); } catch (e) { } }, 1000);
+        document.getElementById('djq-go').addEventListener('click', () => { const id = document.getElementById('djq-song').value, S = mp3.list.find(x => x.id === id); if (!S) { document.getElementById('djq-msg').textContent = 'Pick a song first (or add one with ＋ Song).'; return; } djQueue(S.blob, S.name); });
+        document.getElementById('djq-file').addEventListener('change', async e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; await mp3Add([f]); djPaint(); const S = mp3.list[mp3.list.length - 1]; if (S) { document.getElementById('djq-song').value = S.id; } });
+        document.getElementById('djq-cancel').addEventListener('click', () => djDrop());
+        ui.djOpen = () => { if (!mp3Loaded) mp3Show(false); djPaint(); };
         // ── Stats: playtime, monsters beaten, fish, Coins earned and the rest (kept in G.fan.st; the crypt and fish counts come from their own saves) ──
         const ST = () => { const F = G.fan; if (!F.st) F.st = { pt: 0, dp: 0, ld: 0, ce: 0, ko: 0, ex: 0, since: dayNumber() }; if (!F.st.since) F.st.since = dayNumber(); return F.st; };
         const BOSS_KINDS = ['king', 'lord', 'lich', 'queen'];

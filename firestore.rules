@@ -34,6 +34,13 @@ service cloud.firestore {
       allow create: if me() && request.resource.data.by == request.auth.uid && request.resource.data.text is string && request.resource.data.text.size() <= 600 && small();
     }
 
+    // songs played at the Dance House DJ booth: anyone signed in can listen; you add (and later clear away) only your own song's pieces
+    match /djsongs/{key}/parts/{part} {
+      allow read: if me();
+      allow create: if me() && request.resource.data.by == request.auth.uid && small();
+      allow delete: if me() && resource.data.by == request.auth.uid;
+    }
+
     match /{document=**} { allow read, write: if false; }
   }
 }
