@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346636';
+<script>window.WANDO_BUILD = '1794346668';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -44556,8 +44556,11 @@
             c.clearRect(-ox, -oy, cv.width, cv.height);
             c.fillStyle = '#6a6280';
             RS.forEach(R => c.fillRect(R.x * k, R.y * k, R.w * k, R.h * k));
-            c.fillStyle = '#8a82a4';
-            s.halls.rooms.forEach(R => c.fillRect(R.x * k + 2, R.y * k + 2, R.w * k - 4, R.h * k - 4));
+            const seen = s.halls._seen || (s.halls._seen = new Set()), inR = (R, x, y) => x >= R.x && x <= R.x + R.w && y >= R.y && y <= R.y + R.h;
+            if (s.pz) s.halls.rooms.forEach((R, i) => { if (inR(R, s.pz.x, s.pz.y + FOOT)) seen.add(i); });
+            (ui.others ? ui.others('dungeon') : []).forEach(p => s.halls.rooms.forEach((R, i) => { if (inR(R, p.x, p.y)) seen.add(i); }));     // (rooms you or a friend have been in are lit; the rest wait in the dark)
+            s.halls.rooms.forEach((R, i) => { c.fillStyle = seen.has(i) ? '#8a82a4' : '#4e4862'; c.fillRect(R.x * k + 2, R.y * k + 2, R.w * k - 4, R.h * k - 4); if (!seen.has(i)) { c.fillStyle = 'rgba(255,255,255,0.55)'; c.font = '800 ' + Math.max(10, Math.round(14 * k * 10)) + 'px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', (R.x + R.w / 2) * k, (R.y + R.h / 2) * k); c.textAlign = 'left'; } });
+            const hid = (x, y) => s.halls.rooms.some((R, i) => !seen.has(i) && inR(R, x, y));
             const boss = (s.mons || []).find(m => m.boss && !m.dead), last = s.halls.rooms[s.halls.rooms.length - 1];
             if (boss && last) { c.strokeStyle = '#ff4a8a'; c.lineWidth = 2; c.strokeRect(last.x * k + 2, last.y * k + 2, last.w * k - 4, last.h * k - 4); }
             if (s.stairs) {
@@ -44566,11 +44569,11 @@
             }
             if (s.portal)
                 dot(s.portal.x, s.portal.y, 6, '#b06bff');
-            (s.chests || []).forEach(ch => { if (!ch.open) {
+            (s.chests || []).forEach(ch => { if (!ch.open && !hid(ch.x, ch.y)) {
                 c.fillStyle = '#ffd84d';
                 c.fillRect(ch.x * k - 3, ch.y * k - 3, 6, 5);
             } });
-            (s.mons || []).forEach(m => { if (!m.dead)
+            (s.mons || []).forEach(m => { if (!m.dead && (m.boss || !hid(m.x, m.y)))
                 dot(m.x, m.y, m.boss ? 6 : m.elite ? 4 : 3, m.boss ? '#ff4a8a' : '#ff4a4a'); });
             (ui.others ? ui.others('dungeon') : []).forEach(p => dot(p.x, p.y, 4.5, '#5ec8ff'));
             (s.pings || []).forEach(q => { if (q.until > s.time.now) {
