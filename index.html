@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794312993';
+<script>window.WANDO_BUILD = '1794313068';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -28996,6 +28996,19 @@
             this.dunPop(m.x, m.y - 40, '+' + coins + 'c', '#ffe066');
             const xp = (this.party || []).length ? Math.round(m.xp * 1.2) : m.xp;
             this.dunPop(this.pz.x + (Math.random() - 0.5) * 30, this.pz.y + FOOT - 104, '+' + xp + ' XP' + (xp > m.xp ? ' (party)' : ''), '#7fe8ff');
+            {
+                const now = this.time.now, c = this.combo && now - this.combo.t < 2600 ? this.combo : { n: 0 };
+                c.n++;
+                c.t = now;
+                this.combo = c;
+                if (c.n >= 3) {
+                    const bonus = Math.min(5, c.n - 2);
+                    G.coins += bonus;
+                    this.dunPop(m.x, m.y - 70, 'x' + c.n + ' COMBO! +' + bonus + 'c', c.n >= 6 ? '#ff7ad9' : '#ffb347', c.n >= 6);
+                    if (c.n >= 5)
+                        sfx.tick();
+                }
+            }
             const ups = dunGainXp(Dn, xp);
             if (ups) {
                 Dn.hp = dunMaxHp(Dn);
@@ -48091,7 +48104,7 @@
                 art('Hover Hub', boards.length ? 'Fresh decks this week: ' + boards.join(' and ') + '.' : 'New boards every week at Cosmo Mall.'),
                 art('Card Counter', 'New Classic player cards today: ' + cards.join(', ') + '. Collect them all at the Trading Manor.'),
                 art('Catch of the Day', 'Land a ' + cotd.name + ' (' + FISH_TIERS[cotd.tier].name + ') at the ' + pool + ' for double its price in bonus Coins, once today.', G.angler.cotd === day ? 'You already claimed it today. Nice work!' : ''),
-                day < 20775 ? art('New in the Crypt', 'The Spider Queen has been seen below! Watch for cave spiders, mummies and fire imps too.', 'Fight with friends (same room, same monsters), pick each other up, spar in the camp\'s new Sparring Ring, and melt spare weapons into better ones at Grizzle\'s forge.', go('Go to the crypt', () => { const why = ui.wmap && ui.wmap.go ? ui.wmap.go('dungeon') : ''; if (why)
+                day < 20775 ? art('New in the Crypt', 'The Spider Queen has been seen below! Watch for cave spiders, mummies and fire imps too.', 'Fight with friends (same room, same monsters), pick each other up, spar in the camp\'s new Sparring Ring, and melt spare weapons into better ones at Grizzle\'s forge. Beat monsters quickly in a row for a combo, and press Q (or ⇄) to swap weapons.', go('Go to the crypt', () => { const why = ui.wmap && ui.wmap.go ? ui.wmap.go('dungeon') : ''; if (why)
                     chatLineSys(why); })) : null,
                 art('The Daily Delve', delve.name + ' waits under the crypt today. ' + (DELVE_MODS[delve.mods[0]] ? 'Expect: ' + delve.mods.map(m => DELVE_MODS[m].name || m).join(', ') + '.' : '')),
                 art('Who\'s About', here.length ? here.length + (here.length > 1 ? ' players are' : ' player is') + ' on Planet Wando right now' + (busiest ? ', most at ' + busiest : '') + '.' : (ONLINE_OWN() ? 'It is quiet right now. Send a friend the game\'s link and play together!' : 'It is quiet right now. Share the page with a friend to play together.'), ui.wmap ? go('Open the map', () => ui.wmap.open()) : null),
