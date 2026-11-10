@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794314387';
+<script>window.WANDO_BUILD = '1794314463';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -43758,6 +43758,11 @@
             else if (dn.tab === 'armor') {
                 const A = dunArmor(D), top = node('div', 'mine-row mine-top');
                 top.append(node('span', '', 'Armor ' + A.def + (A.set ? ' (full ' + A.set + ' set: +20%)' : '') + ' (takes ' + Math.round(A.cut * 100) + '% off every hit)' + (A.hp ? ' · +' + A.hp + ' health' : '') + ' · ' + (D.arm || []).length + ' of ' + DUN.ARM + ' in your bag · collection: ' + (D.afound || []).length + ' of ' + ARMOR_SETS.length * 2));
+                if (dn.shop && (D.arm || []).some(p => p.r === 0)) {
+                    const b = el('button', 'btn', { type: 'button', 'data-act': 'asellcommon', 'data-i': '0' });
+                    b.textContent = 'Sell all Common';
+                    top.appendChild(b);
+                }
                 rows.push(top);
                 const armRow = (p, btns) => {
                     const li = node('div', 'mine-row dun-row'), text = node('div', 'mine-text'), nm = node('b', '', armorName(p));
@@ -43886,7 +43891,7 @@
                 dn.af = i;
                 return '';
             }
-            if (act === 'wear' || act === 'unwear' || act === 'asell' || act === 'astash' || act === 'atake') {
+            if (act === 'wear' || act === 'unwear' || act === 'asell' || act === 'astash' || act === 'atake' || act === 'asellcommon') {
                 D.arm = D.arm || [];
                 D.astash = D.astash || [];
                 const redo = () => { const s = scene(); if (s && s.loc === 'dungeon' && s.applyLook)
@@ -43917,6 +43922,17 @@
                 }
                 if (!dn.shop)
                     return '';
+                if (act === 'asellcommon') {
+                    let v = 0;
+                    D.arm = D.arm.filter(p => { if (p.r === 0) {
+                        v += armorValue(p);
+                        return false;
+                    } return true; });
+                    G.coins += v;
+                    if (v)
+                        sfx.coin();
+                    return v ? 'Sold for ' + v + ' Coins.' : '';
+                }
                 if (act === 'asell') {
                     const p = D.arm[i];
                     if (!p)
