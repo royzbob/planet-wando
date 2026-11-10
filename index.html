@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794309852';
+<script>window.WANDO_BUILD = '1794310592';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17626,13 +17626,16 @@
         skelarcher: { name: 'Skeleton archer', hp: 34, dmg: 8, speed: 105, reach: 360, wind: 0.55, cool: 1.7, xp: 13, coins: [3, 7], size: 1, shoot: 360 },
         wraith: { name: 'Wraith', hp: 40, dmg: 15, speed: 95, reach: 340, wind: 0.9, cool: 2.4, xp: 18, coins: [4, 9], size: 1.05, storm: 340, float: true },
         knight: { name: 'Dark knight', hp: 130, dmg: 18, speed: 82, reach: 58, wind: 0.65, cool: 1.5, xp: 30, coins: [8, 15], size: 1.2, armor: 0.3, block: 0.35 },
-        lich: { name: 'Bone Lich', hp: 900, dmg: 22, speed: 70, reach: 380, wind: 0.8, cool: 1.6, xp: 260, coins: [120, 180], size: 1.75, boss: true, storm: 380 }
+        lich: { name: 'Bone Lich', hp: 900, dmg: 22, speed: 70, reach: 380, wind: 0.8, cool: 1.6, xp: 260, coins: [120, 180], size: 1.75, boss: true, storm: 380 },
+        spider: { name: 'Cave spider', hp: 18, dmg: 5, speed: 210, reach: 36, wind: 0.25, cool: 0.9, xp: 6, coins: [1, 3], size: 0.8 },
+        mummy: { name: 'Mummy', hp: 110, dmg: 16, speed: 60, reach: 52, wind: 0.7, cool: 1.6, xp: 24, coins: [6, 12], size: 1.15, armor: 0.2 },
+        imp: { name: 'Fire imp', hp: 30, dmg: 9, speed: 130, reach: 300, wind: 0.6, cool: 1.9, xp: 15, coins: [4, 8], size: 0.85, shoot: 300, float: true, bolt: 'fireball' }
     };
     function monsterOn(kind, f) {
         const M = MONSTERS[kind], k = Math.max(0, f - 1);
         return { kind, name: M.name, lv: Math.max(1, Math.round(f)), hp: Math.round(M.hp * 1.25 * (1 + 0.3 * k) * (1 + 0.05 * k)), dmg: Math.round(M.dmg * 1.3 * (1 + 0.18 * k) * (1 + 0.02 * k)), speed: M.speed * (1 + 0.02 * Math.min(k, 15)), reach: M.reach, wind: M.wind, cool: M.cool,
             xp: Math.round(M.xp * (1 + 0.2 * k)), coins: M.coins.map(c => Math.round(c * (1 + 0.15 * k))), size: M.size, boss: !!M.boss, shoot: M.shoot || 0, split: !!M.split, fly: !!M.fly, heal: !!M.heal,
-            block: M.block || 0, armor: M.armor || 0, storm: M.storm || 0, float: !!M.float, affixes: [], elite: false };
+            block: M.block || 0, armor: M.armor || 0, storm: M.storm || 0, float: !!M.float, bolt: M.bolt || '', affixes: [], elite: false };
     }
     function floorMonsters(f, rand) {
         const n = Math.min(20, 6 + Math.floor(f * 1.5)), out = [];
@@ -17785,7 +17788,7 @@
                 mods.push(k);
         }
         const mix = [];
-        ['goblin', 'archer', 'ghoul', 'slime', 'bat', 'shaman', 'skeleton', 'skelarcher', 'wraith', 'knight'].forEach(k => { if (r() < 0.5)
+        ['goblin', 'archer', 'ghoul', 'slime', 'bat', 'shaman', 'skeleton', 'skelarcher', 'wraith', 'knight', 'spider', 'mummy', 'imp'].forEach(k => { if (r() < 0.5)
             mix.push([k, 10 + Math.floor(r() * 40)]); });
         if (mix.length < 2)
             mix.push(['skeleton', 30], ['ghoul', 25]);
@@ -17794,11 +17797,11 @@
     }
     const DUN_DAILY = [
         { names: [['Goblin Warrens', '#a8e08a'], ['Mossy Burrows', '#9ad8a0'], ['Mudfang Caves', '#c8b08a'], ['Rattle Pit', '#d8d0b8'], ['Toadstool Hollow', '#e0a8c8'], ['Grubby Tunnels', '#b8c890'], ['Snaggletooth Den', '#e8c890']],
-            mix: ['goblin', 'archer', 'skeleton', 'bat', 'shaman', 'slime'], must: 'goblin', rooms: [3, 5], bosses: [['king']], twist: 0.3, twists: ['gilded', 'keg'] },
+            mix: ['goblin', 'archer', 'skeleton', 'bat', 'shaman', 'slime', 'spider'], must: 'goblin', rooms: [3, 5], bosses: [['king']], twist: 0.3, twists: ['gilded', 'keg'] },
         { names: [['Ghoul Catacombs', '#a8c8e8'], ['Weeping Tombs', '#a8b8d8'], ['Sunken Ossuary', '#98c8c0'], ['Bonechill Vault', '#c8e0f0'], ['Ashen Graves', '#c0b0a8'], ['Moonlit Mausoleum', '#b8b0e8'], ['Rotroot Crypt', '#a8c898']],
-            mix: ['skeleton', 'skelarcher', 'ghoul', 'wraith', 'slime', 'bat', 'goblin'], must: 'ghoul', rooms: [4, 5], bosses: [['lord'], ['king']], twist: 0.5, twists: ['gilded', 'keg', 'spiked', 'dark'] },
+            mix: ['skeleton', 'skelarcher', 'ghoul', 'wraith', 'slime', 'bat', 'goblin', 'mummy', 'spider'], must: 'ghoul', rooms: [4, 5], bosses: [['lord'], ['king']], twist: 0.5, twists: ['gilded', 'keg', 'spiked', 'dark'] },
         { names: [['Hollow Depths', '#e8a8a8'], ['Obsidian Halls', '#b8a8c8'], ['Abyssal Throne', '#a8a0d8'], ['Drowned Keep', '#88b8c8'], ['Shadowfang Citadel', '#c8a0b8'], ['Cinder Deep', '#e8b088'], ['Kingsbane Vaults', '#d8c088']],
-            mix: ['knight', 'wraith', 'skeleton', 'skelarcher', 'ghoul', 'shaman', 'bat', 'slime'], must: 'knight', rooms: [4, 6], bosses: [['lich', 'lord'], ['lich', 'king'], ['lord', 'king'], ['lich']], twist: 0.6, twists: ['gilded', 'keg', 'spiked', 'dark', 'swarm'] }
+            mix: ['knight', 'wraith', 'skeleton', 'skelarcher', 'ghoul', 'shaman', 'bat', 'slime', 'mummy', 'imp'], must: 'knight', rooms: [4, 6], bosses: [['lich', 'lord'], ['lich', 'king'], ['lord', 'king'], ['lich']], twist: 0.6, twists: ['gilded', 'keg', 'spiked', 'dark', 'swarm'] }
     ];
     const DUN_DAILY_CACHE = new Map();
     function dunToday(di, day) {
@@ -18510,6 +18513,109 @@
                 c.quadraticCurveTo(36.5, 74 - h * 0.45, 40, 74 - h * 0.62);
             }
             c.stroke();
+            c.restore();
+            return;
+        }
+        if (k === 'spider') {
+            const y = 60, up = s ? -6 : 0;
+            [-1, 1].forEach(d => [0, 1, 2, 3].forEach(i => {
+                const bx = 26 + i * 6, fx = 6 + i * 18 + (d < 0 ? 4 : 0), fy = y + (d < 0 ? 10 : 16) - (s && i === 3 ? 6 : 0), kx = (bx + fx) / 2, ky = y - 16 + (d < 0 ? 4 : 0);
+                c.strokeStyle = ink;
+                c.lineWidth = 4.2;
+                c.beginPath();
+                c.moveTo(bx, y);
+                c.lineTo(kx, ky);
+                c.lineTo(fx, fy);
+                c.stroke();
+                c.strokeStyle = d < 0 ? '#2e2228' : '#4a3a3a';
+                c.lineWidth = 2.2;
+                c.stroke();
+            }));
+            body('#3a2a34', q => q.ellipse(28, y - 2, 15, 11, 0, 0, TAU));
+            c.fillStyle = '#c8323c';
+            c.beginPath();
+            c.moveTo(24, y - 6);
+            c.lineTo(30, y - 2);
+            c.lineTo(24, y + 2);
+            c.lineTo(20, y - 2);
+            c.closePath();
+            c.fill();
+            body('#4a3640', q => q.ellipse(46, y - 2 + up, 9, 8, 0, 0, TAU));
+            c.fillStyle = '#ff3a3a';
+            [[47, y - 5 + up], [51, y - 4 + up], [49, y - 1 + up]].forEach(([x, yy]) => { c.beginPath(); c.arc(x, yy, 1.6, 0, TAU); c.fill(); });
+            c.fillStyle = '#f2ead8';
+            [[52, y + 2 + up], [55, y + 1 + up]].forEach(([x, yy]) => { c.beginPath(); c.moveTo(x - 1.5, yy); c.lineTo(x, yy + 5 + (s ? 2 : 0)); c.lineTo(x + 1.5, yy); c.fill(); });
+            c.restore();
+            return;
+        }
+        if (k === 'mummy') {
+            const wrap = '#d8cfb0', dk = '#a89c78', lean = s ? 6 : 0;
+            [[30, 1], [42, -1]].forEach(([x]) => body(wrap, q => rr(q, x - 4, 56, 9, 20, 3)));
+            body(wrap, q => rr(q, 24 + lean * 0.3, 30, 25, 30, 6));
+            c.strokeStyle = dk;
+            c.lineWidth = 1.4;
+            for (let yy = 34; yy < 60; yy += 5) {
+                c.beginPath();
+                c.moveTo(25 + lean * 0.3, yy);
+                c.lineTo(48 + lean * 0.3, yy + 2);
+                c.stroke();
+            }
+            body(wrap, q => rr(q, 40 + lean, 34, 22 + lean, 7, 3));
+            body(wrap, q => rr(q, 38 + lean, 42, 20 + lean, 7, 3));
+            body(wrap, q => q.arc(37 + lean * 0.5, 22, 11, 0, TAU));
+            c.strokeStyle = dk;
+            c.lineWidth = 1.4;
+            [16, 21, 27].forEach(yy => { c.beginPath(); c.moveTo(27 + lean * 0.5, yy); c.lineTo(47 + lean * 0.5, yy + 1.5); c.stroke(); });
+            c.fillStyle = '#7dff9a';
+            [[40, 22], [45, 22]].forEach(([x, yy]) => { c.beginPath(); c.arc(x + lean * 0.5, yy, 2, 0, TAU); c.fill(); });
+            c.fillStyle = 'rgba(232,224,196,.9)';
+            c.beginPath();
+            c.moveTo(26, 58);
+            c.lineTo(20, 70);
+            c.lineTo(24, 70);
+            c.closePath();
+            c.fill();
+            c.restore();
+            return;
+        }
+        if (k === 'imp') {
+            const y = 38;
+            [-1, 1].forEach(d => body('#8a2a2a', q => { q.moveTo(36 + d * 6, y - 4); q.quadraticCurveTo(36 + d * 20, y - 18, 36 + d * 22, y - 2); q.lineTo(36 + d * 14, y + 2); q.closePath(); }));
+            c.strokeStyle = ink;
+            c.lineWidth = 4;
+            c.beginPath();
+            c.moveTo(30, y + 10);
+            c.quadraticCurveTo(18, y + 22, 14, y + 12);
+            c.stroke();
+            c.strokeStyle = '#d84a2a';
+            c.lineWidth = 2;
+            c.stroke();
+            body('#d84a2a', q => { q.moveTo(11, y + 13); q.lineTo(15, y + 8); q.lineTo(17, y + 14); q.closePath(); });
+            body('#d84a2a', q => q.ellipse(36, y + 6, 10, 12, 0, 0, TAU));
+            body('#e8603a', q => q.arc(38, y - 10, 9, 0, TAU));
+            [-1, 1].forEach(d => body('#f2e6c4', q => { q.moveTo(38 + d * 5, y - 16); q.lineTo(38 + d * 8, y - 25); q.lineTo(38 + d * 1, y - 18); q.closePath(); }));
+            c.fillStyle = '#ffe066';
+            [[36, y - 11], [42, y - 11]].forEach(([x, yy]) => { c.beginPath(); c.arc(x, yy, 2, 0, TAU); c.fill(); });
+            c.strokeStyle = ink;
+            c.lineWidth = 1.4;
+            c.beginPath();
+            c.arc(39, y - 7, 3, 0.2, Math.PI - 0.2);
+            c.stroke();
+            const hx = s ? 52 : 47, hy = s ? y - 16 : y + 2;
+            c.strokeStyle = ink;
+            c.lineWidth = 4;
+            c.beginPath();
+            c.moveTo(42, y + 2);
+            c.lineTo(hx, hy);
+            c.stroke();
+            c.strokeStyle = '#d84a2a';
+            c.lineWidth = 2;
+            c.stroke();
+            c.fillStyle = 'rgba(255,160,60,.45)';
+            c.beginPath();
+            c.arc(hx + 2, hy - 3, 8, 0, TAU);
+            c.fill();
+            body('#ffb52e', q => q.arc(hx + 2, hy - 3, 4.5, 0, TAU));
             c.restore();
             return;
         }
@@ -22905,6 +23011,7 @@
             sw: q.loc === 'dungeon' && Array.isArray(q.sw) && Number.isInteger(q.sw[0]) && Number.isInteger(q.sw[2]) ? [q.sw[0], q.sw[1] < 0 ? -1 : 1, q.sw[2], typeof q.sw[3] === 'string' && /^[a-z]{2,10}$/.test(q.sw[3]) ? q.sw[3] : ''] : null,
             lt: q.loc === 'dungeon' && Array.isArray(q.lt) && Number.isInteger(q.lt[0]) && Number.isInteger(q.lt[2]) && q.lt[2] >= 3 && q.lt[2] <= 4 ? [q.lt[0], chatSafe(cleanText(q.lt[1], 30)), q.lt[2]] : null,
             dn: q.loc === 'dungeon' && q.dn === 1 ? 1 : 0,
+            bo: Array.isArray(q.bo) && Number.isFinite(q.bo[0]) && Number.isFinite(q.bo[1]) ? [clamp(q.bo[0], 0, D.w), clamp(q.bo[1], 0, D.h), q.bo[2] ? 1 : 0] : null,
             hw: q.loc === 'dungeon' && Number.isInteger(q.hw) && q.hw >= 0 && armoryDef(q.hw) ? q.hw : -1,
             ar: q.loc === 'dungeon' && Array.isArray(q.ar) ? [0, 1].map(i => { const v = q.ar[i]; return Array.isArray(v) && Number.isInteger(v[0]) && ARMOR_SETS[v[0]] && Number.isInteger(v[1]) && v[1] >= 0 && v[1] <= 4 ? { a: v[0], s: i ? 'b' : 'h', r: v[1], q: 100 } : null; }) : null,
             bd: q.bd && typeof q.bd === 'object' ? cleanBoard(q.bd) : null,
@@ -29526,8 +29633,10 @@
                         }
                         else if (m.shoot) {
                             const ax = tx - m.x, ay = ty - 20 - (m.y - 30), al = Math.hypot(ax, ay) || 1, hex = m.heal, sp = hex ? 260 : 340;
-                            const img = this.add.image(m.x, m.y - 30, hex ? 'hex' : 'arrow').setScale(1 / TEX).setRotation(Math.atan2(ay, ax)).setDepth(9000);
-                            if (!hex)
+                            const img = this.add.image(m.x, m.y - 30, m.bolt || (hex ? 'hex' : 'arrow')).setScale(1 / TEX).setRotation(Math.atan2(ay, ax)).setDepth(9000);
+                            if (m.bolt)
+                                img.setBlendMode(Phaser.BlendModes.ADD).setTint(0xffa060);
+                            else if (!hex)
                                 img.setTint(0xffb0b0);
                             else
                                 img.setBlendMode(Phaser.BlendModes.ADD);
@@ -36614,6 +36723,10 @@
                         o.board.destroy();
                     if (o.wpn)
                         o.wpn.destroy();
+                    if (o.bob2) {
+                        o.bob2.destroy();
+                        o.line2.destroy();
+                    }
                     if (o.hpG)
                         o.hpG.destroy();
                     if (o.dnTag) {
@@ -36695,6 +36808,26 @@
                     if (F[2] >= 2)
                         chatLineSys('🐟 ' + (p.name || 'Someone') + ' landed a ' + F[1] + ' (' + (p.lc[2] / 10) + ' lb)!');
                 }
+            }
+            if (p.bo && this.bobber) {
+                if (!o.bob2) {
+                    o.bob2 = this.add.image(0, 0, 'bobber').setOrigin(0.5, 0.62).setScale(1 / TEX);
+                    o.line2 = this.add.graphics();
+                }
+                const by = p.bo[1] + (p.bo[2] ? (REDUCED ? 6 : 6 + Math.sin(time * 0.03) * 4) : (REDUCED ? 0 : Math.sin(time * 0.004) * 1.5)), hx = o.x + (p.bo[0] >= o.x ? 22 : -22), hy = o.y - 64;
+                o.bob2.setVisible(true).setPosition(p.bo[0], by).setDepth(9189);
+                o.line2.clear().lineStyle(1.2, 0xffffff, 0.8).beginPath();
+                o.line2.moveTo(hx, hy);
+                for (let i = 1; i <= 8; i++) {
+                    const u = i / 8;
+                    o.line2.lineTo(hx + (p.bo[0] - hx) * u, hy + (by - 8 - hy) * u + Math.sin(u * Math.PI) * 10);
+                }
+                o.line2.strokePath();
+                o.line2.setDepth(9188);
+            }
+            else if (o.bob2) {
+                o.bob2.setVisible(false);
+                o.line2.clear();
             }
             if (p.fi) {
                 o.fiAt = time;
@@ -45254,7 +45387,7 @@
                 return null;
             return { v: 1, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
                 boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, sh: G.riding && !s.boating && shineOn() ? 1 : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
-                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), dn: s.loc === 'dungeon' && s.downAt ? 1 : 0, lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
+                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), bo: s.fish && s.bobber && s.bobber.visible ? [Math.round(s.bobber.x), Math.round(s.bobber.y), s.fish.state === 'bite' || s.fish.state === 'reel' ? 1 : 0] : 0, dn: s.loc === 'dungeon' && s.downAt ? 1 : 0, lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
         }
         const netHeld = s => { const D = G.dun, w = s.loc === 'dungeon' && D && D.eq >= 0 ? D.bag[D.eq] : null; return w && Number.isInteger(w.c) ? w.c : -1; };
         const netArmor = s => { const W = s.loc === 'dungeon' && G.dun && G.dun.worn; return W && (W.h || W.b) ? [W.h ? [W.h.a, W.h.r] : 0, W.b ? [W.b.a, W.b.r] : 0] : 0; };
