@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794347107';
+<script>window.WANDO_BUILD = '1794347119';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -47131,8 +47131,9 @@
                 bd = d;
                 best = p;
             } });
-            wmEl.title = best ? best.name + ' (click to walk there)' : 'Minimap: click to walk there';
+            wmEl.title = best ? best.name + ' (click to walk there)' : 'Minimap: click to walk there, double-click for the big map';
         });
+        wmEl.addEventListener('dblclick', e => { e.preventDefault(); if (!busy()) wmapOpen(); });     // double-click the minimap: the big map
         wmEl.addEventListener('click', e => {
             const s = scene(), D = s && s.D;
             if (!s || !D || !wmGeo || busy() || !s.setTarget)
