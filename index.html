@@ -46909,10 +46909,10 @@
             if (!c)
                 return;
             const fr = new Set((G.friends || []).filter(f => f.ok).map(f => f.id));
-            const others = (ui.others ? ui.others(loc) : []).filter(p => !p.mine && Number.isFinite(p.x) && Number.isFinite(p.y)).map(p => ({ x: p.x, y: p.y, friend: !!(p.uid && fr.has(p.uid)) }));
+            const others = (ui.others ? ui.others(loc) : []).filter(p => !p.mine && Number.isFinite(p.x) && Number.isFinite(p.y)).map(p => ({ x: p.x, y: p.y, friend: !!(p.uid && fr.has(p.uid)), name: (p.uid && fr.has(p.uid) ? '★ ' : '') + p.name }));
             const roads = (ROADS[loc] || []).map(r => ({ x: r.x, y: r.y, side: r.side, label: LOCS[r.to] ? LOCS[r.to].name.split(' ').pop() : '' }));
             const spots = (s.hotspots || []).filter(h => Number.isFinite(h.x) && Number.isFinite(h.y) && h.kind !== 'road').map(h => ({ x: h.x, y: h.y, door: h.kind === 'door' || h.kind === 'shop', name: h.door && LOCS[h.door] ? LOCS[h.door].name : WM_NAMES[h.kind] || '' }));
-            wmSpots = spots.filter(p => p.name);
+            wmSpots = spots.filter(p => p.name).concat(others);
             const hot = [];
             try {
                 if (loc === 'green' && rainOn())
