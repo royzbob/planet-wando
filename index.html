@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794346497';
+<script>window.WANDO_BUILD = '1794346523';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2115,6 +2115,7 @@
   .wmap-ev.live { background: #ff3d6e; animation: wmap-live 0.8s ease-in-out infinite alternate; }
   .wmap-ev.wmap-fr { background: #ffd84d; color: #2a1a6a; }
   .wmap-ev.wmap-car { background: #3fa7f5; }
+  .wmap-ev.wmap-soonev { background: #ff9a2e; color: #2a1a6a; }
   @keyframes wmap-live { to { background: #ff7a9a; } }
   .wmap-soon { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin: 0; font: 700 13px/1.3 var(--font-body); text-shadow: 0 1px 0 #120b3a; }
   .wmap-soon[hidden] { display: none; }
@@ -2124,7 +2125,7 @@
   .wmap-soon-b { padding: 2px 10px; border: 2px solid #120b3a; border-radius: 999px; background: rgba(255, 255, 255, 0.16); color: #fff; font: 800 12px/1.3 var(--font-body); cursor: pointer; }
   .wmap-today .wmap-soon-b.done { background: #3fbf5f; }
   .wmap-soon-b:hover, .wmap-soon-b:focus-visible { background: var(--sun); color: #2a1a6a; outline: none; }
-  @media (max-width: 640px) { .wmap-ev { font-size: 8.5px; padding: 0 4px; border-width: 1.5px; } .wmap-tags .wmap-ev:not(.live):not(.wmap-fr):not(.wmap-car) { display: none; } .wmap-soon, .wmap-soon-b { font-size: 10.5px; } }
+  @media (max-width: 640px) { .wmap-ev { font-size: 8.5px; padding: 0 4px; border-width: 1.5px; } .wmap-tags .wmap-ev:not(.live):not(.wmap-fr):not(.wmap-car):not(.wmap-soonev) { display: none; } .wmap-soon, .wmap-soon-b { font-size: 10.5px; } }
   @media (max-height: 500px) {
     .wmap { padding: 6px 10px 8px; gap: 4px; border-radius: 16px; }
     .wmap-head h2 { font-size: 15px; }
@@ -2138,7 +2139,7 @@
     .wmap-spot::before { width: 64px; height: 44px; }
     .wmap-you { bottom: calc(100% + 24px); font-size: 10px; }
     .wmap-ev { font-size: 8px; padding: 0 4px; border-width: 1.5px; }
-    .wmap-tags .wmap-ev:not(.live):not(.wmap-fr):not(.wmap-car) { display: none; }
+    .wmap-tags .wmap-ev:not(.live):not(.wmap-fr):not(.wmap-car):not(.wmap-soonev) { display: none; }
     .wmap .wmap-note { font-size: 11px; }
     .wmap-soon, .wmap-soon-b { font-size: 10px; }
   }
@@ -46705,6 +46706,7 @@
             try { const c = catchOfDay(day); if (!G.angler || G.angler.cotd !== day) add(c.zone === 'pond' ? 'green' : c.zone === 'lagoon' ? 'dungeon' : 'beach', '🎣 Catch of the Day: ' + c.name, false); } catch (e) { }
             try { if (!G.login || G.login.star !== day) { const sp = starPlace(day), h = LOCS[sp] ? (LOCS[sp].home || sp) : sp; add(h, '⭐ ' + starName() + ' hiding here', false); } } catch (e) { }
             try { if (weatherNow(now) === 'rain') ['beach', 'green'].forEach(l => add(l, '🌧️ Rain: fish bite faster', false)); } catch (e) { }
+            up.forEach(([t, txt, loc]) => { const mins = Math.round((t - now) / 60000); if (loc && mins >= 0 && mins <= 10) (ev[loc] = ev[loc] || []).push({ txt: txt + ' in ' + Math.max(1, mins) + ' min', live: false, cls: ' wmap-soonev' }); });    // (starting soon: on the place itself too)
             Object.keys(ev).forEach(k => ev[k].sort((a, b) => b.live - a.live));
             try {
                 const best = {};
