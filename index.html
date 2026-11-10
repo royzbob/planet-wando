@@ -315,7 +315,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794314541';
+<script>window.WANDO_BUILD = '1794314766';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -43666,6 +43666,10 @@
             dq('dun-weapon').textContent = w ? w.name : 'Fists';
             dq('dun-weapon').style.color = w ? RARITIES[w.r][1] : '';
             dq('dun-swap').hidden = D.bag.length < 2;
+            if (D.bag.length >= 2) {
+                const nx = D.bag[(Math.max(0, D.eq) + 1) % D.bag.length];
+                dq('dun-swap').title = 'Swap weapon (Q, Shift+Q back): next is ' + nx.name;
+            }
             paintDunSkills();
             if (dunP.isOpen())
                 paintDun();
@@ -44327,12 +44331,12 @@
         dunTabs.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (!b)
             return; dn.tab = b.dataset.tab; dn.note = ''; paintDun(); if (e.detail > 0)
             b.blur(); });
-        function dunSwap() {
+        function dunSwap(back) {
             const D = G.dun, likes = CLASSES[D.cls] ? CLASSES[D.cls].likes : null, n = D.bag.length;
             if (n < 2)
                 return '';
             for (let k = 1; k <= n; k++) {
-                const i = (Math.max(0, D.eq) + k) % n, w = D.bag[i];
+                const i = (Math.max(0, D.eq) + (back ? n - k : k)) % n, w = D.bag[i];
                 if (!likes || likes.includes(w.t) || k === n) {
                     if (i === D.eq)
                         return '';
@@ -44352,7 +44356,7 @@
         } });
         window.addEventListener('keydown', e => {
             if ((e.key === 'q' || e.key === 'Q') && G.loc === 'dungeon' && !isTyping() && !busy() && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                const t = dunSwap(), s = scene();
+                const t = dunSwap(e.shiftKey), s = scene();
                 if (t && s) {
                     s.noteUntil = 0;
                     s.note(t, '#ffe9a8');
