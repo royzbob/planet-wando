@@ -46681,6 +46681,29 @@
                     c.scale(cv.width / 1000, cv.height / 620);
                     c.lineJoin = c.lineCap = 'round';
                     drawWorldMap(c);
+                    try {
+                        const done = new Set();
+                        Object.keys(ROADS).forEach(a => ROADS[a].forEach(r => {
+                            const key = [a, r.to].sort().join('-'), A = WMAP_SPOTS[a], B = WMAP_SPOTS[r.to];
+                            if (done.has(key) || !A || !B)
+                                return;
+                            done.add(key);
+                            const ax = A[0] * 1000, ay = A[1] * 620, bx = B[0] * 1000, by = B[1] * 620, mx = (ax + bx) / 2 + (by - ay) * 0.12, my = (ay + by) / 2 - (bx - ax) * 0.12;
+                            const q = t => [(1 - t) * (1 - t) * ax + 2 * (1 - t) * t * mx + t * t * bx, (1 - t) * (1 - t) * ay + 2 * (1 - t) * t * my + t * t * by];
+                            for (let t = 0.2; t <= 0.8001; t += 0.6 / Math.max(4, Math.round(Math.hypot(bx - ax, by - ay) / 16))) {
+                                const [x, y] = q(t);
+                                c.beginPath();
+                                c.arc(x, y, 2.6, 0, Math.PI * 2);
+                                c.fillStyle = 'rgba(18,11,58,0.45)';
+                                c.fill();
+                                c.beginPath();
+                                c.arc(x, y - 0.6, 1.8, 0, Math.PI * 2);
+                                c.fillStyle = '#fff6c8';
+                                c.fill();
+                            }
+                        }));
+                    }
+                    catch (e) { }
                     c.restore();
                 }
                 wmapDrawn = true;
