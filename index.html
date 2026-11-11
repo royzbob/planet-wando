@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794357514';
+<script>window.WANDO_BUILD = '1794357828';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17972,7 +17972,7 @@
         { id: 1, name: 'Ghoul Catacombs', lv: 5, rooms: 4, diff: 5, extra: 1, tint: '#a8c8e8', mods: [], mix: [['skeleton', 28], ['skelarcher', 18], ['ghoul', 24], ['wraith', 10], ['slime', 12], ['bat', 8]], boss: ['lord'], blurb: 'Where the dead walk. The Ghoul Lord rules here.' },
         { id: 2, name: 'Hollow Depths', lv: 10, rooms: 5, diff: 10, extra: 2, tint: '#e8a8a8', mods: [], mix: [['knight', 18], ['wraith', 18], ['skeleton', 18], ['skelarcher', 14], ['ghoul', 14], ['shaman', 8], ['bat', 10]], boss: ['lich', 'lord'], blurb: 'The deepest halls: the Bone Lich and the Ghoul Lord, together.' },
         { id: 3, name: 'Endless Crypt', lv: 12, rooms: 0, diff: 12, extra: 0, tint: '#c8a8e8', mods: [], mix: null, boss: null, blurb: 'Down and down, as far as you can go. A boss on every fifth floor.' },
-        { id: 4, name: 'Daily Delve', lv: 3, rooms: 5, diff: 0, extra: 2, tint: '#ffffff', mods: [], mix: null, boss: null, daily: true, blurb: 'A new dungeon every day, made to your level.' }
+        { id: 4, name: 'Daily Delve', lv: 3, rooms: 7, diff: 0, extra: 2, tint: '#ffffff', mods: [], mix: null, boss: null, daily: true, blurb: 'A new dungeon every day, made to your level.' }
     ];
     const WEAPON_TIERS = [['Wooden', '#c98b4a', 7], ['Iron', '#b9c0cc', 12], ['Steel', '#8fb4d8', 19], ['Mythril', '#7dffe0', 29], ['Dragonbone', '#ffd27a', 44]];
     const RARITIES = [['Common', '#d9d4e4', 1], ['Uncommon', '#5cc86e', 1.15], ['Rare', '#3fa7f5', 1.35], ['Epic', '#b06bff', 1.6], ['Legendary', '#ffb52e', 2]];
@@ -18023,7 +18023,7 @@
             out.push(f % 10 === 0 ? 'lord' : f % 15 === 0 ? 'lich' : f % 20 === 5 && f > 5 ? 'queen' : 'king');
         return out;
     }
-    const roomDiff = (di, room, lv) => { const me = Math.max(1, (lv || 1) - 1); return DUNGEONS[di].daily ? me + (room - 1) * 0.6 : DUNGEONS[di].rooms ? Math.max(DUNGEONS[di].diff, me) + (room - 1) * 0.8 : Math.max(DUNGEONS[di].diff, me) + room - 1; };
+    const roomDiff = (di, room, lv) => { const me = Math.max(1, (lv || 1) - 1); return DUNGEONS[di].daily ? me + 0.5 + (room - 1) * 0.85 : DUNGEONS[di].rooms ? Math.max(DUNGEONS[di].diff, me) + 0.5 + (room - 1) * 1.1 : Math.max(DUNGEONS[di].diff, me) + room - 1; };
     const HALLS = { on: true };
     function hallLayout(rand, B, pad) {
         const cols = [B.x + 270, B.x + B.w / 2, B.x + B.w - 270], rows = [B.y + 210, pad.y - 40];
@@ -18170,11 +18170,11 @@
     }
     const DUN_DAILY = [
         { names: [['Goblin Warrens', '#a8e08a'], ['Mossy Burrows', '#9ad8a0'], ['Mudfang Caves', '#c8b08a'], ['Rattle Pit', '#d8d0b8'], ['Toadstool Hollow', '#e0a8c8'], ['Grubby Tunnels', '#b8c890'], ['Snaggletooth Den', '#e8c890']],
-            mix: ['goblin', 'archer', 'skeleton', 'bat', 'shaman', 'slime', 'spider'], must: 'goblin', rooms: [3, 5], bosses: [['king']], twist: 0.3, twists: ['gilded', 'keg'] },
+            mix: ['goblin', 'archer', 'skeleton', 'bat', 'shaman', 'slime', 'spider'], must: 'goblin', rooms: [5, 7], bosses: [['king']], twist: 0.3, twists: ['gilded', 'keg'] },
         { names: [['Ghoul Catacombs', '#a8c8e8'], ['Weeping Tombs', '#a8b8d8'], ['Sunken Ossuary', '#98c8c0'], ['Bonechill Vault', '#c8e0f0'], ['Ashen Graves', '#c0b0a8'], ['Moonlit Mausoleum', '#b8b0e8'], ['Rotroot Crypt', '#a8c898']],
-            mix: ['skeleton', 'skelarcher', 'ghoul', 'wraith', 'slime', 'bat', 'goblin', 'mummy', 'spider'], must: 'ghoul', rooms: [4, 5], bosses: [['lord'], ['king'], ['queen']], twist: 0.5, twists: ['gilded', 'keg', 'spiked', 'dark'] },
+            mix: ['skeleton', 'skelarcher', 'ghoul', 'wraith', 'slime', 'bat', 'goblin', 'mummy', 'spider'], must: 'ghoul', rooms: [6, 8], bosses: [['lord'], ['king'], ['queen']], twist: 0.5, twists: ['gilded', 'keg', 'spiked', 'dark'] },
         { names: [['Hollow Depths', '#e8a8a8'], ['Obsidian Halls', '#b8a8c8'], ['Abyssal Throne', '#a8a0d8'], ['Drowned Keep', '#88b8c8'], ['Shadowfang Citadel', '#c8a0b8'], ['Cinder Deep', '#e8b088'], ['Kingsbane Vaults', '#d8c088']],
-            mix: ['knight', 'wraith', 'skeleton', 'skelarcher', 'ghoul', 'shaman', 'bat', 'slime', 'mummy', 'imp'], must: 'knight', rooms: [4, 6], bosses: [['lich', 'lord'], ['lich', 'king'], ['lord', 'king'], ['lich'], ['queen', 'lord'], ['lich', 'queen']], twist: 0.6, twists: ['gilded', 'keg', 'spiked', 'dark', 'swarm'] }
+            mix: ['knight', 'wraith', 'skeleton', 'skelarcher', 'ghoul', 'shaman', 'bat', 'slime', 'mummy', 'imp'], must: 'knight', rooms: [7, 9], bosses: [['lich', 'lord'], ['lich', 'king'], ['lord', 'king'], ['lich'], ['queen', 'lord'], ['lich', 'queen']], twist: 0.6, twists: ['gilded', 'keg', 'spiked', 'dark', 'swarm'] }
     ];
     const DUN_DAILY_CACHE = new Map();
     function dunToday(di, day) {
@@ -18205,9 +18205,9 @@
         if (!Dg.rooms)
             out = floorMonsters(room, rand);
         else if (type === 'boss')
-            return Dg.boss.concat([0, 1, 2, 3, 4].map(() => pickW(Dg.mix, rand)));
+            return Dg.boss.concat([0, 1, 2, 3, 4, 5, 6, 7].map(() => pickW(Dg.mix, rand)));     // (the boss brings a bigger gang)
         else
-            out = Array.from({ length: Math.min(18, 6 + room * 2 + Dg.extra) }, () => pickW(Dg.mix, rand));
+            out = Array.from({ length: Math.min(26, Math.round(9 + room * 2.5 + Dg.extra * 2)) }, () => pickW(Dg.mix, rand));     // (more of them, and more each room down)
         if (type === 'shrine' || type === 'vault')
             out = out.filter(k => !MONSTERS[k].boss).slice(0, 3);
         else if (type === 'traps')
@@ -18219,7 +18219,7 @@
             for (let i = 0; i < n && plain.length; i++)
                 out.push(plain[Math.floor(rand() * plain.length)]);
         }
-        return out;
+        return out.slice(0, 34);
     }
     const AFFIXES = {
         swift: { name: 'Swift', color: '#7dffe0', blurb: 'fast' },
