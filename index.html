@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794366353';
+<script>window.WANDO_BUILD = '1794366375';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -29094,7 +29094,7 @@
                 this.label(620, 1030, 'Grizzle\'s Supplies', '#3a1a5a');
                 this.hotspot('dunshop', 620, 1158, 54, new Phaser.Geom.Rectangle(560, 1020, 120, 110));
                 this.gate = { x: D.w / 2, y: 520 };
-                this.prop('dgate', this.gate.x, this.gate.y, 186 / 190, { solids: [[-80, -20, 26], [80, -20, 26]], reserve: 130 });
+                this.prop('dgate', this.gate.x, this.gate.y, 186 / 190, { solids: [[-80, -20, 26], [-40, -20, 26], [0, -20, 26], [40, -20, 26], [80, -20, 26]], reserve: 130 });
                 glow(this.gate.x, this.gate.y - 60, 240, 0x7ccf55, 0.3);
                 this.label(this.gate.x, this.gate.y - 196, 'Dungeon', '#1a3a1a');
                 this.tag(this.gate.x, this.gate.y + 8, 'Enter', -400, 11);
