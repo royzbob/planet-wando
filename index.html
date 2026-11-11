@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794355909';
+<script>window.WANDO_BUILD = '1794356032';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -33456,15 +33456,17 @@
             return near.length;
         }
         chatter(lines) {
-            if (!this.npcs.length || !Array.isArray(lines) || !lines.length)
+            if (!this.npcs.length || !(typeof lines === 'function' || (Array.isArray(lines) && lines.length)))
                 return;
             if (feastOn() && this.loc === 'green')
                 lines = lines.concat(['Happy Thanksgiving!!', 'save me pie', 'try the corn', 'thankful 4 my friends', 'free food by the plaza!']);
             const speak = () => {
                 if (!this.npcs.length)
                     return;
+                const pool = typeof lines === 'function' ? lines() : lines;
                 const n = this.npcs[Math.floor(Math.random() * this.npcs.length)];
-                const b = this.makeBubble(lines[Math.floor(Math.random() * lines.length)]).setPosition(n.x, n.y - 92).setDepth(9550);
+                if (this.heardAt && this.time.now - this.heardAt < 4000) { this.time.delayedCall(2500, speak); return; }     // (someone's just been answered: wait a moment)
+                const b = this.makeBubble(pool[Math.floor(Math.random() * pool.length)]).setPosition(n.x, n.y - 92).setDepth(9550);
                 this.tweens.add({ targets: b, alpha: 0, delay: 2600, duration: 500, ease: 'Sine.in', onComplete: () => b.destroy() });
                 this.time.delayedCall(3200 + Math.random() * 3400, speak);
             };
@@ -34224,7 +34226,7 @@
                 const [x, y] = [[450, 420], [720, 560], [1010, 400], [1210, 640], [560, 800], [900, 760], [1180, 880]][i];
                 this.npc(x, y, i + 1, name, true);
             });
-            this.chatter(CHAT.dance);
+            this.chatter(() => this.clubLines());
             for (const [x, y] of [[200, 640], [200, 520], [1440, 820], [1500, 1000], [700, 1010]])
                 if (this.free(x, y, 60)) {
                     this.pgSign('dance', x, y);
@@ -37450,6 +37452,7 @@
                         this.throwAt(o.x, o.y, TH.x, TH.y, TH.k, p.name || 'Someone');
                     else if (p.sayT && !isMuted(p.uid || 'tab:' + p.id)) {
                         const said = chatSafe(p.sayT), b = o.bubble = this.makeBubble(said).setPosition(o.x, o.y - 92);
+                        this.npcHear(said, o.x, o.y);
                         if (ui.onChatLine)
                             ui.onChatLine(p.name || 'Player', said, false);
                         this.tweens.add({ targets: b, alpha: 0, delay: 4500, duration: 700, ease: 'Sine.in', onComplete: () => { b.destroy(); if (o.bubble === b)
@@ -37608,6 +37611,39 @@
             else if (o.cone)
                 o.cone.setVisible(false);
         }
+        clubLines() {                                                // what the dancers say: only about the club, and about what's playing
+            const base = ['feel that beat', 'best night ever', 'try /dance on a lit tile', 'FREEZE!', 'i never move when it stops', 'spin move!', 'who wants a dance-off?', 'my feet hurt but i cant stop',
+                'the lights are so pretty', 'DJ Volt is the best', 'press space to jump!', 'love this floor', 'step on the glowing tiles!', 'one more song!!', 'this is my favourite spot', 'watch my moves'];
+            const q = ui.djCurrent ? ui.djCurrent() : null;
+            if (q) return ['NOVA STARR!!!', 'who picked this?? 🔥', 'this one is SO good', 'everybody jump!', (q.me ? 'great pick!' : q.name + ' has taste!'), 'turn it UP', 'look at the lasers!!', 'dance with me!'].concat(base.slice(0, 6));
+            return base.concat(['someone queue a song at the booth!', 'DJ Volt play something!', 'queue a song and Nova comes out', 'is anyone gonna pick a song?']);
+        }
+        npcHear(msg, x, y) {                                       // in the club, a dancer nearby answers what you (or another player) say
+            if (this.loc !== 'dance' || !this.npcs || !this.npcs.length || (this.heardAt && this.time.now - this.heardAt < 3000)) return;
+            const t = String(msg).toLowerCase(), has = re => re.test(t);
+            const pick = a => a[Math.floor(Math.random() * a.length)];
+            let r = null;
+            if (has(/\b(hi|hey|hello|sup|yo|hiya|howdy)\b/)) r = ['hey! come dance', 'yo! the floor is open', 'heyy, love the energy', 'hi! grab a tile'];
+            else if (has(/\b(nova|supernova|concert|show)\b/)) r = ['queue a song and Nova comes out!', 'Nova Starr is the best', 'i saw her last night!!'];
+            else if (has(/\b(song|music|track|beat|banger|dj|play|queue)\b/)) r = ['this beat is SO good', 'DJ Volt never misses', 'queue one at the booth!', 'play the next one!', 'turn it up!!'];
+            else if (has(/\b(dance|dancing|move|moves|spin|floss|robot|groove)\b/)) r = ['show me your moves!', 'try /dance on a lit tile', 'ive been practising my spin', 'dance-off? you\'re on!'];
+            else if (has(/\b(jump|jumping)\b/)) r = ['press space to jump!', 'jump jump jump!', 'everybody jump!'];
+            else if (has(/\b(lol|haha|lmao|xd)\b/)) r = ['haha', 'lol same', 'hahaha'];
+            else if (has(/\b(cool|nice|wow|lit|fire|awesome|epic|sick|love)\b/)) r = ['right?!', 'the lasers tho!!', 'best club ever', 'so good!!'];
+            else if (has(/\b(bye|cya|gtg|later)\b/)) r = ['bye! come back soon', 'see ya on the floor!'];
+            else if (t.includes('?')) r = ['no idea, i just dance here', 'ask DJ Volt!', 'hmm, dance first, think later'];
+            else if (Math.random() < 0.3) r = ['woo!', 'lets dance!', 'yeah!!'];
+            if (!r) return;
+            const near = this.npcs.filter(n => n.img && n.img.active).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
+            if (!near || Math.hypot(near.x - x, near.y - y) > 520) return;
+            this.heardAt = this.time.now;
+            this.time.delayedCall(700 + Math.random() * 600, () => {
+                if (!near.img || !near.img.active) return;
+                const b = this.makeBubble(pick(r)).setPosition(near.x, near.y - 92).setDepth(9550);
+                this.tweens.add({ targets: b, alpha: 0, delay: 2600, duration: 500, ease: 'Sine.in', onComplete: () => b.destroy() });
+                if (near.img.setFlipX) near.img.setFlipX(x < near.x);
+            });
+        }
         say(message) {
             const msg = String(message).replace(/\s+/g, ' ').trim().slice(0, 80);
             if (!msg)
@@ -37618,6 +37654,7 @@
                 this.bubble = null;
             }
             const b = this.bubble = this.makeBubble(msg).setPosition(this.pz.x, this.pz.y + FOOT - 92);
+            this.npcHear(msg, this.pz.x, this.pz.y + FOOT);
             if (!REDUCED)
                 this.tweens.add({ targets: b, scale: { from: 0.6, to: 1 }, duration: 240, ease: 'Back.out' });
             this.tweens.add({
