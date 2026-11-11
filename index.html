@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794366031';
+<script>window.WANDO_BUILD = '1794366353';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2661,6 +2661,10 @@
   .catbook.plain .cb-book { padding: 12px; background: linear-gradient(135deg, #9a6a3e, #6a4222); }
   .catbook.plain .cb-pages { display: block; min-height: 0; max-height: calc(100vh - var(--dock-h) - 120px); overflow-y: auto; border-radius: 10px; background: #fffaf0; padding: 12px 14px; }
   .catbook.plain .cb-tabs, .catbook.plain .cb-turn { display: none; }
+  .catbook.cbphone .cb-pages { display: block; overflow-y: auto; overscroll-behavior: contain; padding: 10px; border-radius: 10px; background: linear-gradient(90deg, #fffdf6, #f6efdc); -webkit-overflow-scrolling: touch; }
+  .catbook.cbphone .cb-turn { display: none; }
+  .cb-phone .cb-sec { margin: 14px 0 6px; }
+  .cb-phone .cb-sec:first-child { margin-top: 0; }
   .pl-head { display: flex; align-items: center; gap: 10px; margin: 0 40px 8px 0; }
   .pl-keeper { width: 64px; height: auto; flex: none; }
   .pl-title { margin: 0; color: #5a3416; font: 900 24px/1.05 var(--font-display); }
@@ -49539,6 +49543,23 @@
             });
             return wrap;
         }
+        function cbPhone() {     // (phones: the whole catalog as one list you scroll, not a two-page spread)
+            const wrap = node('div', 'cb-phone');
+            let n = 0;
+            cb.secs.forEach((S, si) => {
+                const h = node('h4', 'cb-sec', S.name);
+                h.dataset.secAt = String(si);
+                wrap.append(h);
+                if (S.blurb)
+                    wrap.append(node('p', 'cb-blurb', S.blurb));
+                if (!S.items.length && S.empty)
+                    wrap.append(node('p', 'cb-blurb', S.empty));
+                const grid = node('div', 'cb-grid');
+                S.items.forEach(it => grid.append(cbItem(it, ++n)));
+                wrap.append(grid);
+            });
+            return wrap;
+        }
         function cbPaint(dir) {
             const B = cb.book;
             if (!B)
@@ -49553,6 +49574,20 @@
                 cbPages.scrollTop = top;
                 cbTabs.replaceChildren();
                 cbPageNo.textContent = B.title;
+                cbMsg.textContent = cb.msg;
+                document.getElementById('cb-coins').textContent = G.coins;
+                return;
+            }
+            cbEl.classList.toggle('cbphone', screenPhone());
+            if (screenPhone()) {
+                const top = cbPages.scrollTop;
+                cbEl.classList.remove('closed');
+                cbEl.style.setProperty('--cb', B.color || '#5ec8e8');
+                cbPages.replaceChildren(cbPhone());
+                cbPages.scrollTop = top;
+                cbTabs.replaceChildren(...cb.secs.map((S, si) => { const b = el('button', 'cb-tab', { type: 'button', 'data-cbsec': String(si) }); b.textContent = S.name; b.title = S.name; return b; }));
+                cbFitTabs();
+                cbPageNo.textContent = 'Scroll down to see everything';
                 cbMsg.textContent = cb.msg;
                 document.getElementById('cb-coins').textContent = G.coins;
                 return;
@@ -49621,6 +49656,12 @@
             cbPaint(d);
         }
         function cbGoSec(si) {
+            if (cbEl.classList.contains('cbphone')) {
+                const h = si < 0 ? null : cbPages.querySelector('[data-sec-at="' + si + '"]');
+                cbPages.scrollTo({ top: h ? Math.max(0, h.offsetTop - 6) : 0, behavior: REDUCED ? 'auto' : 'smooth' });
+                cbTabs.querySelectorAll('.cb-tab').forEach(b => b.classList.toggle('on', Number(b.dataset.cbsec) === si));
+                return;
+            }
             if (si === -2) {
                 cb.spread = 0;
                 cb.msg = '';
