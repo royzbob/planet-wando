@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794357828';
+<script>window.WANDO_BUILD = '1794357880';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -28627,7 +28627,10 @@
                     this.barrelPut(x, y);
                     k++;
                 }
-                const diff = roomDiff(Dn.run.d, room, Dn.level), kinds = roomMonsters(Dg, room, rand, type);
+                const crew = (() => { try { return this.coopParty(); } catch (e) { return []; } })();     // (fighting together: the room is made for the party, not just you)
+                const partyLv = Math.round((Dn.level + crew.reduce((t, p) => t + (p.lv || Dn.level), 0)) / (1 + crew.length));
+                const partyHp = 1 + 0.55 * crew.length;
+                const diff = roomDiff(Dn.run.d, room, Math.max(partyLv, Dn.level - 2)), kinds = roomMonsters(Dg, room, rand, type);
                 let pack = null, packN = 0, packI = 0;
                 const place = kind => {
                     if (MONSTERS[kind].boss)
@@ -28651,7 +28654,8 @@
                         if (!this.free(x, y, 40) || nearPad(x, y, 480))
                             continue;
                         const boss = MONSTERS[kind].boss, aff = boss ? (Dg.bossAffix ? [Dg.bossAffix] : null) : eliteRoll(rand, roomDiff(Dn.run.d, room, 1), mods.includes('champs') ? 3 : 1);
-                        this.monPut(kind, x, y, diff, aff);
+                        const mo = this.monPut(kind, x, y, diff, aff);
+                        if (mo && partyHp > 1) { mo.hp = Math.round(mo.hp * partyHp); mo.max = Math.round(mo.max * partyHp); }     // (more of you: tougher monsters)
                         this.reserve(x, y, 40);
                         return;
                     }
