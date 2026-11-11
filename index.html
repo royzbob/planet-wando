@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794358554';
+<script>window.WANDO_BUILD = '1794359087';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17968,9 +17968,9 @@
     };
     const HEALS = ['heal', 'mend', 'bless', 'sanct', 'renew', 'divine'];
     const DUNGEONS = [
-        { id: 0, name: 'Goblin Warrens', lv: 1, rooms: 4, diff: 1, extra: 0, tint: '#a8e08a', mods: [], mix: [['goblin', 45], ['archer', 20], ['skeleton', 15], ['bat', 12], ['shaman', 8], ['rat', 14], ['beetle', 7]], boss: ['king'], blurb: 'Tunnels full of goblins, and their King at the end.' },
-        { id: 1, name: 'Ghoul Catacombs', lv: 5, rooms: 4, diff: 5, extra: 1, tint: '#a8c8e8', mods: [], mix: [['skeleton', 28], ['skelarcher', 18], ['ghoul', 24], ['wraith', 10], ['slime', 12], ['bat', 8], ['ghost', 12], ['rat', 8], ['beetle', 6]], boss: ['lord'], blurb: 'Where the dead walk. The Ghoul Lord rules here.' },
-        { id: 2, name: 'Hollow Depths', lv: 10, rooms: 5, diff: 10, extra: 2, tint: '#e8a8a8', mods: [], mix: [['knight', 18], ['wraith', 18], ['skeleton', 18], ['skelarcher', 14], ['ghoul', 14], ['shaman', 8], ['bat', 10], ['golem', 8], ['gargoyle', 10], ['wisp', 10], ['ghost', 8]], boss: ['lich', 'lord'], blurb: 'The deepest halls: the Bone Lich and the Ghoul Lord, together.' },
+        { id: 0, name: 'Goblin Warrens', lv: 1, rooms: 4, diff: 1, extra: 0, tint: '#a8e08a', mods: [], mix: [['goblin', 45], ['archer', 20], ['skeleton', 15], ['bat', 12], ['shaman', 8], ['rat', 14], ['beetle', 7], ['shroom', 8], ['boar', 6]], boss: ['king'], blurb: 'Tunnels full of goblins, and their King at the end.' },
+        { id: 1, name: 'Ghoul Catacombs', lv: 5, rooms: 4, diff: 5, extra: 1, tint: '#a8c8e8', mods: [], mix: [['skeleton', 28], ['skelarcher', 18], ['ghoul', 24], ['wraith', 10], ['slime', 12], ['bat', 8], ['ghost', 12], ['rat', 8], ['beetle', 6], ['necro', 7], ['scorpion', 8], ['shroom', 6]], boss: ['lord'], blurb: 'Where the dead walk. The Ghoul Lord rules here.' },
+        { id: 2, name: 'Hollow Depths', lv: 10, rooms: 5, diff: 10, extra: 2, tint: '#e8a8a8', mods: [], mix: [['knight', 18], ['wraith', 18], ['skeleton', 18], ['skelarcher', 14], ['ghoul', 14], ['shaman', 8], ['bat', 10], ['golem', 8], ['gargoyle', 10], ['wisp', 10], ['ghost', 8], ['troll', 8], ['necro', 8], ['boar', 6]], boss: ['lich', 'lord'], blurb: 'The deepest halls: the Bone Lich and the Ghoul Lord, together.' },
         { id: 3, name: 'Endless Crypt', lv: 12, rooms: 0, diff: 12, extra: 0, tint: '#c8a8e8', mods: [], mix: null, boss: null, blurb: 'Down and down, as far as you can go. A boss on every fifth floor.' },
         { id: 4, name: 'Daily Delve', lv: 3, rooms: 7, diff: 0, extra: 2, tint: '#ffffff', mods: [], mix: null, boss: null, daily: true, blurb: 'A new dungeon every day, made to your level.' }
     ];
@@ -18002,13 +18002,19 @@
         golem: { name: 'Stone golem', hp: 240, dmg: 24, speed: 52, reach: 60, wind: 0.9, cool: 1.8, xp: 38, coins: [8, 16], size: 1.35, armor: 0.45 },
         gargoyle: { name: 'Gargoyle', hp: 64, dmg: 11, speed: 200, reach: 40, wind: 0.3, cool: 1.2, xp: 16, coins: [3, 7], size: 1, fly: true, armor: 0.25 },
         ghost: { name: 'Ghost', hp: 38, dmg: 13, speed: 105, reach: 46, wind: 0.4, cool: 1.2, xp: 17, coins: [4, 8], size: 1, float: true, blink: true },
-        colossus: { name: 'Stone Colossus', hp: 1100, dmg: 28, speed: 58, reach: 72, wind: 0.9, cool: 1.5, xp: 300, coins: [130, 190], size: 1.95, boss: true, armor: 0.3 }
+        colossus: { name: 'Stone Colossus', hp: 1100, dmg: 28, speed: 58, reach: 72, wind: 0.9, cool: 1.5, xp: 300, coins: [130, 190], size: 1.95, boss: true, armor: 0.3 },
+        necro: { name: 'Necromancer', hp: 44, dmg: 9, speed: 95, reach: 300, wind: 0.9, cool: 2.4, xp: 22, coins: [5, 10], size: 1.05, shoot: 300, summon: true, bolt: 'fireball' },
+        troll: { name: 'Cave troll', hp: 180, dmg: 20, speed: 78, reach: 56, wind: 0.7, cool: 1.5, xp: 34, coins: [7, 14], size: 1.3, regen: 0.03 },
+        boar: { name: 'Tusk boar', hp: 70, dmg: 16, speed: 120, reach: 46, wind: 0.5, cool: 1.4, xp: 16, coins: [3, 7], size: 1.05, charge: true },
+        shroom: { name: 'Spore shroom', hp: 34, dmg: 14, speed: 70, reach: 44, wind: 0.5, cool: 1.3, xp: 11, coins: [2, 5], size: 0.95, spore: 90 },
+        scorpion: { name: 'Scorpion', hp: 50, dmg: 12, speed: 170, reach: 44, wind: 0.35, cool: 1, xp: 13, coins: [3, 6], size: 0.95, armor: 0.2 },
+        drake: { name: 'Ember Drake', hp: 950, dmg: 24, speed: 110, reach: 380, wind: 0.8, cool: 1.5, xp: 280, coins: [120, 180], size: 1.9, boss: true, storm: 380, fly: true, fire: true }
     };
     function monsterOn(kind, f) {
         const M = MONSTERS[kind], k = Math.max(0, f - 1);
         return { kind, name: M.name, lv: Math.max(1, Math.round(f)), hp: Math.round(M.hp * 1.25 * (1 + 0.3 * k) * (1 + 0.05 * k)), dmg: Math.round(M.dmg * 1.3 * (1 + 0.18 * k) * (1 + 0.02 * k)), speed: M.speed * (1 + 0.02 * Math.min(k, 15)), reach: M.reach, wind: M.wind, cool: M.cool,
             xp: Math.round(M.xp * (1 + 0.2 * k)), coins: M.coins.map(c => Math.round(c * (1 + 0.15 * k))), size: M.size, boss: !!M.boss, shoot: M.shoot || 0, split: !!M.split, fly: !!M.fly, heal: !!M.heal,
-            block: M.block || 0, armor: M.armor || 0, storm: M.storm || 0, float: !!M.float, bolt: M.bolt || '', boom: M.boom || 0, chill: !!M.chill, blink: !!M.blink, affixes: [], elite: false };
+            block: M.block || 0, armor: M.armor || 0, storm: M.storm || 0, float: !!M.float, bolt: M.bolt || '', boom: M.boom || 0, chill: !!M.chill, blink: !!M.blink, summon: !!M.summon, regen: M.regen || 0, charge: !!M.charge, spore: M.spore || 0, fire: !!M.fire, affixes: [], elite: false };
     }
     function floorMonsters(f, rand) {
         const n = Math.min(32, 10 + Math.floor(f * 2)), out = [];
@@ -18032,10 +18038,16 @@
                 k = f >= 8 && z > 0.24 ? 'wisp' : 'gargoyle';
             else if (z >= 0.26 && z < 0.3 && f < 4)
                 k = 'rat';
+            else if (f >= 2 && z >= 0.3 && z < 0.34)
+                k = f >= 4 && z > 0.32 ? 'scorpion' : 'shroom';
+            else if (f >= 5 && z >= 0.34 && z < 0.37)
+                k = 'boar';
+            else if (f >= 9 && z >= 0.37 && z < 0.4)
+                k = z > 0.385 ? 'necro' : 'troll';
             out.push(k);
         }
         if (f % 5 === 0)
-            out.push(f % 10 === 0 ? 'lord' : f % 15 === 0 ? 'lich' : f % 20 === 5 && f > 5 ? 'queen' : f > 5 ? 'colossus' : 'king');
+            out.push(f % 10 === 0 ? 'lord' : f % 15 === 0 ? 'lich' : f % 20 === 5 && f > 5 ? 'queen' : f > 5 ? (f % 2 ? 'colossus' : 'drake') : 'king');
         return out;
     }
     const roomDiff = (di, room, lv) => { const me = Math.max(1, (lv || 1) - 1); return DUNGEONS[di].daily ? me + 0.5 + (room - 1) * 0.85 : DUNGEONS[di].rooms ? Math.max(DUNGEONS[di].diff, me) + 0.5 + (room - 1) * 1.1 : Math.max(DUNGEONS[di].diff, me) + room - 1; };
@@ -18176,20 +18188,20 @@
                 mods.push(k);
         }
         const mix = [];
-        ['goblin', 'archer', 'ghoul', 'slime', 'bat', 'shaman', 'skeleton', 'skelarcher', 'wraith', 'knight', 'spider', 'mummy', 'imp', 'rat', 'beetle', 'wisp', 'golem', 'gargoyle', 'ghost'].forEach(k => { if (r() < 0.5)
+        ['goblin', 'archer', 'ghoul', 'slime', 'bat', 'shaman', 'skeleton', 'skelarcher', 'wraith', 'knight', 'spider', 'mummy', 'imp', 'rat', 'beetle', 'wisp', 'golem', 'gargoyle', 'ghost', 'necro', 'troll', 'boar', 'shroom', 'scorpion'].forEach(k => { if (r() < 0.5)
             mix.push([k, 10 + Math.floor(r() * 40)]); });
         if (mix.length < 2)
             mix.push(['skeleton', 30], ['ghoul', 25]);
-        const bx = r(), boss = [bx < 0.2 ? 'king' : bx < 0.4 ? 'lord' : bx < 0.6 ? 'lich' : bx < 0.8 ? 'queen' : 'colossus'], ak = Object.keys(AFFIXES), bossAffix = ak[Math.floor(r() * ak.length)];
+        const bx = r(), boss = [bx < 0.2 ? 'king' : bx < 0.4 ? 'lord' : bx < 0.55 ? 'lich' : bx < 0.7 ? 'queen' : bx < 0.85 ? 'colossus' : 'drake'], ak = Object.keys(AFFIXES), bossAffix = ak[Math.floor(r() * ak.length)];
         return Object.assign({}, base, { name: 'The ' + adj[0] + ' ' + noun, tint: adj[1], mods, mix, boss, bossAffix, day });
     }
     const DUN_DAILY = [
         { names: [['Goblin Warrens', '#a8e08a'], ['Mossy Burrows', '#9ad8a0'], ['Mudfang Caves', '#c8b08a'], ['Rattle Pit', '#d8d0b8'], ['Toadstool Hollow', '#e0a8c8'], ['Grubby Tunnels', '#b8c890'], ['Snaggletooth Den', '#e8c890']],
-            mix: ['goblin', 'archer', 'skeleton', 'bat', 'shaman', 'slime', 'spider', 'rat', 'beetle'], must: 'goblin', rooms: [5, 7], bosses: [['king']], twist: 0.3, twists: ['gilded', 'keg'] },
+            mix: ['goblin', 'archer', 'skeleton', 'bat', 'shaman', 'slime', 'spider', 'rat', 'beetle', 'shroom', 'boar', 'scorpion'], must: 'goblin', rooms: [5, 7], bosses: [['king']], twist: 0.3, twists: ['gilded', 'keg'] },
         { names: [['Ghoul Catacombs', '#a8c8e8'], ['Weeping Tombs', '#a8b8d8'], ['Sunken Ossuary', '#98c8c0'], ['Bonechill Vault', '#c8e0f0'], ['Ashen Graves', '#c0b0a8'], ['Moonlit Mausoleum', '#b8b0e8'], ['Rotroot Crypt', '#a8c898']],
-            mix: ['skeleton', 'skelarcher', 'ghoul', 'wraith', 'slime', 'bat', 'goblin', 'mummy', 'spider', 'ghost', 'beetle', 'gargoyle'], must: 'ghoul', rooms: [6, 8], bosses: [['lord'], ['king'], ['queen'], ['colossus']], twist: 0.5, twists: ['gilded', 'keg', 'spiked', 'dark'] },
+            mix: ['skeleton', 'skelarcher', 'ghoul', 'wraith', 'slime', 'bat', 'goblin', 'mummy', 'spider', 'ghost', 'beetle', 'gargoyle', 'necro', 'scorpion', 'troll'], must: 'ghoul', rooms: [6, 8], bosses: [['lord'], ['king'], ['queen'], ['colossus'], ['drake']], twist: 0.5, twists: ['gilded', 'keg', 'spiked', 'dark'] },
         { names: [['Hollow Depths', '#e8a8a8'], ['Obsidian Halls', '#b8a8c8'], ['Abyssal Throne', '#a8a0d8'], ['Drowned Keep', '#88b8c8'], ['Shadowfang Citadel', '#c8a0b8'], ['Cinder Deep', '#e8b088'], ['Kingsbane Vaults', '#d8c088']],
-            mix: ['knight', 'wraith', 'skeleton', 'skelarcher', 'ghoul', 'shaman', 'bat', 'slime', 'mummy', 'imp', 'golem', 'gargoyle', 'wisp', 'ghost'], must: 'knight', rooms: [7, 9], bosses: [['lich', 'lord'], ['lich', 'king'], ['lord', 'king'], ['lich'], ['queen', 'lord'], ['lich', 'queen'], ['colossus'], ['colossus', 'lich']], twist: 0.6, twists: ['gilded', 'keg', 'spiked', 'dark', 'swarm'] }
+            mix: ['knight', 'wraith', 'skeleton', 'skelarcher', 'ghoul', 'shaman', 'bat', 'slime', 'mummy', 'imp', 'golem', 'gargoyle', 'wisp', 'ghost', 'troll', 'necro', 'boar'], must: 'knight', rooms: [7, 9], bosses: [['lich', 'lord'], ['lich', 'king'], ['lord', 'king'], ['lich'], ['queen', 'lord'], ['lich', 'queen'], ['colossus'], ['colossus', 'lich'], ['drake'], ['drake', 'queen']], twist: 0.6, twists: ['gilded', 'keg', 'spiked', 'dark', 'swarm'] }
     ];
     const DUN_DAILY_CACHE = new Map();
     function dunToday(di, day) {
@@ -18314,7 +18326,11 @@
         { id: 'beetles', text: 'Pop 10 bomb beetles', ev: 'kill', kinds: ['beetle'], n: 10, coins: 120, from: 20769 },
         { id: 'golems', text: 'Crack 5 stone golems', ev: 'kill', kinds: ['golem', 'colossus'], n: 5, coins: 170, from: 20769 },
         { id: 'ghosts', text: 'Banish 10 ghosts', ev: 'kill', kinds: ['ghost'], n: 10, coins: 140, from: 20769 },
-        { id: 'rats', text: 'Chase off 20 crypt rats', ev: 'kill', kinds: ['rat'], n: 20, coins: 100, from: 20769 }
+        { id: 'rats', text: 'Chase off 20 crypt rats', ev: 'kill', kinds: ['rat'], n: 20, coins: 100, from: 20769 },
+        { id: 'necros', text: 'Stop 6 necromancers', ev: 'kill', kinds: ['necro'], n: 6, coins: 160, from: 20769 },
+        { id: 'trolls', text: 'Topple 5 cave trolls', ev: 'kill', kinds: ['troll'], n: 5, coins: 160, from: 20769 },
+        { id: 'boars', text: 'Tame 8 tusk boars', ev: 'kill', kinds: ['boar'], n: 8, coins: 130, from: 20769 },
+        { id: 'shrooms', text: 'Pick 12 spore shrooms', ev: 'kill', kinds: ['shroom'], n: 12, coins: 110, from: 20769 }
     ];
     function bountiesToday(day) { const r = rng(dunHash(day, 777)), ids = BOUNTIES.map((_, i) => i).filter(i => !(BOUNTIES[i].from > day)), out = []; while (out.length < 3)
         out.push(ids.splice(Math.floor(r() * ids.length), 1)[0]); return out; }
@@ -18976,6 +18992,164 @@
             c.lineTo(24, 70);
             c.closePath();
             c.fill();
+            c.restore();
+            return;
+        }
+        if (k === 'necro') {
+            const robe = '#2e2440', up = s ? -10 : 0;
+            body(robe, q => { q.moveTo(26, 30); q.lineTo(46, 30); q.lineTo(54, 76); q.lineTo(18, 76); q.closePath(); });
+            c.fillStyle = '#4a3a66';
+            c.fillRect(33, 34, 6, 42);
+            c.fillStyle = 'rgba(29,20,36,.4)';
+            [[22, 74], [32, 74], [42, 74], [50, 74]].forEach(([x, y]) => { c.beginPath(); c.moveTo(x - 4, y + 2); c.lineTo(x, y - 5); c.lineTo(x + 4, y + 2); c.fill(); });
+            body(robe, q => { q.moveTo(24, 30); q.quadraticCurveTo(24, 8, 37, 6); q.quadraticCurveTo(50, 8, 50, 30); q.closePath(); });
+            c.fillStyle = '#120c1a';
+            c.beginPath();
+            c.ellipse(39, 22, 8, 9, 0, 0, TAU);
+            c.fill();
+            c.fillStyle = '#b98cff';
+            [[36, 21], [42, 21]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 1.8, 0, TAU); c.fill(); });
+            c.strokeStyle = ink;
+            c.lineWidth = 4;
+            c.beginPath();
+            c.moveTo(58, 76);
+            c.lineTo(58, 18 + up);
+            c.stroke();
+            c.strokeStyle = '#5a4a3a';
+            c.lineWidth = 2.2;
+            c.stroke();
+            c.fillStyle = 'rgba(185,140,255,.4)';
+            c.beginPath();
+            c.arc(58, 12 + up, s ? 13 : 9, 0, TAU);
+            c.fill();
+            body('#ece6d4', q => q.arc(58, 12 + up, 6, 0, TAU));
+            c.fillStyle = ink;
+            [[56, 11 + up], [60, 11 + up]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 1.3, 0, TAU); c.fill(); });
+            body('#ece6d4', q => q.ellipse(52, 40 + up * 0.5, 4, 3.4, 0, 0, TAU));
+            c.restore();
+            return;
+        }
+        if (k === 'troll') {
+            const sk = '#7a9a7a', skD = mix(sk, ink, 0.35), up = s ? -16 : 0;
+            [[27], [45]].forEach(([x]) => body(skD, q => q.ellipse(x, 70, 8, 6, 0, 0, TAU)));
+            body('#6a4a2a', q => rr(q, 20, 52, 32, 14, 4));
+            body(sk, q => { q.moveTo(18, 56); q.quadraticCurveTo(12, 26, 36, 22); q.quadraticCurveTo(58, 24, 54, 56); q.closePath(); });
+            body(sk, q => q.ellipse(46, 22, 11, 10, 0, 0, TAU));
+            c.fillStyle = '#ffe066';
+            [[45, 19], [52, 19]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 1.8, 0, TAU); c.fill(); });
+            c.fillStyle = '#f2ead8';
+            [[45, 27], [52, 27]].forEach(([x, y]) => { c.beginPath(); c.moveTo(x - 1.6, y); c.lineTo(x, y - 5); c.lineTo(x + 1.6, y); c.fill(); });
+            body(skD, q => q.ellipse(54, 16, 4, 3, 0.4, 0, TAU));
+            c.strokeStyle = ink;
+            c.lineWidth = 6;
+            c.beginPath();
+            c.moveTo(50, 40);
+            c.lineTo(60, 40 + up * 0.6);
+            c.stroke();
+            c.strokeStyle = sk;
+            c.lineWidth = 3.6;
+            c.stroke();
+            body('#7a5a3a', q => { q.moveTo(58, 46 + up); q.lineTo(62, 46 + up); q.lineTo(70, 18 + up); q.lineTo(60, 16 + up); q.closePath(); });
+            c.restore();
+            return;
+        }
+        if (k === 'boar') {
+            const y = 54, hd = s ? 6 : 0;
+            [[22, 0], [30, 1], [42, 0], [50, 1]].forEach(([x]) => body('#4a3424', q => rr(q, x - 3, y + 6, 6, 14, 2)));
+            body('#7a5434', q => q.ellipse(36, y, 22, 13, 0, 0, TAU));
+            c.fillStyle = '#4a3424';
+            for (let x = 20; x < 50; x += 5) { c.beginPath(); c.moveTo(x, y - 11); c.lineTo(x + 2, y - 17); c.lineTo(x + 4, y - 11); c.fill(); }
+            body('#7a5434', q => q.ellipse(56 + hd, y + 2, 11, 9, 0.2, 0, TAU));
+            body('#c88a6a', q => q.ellipse(65 + hd, y + 5, 4, 4.4, 0, 0, TAU));
+            body('#f2ead8', q => { q.moveTo(59 + hd, y + 7); q.quadraticCurveTo(66 + hd, y + 8, 66 + hd, y - 2); q.lineTo(62 + hd, y + 4); q.closePath(); });
+            body('#5a3c24', q => { q.moveTo(50 + hd, y - 5); q.lineTo(50 + hd, y - 14); q.lineTo(56 + hd, y - 7); q.closePath(); });
+            c.fillStyle = '#ff3a3a';
+            c.beginPath();
+            c.arc(58 + hd, y - 1, 1.8, 0, TAU);
+            c.fill();
+            c.strokeStyle = ink;
+            c.lineWidth = 2;
+            c.beginPath();
+            c.moveTo(14, y - 2);
+            c.quadraticCurveTo(8, y - 6, 10, y - 10);
+            c.stroke();
+            c.restore();
+            return;
+        }
+        if (k === 'shroom') {
+            const sq = s ? 3 : 0;
+            [[30], [42]].forEach(([x]) => body('#d8cfb0', q => q.ellipse(x, 72, 5, 4, 0, 0, TAU)));
+            body('#f2ead8', q => rr(q, 24, 40 + sq, 24, 32 - sq, 8));
+            c.fillStyle = ink;
+            [[32, 52], [41, 52]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y + sq, 2, 0, TAU); c.fill(); });
+            c.beginPath();
+            c.arc(36.5, 58 + sq, 3, 0.1, Math.PI - 0.1);
+            c.fill();
+            body('#c8323c', q => { q.moveTo(10, 44 + sq); q.quadraticCurveTo(12, 14 - sq, 36, 12 - sq); q.quadraticCurveTo(60, 14 - sq, 62, 44 + sq); q.quadraticCurveTo(36, 36 + sq, 10, 44 + sq); q.closePath(); });
+            c.fillStyle = '#fff6e8';
+            [[22, 30, 4], [36, 20, 4.6], [50, 30, 4], [30, 36, 2.6], [44, 37, 2.6]].forEach(([x, y, r]) => { c.beginPath(); c.arc(x, y - sq, r, 0, TAU); c.fill(); });
+            if (s) {
+                c.fillStyle = 'rgba(143,224,74,.55)';
+                [[14, 14], [58, 12], [36, 4], [8, 30], [64, 28]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 3, 0, TAU); c.fill(); });
+            }
+            c.restore();
+            return;
+        }
+        if (k === 'scorpion') {
+            const y = 60, st = s ? 1 : 0, sh = '#c89a4a', shD = '#8a6a2a';
+            [-1, 0, 1, 2].forEach(i => { c.strokeStyle = ink; c.lineWidth = 2.6; c.beginPath(); c.moveTo(32 + i * 6, y + 2); c.lineTo(26 + i * 8, y + 12); c.stroke(); });
+            c.strokeStyle = ink;
+            c.lineWidth = 7;
+            c.beginPath();
+            c.moveTo(22, y);
+            c.quadraticCurveTo(4, y - 10, 10 + st * 10, y - 30 - st * 4);
+            c.quadraticCurveTo(20 + st * 14, y - 40, 30 + st * 16, y - 30 + st * 4);
+            c.stroke();
+            c.strokeStyle = sh;
+            c.lineWidth = 4.6;
+            c.stroke();
+            body('#5a3a1a', q => { const x = 30 + st * 16, yy = y - 30 + st * 4; q.moveTo(x - 3, yy - 2); q.lineTo(x + 6, yy + 6); q.lineTo(x + 1, yy + 2); q.closePath(); });
+            body(sh, q => q.ellipse(36, y, 16, 8, 0, 0, TAU));
+            c.strokeStyle = shD;
+            c.lineWidth = 1.2;
+            [30, 36, 42].forEach(x => { c.beginPath(); c.moveTo(x, y - 7); c.lineTo(x, y + 7); c.stroke(); });
+            [[-6], [6]].forEach(([o]) => body(sh, q => { const x = 58 + (s ? 4 : 0), yy = y + o; q.moveTo(48, y); q.lineTo(x - 4, yy); q.lineTo(x + 4, yy - 4); q.lineTo(x + 2, yy + 1); q.lineTo(x + 5, yy + 4); q.closePath(); }));
+            c.fillStyle = ink;
+            [[49, y - 3], [49, y + 2]].forEach(([x, yy]) => { c.beginPath(); c.arc(x, yy, 1.3, 0, TAU); c.fill(); });
+            c.restore();
+            return;
+        }
+        if (k === 'drake') {
+            const y = 40, wy = s ? -16 : 6, sc = '#c83a2a', scD = '#8a2a1e';
+            [-1, 1].forEach(d => body(scD, q => { q.moveTo(36 + d * 4, y - 4); q.lineTo(36 + d * 32, y - 22 + wy); q.lineTo(36 + d * 30, y - 2 + wy * 0.5); q.lineTo(36 + d * 22, y + 4 + wy * 0.3); q.lineTo(36 + d * 14, y + 8); q.closePath(); }));
+            c.strokeStyle = ink;
+            c.lineWidth = 6;
+            c.beginPath();
+            c.moveTo(28, y + 14);
+            c.quadraticCurveTo(12, y + 26, 6, y + 14);
+            c.stroke();
+            c.strokeStyle = sc;
+            c.lineWidth = 3.6;
+            c.stroke();
+            body(scD, q => { q.moveTo(2, y + 12); q.lineTo(8, y + 8); q.lineTo(9, y + 18); q.closePath(); });
+            body(sc, q => q.ellipse(34, y + 10, 12, 15, 0, 0, TAU));
+            body('#ffb052', q => q.ellipse(36, y + 13, 6, 10, 0, 0, TAU));
+            body(sc, q => { q.moveTo(36, y - 2); q.quadraticCurveTo(40, y - 14, 46, y - 16); q.lineTo(60, y - 12); q.lineTo(58, y - 6); q.lineTo(46, y - 6); q.closePath(); });
+            [[42, -1], [48, 1]].forEach(([x]) => body('#f2ead8', q => { q.moveTo(x, y - 16); q.lineTo(x - 4, y - 26); q.lineTo(x + 3, y - 17); q.closePath(); }));
+            c.fillStyle = '#ffe066';
+            c.beginPath();
+            c.arc(50, y - 12, 2, 0, TAU);
+            c.fill();
+            if (s) {
+                c.fillStyle = 'rgba(255,160,60,.6)';
+                c.beginPath();
+                c.arc(64, y - 8, 7, 0, TAU);
+                c.fill();
+                c.fillStyle = '#ffe066';
+                c.beginPath();
+                c.arc(64, y - 8, 3.4, 0, TAU);
+                c.fill();
+            }
             c.restore();
             return;
         }
@@ -29415,9 +29589,9 @@
                 this.dunPop(m.x, m.y - 90 * m.size, 'ENRAGED!', '#ff7a3c', true);
             }
         }
-        dunStorm(x, y, dmg, src, wait) {
+        dunStorm(x, y, dmg, src, wait, col, r) {
             const ring = this.add.graphics().setDepth(-460);
-            const W = { x, y, t: wait || 0.85, max: wait || 0.85, dmg, src, ring };
+            const W = { x, y, t: wait || 0.85, max: wait || 0.85, dmg, src, ring, col: col || 0, r: r || 0 };
             (this.warns = this.warns || []).push(W);
         }
         dunWarnTick(dt, fx, fy) {
@@ -29427,9 +29601,9 @@
                 W.t -= dt;
                 const p = 1 - Math.max(0, W.t) / W.max, r = W.r || 46, g = W.ring;
                 g.clear();
-                g.fillStyle(W.slam ? 0xff3b3b : 0x7fd8ff, 0.12 + 0.22 * p);
+                g.fillStyle(W.slam ? 0xff3b3b : W.col || 0x7fd8ff, 0.12 + 0.22 * p);
                 g.fillEllipse(W.x, W.y, r * 2 * p, r * 0.9 * p);
-                g.lineStyle(3, W.slam ? 0xff5a5a : 0xbfeaff, 0.9);
+                g.lineStyle(3, W.slam ? 0xff5a5a : W.col || 0xbfeaff, 0.9);
                 g.strokeEllipse(W.x, W.y, r * 2, r * 0.9);
                 if (W.t > 0)
                     return true;
@@ -29439,6 +29613,11 @@
                     this.dunRing(W.x, W.y, r, 0xff8a5c);
                     if (!REDUCED)
                         this.cameras.main.shake(180, 0.01);
+                    sfx.thud();
+                }
+                else if (W.col) {
+                    this.dunRing(W.x, W.y, r, W.col);
+                    this.dunRing(W.x, W.y, r * 0.5, 0xffffff);
                     sfx.thud();
                 }
                 else {
@@ -29512,6 +29691,8 @@
         monKill(m) {
             const Dn = G.dun, mods = this.mods || [];
             m.dead = true;
+            if (m.spore)
+                this.dunStorm(m.x, m.y, m.dmg, null, 0.7, 0x8fe04a, m.spore);
             m.shadow.destroy();
             if (m.tag)
                 m.tag.destroy();
@@ -29818,6 +29999,8 @@
         }
         monGone(m) {
             m.dead = true;
+            if (m.spore)
+                this.dunStorm(m.x, m.y, m.dmg, null, 0.7, 0x8fe04a, m.spore);
             m.shadow.destroy();
             if (m.tag)
                 m.tag.destroy();
@@ -30400,6 +30583,13 @@
                     if (o.t <= 0)
                         m[k] = null;
                 }
+                if (m.regen && m.hp > 0 && m.hp < m.max && !m.burn) {
+                    m.hp = Math.min(m.max, m.hp + m.max * m.regen * dt);
+                    if ((m.regenPop = (m.regenPop || 0) + dt) > 1.5) {
+                        m.regenPop = 0;
+                        this.dunPop(m.x, m.y - 80 * m.size, '+' + Math.round(m.max * m.regen * 1.5), '#7dff9a');
+                    }
+                }
                 if (m.hp <= 0) {
                     this.monKill(m);
                     continue;
@@ -30427,16 +30617,22 @@
                             this.dunRing(hurt.x, hurt.y, 50, 0x7dff9a);
                             sfx.chime();
                         }
+                        else if (m.summon && !(this.party || []).length && (m.raised || 0) < 4 && Math.random() < 0.5 && this.mons.filter(o => !o.dead).length < 50) {
+                            m.raised = (m.raised || 0) + 2;
+                            this.dunPop(m.x, m.y - 90 * m.size, 'Rise!', '#b98cff', true);
+                            [-1, 1].forEach(sd => { const b = this.monPut((m.diff || m.lv) >= 8 ? 'skeleton' : 'rat', m.x + sd * 40, m.y + 16, m.diff || m.lv); b.aggro = true; b.state = 'cool'; b.t = 0.6; this.dunFree(b); this.dunRing(b.x, b.y, 30, 0xb98cff); });
+                            sfx.cast();
+                        }
                         else if (m.storm) {
                             const spots = m.boss ? [[0, 0], [70, 30], [-70, 30], [0, -60]] : [[0, 0]];
-                            spots.forEach(([ox, oy], i) => this.dunStorm(tx + ox + (i ? (Math.random() - 0.5) * 40 : 0), ty + oy, m.dmg, m, 0.85 + i * 0.12));
+                            spots.forEach(([ox, oy], i) => this.dunStorm(tx + ox + (i ? (Math.random() - 0.5) * 40 : 0), ty + oy, m.dmg, m, 0.85 + i * 0.12, m.fire ? 0xff8a3a : 0));
                             sfx.cast();
                         }
                         else if (m.shoot) {
                             const ax = tx - m.x, ay = ty - 20 - (m.y - 30), al = Math.hypot(ax, ay) || 1, hex = m.heal, sp = hex ? 260 : 340;
                             const img = this.add.image(m.x, m.y - 30, m.bolt || (hex ? 'hex' : 'arrow')).setScale(1 / TEX).setRotation(Math.atan2(ay, ax)).setDepth(9000);
                             if (m.bolt)
-                                img.setBlendMode(Phaser.BlendModes.ADD).setTint(m.chill ? 0x8fdcff : 0xffa060);
+                                img.setBlendMode(Phaser.BlendModes.ADD).setTint(m.chill ? 0x8fdcff : m.summon ? 0xb98cff : 0xffa060);
                             else if (!hex)
                                 img.setTint(0xffb0b0);
                             else
@@ -30457,6 +30653,33 @@
                         }
                         else if (me && d < m.reach + 18)
                             this.playerHurt(m.dmg, m);
+                    }
+                }
+                else if (m.state === 'rushwind') {
+                    m.t -= dt;
+                    if (m.t <= 0) {
+                        m.state = 'rush';
+                        m.t = 0.6;
+                        m.hitRush = false;
+                        sfx.whoosh();
+                    }
+                }
+                else if (m.state === 'rush') {
+                    m.t -= dt;
+                    m.x += m.rx * m.speed * 3.4 * dt;
+                    m.y += m.ry * m.speed * 3.4 * dt;
+                    const bx = m.x, by = m.y;
+                    this.dunFree(m);
+                    m.swing = 0.1;
+                    if (me && !m.hitRush && d < 54) {
+                        m.hitRush = true;
+                        this.playerHurt(Math.round(m.dmg * 1.4), m);
+                    }
+                    if (m.t <= 0 || Math.hypot(m.x - bx, m.y - by) > 2) {
+                        m.state = 'cool';
+                        m.t = m.cool;
+                        if (m.t > 0 && Math.hypot(m.x - bx, m.y - by) > 2)
+                            m.stun = 0.6;
                     }
                 }
                 else if (m.state === 'cool') {
@@ -30484,6 +30707,15 @@
                             m.state = 'wind';
                             m.t = m.wind;
                         }
+                    }
+                    else if (m.charge && d > 130 && d < 400 && (m.chargeT = (m.chargeT === undefined ? 0.8 : m.chargeT) - dt) <= 0) {
+                        m.chargeT = 3 + Math.random() * 1.5;
+                        m.rx = ux;
+                        m.ry = uy;
+                        m.flip = ux >= 0 ? 1 : -1;
+                        m.state = 'rushwind';
+                        m.t = 0.5;
+                        this.dunPop(m.x, m.y - 80 * m.size, '!', '#ff9a5c', true);
                     }
                     else if (m.blink && d > 150 && (m.blinkT = (m.blinkT === undefined ? 1.5 : m.blinkT) - dt) <= 0) {
                         m.blinkT = 3 + Math.random() * 2;
@@ -30543,7 +30775,7 @@
                 }
                 else if (m.aggro && !(m.stun > 0))
                     m.flip = dx >= 0 ? 1 : -1;
-                const wind = m.state === 'wind', bob = (m.fly || m.float) && !REDUCED ? Math.sin(time * 0.01 + m.x) * 5 + (m.float ? 10 : 0) : (vx || vy) && !REDUCED ? Math.abs(Math.sin(time * 0.015 + m.x)) * 3 : 0;
+                const wind = m.state === 'wind' || m.state === 'rushwind', bob = (m.fly || m.float) && !REDUCED ? Math.sin(time * 0.01 + m.x) * 5 + (m.float ? 10 : 0) : (vx || vy) && !REDUCED ? Math.abs(Math.sin(time * 0.015 + m.x)) * 3 : 0;
                 m.img.setTexture('mon_' + m.kind + '_' + (m.swing > 0 || (m.fly && Math.sin(time * 0.03 + m.x) > 0) ? 1 : 0)).setPosition(m.x, m.y - bob).setDepth(m.y).setScale(0.9 * m.size * m.flip / TEX, 0.9 * m.size * (wind && !REDUCED ? 1 + Math.sin(time * 0.04) * 0.04 : 1) / TEX);
                 if (m.flash > 0)
                     m.img.setTintFill(0xffffff);
