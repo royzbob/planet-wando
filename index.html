@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794359453';
+<script>window.WANDO_BUILD = '1794362336';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -1700,6 +1700,10 @@
   .dun-skill:disabled { opacity: 0.6; }
   .dun-locked { opacity: 0.55; }
   .dun-from { font-size: 10.5px !important; opacity: 0.65 !important; }
+  .dun-magic { font-size: 11px !important; font-weight: 700; line-height: 1.3; }
+  .dun-magic-key { margin: 2px 4px 8px; font-size: 12px; background: rgba(255,255,255,.55); border-radius: 10px; padding: 6px 10px; }
+  .dun-magic-key summary { cursor: pointer; font-weight: 800; }
+  .dun-magic-key p { margin: 4px 0; line-height: 1.35; }
   .dun-unknown b { opacity: 0.6; }
   .dun-filters { display: flex; flex-wrap: wrap; gap: 4px; }
   .coll-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
@@ -20068,16 +20072,16 @@
         sun: ['Sunsteel', '#fff0a0', '#ffffff', '#e0b030', ['Sunforged', 'Solar', 'Daybreak', 'Gleaming'], [4]]
     };
     const MAGIC = {
-        none: ['', '#ffffff', 'Well made: hits a little harder.', []],
-        flame: ['Flame', '#ff8a3c', 'Burns: sets monsters alight.', ['Ember', 'Blaze', 'Inferno', 'Cinder', 'Pyre', 'Scorch', 'Phoenix', 'Hellfire']],
-        frost: ['Frost', '#9be7ff', 'Chills: slows what it hits.', ['Frost', 'Rime', 'Glacier', 'Winter', 'Blizzard', 'Hoarfrost', 'Icefang', 'Snowfall']],
-        storm: ['Storm', '#ffe14d', 'Arcs: lightning leaps to two more.', ['Storm', 'Thunder', 'Tempest', 'Volt', 'Skybreaker', 'Gale', 'Bolt', 'Squall']],
-        shadow: ['Shadow', '#9a6aff', 'Drains: heals you a little each hit.', ['Shadow', 'Dusk', 'Night', 'Umbral', 'Wraith', 'Eclipse', 'Gloom', 'Void']],
-        holy: ['Holy', '#fff6c0', 'Smites: half again against the dead.', ['Dawn', 'Radiant', 'Sacred', 'Halo', 'Seraph', 'Lumen', 'Blessed', 'Aurora']],
-        venom: ['Venom', '#8fe04a', 'Poisons: hurts over time.', ['Venom', 'Viper', 'Blight', 'Toxin', 'Asp', 'Nettle', 'Mire', 'Hornet']],
-        star: ['Star', '#c8d8ff', 'Keen: more critical hits.', ['Star', 'Comet', 'Astral', 'Nova', 'Meteor', 'Celestial', 'Zenith', 'Moonlit']],
-        blood: ['Blood', '#ff3a4a', 'Fury: hits harder when you are hurt.', ['Blood', 'Crimson', 'Sanguine', 'Reaver', 'Scarlet', 'Bloodfang', 'Carnage', 'Gore']],
-        arcane: ['Arcane', '#d68aff', 'Echo: sometimes strikes twice.', ['Arcane', 'Rune', 'Mystic', 'Aether', 'Spell', 'Sigil', 'Eldritch', 'Prism']]
+        none: ['', '#ffffff', 'No magic: plain, but hits 10% harder.', []],
+        flame: ['Flame', '#ff8a3c', 'Flame: sets monsters on fire, so they keep burning for 3 seconds after each hit.', ['Ember', 'Blaze', 'Inferno', 'Cinder', 'Pyre', 'Scorch', 'Phoenix', 'Hellfire']],
+        frost: ['Frost', '#9be7ff', 'Frost: freezes monsters you hit so they move at half speed for a moment.', ['Frost', 'Rime', 'Glacier', 'Winter', 'Blizzard', 'Hoarfrost', 'Icefang', 'Snowfall']],
+        storm: ['Storm', '#ffe14d', 'Storm: lightning jumps from your target to 2 monsters nearby, for half damage.', ['Storm', 'Thunder', 'Tempest', 'Volt', 'Skybreaker', 'Gale', 'Bolt', 'Squall']],
+        shadow: ['Shadow', '#9a6aff', 'Shadow: every hit heals you a little (8% of the damage you deal).', ['Shadow', 'Dusk', 'Night', 'Umbral', 'Wraith', 'Eclipse', 'Gloom', 'Void']],
+        holy: ['Holy', '#fff6c0', 'Holy: 50% more damage to the undead: skeletons, ghouls, mummies, ghosts, wraiths, necromancers and liches.', ['Dawn', 'Radiant', 'Sacred', 'Halo', 'Seraph', 'Lumen', 'Blessed', 'Aurora']],
+        venom: ['Venom', '#8fe04a', 'Venom: poisons monsters, so they keep taking damage for 4 seconds after each hit.', ['Venom', 'Viper', 'Blight', 'Toxin', 'Asp', 'Nettle', 'Mire', 'Hornet']],
+        star: ['Star', '#c8d8ff', 'Star: more critical hits (big yellow numbers that do extra damage).', ['Star', 'Comet', 'Astral', 'Nova', 'Meteor', 'Celestial', 'Zenith', 'Moonlit']],
+        blood: ['Blood', '#ff3a4a', 'Blood: hits 30% harder while your health is under half.', ['Blood', 'Crimson', 'Sanguine', 'Reaver', 'Scarlet', 'Bloodfang', 'Carnage', 'Gore']],
+        arcane: ['Arcane', '#d68aff', 'Arcane: sometimes a hit echoes and does double damage.', ['Arcane', 'Rune', 'Mystic', 'Aether', 'Spell', 'Sigil', 'Eldritch', 'Prism']]
     };
     const WRAPS = ['#7a4f32', '#3a3046', '#a8323a', '#2f5a8a', '#2f7a4a', '#d8b46a', '#6a3a8a', '#e8e2d4'];
     const SUFFIXES = ['of Embers', 'of the Deep', 'of Moonlight', 'of the Hollow', 'of Kings', 'of the Wilds', 'of Echoes', 'of the North', 'of Dawn', 'of Ruin', 'of Whispers', 'of the Tide', 'of Ages', 'of the Vale', 'of Stars', 'of Thorns'];
@@ -29612,7 +29616,7 @@
             if (m.dead)
                 return;
             const w = notMine ? null : this.dunWeapon(), fx = w ? w.fx : 'none';
-            if (fx === 'holy' && (m.kind === 'ghoul' || m.kind === 'lord'))
+            if (fx === 'holy' && ['ghoul', 'lord', 'skeleton', 'skelarcher', 'lich', 'wraith', 'mummy', 'ghost', 'necro'].includes(m.kind))
                 d = Math.round(d * 1.5);
             if (fx === 'arcane' && Math.random() < 0.15) {
                 d *= 2;
@@ -44867,7 +44871,9 @@
         const DUN_TABS = [['bag', 'Bag'], ['stats', 'Stats & skills'], ['armory', 'Armory'], ['shop', 'Potions'], ['wares', 'Today\'s wares'], ['stash', 'Stash'], ['armor', 'Armor']];
         dn.af = 'week';
         const dunTabBtns = DUN_TABS.map(([id, name]) => { const b = el('button', 'furn-cat', { type: 'button', 'data-tab': id, 'aria-pressed': 'false' }); b.textContent = name; dunTabs.appendChild(b); return b; });
-        const weaponLine = w => { const d = Number.isInteger(w.c) ? armoryDef(w.c) : null; return RARITIES[w.r][0] + ' ' + (d ? FORMS[d.t][d.form].name[0].toLowerCase() : WEAPON_TYPES[w.t].name.toLowerCase()) + ' · damage ' + w.dmg + (d && d.fx !== 'none' ? ' · ' + MAGIC[d.fx][2].split(':')[0] : ''); };
+        const weaponLine = w => { const d = Number.isInteger(w.c) ? armoryDef(w.c) : null; return RARITIES[w.r][0] + ' ' + (d ? FORMS[d.t][d.form].name[0].toLowerCase() : WEAPON_TYPES[w.t].name.toLowerCase()) + ' · damage ' + w.dmg + (d && d.fx !== 'none' ? ' · ' + MAGIC[d.fx][0] + ' magic' : ''); };
+        const magicNode = fx => { if (!fx || !MAGIC[fx] || fx === 'none') return document.createTextNode(''); const n = node('small', 'dun-magic', MAGIC[fx][2]); n.style.color = mix(MAGIC[fx][1], '#1d1424', 0.5); return n; };
+        const weaponMagic = w => { const d = Number.isInteger(w.c) ? armoryDef(w.c) : null; return magicNode(d ? d.fx : ''); };
         const weaponFrom = w => { const d = Number.isInteger(w.c) ? armoryDef(w.c) : null; return d ? armorySetName(d) + (armoryLive(d) ? '' : ' (retired)') + ' · #' + w.u : ''; };
         const weaponTip = w => { const d = Number.isInteger(w.c) ? armoryDef(w.c) : null; return d ? d.name + '\n' + (d.fx !== 'none' ? MAGIC[d.fx][2] + '\n' : '') + d.lore + '\nQuality ' + w.q + '%' : w.name; };
         const armorCanvas = (p, n) => { const cv = el('canvas', '', { width: n || 96, height: n || 96, 'aria-hidden': 'true' }), c = cv.getContext('2d'); if (c) {
@@ -45022,7 +45028,7 @@
                 st.forEach(({ w, price }, i) => {
                     const li = node('div', 'mine-row dun-row'), text = node('div', 'mine-text'), nm = node('b', '', w.name);
                     nm.style.color = mix(RARITIES[w.r][1], '#1d1424', 0.35);
-                    text.append(nm, node('small', '', weaponLine(w)), node('small', 'dun-from', weaponFrom(w).replace(/ · #.*/, '')));
+                    text.append(nm, node('small', '', weaponLine(w)), weaponMagic(w), node('small', 'dun-from', weaponFrom(w).replace(/ · #.*/, '')));
                     li.title = weaponTip(w);
                     li.append(weaponCanvas(w), text);
                     const b = el('button', 'btn', { type: 'button', 'data-act': 'buyw', 'data-i': String(i) });
@@ -45060,7 +45066,7 @@
                 shown.forEach(d => {
                     const got = have.has(d.id), li = node('div', 'mine-row dun-row' + (got ? '' : ' dun-unknown')), text = node('div', 'mine-text'), nm = node('b', '', got ? d.name : '???');
                     nm.style.color = mix(RARITIES[d.r][1], '#1d1424', 0.35);
-                    text.append(nm, node('small', '', RARITIES[d.r][0] + ' ' + FORMS[d.t][d.form].name[0].toLowerCase() + ' · tier ' + (d.tier + 1) + (got ? ' · damage about ' + d.dmg : '') + (d.fx !== 'none' ? ' · ' + MAGIC[d.fx][2].split(':')[0] : '')), node('small', 'dun-from', armorySetName(d) + (d.set === 'week' && d.week === wk ? ' · NEW' : armoryLive(d, wk) ? '' : ' · retired: trade only')));
+                    text.append(nm, node('small', '', RARITIES[d.r][0] + ' ' + FORMS[d.t][d.form].name[0].toLowerCase() + ' · tier ' + (d.tier + 1) + (got ? ' · damage about ' + d.dmg : '') + (d.fx !== 'none' ? ' · ' + MAGIC[d.fx][0] + ' magic' : '')), got ? magicNode(d.fx) : document.createTextNode(''), node('small', 'dun-from', armorySetName(d) + (d.set === 'week' && d.week === wk ? ' · NEW' : armoryLive(d, wk) ? '' : ' · retired: trade only')));
                     if (got)
                         li.title = d.name + '\n' + (d.fx !== 'none' ? MAGIC[d.fx][2] + '\n' : '') + d.lore;
                     const cv = weaponCanvas({ c: d.id, t: d.t, tier: d.tier, r: d.r }, 72);
@@ -45108,7 +45114,7 @@
                 (D.stash || []).forEach((w, i) => {
                     const li = node('div', 'mine-row dun-row'), text = node('div', 'mine-text'), nm = node('b', '', w.name);
                     nm.style.color = mix(RARITIES[w.r][1], '#1d1424', 0.35);
-                    text.append(nm, node('small', '', weaponLine(w)));
+                    text.append(nm, node('small', '', weaponLine(w)), weaponMagic(w));
                     li.title = weaponTip(w);
                     li.append(weaponCanvas(w), text);
                     const tk = el('button', 'btn', { type: 'button', 'data-act': 'take', 'data-i': String(i) });
@@ -45134,6 +45140,12 @@
                     top.appendChild(b);
                 }
                 rows.push(top);
+                {
+                    const key = el('details', 'dun-magic-key'), sm = node('summary', '', '✨ What does weapon magic do?');
+                    key.appendChild(sm);
+                    Object.keys(MAGIC).forEach(k => { const r = node('p', '', ''); const b = node('b', '', (MAGIC[k][0] || 'Plain') + ': '); b.style.color = k === 'none' ? '#5a5070' : mix(MAGIC[k][1], '#1d1424', 0.45); r.append(b, MAGIC[k][2].replace(/^[^:]*: /, '')); key.appendChild(r); });
+                    rows.push(key);
+                }
                 if (dn.shop) {
                     const forge = node('div', 'mine-row dun-forge'), txt = node('div', 'mine-text');
                     txt.append(node('b', '', '🔨 Grizzle\'s forge'), node('small', '', 'Three weapons of one rarity melt into one of the next, up to Epic (Legends only come from bosses).'));
@@ -45158,7 +45170,7 @@
                         tag.title = 'Damage compared with the one in your hand';
                         nm.append(' ', tag);
                     }
-                    text.append(nm, node('small', '', weaponLine(w) + (likes && !likes.includes(w.t) ? ' · not for your class' : '')), node('small', 'dun-from', weaponFrom(w)));
+                    text.append(nm, node('small', '', weaponLine(w) + (likes && !likes.includes(w.t) ? ' · not for your class' : '')), weaponMagic(w), node('small', 'dun-from', weaponFrom(w)));
                     li.title = weaponTip(w);
                     li.append(weaponCanvas(w), text);
                     const eq = el('button', 'btn', { type: 'button', 'data-act': 'equip', 'data-i': String(i) });
@@ -45875,7 +45887,7 @@
             }
             return cv;
         }
-        const collWhat = (kind, d) => (kind === 'c' ? 'player card · ' + CARD_PATS[d.pat].toLowerCase() + (d.emblem ? ', ' + CARD_EMBLEMS[d.emblem] : '') + (d.frame ? ', ' + CARD_FRAMES[d.frame].toLowerCase() + ' frame' : '') : kind === 'w' ? FORMS[d.t][d.form].name[0].toLowerCase() + (d.fx !== 'none' ? ' · ' + MAGIC[d.fx][2].split(':')[0] : '')
+        const collWhat = (kind, d) => (kind === 'c' ? 'player card · ' + CARD_PATS[d.pat].toLowerCase() + (d.emblem ? ', ' + CARD_EMBLEMS[d.emblem] : '') + (d.frame ? ', ' + CARD_FRAMES[d.frame].toLowerCase() + ' frame' : '') : kind === 'w' ? FORMS[d.t][d.form].name[0].toLowerCase() + (d.fx !== 'none' ? ' · ' + MAGIC[d.fx][0] + ' magic' : '')
             : kind === 'o' ? 'outfit' + ['hat', 'eyes', 'neck', 'pack'].filter(k => d[k]).map(k => ' + ' + WEAR[k].list[d[k].style].name.toLowerCase()).join('')
                 : kind === 'b' ? (d.skate ? 'skateboard' : BOARD_SHAPES[d.shape].toLowerCase() + ' hoverboard, ' + BOARD_PATS[d.pat].toLowerCase()) + ' · speed ' + d.speed
                     : FURN_BY[d.t].name.toLowerCase() + (d.flair ? ', ' + FLAIRS[d.flair].toLowerCase() + ' finish' : ''));
@@ -46631,7 +46643,7 @@
                 const li = node('div', 'mine-row dun-row'), text = node('div', 'mine-text'), nm = node('b', '', w.name);
                 nm.style.color = mix(RARITIES[w.r][1], '#1d1424', 0.35);
                 if (w.k === 'w') {
-                    text.append(nm, node('small', '', weaponLine(w)), node('small', 'dun-from', weaponFrom(w)));
+                    text.append(nm, node('small', '', weaponLine(w)), weaponMagic(w), node('small', 'dun-from', weaponFrom(w)));
                     li.title = weaponTip(w);
                     li.append(weaponCanvas(w, 56), text);
                 }
