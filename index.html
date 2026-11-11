@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794357198';
+<script>window.WANDO_BUILD = '1794357246';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -34188,14 +34188,14 @@
                 c.fillStyle = '#7a6aa0'; disc(c, 35, 35, 9); c.fillStyle = 'rgba(255,255,255,0.35)'; disc(c, 32, 32, 3.5);
             });
             this.speakers = [];
-            [[158, 372], [1442, 372]].forEach(([sx, sy]) => {
-                if (!this.free(sx, sy, 40)) return;
-                this.prop('spk_box', sx, sy, 164 / 170, { shadow: [6, -3, 96, 26], solids: [[0, -10, 38]], reserve: 50 });
+            [[175, 372], [1425, 372], [175, 1010], [1425, 1040]].forEach(([sx, sy]) => {
+                if (!this.free(sx, sy, 36)) return;
+                const box = this.prop('spk_box', sx, sy, 164 / 170, { shadow: [6, -3, 96, 26], solids: [[0, -10, 38]], reserve: 50 });
                 const top = sy - 164;                                       // (the cabinet's top edge, in the world)
                 const woof = this.add.image(sx, top + 112, 'spk_cone').setScale(66 / 70 / TEX).setDepth(sy + 0.2);
                 const tw = this.add.image(sx, top + 46, 'spk_cone').setScale(44 / 70 / TEX).setDepth(sy + 0.2);
                 const glow = this.add.image(sx, top + 112, 'glow').setDisplaySize(140, 140).setTint(0xff3df2).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD).setDepth(sy + 0.3);
-                this.speakers.push({ woof, tw, glow, w0: 66 / 70 / TEX, t0: 44 / 70 / TEX, lvl: 0 });
+                this.speakers.push({ box, sx, sy, woof, tw, glow, w0: 66 / 70 / TEX, t0: 44 / 70 / TEX, lvl: 0, b0: box.scaleX });
             });
             this.djHost = { img: this.add.image(800, 186, 'dj_host').setOrigin(0.5, FEET_OA).setScale(1 / TEX).setDepth(200), x: 800, y: 186 };
             this.label(800, 236 - 150, 'DJ Volt · DJ Booth', '#3a0f6e');
@@ -34231,7 +34231,6 @@
             if (!REDUCED)
                 this.tweens.add({ targets: glow, alpha: 0.75, duration: 760, yoyo: true, repeat: -1, ease: 'Sine.inOut' });
             this.concert = { btn, glow, on: false, hit: new Phaser.Geom.Rectangle(bx - 100, by - 48, 200, 96) };
-            [[190, 340], [190, 960], [1420, 290], [1420, 1010]].forEach(([x, y]) => this.prop('speaker', x, y, 122 / 130, { solids: [[0, -20, 30]] }));
             if (!this.textures.exists('dancestudio'))
                 bake(this, 'dancestudio', 120, 150, c => {
                     c.strokeStyle = '#0b0718';
@@ -37077,13 +37076,15 @@
             if (!this.speakers || !this.speakers.length) return;
             let b = null;
             try { b = ui.clubBass ? ui.clubBass() : null; } catch (e) { }
-            if (b === null) { const playing = bp !== null; b = playing ? Math.max(0, 1 - (bp - Math.floor(bp)) * 3.2) * 0.85 : 0; }     // (the club's own music: a kick on each beat)
+            if (b === null) { const playing = bp !== null; b = playing ? Math.pow(Math.max(0, 1 - (bp - Math.floor(bp)) * 2.6), 1.5) : 0; }     // (the club's own music: a kick on each beat)
+            else b = Math.min(1, b * 1.35);
             for (const S of this.speakers) {
-                S.lvl = b > S.lvl ? b : S.lvl + (b - S.lvl) * 0.25;                  // (fast out, slower back in, like a real cone)
-                const k = REDUCED ? 0 : S.lvl;
-                S.woof.setScale(S.w0 * (1 + k * 0.16));
-                S.tw.setScale(S.t0 * (1 + k * 0.08));
-                S.glow.setAlpha(k * 0.45);
+                S.lvl = b > S.lvl ? b : S.lvl + (b - S.lvl) * 0.32;                  // (punches out, falls back)
+                const k = REDUCED ? 0 : S.lvl, jig = k > 0.55 ? (Math.random() - 0.5) * 2.4 * k : 0;
+                S.woof.setScale(S.w0 * (1 + k * 0.34)).setX(S.sx + jig);
+                S.tw.setScale(S.t0 * (1 + k * 0.2)).setX(S.sx + jig);
+                S.box.setScale(S.b0 * (1 + k * 0.035), S.b0 * (1 - k * 0.045)).setX(S.sx + jig);     // (the whole cabinet kicks)
+                S.glow.setAlpha(k * 0.6).setDisplaySize(140 + k * 60, 140 + k * 60);
             }
         }
         djHostTick(time, on, bp) {                                  // DJ Volt: nods along, works the decks, throws a hand up now and then; on the beat when a song is on
