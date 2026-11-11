@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794365200';
+<script>window.WANDO_BUILD = '1794365417';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -18574,7 +18574,7 @@
         return t;
     }
     const treeSpent = D => treeSpentIn(D.cls, treeOf(D));
-    const treePts = D => Math.max(0, D.level - treeSpent(D));
+    const treePts = D => Math.max(0, D.level - (D.spBase || 0) - treeSpent(D));     // (spBase: levels before the fresh start don't give skill points)
     const skillRank = (D, id) => treeOf(D)[id] || 0;
     function talent(D, fx) {
         const t = D && D.trees && D.trees[D.cls];
@@ -18654,17 +18654,19 @@
         out.pts = Number.isInteger(v.pts) ? clamp(v.pts, 0, owed) : owed;
         out.bag = (Array.isArray(v.bag) ? v.bag : []).map(cleanWeapon).filter(Boolean).slice(0, DUN.BAG);
         out.slots = (Array.isArray(v.slots) ? v.slots : []).slice(0, 3).map(x => (typeof x === 'string' && /^[a-z]{2,10}$/.test(x) ? x : null));
+        out.spBase = Number.isInteger(v.spBase) ? clamp(v.spBase, 0, out.level) : 0;
         if (v.trees && typeof v.trees === 'object') {
             out.trees = {};
             Object.keys(CLASSES).forEach(c => { const src = v.trees[c]; if (!src || typeof src !== 'object')
                 return; const t = {}; treeNodes(c).forEach(n => { const r = src[n.id]; if (Number.isInteger(r) && r > 0)
-                t[n.id] = Math.min(TREE_MAX, r); }); out.trees[c] = treeSpentIn(c, t) <= out.level ? t : {}; });
+                t[n.id] = Math.min(TREE_MAX, r); }); out.trees[c] = treeSpentIn(c, t) <= out.level - out.spBase ? t : {}; });
         }
-        if (v.treeV !== 2) {     // (one-time roll back: skills handed out for free before costs existed must be earned again)
+        if (v.treeV !== 3) {     // (fresh start for everyone: only the free first skill, 0 skill points; new points come from levels gained after this)
             out.trees = {};
             out.slots = [null, null, null];
+            out.spBase = out.level;
         }
-        out.treeV = 2;
+        out.treeV = 3;
         out.stash = (Array.isArray(v.stash) ? v.stash : []).map(cleanWeapon).filter(Boolean).slice(0, DUN.STASH);
         const lv = v.loot && typeof v.loot === 'object' ? v.loot : {};
         out.loot = { day: int(lv.day, 0, 1e7, 0), n: int(lv.n, 0, 999, 0), got: (Array.isArray(lv.got) ? lv.got : []).filter(x => typeof x === 'string' && x.length < 24).slice(0, 40) };
@@ -45767,7 +45769,7 @@
                 D.hp = Math.min(D.hp, dunMaxHp(D));
                 D.mp = Math.min(D.mp, dunMaxMp(D));
                 sfx.tick();
-                return 'Tree reset: all ' + D.level + ' skill points are back (you keep your first skill). Spend them how you like!';
+                return 'Tree reset: ' + treePts(D) + ' skill point' + (treePts(D) === 1 ? ' is' : 's are') + ' back (you keep your first skill). Spend them how you like!';
             }
             if (act === 'slot') {
                 const [id, ks] = String(i).split(':'), k = Number(ks), S = (SKILLS[D.cls] || []).find(x => x.id === id);
