@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794362336';
+<script>window.WANDO_BUILD = '1794362634';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -1701,6 +1701,26 @@
   .dun-locked { opacity: 0.55; }
   .dun-from { font-size: 10.5px !important; opacity: 0.65 !important; }
   .dun-magic { font-size: 11px !important; font-weight: 700; line-height: 1.3; }
+  .tree-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 2px 4px 8px; }
+  @media (max-width: 720px) { .tree-grid { grid-template-columns: 1fr; } }
+  .tree-col { display: flex; flex-direction: column; align-items: stretch; background: rgba(255,255,255,.35); border-radius: 12px; padding: 8px; }
+  .tree-hd { border-bottom: 3px solid; padding-bottom: 4px; margin-bottom: 6px; }
+  .tree-hd b { display: block; font-size: 15px; }
+  .tree-hd small { font-size: 11px; opacity: .75; }
+  .tree-node { display: flex; gap: 8px; align-items: center; background: #fff; border: 2px solid #d8d0e8; border-radius: 10px; padding: 6px; }
+  .tree-node.on { border-color: #7dcf6a; background: #f2ffe9; }
+  .tree-node.off { opacity: .55; }
+  .tree-node.perk .tree-ic { border-radius: 50%; background: #3a3050; }
+  .tree-ic { flex: 0 0 40px; width: 40px; height: 40px; display: grid; place-items: center; font-size: 22px; border-radius: 8px; background: #2a2238; overflow: hidden; }
+  .tree-ic canvas { width: 40px; height: 40px; }
+  .tree-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .tree-tx b { font-size: 13px; }
+  .tree-tx small { font-size: 11px; line-height: 1.3; }
+  .tree-dots { color: #e8a82e; letter-spacing: 1px; font-size: 11px; }
+  .tree-why { color: #a0405a; font-weight: 700; }
+  .tree-btn { flex: 0 0 auto; font-size: 12px !important; padding: 6px 10px !important; }
+  .tree-link { width: 4px; height: 10px; margin: 0 auto; background: #c8c0d8; border-radius: 2px; }
+  .tree-link.on { background: #7dcf6a; }
   .dun-magic-key { margin: 2px 4px 8px; font-size: 12px; background: rgba(255,255,255,.55); border-radius: 10px; padding: 6px 10px; }
   .dun-magic-key summary { cursor: pointer; font-weight: 800; }
   .dun-magic-key p { margin: 4px 0; line-height: 1.35; }
@@ -18443,26 +18463,89 @@
     const dunFound = (D, w) => { if (w && Number.isInteger(w.c) && !D.found.includes(w.c))
         D.found.push(w.c); };
     const dunPlace = D => (D.run.room ? (D.run.d + 1) * 1000 + D.run.room : 0);
+    const TREES = {
+        warrior: [{ name: 'Berserker', blurb: 'Hit hard and fast.', color: '#ff7a5a', nodes: [{ s: 'charge' }, { id: 'w_dmg', name: 'Heavy Hands', lv: 2, fx: 'dmg', v: 6, icon: '💪' }, { s: 'whirl' }, { s: 'warcry' }, { s: 'cleave' }] },
+            { name: 'Guardian', blurb: 'Stand firm and soak it up.', color: '#7aa8ff', nodes: [{ id: 'w_hp', name: 'Thick Skin', lv: 2, fx: 'hp', v: 8, icon: '🛡️' }, { s: 'skin' }, { s: 'slam' }, { id: 'w_def', name: 'Stone Wall', lv: 12, fx: 'def', v: 5, icon: '🧱' }, { s: 'quake' }] },
+            { name: 'Warlord', blurb: 'Keep fighting forever.', color: '#ffd84d', nodes: [{ id: 'w_cdr', name: 'Battle Rhythm', lv: 2, fx: 'cdr', v: 6, icon: '⏱️' }, { id: 'w_kill', name: 'Bloodlust', lv: 5, fx: 'kill', v: 2, icon: '🩸' }, { id: 'w_leech', name: 'Second Wind', lv: 12, fx: 'leech', v: 2, icon: '💨' }, { id: 'w_crit', name: 'Killer Instinct', lv: 16, fx: 'crit', v: 3, icon: '🎯' }] }],
+        archer: [{ name: 'Marksman', blurb: 'Every arrow counts.', color: '#ff7a5a', nodes: [{ s: 'volley' }, { id: 'a_dmg', name: 'Steady Aim', lv: 2, fx: 'dmg', v: 6, icon: '🏹' }, { s: 'hawk' }, { s: 'pierce' }, { s: 'rain' }] },
+            { name: 'Ranger', blurb: 'Quick feet, sharp eyes.', color: '#7dff9a', nodes: [{ id: 'a_spd', name: 'Fleet Foot', lv: 2, fx: 'speed', v: 5, icon: '👟' }, { s: 'leap' }, { id: 'a_crit', name: 'Hunter\'s Eye', lv: 8, fx: 'crit', v: 3, icon: '👁️' }, { s: 'snare' }] },
+            { name: 'Windrunner', blurb: 'Skills, skills, skills.', color: '#9be7ff', nodes: [{ id: 'a_cdr', name: 'Quick Draw', lv: 2, fx: 'cdr', v: 6, icon: '⏱️' }, { id: 'a_reg', name: 'Deep Breath', lv: 6, fx: 'regen', v: 12, icon: '🌬️' }, { id: 'a_hp', name: 'Tough Hide', lv: 10, fx: 'hp', v: 8, icon: '🦌' }, { s: 'swift' }] }],
+        mage: [{ name: 'Fire', blurb: 'Burn it all down.', color: '#ff8a3c', nodes: [{ s: 'fire' }, { id: 'm_dmg', name: 'Kindling', lv: 2, fx: 'dmg', v: 6, icon: '🔥' }, { s: 'chain' }, { s: 'meteor' }] },
+            { name: 'Frost', blurb: 'Freeze them, then slip away.', color: '#9be7ff', nodes: [{ s: 'frost' }, { id: 'm_mp', name: 'Cold Mind', lv: 4, fx: 'mp', v: 10, icon: '🧊' }, { s: 'blink' }, { id: 'm_def', name: 'Ice Armor', lv: 16, fx: 'def', v: 5, icon: '❄️' }, { s: 'ward' }] },
+            { name: 'Arcane', blurb: 'Endless mana.', color: '#d68aff', nodes: [{ id: 'm_reg', name: 'Mana Flow', lv: 2, fx: 'regen', v: 12, icon: '🌀' }, { s: 'heal' }, { id: 'm_cdr', name: 'Focus', lv: 8, fx: 'cdr', v: 6, icon: '⏱️' }, { id: 'm_crit', name: 'Spell Surge', lv: 14, fx: 'crit', v: 3, icon: '✨' }] }],
+        cleric: [{ name: 'Light', blurb: 'Smite the wicked.', color: '#ffe066', nodes: [{ s: 'smite' }, { id: 'c_dmg', name: 'Zeal', lv: 2, fx: 'dmg', v: 6, icon: '☀️' }, { s: 'nova' }, { id: 'c_crit', name: 'Judgement', lv: 20, fx: 'crit', v: 3, icon: '⚖️' }] },
+            { name: 'Mercy', blurb: 'Keep everyone standing.', color: '#7dff9a', nodes: [{ s: 'mend' }, { id: 'c_reg', name: 'Prayer', lv: 4, fx: 'regen', v: 12, icon: '🙏' }, { s: 'renew' }, { s: 'divine' }] },
+            { name: 'Shield', blurb: 'Nothing gets through.', color: '#7aa8ff', nodes: [{ id: 'c_hp', name: 'Faith', lv: 2, fx: 'hp', v: 8, icon: '💛' }, { s: 'bless' }, { s: 'sanct' }, { id: 'c_def', name: 'Devotion', lv: 12, fx: 'def', v: 5, icon: '🛡️' }, { id: 'c_kill', name: 'Grace', lv: 16, fx: 'kill', v: 2, icon: '🕊️' }] }]
+    };
+    const TREE_MAX = 3;
+    const PERK_TEXT = { dmg: 'more damage', hp: 'more health', mp: 'more mana', crit: 'more critical hits', def: 'less damage taken', regen: 'faster mana refill', cdr: 'faster skill recharge', leech: 'of the damage you deal comes back as health', kill: 'health back on every kill', speed: 'faster running in dungeons' };
+    const TREE_CACHE = new Map();
+    function treeNodes(cls) {
+        if (TREE_CACHE.has(cls))
+            return TREE_CACHE.get(cls);
+        const list = [];
+        (TREES[cls] || []).forEach((B, bi) => B.nodes.forEach((n, i) => { const S = n.s ? (SKILLS[cls] || []).find(x => x.id === n.s) : null, pv = i ? B.nodes[i - 1] : null;
+            list.push(Object.assign({}, n, { id: n.s || n.id, b: bi, i, lv: S ? S.lv : n.lv, name: S ? S.name : n.name, skill: S, prev: pv ? pv.s || pv.id : null })); }));
+        TREE_CACHE.set(cls, list);
+        return list;
+    }
+    function treeOf(D) {
+        if (!D || !CLASSES[D.cls])
+            return {};
+        if (!D.trees || typeof D.trees !== 'object')
+            D.trees = {};
+        if (!D.trees[D.cls] || typeof D.trees[D.cls] !== 'object') {
+            const t = {};
+            (SKILLS[D.cls] || []).forEach(S => { if (S.lv <= D.level)
+                t[S.id] = 1; });
+            D.trees[D.cls] = t;
+        }
+        return D.trees[D.cls];
+    }
+    const treeSpent = D => Object.values(treeOf(D)).reduce((a, b) => a + b, 0);
+    const treePts = D => Math.max(0, D.level - treeSpent(D));
+    const skillRank = (D, id) => treeOf(D)[id] || 0;
+    function talent(D, fx) {
+        const t = D && D.trees && D.trees[D.cls];
+        if (!t)
+            return 0;
+        let v = 0;
+        treeNodes(D.cls).forEach(n => { if (n.fx === fx && t[n.id])
+            v += n.v * t[n.id]; });
+        return v / 100;
+    }
+    function treeCan(D, n) {
+        const t = treeOf(D), r = t[n.id] || 0;
+        if (r >= TREE_MAX)
+            return 'Maxed out';
+        if (D.level < n.lv)
+            return 'Needs level ' + n.lv;
+        if (!r && n.prev && !(t[n.prev] > 0))
+            return 'Learn ' + treeNodes(D.cls).find(x => x.id === n.prev).name + ' first';
+        if (treePts(D) < 1)
+            return 'No skill points left';
+        return '';
+    }
     function dunSlots(D) {
-        const list = SKILLS[D.cls] || [], ok = id => list.some(S => S.id === id && S.lv <= D.level);
+        const t = treeOf(D), list = SKILLS[D.cls] || [], ok = id => list.some(S => S.id === id) && t[id] > 0;
         const out = [0, 1, 2].map(i => (Array.isArray(D.slots) && ok(D.slots[i]) ? D.slots[i] : null));
-        list.forEach(S => { if (S.lv <= D.level && !out.includes(S.id)) {
+        list.forEach(S => { if (t[S.id] > 0 && !out.includes(S.id)) {
             const k = out.indexOf(null);
-            if (k >= 0 && list.indexOf(S) < 3)
+            if (k >= 0)
                 out[k] = S.id;
         } });
-        return out.map((id, i) => (id ? list.find(S => S.id === id) : list[i] || null));
+        return out.map(id => (id ? list.find(S => S.id === id) : null));
     }
     const dunOpenTo = (D, i) => i === 0 || (DUNGEONS[i] && DUNGEONS[i].daily ? D.done.includes(0) : D.done.includes(i - 1));
     const xpFor = L => Math.round(40 * Math.pow(L, 1.5));
-    const dunMaxHp = D => 100 + (D.level - 1) * 12 + (CLASSES[D.cls] ? CLASSES[D.cls].hp : 0) + D.stats.str * 4 + dunArmor(D).hp;
-    const dunMaxMp = D => (CLASSES[D.cls] ? CLASSES[D.cls].mp : 30) + D.stats.int * 5 + (D.level - 1) * 3;
+    const dunMaxHp = D => Math.round((100 + (D.level - 1) * 12 + (CLASSES[D.cls] ? CLASSES[D.cls].hp : 0) + D.stats.str * 4 + dunArmor(D).hp) * (1 + talent(D, 'hp')));
+    const dunMaxMp = D => Math.round(((CLASSES[D.cls] ? CLASSES[D.cls].mp : 30) + D.stats.int * 5 + (D.level - 1) * 3) * (1 + talent(D, 'mp')));
     const dunDmgMul = L => 1 + (L - 1) * 0.06;
     function dunPower(D, w) {
         const t = w ? w.t : 'sword', likes = CLASSES[D.cls] ? CLASSES[D.cls].likes : null;
-        return (w ? w.dmg : DUN.FIST) * dunDmgMul(D.level) * (1 + 0.02 * D.stats[WEAPON_TYPES[t].stat]) * (!w || !likes || likes.includes(t) ? 1 : DUN.OFF);
+        return (w ? w.dmg : DUN.FIST) * dunDmgMul(D.level) * (1 + 0.02 * D.stats[WEAPON_TYPES[t].stat]) * (!w || !likes || likes.includes(t) ? 1 : DUN.OFF) * (1 + talent(D, 'dmg'));
     }
-    const dunCrit = (D, hawk) => 0.08 + D.stats.dex * 0.004 + (hawk ? 0.4 : 0);
+    const dunCrit = (D, hawk) => 0.08 + D.stats.dex * 0.004 + (hawk ? 0.4 : 0) + talent(D, 'crit');
     const dunHitChance = (D, mlv) => clamp(DUN.HIT + 0.03 * (D.level - mlv) + D.stats.dex * 0.002, Math.min(0.6, DUN.HIT), Math.max(0.98, DUN.HIT));
     const dunDodge = D => Math.min(Math.max(0.25, DUN.DODGE), DUN.DODGE + D.stats.dex * 0.003);
     function dunGainXp(D, xp) {
@@ -18499,6 +18582,14 @@
         out.pts = Number.isInteger(v.pts) ? clamp(v.pts, 0, owed) : owed;
         out.bag = (Array.isArray(v.bag) ? v.bag : []).map(cleanWeapon).filter(Boolean).slice(0, DUN.BAG);
         out.slots = (Array.isArray(v.slots) ? v.slots : []).slice(0, 3).map(x => (typeof x === 'string' && /^[a-z]{2,10}$/.test(x) ? x : null));
+        if (v.trees && typeof v.trees === 'object') {
+            out.trees = {};
+            Object.keys(CLASSES).forEach(c => { const src = v.trees[c]; if (!src || typeof src !== 'object')
+                return; const t = {}; let sum = 0; treeNodes(c).forEach(n => { const r = src[n.id]; if (Number.isInteger(r) && r > 0) {
+                t[n.id] = Math.min(TREE_MAX, r);
+                sum += t[n.id];
+            } }); out.trees[c] = sum <= out.level ? t : {}; });
+        }
         out.stash = (Array.isArray(v.stash) ? v.stash : []).map(cleanWeapon).filter(Boolean).slice(0, DUN.STASH);
         const lv = v.loot && typeof v.loot === 'object' ? v.loot : {};
         out.loot = { day: int(lv.day, 0, 1e7, 0), n: int(lv.n, 0, 999, 0), got: (Array.isArray(lv.got) ? lv.got : []).filter(x => typeof x === 'string' && x.length < 24).slice(0, 40) };
@@ -28603,7 +28694,7 @@
         }
         mineSpeed() {
             if (!this.mineNodes)
-                return (this.chillUntil > this.time.now ? 0.6 : 1) * (this.wetUntil > this.time.now ? 0.68 : 1);
+                return (this.chillUntil > this.time.now ? 0.6 : 1) * (this.wetUntil > this.time.now ? 0.68 : 1) * (G.loc === 'dungeon' ? 1 + talent(G.dun, 'speed') : 1);
             const C = cartOf(G.mine);
             return C.boost * (1 - C.drag * G.mine.load.length / C.cap) * (this.drillingNow ? 0.2 : 1);
         }
@@ -29287,10 +29378,10 @@
             }
             return { dx, dy, fx, cy };
         }
-        dunHitRoll(mul) {
+        dunHitRoll(mul, shot) {
             const w = this.dunWeapon(), fx = w ? w.fx : 'none', Dn = G.dun;
             const crit = Math.random() < dunCrit(Dn, this.time.now < this.buff.hawk) + (this.boon('keen') ? 0.12 : 0) + (fx === 'star' ? 0.1 : 0);
-            const k = (mul || 1) * (this.time.now < (this.buff.cry || 0) ? 1.5 : 1) * (this.boon('might') ? 1.25 : 1) * ((this.mods || []).includes('glass') ? 1.5 : 1) * (fx === 'blood' && Dn.hp < dunMaxHp(Dn) / 2 ? 1.3 : 1);
+            const k = (mul || 1) * (!shot && this.castOn ? this.castMul || 1 : 1) * (this.time.now < (this.buff.cry || 0) ? 1.5 : 1) * (this.boon('might') ? 1.25 : 1) * ((this.mods || []).includes('glass') ? 1.5 : 1) * (fx === 'blood' && Dn.hp < dunMaxHp(Dn) / 2 ? 1.3 : 1);
             return { d: Math.round(dunPower(G.dun, this.dunWeapon()) * k * (0.9 + Math.random() * 0.2) * (crit ? 1.6 : 1)), crit };
         }
         dunMissed(m) {
@@ -29305,9 +29396,10 @@
             const img = this.add.image(x, y, kind).setScale(1 / TEX).setRotation(Math.atan2(dy, dx)).setDepth(9000);
             if (kind !== 'arrow')
                 img.setBlendMode(Phaser.BlendModes.ADD);
-            this.shots.push({ x, y, vx: dx * speed, vy: dy * speed, life, mine: true, kind, mul: mul || 1, img });
+            this.shots.push({ x, y, vx: dx * speed, vy: dy * speed, life, mine: true, kind, mul: (mul || 1) * (this.castOn ? this.castMul || 1 : 1), img });
         }
         dunAttack(tx, ty) {
+            this.castOn = false;
             const now = this.time.now, w = this.dunWeapon(), T = w ? Object.assign({}, WEAPON_TYPES[w.t], weaponStats(w)) : { reach: 54, cool: 0.38, arc: 0.95 };
             if (!this.dun || this.leaving || this.dunOver || now < this.dunAtkAt || !this.mons)
                 return 0;
@@ -29397,7 +29489,8 @@
             const Dn = G.dun, S = dunSlots(Dn)[i], now = this.time.now;
             if (!S || !this.dun || !this.mons || this.leaving || this.dunOver)
                 return false;
-            const why = Dn.level < S.lv ? S.name + ' is learned at level ' + S.lv + '.' : now < this.cds[i] ? '' : Dn.mp < S.mp ? 'Not enough mana for ' + S.name + '.' : this.mons.length || HEALS.includes(S.id) ? null : 'Nothing to fight here.';
+            const rk = skillRank(Dn, S.id), mpc = Math.max(1, Math.round(S.mp * (1 - 0.1 * Math.max(0, rk - 1))));
+            const why = rk < 1 ? 'Learn ' + S.name + ' in your skill tree first (B).' : now < this.cds[i] ? '' : Dn.mp < mpc ? 'Not enough mana for ' + S.name + '.' : this.mons.length || HEALS.includes(S.id) ? null : 'Nothing to fight here.';
             if (why !== null) {
                 if (why) {
                     this.noteUntil = 0;
@@ -29408,8 +29501,10 @@
             }
             this.castN = ((this.castN || 0) + 1) % 1000;
             this.castId = S.id;
-            Dn.mp -= S.mp;
-            this.cds[i] = now + S.cd * 1000 * (this.boon('focus') ? 0.7 : 1) * (now < (this.buff.swift || 0) ? 0.5 : 1);
+            Dn.mp -= mpc;
+            this.cds[i] = now + S.cd * 1000 * (this.boon('focus') ? 0.7 : 1) * (now < (this.buff.swift || 0) ? 0.5 : 1) * (1 - 0.12 * Math.max(0, rk - 1)) * (1 - talent(Dn, 'cdr'));
+            this.castMul = 1 + 0.2 * Math.max(0, rk - 1);
+            this.castOn = true;
             this.swingStart = now;
             const { dx, dy, fx, cy } = this.dunAim(), fy = cy + 22, B = this.D.bounds;
             const hitAll = (test, mul, push, after) => {
@@ -29635,6 +29730,10 @@
             m.mine = (m.mine || 0) + d;
             this.monAlert(m);
             m.flash = 0.12;
+            if (!notMine && talent(G.dun, 'leech')) {
+                const Dn = G.dun;
+                Dn.hp = Math.min(dunMaxHp(Dn), Dn.hp + d * talent(Dn, 'leech'));
+            }
             if (!notMine && this.boon('leech')) {
                 const Dn = G.dun;
                 Dn.hp = Math.min(dunMaxHp(Dn), Dn.hp + d * 0.05);
@@ -29945,6 +30044,8 @@
                 this.dunTarget = null;
             const coins = Math.round((m.coins[0] + Math.floor(Math.random() * (m.coins[1] - m.coins[0] + 1))) * (mods.includes('gilded') ? 2 : 1) * (this.boon('greed') ? 1.5 : 1));
             G.coins += coins;
+            if (talent(Dn, 'kill') && Dn.hp > 0)
+                Dn.hp = Math.min(dunMaxHp(Dn), Dn.hp + dunMaxHp(Dn) * talent(Dn, 'kill'));
             Dn.kills[m.kind] = (Dn.kills[m.kind] || 0) + 1;
             this.dunPop(m.x, m.y - 40, '+' + coins + 'c', '#ffe066');
             const xp = (this.party || []).length ? Math.round(m.xp * 1.2) : m.xp;
@@ -29972,7 +30073,7 @@
                     this.nameTag.setText(this.myTagText());
                     this.pillFit(this.nameTag);
                 }
-                this.note('Level up! Level ' + Dn.level + ': ' + DUN.PTS * ups + ' points to spend! (B)', '#7dff9a');
+                this.note('Level up! Level ' + Dn.level + ': ' + DUN.PTS * ups + ' stat points and ' + ups + ' skill point' + (ups > 1 ? 's' : '') + ' to spend! (B)', '#7dff9a');
                 const px = this.pz.x, py = this.pz.y + FOOT;
                 this.dunRing(px, py, 90, 0xffd84d);
                 this.dunRing(px, py, 60, 0xffffff);
@@ -30450,6 +30551,8 @@
                 d = Math.max(1, Math.round(d * (1 - cut)));
             if (this.boon('stone'))
                 d = Math.ceil(d * 0.8);
+            if (talent(Dn, 'def'))
+                d = Math.max(1, Math.round(d * (1 - talent(Dn, 'def'))));
             Dn.hp = Math.max(0, Dn.hp - d);
             this.iframes = DUN.IFRAMES;
             if (src && !src.dead && src.affixes && src.affixes.includes('vampiric')) {
@@ -30744,7 +30847,7 @@
             this.dunLamp.setPosition(fx, fy - 40);
             this.iframes = Math.max(0, this.iframes - dt);
             this.avatar.setAlpha(this.iframes > 0 && !REDUCED ? 0.55 + 0.45 * Math.round(Math.sin(time * 0.05) * 0.5 + 0.5) : 1);
-            Dn.mp = Math.min(dunMaxMp(Dn), Dn.mp + (CLASSES[Dn.cls] ? CLASSES[Dn.cls].regen : 1) * (this.boon('arcane') ? 1.5 : 1) * dt);
+            Dn.mp = Math.min(dunMaxMp(Dn), Dn.mp + (CLASSES[Dn.cls] ? CLASSES[Dn.cls].regen : 1) * (this.boon('arcane') ? 1.5 : 1) * (1 + talent(Dn, 'regen')) * dt);
             if (this.boon('mend') && !this.dunOver)
                 Dn.hp = Math.min(dunMaxHp(Dn), Dn.hp + 2 * dt);
             if (time < (this.buff.renew || 0) && !this.dunOver)
@@ -31075,7 +31178,7 @@
                     }
                     else if (hitM) {
                         if (!this.dunMissed(hitM)) {
-                            const r = this.dunHitRoll(s.mul);
+                            const r = this.dunHitRoll(s.mul, true);
                             this.monHurt(hitM, r.d, r.crit, s.vx / sl, s.vy / sl, 8);
                             sfx.clack();
                         }
@@ -44868,7 +44971,7 @@
         const gateP = makePanel(dq('dungate')), gateList = dq('dungate-list');
         const shrineP = makePanel(dq('dunshrine')), shrineList = dq('dunshrine-list'), dunBoonsEl = dq('dun-boons');
         const dn = { tab: 'bag', shop: false, note: '' };
-        const DUN_TABS = [['bag', 'Bag'], ['stats', 'Stats & skills'], ['armory', 'Armory'], ['shop', 'Potions'], ['wares', 'Today\'s wares'], ['stash', 'Stash'], ['armor', 'Armor']];
+        const DUN_TABS = [['bag', 'Bag'], ['stats', 'Stats & skills'], ['tree', '🌳 Skill tree'], ['armory', 'Armory'], ['shop', 'Potions'], ['wares', 'Today\'s wares'], ['stash', 'Stash'], ['armor', 'Armor']];
         dn.af = 'week';
         const dunTabBtns = DUN_TABS.map(([id, name]) => { const b = el('button', 'furn-cat', { type: 'button', 'data-tab': id, 'aria-pressed': 'false' }); b.textContent = name; dunTabs.appendChild(b); return b; });
         const weaponLine = w => { const d = Number.isInteger(w.c) ? armoryDef(w.c) : null; return RARITIES[w.r][0] + ' ' + (d ? FORMS[d.t][d.form].name[0].toLowerCase() : WEAPON_TYPES[w.t].name.toLowerCase()) + ' · damage ' + w.dmg + (d && d.fx !== 'none' ? ' · ' + MAGIC[d.fx][0] + ' magic' : ''); };
@@ -44916,7 +45019,7 @@
                 b.hidden = !S;
                 if (!S)
                     return;
-                const locked = D.level < S.lv, sec = cd > 0 ? Math.ceil(cd) : 0, face = S.id + '|' + (locked ? 'L' : '') + '|' + sec;
+                const locked = !(skillRank(D, S.id) > 0), sec = cd > 0 ? Math.ceil(cd) : 0, face = S.id + '|' + (locked ? 'L' : '') + '|' + sec;
                 if (b.dataset.face !== face) {
                     b.dataset.face = face;
                     const cv = el('canvas', '', { width: 96, height: 96, 'aria-hidden': 'true' }), cx = cv.getContext('2d');
@@ -44924,7 +45027,7 @@
                         cx.scale(2, 2);
                         drawSkillIcon(cx, S.id);
                     }
-                    b.replaceChildren(cv, node('small', '', locked ? 'Lv ' + S.lv : String(i + 1)));
+                    b.replaceChildren(cv, node('small', '', locked ? '?' : String(i + 1)));
                     if (sec)
                         b.appendChild(node('b', '', String(sec)));
                 }
@@ -44946,7 +45049,7 @@
             dunMpBar.style.width = Math.round(100 * clamp(D.mp / mmax, 0, 1)) + '%';
             dunMpText.textContent = Math.floor(D.mp) + ' / ' + mmax;
             dunXpBar.style.width = Math.round(100 * D.xp / xpFor(D.level)) + '%';
-            dunLv.textContent = (CLASSES[D.cls] ? CLASSES[D.cls].name + ' · ' : '') + 'Level ' + D.level + (D.pts ? ' · ' + D.pts + ' pts!' : '');
+            dunLv.textContent = (CLASSES[D.cls] ? CLASSES[D.cls].name + ' · ' : '') + 'Level ' + D.level + (D.pts ? ' · ' + D.pts + ' pts!' : '') + (D.cls && treePts(D) ? ' · ' + treePts(D) + ' skill pts!' : '');
             const left = s && s.mons ? s.mons.filter(m => !m.dead).length : 0;
             dunFloorEl.textContent = dunWhere() + (D.run.room ? (left ? '' : ' · cleared') : '');
             dunPotionBtn.firstChild.textContent = String(D.potions + D.big);
@@ -44990,8 +45093,67 @@
             D.arm = D.arm || [];
             if (!dn.shop && dn.tab === 'bag')
                 dn.tab = 'stats';
-            dunTabBtns.forEach((b, i) => { b.setAttribute('aria-pressed', String(DUN_TABS[i][0] === dn.tab)); b.hidden = (i === 0 || (i >= 3 && i <= 5)) && !dn.shop; });
-            if (dn.tab === 'stats') {
+            dunTabBtns.forEach((b, i) => { b.setAttribute('aria-pressed', String(DUN_TABS[i][0] === dn.tab)); b.hidden = ['bag', 'shop', 'wares', 'stash'].includes(DUN_TABS[i][0]) && !dn.shop; });
+            if (dn.tab === 'tree') {
+                const C = CLASSES[D.cls];
+                if (!C)
+                    rows.push(node('p', 'pet-hint', 'Pick a class at the camp first, then come back to build your skill tree.'));
+                else {
+                    const t = treeOf(D), top = node('div', 'mine-row mine-top'), pts = treePts(D);
+                    top.append(node('span', '', C.name + ' skill tree · ' + (pts ? pts + ' skill point' + (pts > 1 ? 's' : '') + ' to spend!' : 'no points left (1 more each level)')));
+                    const camp = !(G.loc === 'dungeon' && D.run.room);
+                    if (treeSpent(D)) {
+                        const b = el('button', 'btn', { type: 'button', 'data-act': 'treereset', 'data-i': '0', title: camp ? 'Get all your skill points back' : 'Only at the camp' });
+                        b.textContent = '↺ Reset';
+                        b.disabled = !camp;
+                        top.appendChild(b);
+                    }
+                    rows.push(top);
+                    const grid = node('div', 'tree-grid'), nodes = treeNodes(D.cls);
+                    TREES[D.cls].forEach((B, bi) => {
+                        const col = node('div', 'tree-col'), hd = node('div', 'tree-hd');
+                        hd.style.borderColor = B.color;
+                        const hb = node('b', '', B.name);
+                        hb.style.color = mix(B.color, '#1d1424', 0.4);
+                        hd.append(hb, node('small', '', B.blurb));
+                        col.appendChild(hd);
+                        nodes.filter(n => n.b === bi).forEach((n, k) => {
+                            const r = t[n.id] || 0, why = treeCan(D, n), card = node('div', 'tree-node' + (n.skill ? '' : ' perk') + (r ? ' on' : why && why !== 'No skill points left' && why !== 'Maxed out' ? ' off' : ''));
+                            if (k)
+                                col.appendChild(node('div', 'tree-link' + (r ? ' on' : ''), ''));
+                            const ic = node('div', 'tree-ic', '');
+                            if (n.skill) {
+                                const cv = el('canvas', '', { width: 72, height: 72, 'aria-hidden': 'true' }), cx = cv.getContext('2d');
+                                if (cx) {
+                                    cx.scale(1.5, 1.5);
+                                    drawSkillIcon(cx, n.id);
+                                }
+                                ic.appendChild(cv);
+                            }
+                            else
+                                ic.textContent = n.icon || '⭐';
+                            const tx = node('div', 'tree-tx'), nm = node('b', '', n.name + ' '), dots = node('span', 'tree-dots', '●'.repeat(r) + '○'.repeat(TREE_MAX - r));
+                            nm.appendChild(dots);
+                            let desc;
+                            if (n.skill)
+                                desc = n.skill.blurb + ' ' + Math.max(1, Math.round(n.skill.mp * (1 - 0.1 * Math.max(0, r - 1)))) + ' mana · ' + Math.round(n.skill.cd * (1 - 0.12 * Math.max(0, r - 1)) * 10) / 10 + 's';
+                            else
+                                desc = '+' + n.v + '% ' + PERK_TEXT[n.fx] + ' per rank' + (r ? ' (now ' + n.v * r + '%)' : '');
+                            tx.append(nm, node('small', '', desc));
+                            const b = el('button', 'btn tree-btn', { type: 'button', 'data-act': 'learn', 'data-i': n.id });
+                            b.textContent = r >= TREE_MAX ? 'Max' : r ? 'Rank up' : 'Learn';
+                            b.disabled = !!why;
+                            if (why && r < TREE_MAX)
+                                tx.appendChild(node('small', 'tree-why', why));
+                            card.append(ic, tx, b);
+                            col.appendChild(card);
+                        });
+                        grid.appendChild(col);
+                    });
+                    rows.push(grid);
+                }
+            }
+            else if (dn.tab === 'stats') {
                 const C = CLASSES[D.cls], w = D.eq >= 0 ? D.bag[D.eq] : null;
                 const top = node('div', 'mine-row mine-top');
                 top.append(node('span', '', (C ? C.name : 'No class yet') + ' · level ' + D.level + ' · ' + D.xp + ' of ' + xpFor(D.level) + ' xp to the next'));
@@ -45014,8 +45176,8 @@
                     + (w && C && !C.likes.includes(w.t) ? '. (A ' + C.name.toLowerCase() + ' fights poorly with a ' + WEAPON_TYPES[w.t].name.toLowerCase() + ': ' + Math.round(DUN.OFF * 100) + '% damage.)' : '.')));
                 const slots = dunSlots(D).map(S => S && S.id);
                 (SKILLS[D.cls] || []).forEach(S => {
-                    const locked = D.level < S.lv, at = slots.indexOf(S.id), li = node('div', 'mine-row' + (locked ? ' dun-locked' : '')), text = node('div', 'mine-text');
-                    text.append(node('b', '', S.name + (locked ? ' (unlocks at level ' + S.lv + ')' : at >= 0 ? ' · on key ' + (at + 1) : '')), node('small', '', S.blurb + ' ' + S.mp + ' mana, ' + S.cd + 's to recharge.'));
+                    const locked = !(skillRank(D, S.id) > 0), at = slots.indexOf(S.id), li = node('div', 'mine-row' + (locked ? ' dun-locked' : '')), text = node('div', 'mine-text');
+                    text.append(node('b', '', S.name + (locked ? ' (learn it in the Skill tree' + (D.level < S.lv ? ' at level ' + S.lv : '') + ')' : ' · rank ' + skillRank(D, S.id) + (at >= 0 ? ' · on key ' + (at + 1) : ''))), node('small', '', S.blurb + ' ' + S.mp + ' mana, ' + S.cd + 's to recharge.'));
                     li.appendChild(text);
                     if (!locked)
                         [0, 1, 2].forEach(k => { const b = el('button', 'btn', { type: 'button', 'data-act': 'slot', 'data-i': S.id + ':' + k }); b.textContent = String(k + 1); b.title = 'Put ' + S.name + ' on key ' + (k + 1); b.disabled = at === k; li.appendChild(b); });
@@ -45203,7 +45365,7 @@
                 });
             }
             dunList.replaceChildren(...rows);
-            dunMsg.textContent = dn.note || (dn.tab === 'stats' ? 'Every level brings ' + DUN.PTS + ' stat points. New skills come at levels 3 and 6.' : dn.shop ? 'Grizzle buys any weapon you do not need.' : 'Equip a weapon. Sell extras to Grizzle.');
+            dunMsg.textContent = dn.note || (dn.tab === 'stats' ? 'Every level brings ' + DUN.PTS + ' stat points and 1 skill point (spend it in the Skill tree).' : dn.tab === 'tree' ? '1 skill point per level. Square icons are skills you put on keys; round ones are perks that are always on. Each skill rank: +20% damage, 10% less mana, 12% faster recharge.' : dn.shop ? 'Grizzle buys any weapon you do not need.' : 'Equip a weapon. Sell extras to Grizzle.');
         }
         function dunOpen(shop, tab) { dn.shop = !!shop; dn.tab = tab || (shop ? 'bag' : 'stats'); dn.note = ''; paintDun(); dunP.open(); if (shop)
             questHappened('talk', { name: 'Grizzle' }); }
@@ -45305,9 +45467,33 @@
                 classOpen(false);
                 return '';
             }
+            if (act === 'learn') {
+                const n = treeNodes(D.cls).find(x => x.id === i);
+                if (!n || treeCan(D, n))
+                    return '';
+                const t = treeOf(D);
+                t[n.id] = (t[n.id] || 0) + 1;
+                if (n.skill && t[n.id] === 1)
+                    D.slots = dunSlots(D).map(x => x && x.id);
+                D.hp = Math.min(D.hp, dunMaxHp(D));
+                D.mp = Math.min(D.mp, dunMaxMp(D));
+                sfx.chime();
+                return t[n.id] === 1 ? 'You learned ' + n.name + '!' + (n.skill && dunSlots(D).some(x => x && x.id === n.id) ? ' It is on key ' + (dunSlots(D).findIndex(x => x && x.id === n.id) + 1) + '.' : n.skill ? ' Put it on a key in Stats & skills.' : '') : n.name + ' is now rank ' + t[n.id] + '!';
+            }
+            if (act === 'treereset') {
+                if (G.loc === 'dungeon' && D.run.room)
+                    return 'You can only reset your tree at the camp.';
+                treeOf(D);
+                D.trees[D.cls] = {};
+                D.slots = [null, null, null];
+                D.hp = Math.min(D.hp, dunMaxHp(D));
+                D.mp = Math.min(D.mp, dunMaxMp(D));
+                sfx.tick();
+                return 'Tree reset: all ' + D.level + ' skill points are back. Spend them how you like!';
+            }
             if (act === 'slot') {
                 const [id, ks] = String(i).split(':'), k = Number(ks), S = (SKILLS[D.cls] || []).find(x => x.id === id);
-                if (!S || D.level < S.lv || !(k >= 0 && k < 3))
+                if (!S || !(skillRank(D, S.id) > 0) || !(k >= 0 && k < 3))
                     return '';
                 const cur = dunSlots(D).map(x => x && x.id), was = cur.indexOf(id);
                 if (was >= 0)
@@ -45683,7 +45869,7 @@
             const b = e.target.closest('[data-act]');
             if (!b || b.disabled)
                 return;
-            dn.note = dunAct(b.dataset.act, ['buy', 'stat', 'af', 'slot', 'unwear'].includes(b.dataset.act) ? b.dataset.i : Number(b.dataset.i));
+            dn.note = dunAct(b.dataset.act, ['buy', 'stat', 'af', 'slot', 'unwear', 'learn'].includes(b.dataset.act) ? b.dataset.i : Number(b.dataset.i));
             paintState();
             paintDun();
             paintDunHud();
