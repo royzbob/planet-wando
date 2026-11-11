@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794366375';
+<script>window.WANDO_BUILD = '1794395350';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2665,6 +2665,7 @@
   .catbook.cbphone .cb-turn { display: none; }
   .cb-phone .cb-sec { margin: 14px 0 6px; }
   .cb-phone .cb-sec:first-child { margin-top: 0; }
+  .cb-lazy { background: rgba(0, 0, 0, 0.04); border-radius: 12px; }
   .pl-head { display: flex; align-items: center; gap: 10px; margin: 0 40px 8px 0; }
   .pl-keeper { width: 64px; height: auto; flex: none; }
   .pl-title { margin: 0; color: #5a3416; font: 900 24px/1.05 var(--font-display); }
@@ -49543,9 +49544,34 @@
             });
             return wrap;
         }
-        function cbPhone() {     // (phones: the whole catalog as one list you scroll, not a two-page spread)
+        let cbIo = null;
+        function cbPhone() {     // (phones: the whole catalog as one list you scroll, not a two-page spread; pictures are drawn only near the screen, so big catalogs don't run a phone out of memory)
             const wrap = node('div', 'cb-phone');
             let n = 0;
+            if (cbIo)
+                cbIo.disconnect();
+            const lazy = (it, k, h) => { const ph = node('div', 'cb-item cb-lazy'); ph._it = it; ph._n = k; ph.style.minHeight = (h || cb.cardH || 230) + 'px'; return ph; };
+            cbIo = 'IntersectionObserver' in window ? new IntersectionObserver(ents => ents.forEach(e => {
+                const t = e.target;
+                if (!t.isConnected)
+                    return;
+                if (e.isIntersecting && t.classList.contains('cb-lazy')) {
+                    const c = cbItem(t._it, t._n);
+                    c._it = t._it;
+                    c._n = t._n;
+                    t.replaceWith(c);
+                    cbIo.unobserve(t);
+                    cbIo.observe(c);
+                    if (c.offsetHeight)
+                        cb.cardH = c.offsetHeight;
+                }
+                else if (!e.isIntersecting && !t.classList.contains('cb-lazy')) {
+                    const ph = lazy(t._it, t._n, t.offsetHeight);
+                    t.replaceWith(ph);
+                    cbIo.unobserve(t);
+                    cbIo.observe(ph);
+                }
+            }), { root: cbPages, rootMargin: '600px 0px' }) : null;
             cb.secs.forEach((S, si) => {
                 const h = node('h4', 'cb-sec', S.name);
                 h.dataset.secAt = String(si);
@@ -49555,7 +49581,8 @@
                 if (!S.items.length && S.empty)
                     wrap.append(node('p', 'cb-blurb', S.empty));
                 const grid = node('div', 'cb-grid');
-                S.items.forEach(it => grid.append(cbItem(it, ++n)));
+                S.items.forEach(it => { const k = ++n, c = cbIo ? lazy(it, k) : cbItem(it, k); grid.append(c); if (cbIo)
+                    cbIo.observe(c); });
                 wrap.append(grid);
             });
             return wrap;
