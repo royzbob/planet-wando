@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794364351';
+<script>window.WANDO_BUILD = '1794364456';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -826,6 +826,7 @@
   .status, .soon { margin-left: auto; flex: none; font-size: 10px; font-weight: 800; }
   .soon { padding: 1px 7px; border-radius: 999px; background: var(--lcd-bar); color: #fff; }
   .lcd-note { margin: 0; font-size: 10.5px; opacity: 0.78; }
+  .phone .key, .phone button { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
   .lcd-btn {
     flex: none; padding: 6px 10px; border: 0; border-radius: 8px;
     background: linear-gradient(180deg, #6a5cc0, var(--lcd-bar)); color: #fff;
@@ -40459,6 +40460,8 @@
                 const form = node('form', 'lcd-form');
                 form.dataset.form = 'send';
                 const ta = node('textarea', 'lcd-input');
+                if (DEV.touch || TOUCH_FIRST)
+                    ta.inputMode = 'none';     // (phones: type with the in-game phone's keys, not the real keyboard)
                 ta.id = 'pm-text';
                 ta.rows = 2;
                 ta.maxLength = MAIL.TEXT;
@@ -40492,6 +40495,8 @@
                 const form = node('form', 'lcd-form');
                 form.dataset.form = 'find';
                 const inp = node('input', 'lcd-input');
+                if (DEV.touch || TOUCH_FIRST)
+                    inp.inputMode = 'none';
                 inp.id = 'friend-name';
                 inp.type = 'text';
                 inp.maxLength = 16;
