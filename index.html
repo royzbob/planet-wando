@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794364456';
+<script>window.WANDO_BUILD = '1794364973';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -18003,30 +18003,50 @@
             { id: 'slam', name: 'Ground Slam', lv: 10, mp: 22, cd: 10, blurb: 'Smash the floor. Everything near you is knocked back and stunned.' },
             { id: 'warcry', name: 'War Cry', lv: 14, mp: 25, cd: 22, blurb: 'Hit 50% harder for 8 seconds.' },
             { id: 'cleave', name: 'Cleave', lv: 18, mp: 20, cd: 7, blurb: 'A huge swing that hits everything in front of you very hard.' },
-            { id: 'quake', name: 'Earthquake', lv: 24, mp: 40, cd: 26, blurb: 'Shake the whole chamber. Everything close by takes heavy damage.' }],
+            { id: 'quake', name: 'Earthquake', lv: 24, mp: 40, cd: 26, blurb: 'Shake the whole chamber. Everything close by takes heavy damage.' },
+            { id: 'leapstrike', name: 'Leap Strike', lv: 8, mp: 18, cd: 9, blurb: 'Leap forward and smash down, stunning everything where you land.' },
+            { id: 'rally', name: 'Rally', lv: 12, mp: 20, cd: 25, blurb: 'Catch your breath and heal a quarter of your health.' },
+            { id: 'wall', name: 'Shield Wall', lv: 16, mp: 22, cd: 24, blurb: 'Take 70% less damage for 4 seconds.' },
+            { id: 'execute', name: 'Execute', lv: 21, mp: 20, cd: 9, blurb: 'One brutal blow in front of you. Four times the damage to monsters that are nearly dead.' },
+            { id: 'bladestorm', name: 'Blade Storm', lv: 30, mp: 45, cd: 24, blurb: 'Spin three times in a row, shredding everything around you.' }],
         archer: [{ id: 'volley', name: 'Volley', lv: 1, mp: 12, cd: 6, blurb: 'Five arrows in a fan.' },
             { id: 'leap', name: 'Leap Back', lv: 3, mp: 8, cd: 7, blurb: 'Leap away from danger, slowing whatever was close.' },
             { id: 'hawk', name: 'Hawkeye', lv: 6, mp: 18, cd: 20, blurb: 'Far more critical hits for 8 seconds.' },
             { id: 'pierce', name: 'Power Shot', lv: 10, mp: 16, cd: 6, blurb: 'One heavy arrow that hits very hard.' },
             { id: 'snare', name: 'Snare', lv: 14, mp: 18, cd: 14, blurb: 'Root everything near you in place for 3 seconds.' },
             { id: 'rain', name: 'Arrow Rain', lv: 18, mp: 28, cd: 12, blurb: 'Arrows fly out in every direction.' },
-            { id: 'swift', name: 'Swiftness', lv: 24, mp: 25, cd: 24, blurb: 'Your skills recharge twice as fast for 8 seconds.' }],
+            { id: 'swift', name: 'Swiftness', lv: 24, mp: 25, cd: 24, blurb: 'Your skills recharge twice as fast for 8 seconds.' },
+            { id: 'triple', name: 'Triple Shot', lv: 5, mp: 12, cd: 5, blurb: 'Three quick arrows straight ahead.' },
+            { id: 'firetrap', name: 'Fire Trap', lv: 8, mp: 16, cd: 10, blurb: 'Throw a trap ahead of you. It bursts into flames a moment later.' },
+            { id: 'venomshot', name: 'Venom Arrows', lv: 12, mp: 16, cd: 9, blurb: 'A spray of poisoned arrows in front of you.' },
+            { id: 'roll', name: 'Dodge Roll', lv: 16, mp: 8, cd: 5, blurb: 'Roll forward. Nothing can hurt you mid-roll.' },
+            { id: 'arrowstorm', name: 'Arrow Storm', lv: 30, mp: 40, cd: 20, blurb: 'Arrows pour down on the spot ahead of you, three times.' }],
         mage: [{ id: 'fire', name: 'Fireball', lv: 1, mp: 14, cd: 4, blurb: 'A ball of fire that bursts over everything where it lands.' },
             { id: 'frost', name: 'Frost Nova', lv: 3, mp: 18, cd: 10, blurb: 'Freeze everything around you in place.' },
             { id: 'heal', name: 'Heal', lv: 6, mp: 25, cd: 14, blurb: 'Heal yourself by a good share of your health.' },
             { id: 'chain', name: 'Chain Lightning', lv: 10, mp: 20, cd: 7, blurb: 'Lightning jumps between up to five monsters.' },
             { id: 'blink', name: 'Blink', lv: 14, mp: 15, cd: 9, blurb: 'Teleport forward, out of trouble.' },
             { id: 'meteor', name: 'Meteor', lv: 18, mp: 35, cd: 14, blurb: 'Call down a meteor in front of you. Huge damage where it lands.' },
-            { id: 'ward', name: 'Mana Shield', lv: 24, mp: 30, cd: 24, blurb: 'Take half damage for 8 seconds.' }],
+            { id: 'ward', name: 'Mana Shield', lv: 24, mp: 30, cd: 24, blurb: 'Take half damage for 8 seconds.' },
+            { id: 'cone', name: 'Cone of Cold', lv: 5, mp: 16, cd: 7, blurb: 'A blast of ice in front of you that hits and slows everything.' },
+            { id: 'flamewave', name: 'Flame Wave', lv: 8, mp: 20, cd: 8, blurb: 'A wall of fire rolls forward, burning all it touches.' },
+            { id: 'missiles', name: 'Arcane Missiles', lv: 12, mp: 18, cd: 6, blurb: 'Five magic missiles fly at the nearest monsters.' },
+            { id: 'thunder', name: 'Thunderstorm', lv: 21, mp: 32, cd: 16, blurb: 'Lightning strikes up to eight monsters around you.' },
+            { id: 'arcburst', name: 'Arcane Burst', lv: 30, mp: 50, cd: 26, blurb: 'Unleash raw magic: huge damage to everything near you.' }],
         cleric: [{ id: 'smite', name: 'Smite', lv: 1, mp: 10, cd: 3, blurb: 'A ball of holy light at the nearest monster.' },
             { id: 'mend', name: 'Mend', lv: 3, mp: 18, cd: 8, blurb: 'Heal yourself and every friend near you.' },
             { id: 'bless', name: 'Blessing', lv: 6, mp: 20, cd: 20, blurb: 'You and friends near you hit 50% harder for 8 seconds.' },
             { id: 'sanct', name: 'Sanctuary', lv: 10, mp: 24, cd: 22, blurb: 'You and friends near you take half damage for 6 seconds.' },
             { id: 'renew', name: 'Renew', lv: 14, mp: 22, cd: 16, blurb: 'You and friends near you heal a little every second for 6 seconds.' },
             { id: 'nova', name: 'Holy Nova', lv: 18, mp: 28, cd: 12, blurb: 'A burst of light: hurts monsters around you and heals friends.' },
-            { id: 'divine', name: 'Divine Light', lv: 24, mp: 40, cd: 30, blurb: 'Fully heal yourself and every friend near you, and pick up any who are down.' }]
+            { id: 'divine', name: 'Divine Light', lv: 24, mp: 40, cd: 30, blurb: 'Fully heal yourself and every friend near you, and pick up any who are down.' },
+            { id: 'hammer', name: 'Holy Hammer', lv: 5, mp: 12, cd: 5, blurb: 'Swing a hammer of light in front of you, stunning what it hits.' },
+            { id: 'purify', name: 'Purify', lv: 8, mp: 18, cd: 12, blurb: 'Holy light bursts around you: double damage to the undead, and it heals you a little.' },
+            { id: 'chains', name: 'Chains of Light', lv: 12, mp: 20, cd: 14, blurb: 'Bind every monster near you in place for 3 seconds.' },
+            { id: 'aegis', name: 'Aegis', lv: 21, mp: 30, cd: 28, blurb: 'You take 70% less damage for 4 seconds, and friends near you take half.' },
+            { id: 'judgment', name: 'Judgment', lv: 30, mp: 45, cd: 20, blurb: 'A pillar of light crashes down ahead of you. Massive damage.' }]
     };
-    const HEALS = ['heal', 'mend', 'bless', 'sanct', 'renew', 'divine'];
+    const HEALS = ['heal', 'mend', 'bless', 'sanct', 'renew', 'divine', 'rally', 'wall', 'aegis', 'roll'];
     const DUNGEONS = [
         { id: 0, name: 'Goblin Warrens', lv: 1, rooms: 4, diff: 1, extra: 0, tint: '#a8e08a', mods: [], mix: [['goblin', 45], ['archer', 20], ['skeleton', 15], ['bat', 12], ['shaman', 8], ['rat', 14], ['beetle', 7], ['shroom', 8], ['boar', 6]], boss: ['king'], blurb: 'Tunnels full of goblins, and their King at the end.' },
         { id: 1, name: 'Ghoul Catacombs', lv: 5, rooms: 4, diff: 5, extra: 1, tint: '#a8c8e8', mods: [], mix: [['skeleton', 28], ['skelarcher', 18], ['ghoul', 24], ['wraith', 10], ['slime', 12], ['bat', 8], ['ghost', 12], ['rat', 8], ['beetle', 6], ['necro', 7], ['scorpion', 8], ['shroom', 6]], boss: ['lord'], blurb: 'Where the dead walk. The Ghoul Lord rules here.' },
@@ -18500,18 +18520,18 @@
         D.found.push(w.c); };
     const dunPlace = D => (D.run.room ? (D.run.d + 1) * 1000 + D.run.room : 0);
     const TREES = {
-        warrior: [{ name: 'Berserker', blurb: 'Hit hard and fast.', color: '#ff7a5a', nodes: [{ s: 'charge' }, { id: 'w_dmg', name: 'Heavy Hands', lv: 2, fx: 'dmg', v: 6, icon: '💪' }, { s: 'whirl' }, { s: 'warcry' }, { s: 'cleave' }] },
-            { name: 'Guardian', blurb: 'Stand firm and soak it up.', color: '#7aa8ff', nodes: [{ id: 'w_hp', name: 'Thick Skin', lv: 2, fx: 'hp', v: 8, icon: '🛡️' }, { s: 'skin' }, { s: 'slam' }, { id: 'w_def', name: 'Stone Wall', lv: 12, fx: 'def', v: 5, icon: '🧱' }, { s: 'quake' }] },
-            { name: 'Warlord', blurb: 'Keep fighting forever.', color: '#ffd84d', nodes: [{ id: 'w_cdr', name: 'Battle Rhythm', lv: 2, fx: 'cdr', v: 6, icon: '⏱️' }, { id: 'w_kill', name: 'Bloodlust', lv: 5, fx: 'kill', v: 2, icon: '🩸' }, { id: 'w_leech', name: 'Second Wind', lv: 12, fx: 'leech', v: 2, icon: '💨' }, { id: 'w_crit', name: 'Killer Instinct', lv: 16, fx: 'crit', v: 3, icon: '🎯' }] }],
-        archer: [{ name: 'Marksman', blurb: 'Every arrow counts.', color: '#ff7a5a', nodes: [{ s: 'volley' }, { id: 'a_dmg', name: 'Steady Aim', lv: 2, fx: 'dmg', v: 6, icon: '🏹' }, { s: 'hawk' }, { s: 'pierce' }, { s: 'rain' }] },
-            { name: 'Ranger', blurb: 'Quick feet, sharp eyes.', color: '#7dff9a', nodes: [{ id: 'a_spd', name: 'Fleet Foot', lv: 2, fx: 'speed', v: 5, icon: '👟' }, { s: 'leap' }, { id: 'a_crit', name: 'Hunter\'s Eye', lv: 8, fx: 'crit', v: 3, icon: '👁️' }, { s: 'snare' }] },
-            { name: 'Windrunner', blurb: 'Skills, skills, skills.', color: '#9be7ff', nodes: [{ id: 'a_cdr', name: 'Quick Draw', lv: 2, fx: 'cdr', v: 6, icon: '⏱️' }, { id: 'a_reg', name: 'Deep Breath', lv: 6, fx: 'regen', v: 12, icon: '🌬️' }, { id: 'a_hp', name: 'Tough Hide', lv: 10, fx: 'hp', v: 8, icon: '🦌' }, { s: 'swift' }] }],
-        mage: [{ name: 'Fire', blurb: 'Burn it all down.', color: '#ff8a3c', nodes: [{ s: 'fire' }, { id: 'm_dmg', name: 'Kindling', lv: 2, fx: 'dmg', v: 6, icon: '🔥' }, { s: 'chain' }, { s: 'meteor' }] },
-            { name: 'Frost', blurb: 'Freeze them, then slip away.', color: '#9be7ff', nodes: [{ s: 'frost' }, { id: 'm_mp', name: 'Cold Mind', lv: 4, fx: 'mp', v: 10, icon: '🧊' }, { s: 'blink' }, { id: 'm_def', name: 'Ice Armor', lv: 16, fx: 'def', v: 5, icon: '❄️' }, { s: 'ward' }] },
-            { name: 'Arcane', blurb: 'Endless mana.', color: '#d68aff', nodes: [{ id: 'm_reg', name: 'Mana Flow', lv: 2, fx: 'regen', v: 12, icon: '🌀' }, { s: 'heal' }, { id: 'm_cdr', name: 'Focus', lv: 8, fx: 'cdr', v: 6, icon: '⏱️' }, { id: 'm_crit', name: 'Spell Surge', lv: 14, fx: 'crit', v: 3, icon: '✨' }] }],
-        cleric: [{ name: 'Light', blurb: 'Smite the wicked.', color: '#ffe066', nodes: [{ s: 'smite' }, { id: 'c_dmg', name: 'Zeal', lv: 2, fx: 'dmg', v: 6, icon: '☀️' }, { s: 'nova' }, { id: 'c_crit', name: 'Judgement', lv: 20, fx: 'crit', v: 3, icon: '⚖️' }] },
-            { name: 'Mercy', blurb: 'Keep everyone standing.', color: '#7dff9a', nodes: [{ s: 'mend' }, { id: 'c_reg', name: 'Prayer', lv: 4, fx: 'regen', v: 12, icon: '🙏' }, { s: 'renew' }, { s: 'divine' }] },
-            { name: 'Shield', blurb: 'Nothing gets through.', color: '#7aa8ff', nodes: [{ id: 'c_hp', name: 'Faith', lv: 2, fx: 'hp', v: 8, icon: '💛' }, { s: 'bless' }, { s: 'sanct' }, { id: 'c_def', name: 'Devotion', lv: 12, fx: 'def', v: 5, icon: '🛡️' }, { id: 'c_kill', name: 'Grace', lv: 16, fx: 'kill', v: 2, icon: '🕊️' }] }]
+        warrior: [{ name: 'Berserker', blurb: 'Hit hard and fast.', color: '#ff7a5a', nodes: [{ s: 'charge' }, { id: 'w_dmg', name: 'Heavy Hands', lv: 2, fx: 'dmg', v: 6, icon: '💪' }, { s: 'whirl' }, { s: 'warcry' }, { s: 'cleave' }, { s: 'execute' }, { s: 'bladestorm' }] },
+            { name: 'Guardian', blurb: 'Stand firm and soak it up.', color: '#7aa8ff', nodes: [{ id: 'w_hp', name: 'Thick Skin', lv: 2, fx: 'hp', v: 8, icon: '🛡️' }, { s: 'skin' }, { s: 'slam' }, { s: 'rally' }, { id: 'w_def', name: 'Stone Wall', lv: 12, fx: 'def', v: 5, icon: '🧱' }, { s: 'wall' }, { s: 'quake' }] },
+            { name: 'Warlord', blurb: 'Keep fighting forever.', color: '#ffd84d', nodes: [{ id: 'w_cdr', name: 'Battle Rhythm', lv: 2, fx: 'cdr', v: 6, icon: '⏱️' }, { s: 'leapstrike' }, { id: 'w_kill', name: 'Bloodlust', lv: 10, fx: 'kill', v: 2, icon: '🩸' }, { id: 'w_leech', name: 'Second Wind', lv: 14, fx: 'leech', v: 2, icon: '💨' }, { id: 'w_crit', name: 'Killer Instinct', lv: 18, fx: 'crit', v: 3, icon: '🎯' }] }],
+        archer: [{ name: 'Marksman', blurb: 'Every arrow counts.', color: '#ff7a5a', nodes: [{ s: 'volley' }, { id: 'a_dmg', name: 'Steady Aim', lv: 2, fx: 'dmg', v: 6, icon: '🏹' }, { s: 'triple' }, { s: 'hawk' }, { s: 'pierce' }, { s: 'rain' }, { s: 'arrowstorm' }] },
+            { name: 'Ranger', blurb: 'Quick feet, sharp eyes.', color: '#7dff9a', nodes: [{ id: 'a_spd', name: 'Fleet Foot', lv: 2, fx: 'speed', v: 5, icon: '👟' }, { s: 'leap' }, { s: 'firetrap' }, { id: 'a_crit', name: 'Hunter\'s Eye', lv: 10, fx: 'crit', v: 3, icon: '👁️' }, { s: 'snare' }, { s: 'roll' }] },
+            { name: 'Windrunner', blurb: 'Skills, skills, skills.', color: '#9be7ff', nodes: [{ id: 'a_cdr', name: 'Quick Draw', lv: 2, fx: 'cdr', v: 6, icon: '⏱️' }, { s: 'venomshot' }, { id: 'a_reg', name: 'Deep Breath', lv: 14, fx: 'regen', v: 12, icon: '🌬️' }, { id: 'a_hp', name: 'Tough Hide', lv: 18, fx: 'hp', v: 8, icon: '🦌' }, { s: 'swift' }] }],
+        mage: [{ name: 'Fire', blurb: 'Burn it all down.', color: '#ff8a3c', nodes: [{ s: 'fire' }, { id: 'm_dmg', name: 'Kindling', lv: 2, fx: 'dmg', v: 6, icon: '🔥' }, { s: 'flamewave' }, { s: 'chain' }, { s: 'meteor' }, { s: 'thunder' }] },
+            { name: 'Frost', blurb: 'Freeze them, then slip away.', color: '#9be7ff', nodes: [{ s: 'frost' }, { s: 'cone' }, { id: 'm_mp', name: 'Cold Mind', lv: 6, fx: 'mp', v: 10, icon: '🧊' }, { s: 'blink' }, { id: 'm_def', name: 'Ice Armor', lv: 16, fx: 'def', v: 5, icon: '❄️' }, { s: 'ward' }] },
+            { name: 'Arcane', blurb: 'Endless mana.', color: '#d68aff', nodes: [{ id: 'm_reg', name: 'Mana Flow', lv: 2, fx: 'regen', v: 12, icon: '🌀' }, { s: 'heal' }, { s: 'missiles' }, { id: 'm_cdr', name: 'Focus', lv: 14, fx: 'cdr', v: 6, icon: '⏱️' }, { id: 'm_crit', name: 'Spell Surge', lv: 18, fx: 'crit', v: 3, icon: '✨' }, { s: 'arcburst' }] }],
+        cleric: [{ name: 'Light', blurb: 'Smite the wicked.', color: '#ffe066', nodes: [{ s: 'smite' }, { id: 'c_dmg', name: 'Zeal', lv: 2, fx: 'dmg', v: 6, icon: '☀️' }, { s: 'hammer' }, { s: 'nova' }, { id: 'c_crit', name: 'Judgement', lv: 20, fx: 'crit', v: 3, icon: '⚖️' }, { s: 'judgment' }] },
+            { name: 'Mercy', blurb: 'Keep everyone standing.', color: '#7dff9a', nodes: [{ s: 'mend' }, { id: 'c_reg', name: 'Prayer', lv: 4, fx: 'regen', v: 12, icon: '🙏' }, { s: 'purify' }, { s: 'renew' }, { s: 'divine' }] },
+            { name: 'Shield', blurb: 'Nothing gets through.', color: '#7aa8ff', nodes: [{ id: 'c_hp', name: 'Faith', lv: 2, fx: 'hp', v: 8, icon: '💛' }, { s: 'bless' }, { s: 'sanct' }, { s: 'chains' }, { id: 'c_def', name: 'Devotion', lv: 14, fx: 'def', v: 5, icon: '🛡️' }, { s: 'aegis' }, { id: 'c_kill', name: 'Grace', lv: 22, fx: 'kill', v: 2, icon: '🕊️' }] }]
     };
     const TREE_MAX = 3;
     const PERK_TEXT = { dmg: 'more damage', hp: 'more health', mp: 'more mana', crit: 'more critical hits', def: 'less damage taken', regen: 'faster mana refill', cdr: 'faster skill recharge', leech: 'of the damage you deal comes back as health', kill: 'health back on every kill', speed: 'faster running in dungeons' };
@@ -18525,20 +18545,35 @@
         TREE_CACHE.set(cls, list);
         return list;
     }
+    const treeStarter = cls => ((SKILLS[cls] || []).find(S => S.lv === 1) || {}).id;
+    function treeCost(cls, n, r) {     // (r = the rank you are buying: 1 learns it)
+        if (!n.skill)
+            return 1;
+        if (r > 1)
+            return 2;
+        if (n.id === treeStarter(cls))
+            return 0;
+        return n.lv <= 6 ? 2 : n.lv <= 14 ? 3 : n.lv <= 24 ? 4 : 5;
+    }
+    function treeSpentIn(cls, t) {
+        let sum = 0;
+        treeNodes(cls).forEach(n => { for (let r = 1; r <= (t[n.id] || 0); r++)
+            sum += treeCost(cls, n, r); });
+        return sum;
+    }
     function treeOf(D) {
         if (!D || !CLASSES[D.cls])
             return {};
         if (!D.trees || typeof D.trees !== 'object')
             D.trees = {};
-        if (!D.trees[D.cls] || typeof D.trees[D.cls] !== 'object') {
-            const t = {};
-            (SKILLS[D.cls] || []).forEach(S => { if (S.lv <= D.level)
-                t[S.id] = 1; });
-            D.trees[D.cls] = t;
-        }
-        return D.trees[D.cls];
+        if (!D.trees[D.cls] || typeof D.trees[D.cls] !== 'object')
+            D.trees[D.cls] = {};
+        const t = D.trees[D.cls], st = treeStarter(D.cls);
+        if (st && !(t[st] > 0))
+            t[st] = 1;     // (everyone starts with their class's first skill, free)
+        return t;
     }
-    const treeSpent = D => Object.values(treeOf(D)).reduce((a, b) => a + b, 0);
+    const treeSpent = D => treeSpentIn(D.cls, treeOf(D));
     const treePts = D => Math.max(0, D.level - treeSpent(D));
     const skillRank = (D, id) => treeOf(D)[id] || 0;
     function talent(D, fx) {
@@ -18558,8 +18593,9 @@
             return 'Needs level ' + n.lv;
         if (!r && n.prev && !(t[n.prev] > 0))
             return 'Learn ' + treeNodes(D.cls).find(x => x.id === n.prev).name + ' first';
-        if (treePts(D) < 1)
-            return 'No skill points left';
+        const cost = treeCost(D.cls, n, r + 1);
+        if (treePts(D) < cost)
+            return 'Needs ' + cost + ' skill points';
         return '';
     }
     function dunSlots(D) {
@@ -18621,11 +18657,14 @@
         if (v.trees && typeof v.trees === 'object') {
             out.trees = {};
             Object.keys(CLASSES).forEach(c => { const src = v.trees[c]; if (!src || typeof src !== 'object')
-                return; const t = {}; let sum = 0; treeNodes(c).forEach(n => { const r = src[n.id]; if (Number.isInteger(r) && r > 0) {
-                t[n.id] = Math.min(TREE_MAX, r);
-                sum += t[n.id];
-            } }); out.trees[c] = sum <= out.level ? t : {}; });
+                return; const t = {}; treeNodes(c).forEach(n => { const r = src[n.id]; if (Number.isInteger(r) && r > 0)
+                t[n.id] = Math.min(TREE_MAX, r); }); out.trees[c] = treeSpentIn(c, t) <= out.level ? t : {}; });
         }
+        if (v.treeV !== 2) {     // (one-time roll back: skills handed out for free before costs existed must be earned again)
+            out.trees = {};
+            out.slots = [null, null, null];
+        }
+        out.treeV = 2;
         out.stash = (Array.isArray(v.stash) ? v.stash : []).map(cleanWeapon).filter(Boolean).slice(0, DUN.STASH);
         const lv = v.loot && typeof v.loot === 'object' ? v.loot : {};
         out.loot = { day: int(lv.day, 0, 1e7, 0), n: int(lv.n, 0, 999, 0), got: (Array.isArray(lv.got) ? lv.got : []).filter(x => typeof x === 'string' && x.length < 24).slice(0, 40) };
@@ -18669,7 +18708,7 @@
         return out;
     }
     function drawSkillIcon(c, id) {
-        const bgNew = { smite: '#d8a43a', mend: '#3fbf5f', bless: '#e8b84a', sanct: '#7a9ad8', renew: '#2fa86a', nova: '#e8d070', divine: '#f0c040', slam: '#a8742a', warcry: '#d84a2a', cleave: '#8a2a3a', quake: '#7a5a2a', pierce: '#2f6a8a', snare: '#4a8a2a', rain: '#2a6a4a', swift: '#2aa8a0', chain: '#5a6ad8', blink: '#8a4ad8', meteor: '#c8501e', ward: '#4a6aa8' }[id];
+        const bgNew = { smite: '#d8a43a', mend: '#3fbf5f', bless: '#e8b84a', sanct: '#7a9ad8', renew: '#2fa86a', nova: '#e8d070', divine: '#f0c040', slam: '#a8742a', warcry: '#d84a2a', cleave: '#8a2a3a', quake: '#7a5a2a', pierce: '#2f6a8a', snare: '#4a8a2a', rain: '#2a6a4a', swift: '#2aa8a0', chain: '#5a6ad8', blink: '#8a4ad8', meteor: '#c8501e', ward: '#4a6aa8', leapstrike: '#c8823c', rally: '#2fa86a', wall: '#6a7a9a', execute: '#8a1a2a', bladestorm: '#a83a3a', triple: '#3f8a3a', firetrap: '#c8501e', venomshot: '#4a8a2a', roll: '#2a8aa8', arrowstorm: '#2a5a7a', cone: '#3fa7f5', flamewave: '#e8602a', missiles: '#8a4ad8', thunder: '#4a5ab8', arcburst: '#a84ad8', hammer: '#d8a43a', purify: '#e8d070', chains: '#c8a83a', aegis: '#e8b84a', judgment: '#f0c040' }[id];
         const own = id;
         const ink = '#1d1424', bg = bgNew || { charge: '#c8323c', whirl: '#c8323c', skin: '#8a90a4', volley: '#3f8a3a', leap: '#3f8a3a', hawk: '#d8a43a', fire: '#e8602a', frost: '#3fa7f5', heal: '#3fbf5f' }[id] || '#6a4a8a';
         c.save();
@@ -18691,6 +18730,15 @@
             i ? q.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr) : q.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
         } q.closePath(); });
         const arrow = (x0, y0, x1, y1, w) => { line([[x0, y0], [x1, y1]], w || 2.5); const a = Math.atan2(y1 - y0, x1 - x0); inked(c, W, ink, 1, q => { q.moveTo(x1 + Math.cos(a) * 6, y1 + Math.sin(a) * 6); q.lineTo(x1 + Math.cos(a + 2.4) * 6, y1 + Math.sin(a + 2.4) * 6); q.lineTo(x1 + Math.cos(a - 2.4) * 6, y1 + Math.sin(a - 2.4) * 6); q.closePath(); }); };
+        const EMO = { leapstrike: '🦘', rally: '💚', wall: '🛡️', execute: '🪓', bladestorm: '🌪️', triple: '🎯', firetrap: '🪤', venomshot: '🧪', roll: '🌀', arrowstorm: '🌧️', cone: '🧊', flamewave: '🔥', missiles: '✨', thunder: '⛈️', arcburst: '💥', hammer: '🔨', purify: '🌟', chains: '⛓️', aegis: '🔆', judgment: '⚡' }[id];
+        if (EMO) {
+            c.font = '24px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+            c.textAlign = 'center';
+            c.textBaseline = 'middle';
+            c.fillText(EMO, 24, 22);
+            c.restore();
+            return;
+        }
         const heart = (x, y, r, col) => inked(c, col, ink, 1.6, q => { q.moveTo(x, y + r * 0.9); q.bezierCurveTo(x - r * 1.5, y - r * 0.2, x - r * 0.7, y - r * 1.3, x, y - r * 0.45); q.bezierCurveTo(x + r * 0.7, y - r * 1.3, x + r * 1.5, y - r * 0.2, x, y + r * 0.9); });
         if (own === 'slam') {
             line([[8, 35], [40, 35]], 3);
@@ -29009,7 +29057,7 @@
             this.shrine = null;
             this.cleared = false;
             this.cds = [0, 0, 0];
-            this.buff = { skin: 0, hawk: 0, cry: 0, swift: 0, renew: 0 };
+            this.buff = { skin: 0, hawk: 0, cry: 0, swift: 0, renew: 0, wall: 0 };
             this.dunTarget = null;
             if (camp) {
                 this.noPad = false;
@@ -29692,6 +29740,155 @@
                 this.buff.skin = now + 8000;
                 this.dunPop(fx, fy - 96, 'Mana Shield!', '#9bbcff', true);
                 sfx.chime();
+            }
+            else if (S.id === 'leapstrike') {
+                const to = dash(190);
+                this.pz.body.reset(to.x, to.y - FOOT);
+                this.iframes = Math.max(this.iframes, 0.35);
+                hitAll(m => Math.hypot(m.x - to.x, m.y - to.y) < 120 + 14 * m.size, 1.8, 40, m => { m.stun = 1.2; });
+                this.dunRing(to.x, to.y, 120, 0xffd84d);
+                if (!REDUCED)
+                    this.cameras.main.shake(120, 0.007);
+                sfx.clack();
+            }
+            else if (S.id === 'rally') {
+                Dn.hp = Math.min(dunMaxHp(Dn), Dn.hp + dunMaxHp(Dn) * 0.25);
+                this.dunPop(fx, fy - 96, 'Rally!', '#7dff9a', true);
+                this.dunRing(fx, fy, 70, 0x7dff9a);
+                sfx.chime();
+            }
+            else if (S.id === 'wall') {
+                this.buff.wall = now + 4000;
+                this.dunPop(fx, fy - 96, 'Shield Wall!', '#c8d8ff', true);
+                this.dunRing(fx, fy, 60, 0xc8d8ff);
+                sfx.clack();
+            }
+            else if (S.id === 'execute') {
+                this.mons.filter(m => { if (m.dead)
+                    return false; const ox = m.x - fx, oy = m.y - fy, l = Math.hypot(ox, oy); return l < 110 + 14 * m.size && (ox * dx + oy * dy) / (l || 1) > 0.3; }).forEach(m => {
+                    const r = this.dunHitRoll(m.hp < m.max * 0.3 ? 8 : 2), l = Math.hypot(m.x - fx, m.y - fy) || 1;
+                    if (m.hp < m.max * 0.3)
+                        this.dunPop(m.x, m.y - 100 * m.size, 'EXECUTE!', '#ff5a5a', true);
+                    this.monHurt(m, r.d, r.crit, (m.x - fx) / l, (m.y - fy) / l, 30);
+                });
+                this.dunRing(fx + dx * 60, fy + dy * 40, 70, 0xff5a5a);
+                sfx.clack();
+            }
+            else if (S.id === 'bladestorm') {
+                [0, 400, 800].forEach((t, k) => this.time.delayedCall(t, () => { if (!this.dun || this.dunOver || !this.pz)
+                    return; const px = this.pz.x, py = this.pz.y + FOOT; this.mons.forEach(m => { if (!m.dead && Math.hypot(m.x - px, m.y - py) < 120 + 14 * m.size) {
+                    const r = this.dunHitRoll(1.4), l = Math.hypot(m.x - px, m.y - py) || 1;
+                    this.monHurt(m, r.d, r.crit, (m.x - px) / l, (m.y - py) / l, 14);
+                } }); this.dunRing(px, py, 120, k === 2 ? 0xff9a5a : 0xffffff); sfx.whoosh(); }));
+            }
+            else if (S.id === 'triple') {
+                [0, 120, 240].forEach(t => this.time.delayedCall(t, () => { if (!this.dun || this.dunOver)
+                    return; const a = this.dunAim(); this.dunShoot('arrow', a.fx, a.cy, a.dx, a.dy, 640, 0.9, 1.1); sfx.cast(); }));
+            }
+            else if (S.id === 'firetrap') {
+                const px = fx + dx * 170, py = fy + dy * 120;
+                this.dunRing(px, py, 40, 0xff9a3c);
+                this.time.delayedCall(700, () => { if (!this.dun || this.dunOver)
+                    return; this.mons.forEach(m => { if (!m.dead && Math.hypot(m.x - px, m.y - py) < 110 + 14 * m.size) {
+                    const r = this.dunHitRoll(2);
+                    this.monHurt(m, r.d, r.crit, null, null, 0);
+                    if (!m.dead)
+                        m.burn = { t: 4, dps: Math.max(2, r.d * 0.15), acc: 0 };
+                } }); this.dunRing(px, py, 110, 0xff7a3c); this.dunRing(px, py, 60, 0xffd84d); sfx.clack(); });
+                sfx.whoosh();
+            }
+            else if (S.id === 'venomshot') {
+                hitAll(m => { const ox = m.x - fx, oy = m.y - fy, l = Math.hypot(ox, oy); return l < 300 && (ox * dx + oy * dy) / (l || 1) > 0.75; }, 0.9, 10, m => { m.poison = { t: 5, dps: Math.max(2, dunPower(Dn, this.dunWeapon()) * 0.25), acc: 0 }; });
+                [-0.25, 0, 0.25].forEach(a => { const c = Math.cos(a), sn = Math.sin(a); const sh = this.dunShoot('arrow', fx, cy, dx * c - dy * sn, dx * sn + dy * c, 700, 0.4, 0.01); const last = this.shots[this.shots.length - 1]; if (last && last.img.setTint)
+                    last.img.setTint(0x8fe04a); });
+                sfx.cast();
+            }
+            else if (S.id === 'roll') {
+                const to = dash(140);
+                this.pz.body.reset(to.x, to.y - FOOT);
+                this.iframes = Math.max(this.iframes, 0.6);
+                this.dunRing(to.x, to.y, 30, 0xffffff);
+                sfx.whoosh();
+            }
+            else if (S.id === 'arrowstorm') {
+                const px = fx + dx * 190, py = fy + dy * 130;
+                [0, 450, 900].forEach(t => this.time.delayedCall(t, () => { if (!this.dun || this.dunOver)
+                    return; this.mons.forEach(m => { if (!m.dead && Math.hypot(m.x - px, m.y - py) < 140 + 14 * m.size) {
+                    const r = this.dunHitRoll(1.5);
+                    this.monHurt(m, r.d, r.crit, null, null, 0);
+                } }); this.dunRing(px, py, 140, 0xe8ecf4); sfx.cast(); }));
+            }
+            else if (S.id === 'cone') {
+                hitAll(m => { const ox = m.x - fx, oy = m.y - fy, l = Math.hypot(ox, oy); return l < 230 + 14 * m.size && (ox * dx + oy * dy) / (l || 1) > 0.55; }, 1.3, 20, m => { m.slow = 4; m.frozen = 1; });
+                this.dunRing(fx + dx * 110, fy + dy * 80, 90, 0x9be7ff);
+                sfx.chime();
+            }
+            else if (S.id === 'flamewave') {
+                hitAll(m => { const ox = m.x - fx, oy = m.y - fy, along = ox * dx + oy * dy, side = Math.abs(ox * dy - oy * dx); return along > 0 && along < 340 && side < 70 + 14 * m.size; }, 1.6, 30, m => { m.burn = { t: 3, dps: Math.max(2, dunPower(Dn, this.dunWeapon()) * 0.3), acc: 0 }; });
+                [80, 170, 260].forEach((k, j) => this.time.delayedCall(j * 90, () => this.dunRing(fx + dx * k, fy + dy * k * 0.7, 60, 0xff7a3c)));
+                sfx.whoosh();
+            }
+            else if (S.id === 'missiles') {
+                const tg = this.mons.filter(m => !m.dead && Math.hypot(m.x - fx, m.y - fy) < 420).sort((a, b) => Math.hypot(a.x - fx, a.y - fy) - Math.hypot(b.x - fx, b.y - fy));
+                for (let k = 0; k < 5 && tg.length; k++) {
+                    const m = tg[k % tg.length];
+                    this.time.delayedCall(k * 90, () => { if (!this.dun || m.dead)
+                        return; this.dunZap(this.pz.x, this.pz.y - 20, m.x, m.y - 30); const r = this.dunHitRoll(1); this.monHurt(m, r.d, r.crit, null, null, 0); });
+                }
+                sfx.cast();
+            }
+            else if (S.id === 'thunder') {
+                const tg = this.mons.filter(m => !m.dead && Math.hypot(m.x - fx, m.y - fy) < 380).sort(() => Math.random() - 0.5).slice(0, 8);
+                tg.forEach((m, k) => this.time.delayedCall(k * 120, () => { if (!this.dun || m.dead)
+                    return; this.dunBolt(m.x, m.y); const r = this.dunHitRoll(2); this.monHurt(m, r.d, r.crit, null, null, 0); if (!m.dead)
+                    m.stun = Math.max(m.stun || 0, 0.6); }));
+                sfx.cast();
+            }
+            else if (S.id === 'arcburst') {
+                hitAll(m => Math.hypot(m.x - fx, m.y - fy) < 230 + 14 * m.size, 3.4, 70);
+                this.dunRing(fx, fy, 230, 0xd68aff);
+                this.dunRing(fx, fy, 130, 0xffffff);
+                if (!REDUCED)
+                    this.cameras.main.shake(220, 0.01);
+                sfx.clack();
+            }
+            else if (S.id === 'hammer') {
+                hitAll(m => { const ox = m.x - fx, oy = m.y - fy, l = Math.hypot(ox, oy); return l < 120 + 14 * m.size && (ox * dx + oy * dy) / (l || 1) > 0.2; }, 1.7, 36, m => { m.stun = 1.2; });
+                this.dunRing(fx + dx * 60, fy + dy * 40, 70, 0xfff0a0);
+                sfx.clack();
+            }
+            else if (S.id === 'purify') {
+                const undead = ['ghoul', 'lord', 'skeleton', 'skelarcher', 'lich', 'wraith', 'mummy', 'ghost', 'necro'];
+                this.mons.forEach(m => { if (!m.dead && Math.hypot(m.x - fx, m.y - fy) < 170 + 14 * m.size) {
+                    const r = this.dunHitRoll(undead.includes(m.kind) ? 2.4 : 1.2), l = Math.hypot(m.x - fx, m.y - fy) || 1;
+                    this.monHurt(m, r.d, r.crit, (m.x - fx) / l, (m.y - fy) / l, 20);
+                } });
+                Dn.hp = Math.min(dunMaxHp(Dn), Dn.hp + dunMaxHp(Dn) * 0.1);
+                this.dunRing(fx, fy, 170, 0xfff6c0);
+                sfx.chime();
+            }
+            else if (S.id === 'chains') {
+                hitAll(m => Math.hypot(m.x - fx, m.y - fy) < 200 + 14 * m.size, 0.4, 0, m => { m.stun = 3; });
+                this.dunRing(fx, fy, 200, 0xffe066);
+                sfx.chime();
+            }
+            else if (S.id === 'aegis') {
+                this.buff.wall = now + 4000;
+                this.dunPop(fx, fy - 96, 'Aegis!', '#ffe066', true);
+                this.dunRing(fx, fy, 90, 0xffe066);
+                this.coopSend('bf', 'skin', fx, fy);
+                sfx.chime();
+            }
+            else if (S.id === 'judgment') {
+                const px = fx + dx * 180, py = fy + dy * 120;
+                this.time.delayedCall(250, () => { if (!this.dun || this.dunOver)
+                    return; this.mons.forEach(m => { if (!m.dead && Math.hypot(m.x - px, m.y - py) < 140 + 14 * m.size) {
+                    const r = this.dunHitRoll(3.6);
+                    this.monHurt(m, r.d, r.crit, null, null, 0);
+                    if (!m.dead)
+                        m.stun = 1;
+                } }); this.dunBolt(px, py); this.dunRing(px, py, 140, 0xfff6c0); this.dunRing(px, py, 70, 0xffd84d); if (!REDUCED)
+                    this.cameras.main.shake(180, 0.009); sfx.clack(); });
             }
             else if (S.id === 'heal') {
                 this.coopHeal(40, fx, fy);
@@ -30589,6 +30786,8 @@
                 d = Math.ceil(d * 0.8);
             if (talent(Dn, 'def'))
                 d = Math.max(1, Math.round(d * (1 - talent(Dn, 'def'))));
+            if (this.time.now < (this.buff.wall || 0))
+                d = Math.max(1, Math.round(d * 0.3));
             Dn.hp = Math.max(0, Dn.hp - d);
             this.iframes = DUN.IFRAMES;
             if (src && !src.dead && src.affixes && src.affixes.includes('vampiric')) {
@@ -45182,7 +45381,7 @@
                         hd.append(hb, node('small', '', B.blurb));
                         col.appendChild(hd);
                         nodes.filter(n => n.b === bi).forEach((n, k) => {
-                            const r = t[n.id] || 0, why = treeCan(D, n), card = node('div', 'tree-node' + (n.skill ? '' : ' perk') + (r ? ' on' : why && why !== 'No skill points left' && why !== 'Maxed out' ? ' off' : ''));
+                            const r = t[n.id] || 0, why = treeCan(D, n), card = node('div', 'tree-node' + (n.skill ? '' : ' perk') + (r ? ' on' : why && !/^Needs \d+ skill/.test(why) && why !== 'Maxed out' ? ' off' : ''));
                             if (k)
                                 col.appendChild(node('div', 'tree-link' + (r ? ' on' : ''), ''));
                             const ic = node('div', 'tree-ic', '');
@@ -45205,7 +45404,8 @@
                                 desc = '+' + n.v + '% ' + PERK_TEXT[n.fx] + ' per rank' + (r ? ' (now ' + n.v * r + '%)' : '');
                             tx.append(nm, node('small', '', desc));
                             const b = el('button', 'btn tree-btn', { type: 'button', 'data-act': 'learn', 'data-i': n.id });
-                            b.textContent = r >= TREE_MAX ? 'Max' : r ? 'Rank up' : 'Learn';
+                            const cost = treeCost(D.cls, n, r + 1);
+                            b.textContent = r >= TREE_MAX ? 'Max' : (r ? 'Rank up' : 'Learn') + (cost ? ' · ' + cost : ' · free');
                             b.disabled = !!why;
                             if (why && r < TREE_MAX)
                                 tx.appendChild(node('small', 'tree-why', why));
@@ -45437,7 +45637,7 @@
                 });
             }
             dunList.replaceChildren(...rows);
-            dunMsg.textContent = dn.note || (dn.tab === 'stats' ? 'Every level brings ' + DUN.PTS + ' stat points and 1 skill point (spend it in the Skill tree).' : dn.tab === 'tree' ? '1 skill point per level. Square icons are skills you put on keys; round ones are perks that are always on. Each skill rank: +20% damage, 10% less mana, 12% faster recharge.' : dn.shop ? 'Grizzle buys any weapon you do not need.' : 'Equip a weapon. Sell extras to Grizzle.');
+            dunMsg.textContent = dn.note || (dn.tab === 'stats' ? 'Every level brings ' + DUN.PTS + ' stat points and 1 skill point (spend it in the Skill tree).' : dn.tab === 'tree' ? '1 skill point per level. New skills cost 2 to 5 points (the number on the button), ranking up costs 2, perks cost 1. Each skill rank: +20% damage, 10% less mana, 12% faster recharge.' : dn.shop ? 'Grizzle buys any weapon you do not need.' : 'Equip a weapon. Sell extras to Grizzle.');
         }
         function dunOpen(shop, tab) { dn.shop = !!shop; dn.tab = tab || (shop ? 'bag' : 'stats'); dn.note = ''; paintDun(); dunP.open(); if (shop)
             questHappened('talk', { name: 'Grizzle' }); }
@@ -45566,7 +45766,7 @@
                 D.hp = Math.min(D.hp, dunMaxHp(D));
                 D.mp = Math.min(D.mp, dunMaxMp(D));
                 sfx.tick();
-                return 'Tree reset: all ' + D.level + ' skill points are back. Spend them how you like!';
+                return 'Tree reset: all ' + D.level + ' skill points are back (you keep your first skill). Spend them how you like!';
             }
             if (act === 'slot') {
                 const [id, ks] = String(i).split(':'), k = Number(ks), S = (SKILLS[D.cls] || []).find(x => x.id === id);
