@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794364973';
+<script>window.WANDO_BUILD = '1794365200';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -18093,7 +18093,7 @@
     function monsterOn(kind, f) {
         const M = MONSTERS[kind], k = Math.max(0, f - 1);
         return { kind, name: M.name, lv: Math.max(1, Math.round(f)), hp: Math.round(M.hp * 1.25 * (1 + 0.3 * k) * (1 + 0.05 * k)), dmg: Math.round(M.dmg * 1.3 * (1 + 0.18 * k) * (1 + 0.02 * k)), speed: M.speed * (1 + 0.02 * Math.min(k, 15)), reach: M.reach, wind: M.wind, cool: M.cool,
-            xp: Math.round(M.xp * (1 + 0.2 * k)), coins: M.coins.map(c => Math.round(c * (1 + 0.15 * k))), size: M.size, boss: !!M.boss, shoot: M.shoot || 0, split: !!M.split, fly: !!M.fly, heal: !!M.heal,
+            xp: Math.round(M.xp * (1 + 0.2 * k)), coins: M.coins.map(c => Math.round(c * (1 + 0.08 * k))), size: M.size, boss: !!M.boss, shoot: M.shoot || 0, split: !!M.split, fly: !!M.fly, heal: !!M.heal,
             block: M.block || 0, armor: M.armor || 0, storm: M.storm || 0, float: !!M.float, bolt: M.bolt || '', boom: M.boom || 0, chill: !!M.chill, blink: !!M.blink, summon: !!M.summon, regen: M.regen || 0, charge: !!M.charge, spore: M.spore || 0, fire: !!M.fire, affixes: [], elite: false };
     }
     function floorMonsters(f, rand) {
@@ -18130,7 +18130,7 @@
             out.push(f % 10 === 0 ? 'lord' : f % 15 === 0 ? 'lich' : f % 20 === 5 && f > 5 ? 'queen' : f > 5 ? (f % 2 ? 'colossus' : 'drake') : 'king');
         return out;
     }
-    const roomDiff = (di, room, lv) => { const me = Math.max(1, (lv || 1) - 1); return DUNGEONS[di].daily ? me + 0.5 + (room - 1) * 0.85 : DUNGEONS[di].rooms ? Math.max(DUNGEONS[di].diff, me) + 0.5 + (room - 1) * 1.1 : Math.max(DUNGEONS[di].diff, me) + room - 1; };
+    const roomDiff = (di, room, lv) => { const me = Math.max(1, (lv || 1) - 1); return DUNGEONS[di].daily ? me + 0.3 + (room - 1) * 0.6 : DUNGEONS[di].rooms ? DUNGEONS[di].diff + (room - 1) * 0.8 : DUNGEONS[di].diff + room - 1; };     // (each dungeon has set monster levels, like zones: come back when you are strong enough)
     const HALLS = { on: true };
     const HALL_SHAPES = {
         classic: { name: '', cols: 3, rows: 2, mx: 270, rw: [400, 490], rh: [300, 360], sw: 470, sh: 330, hw: [120, 140], len: [3, 5], side: 0.3 },
@@ -18380,9 +18380,9 @@
         if (!Dg.rooms)
             out = floorMonsters(room, rand);
         else if (type === 'boss')
-            return Dg.boss.concat(Array.from({ length: 12 }, () => pickW(Dg.mix, rand)));     // (the boss brings a bigger gang)
+            return Dg.boss.concat(Array.from({ length: 4 + Dg.extra * 4 }, () => pickW(Dg.mix, rand)));     // (the boss brings a gang: bigger in harder dungeons)
         else
-            out = Array.from({ length: Math.min(36, Math.round(13 + room * 3.2 + Dg.extra * 2)) }, () => pickW(Dg.mix, rand));     // (more of them, and more each room down)
+            out = Array.from({ length: Math.min([16, 24, 34][Dg.extra] || 34, Math.round(7 + Dg.extra * 2.5 + room * (2 + Dg.extra * 0.5))) }, () => pickW(Dg.mix, rand));     // (easy dungeons: fewer; hard ones: crowds)
         if (type === 'shrine' || type === 'vault')
             out = out.filter(k => !MONSTERS[k].boss).slice(0, 3);
         else if (type === 'traps')
@@ -30275,13 +30275,14 @@
             }
             if (this.dunTarget === m)
                 this.dunTarget = null;
-            const coins = Math.round((m.coins[0] + Math.floor(Math.random() * (m.coins[1] - m.coins[0] + 1))) * (mods.includes('gilded') ? 2 : 1) * (this.boon('greed') ? 1.5 : 1));
+            const coins = Math.round((m.coins[0] + Math.floor(Math.random() * (m.coins[1] - m.coins[0] + 1))) * 0.4 * (mods.includes('gilded') ? 2 : 1) * (this.boon('greed') ? 1.5 : 1));
             G.coins += coins;
             if (talent(Dn, 'kill') && Dn.hp > 0)
                 Dn.hp = Math.min(dunMaxHp(Dn), Dn.hp + dunMaxHp(Dn) * talent(Dn, 'kill'));
             Dn.kills[m.kind] = (Dn.kills[m.kind] || 0) + 1;
             this.dunPop(m.x, m.y - 40, '+' + coins + 'c', '#ffe066');
-            const xp = (this.party || []).length ? Math.round(m.xp * 1.2) : m.xp;
+            const gap = Dn.level - (m.lv || 1), low = gap > 5 ? Math.max(0.1, 1 - 0.15 * (gap - 5)) : 1;     // (monsters far below your level give little xp: move on to a harder dungeon)
+            const xp = Math.max(1, Math.round(((this.party || []).length ? m.xp * 1.2 : m.xp) * low));
             this.dunPop(this.pz.x + (Math.random() - 0.5) * 30, this.pz.y + FOOT - 104, '+' + xp + ' XP' + (xp > m.xp ? ' (party)' : ''), '#7fe8ff');
             {
                 const now = this.time.now, c = this.combo && now - this.combo.t < 2600 ? this.combo : { n: 0 };
@@ -30289,7 +30290,7 @@
                 c.t = now;
                 this.combo = c;
                 if (c.n >= 3) {
-                    const bonus = Math.min(5, c.n - 2);
+                    const bonus = Math.min(3, Math.floor((c.n - 1) / 2));
                     G.coins += bonus;
                     this.dunPop(m.x, m.y - 70, 'x' + c.n + ' COMBO! +' + bonus + 'c', c.n >= 6 ? '#ff7ad9' : '#ffb347', c.n >= 6);
                     if (c.n >= 5)
@@ -30742,7 +30743,7 @@
                 return true;
             }
             ch.img.setTexture('chest_1');
-            const coins = Math.round((10 + Math.random() * 25) * (1 + 0.25 * (f - 1)) * (ch.big ? 4 : 1) * (mods.includes('gilded') ? 2 : 1) * (this.boon('greed') ? 1.5 : 1));
+            const coins = Math.round((6 + Math.random() * 12) * (1 + 0.15 * (f - 1)) * (ch.big ? 4 : 1) * (mods.includes('gilded') ? 2 : 1) * (this.boon('greed') ? 1.5 : 1));
             G.coins += coins;
             Dn.chests++;
             this.dunPop(ch.x, ch.y - 60, '+' + coins + ' Coins', '#ffd84d', true);
@@ -46025,7 +46026,7 @@
             DUNGEONS.forEach((base, i) => {
                 const Dg = dunDef(i, day), open = dunOpenTo(D, i), li = node('div', 'mine-row' + (open ? '' : ' dun-locked')), text = node('div', 'mine-text'), b = el('button', 'btn', { type: 'button', 'data-d': String(i) });
                 const plan = roomPlan(Dg, day), done = Dg.daily ? D.daily === day : !!(D.cl && D.cl.day === day && D.cl.d.includes(i));
-                let blurb = Dg.daily ? 'Today: ' + Dg.mods.map(k => DELVE_MODS[k].name + ' (' + DELVE_MODS[k].blurb.replace(/\.$/, '').toLowerCase() + ')').join(', ') + '. Its boss is ' + AFFIXES[Dg.bossAffix].name.toLowerCase() + '. Made to your level.' : Dg.blurb + ' For level ' + Dg.lv + ' and up.';
+                let blurb = Dg.daily ? 'Today: ' + Dg.mods.map(k => DELVE_MODS[k].name + ' (' + DELVE_MODS[k].blurb.replace(/\.$/, '').toLowerCase() + ')').join(', ') + '. Its boss is ' + AFFIXES[Dg.bossAffix].name.toLowerCase() + '. Made to your level.' : Dg.blurb + (Dg.rooms ? ' Monsters are level ' + Math.max(1, Math.round(roomDiff(i, 1, 1))) + ' to ' + Math.round(roomDiff(i, Dg.rooms, 1)) + '.' + (D.level > Math.round(roomDiff(i, Dg.rooms, 1)) + 5 ? ' (Too easy for you now: little xp here.)' : D.level + 2 < Dg.lv ? ' (Dangerous at your level!)' : '') : ' Monsters start at level ' + Dg.diff + ' and get stronger every floor.');
                 if (plan)
                     blurb += ' ' + (plan.length - 1) + ' layers, then the boss. Every layer is a surprise!';
                 else
