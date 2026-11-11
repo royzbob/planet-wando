@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794354958';
+<script>window.WANDO_BUILD = '1794355226';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -34153,7 +34153,7 @@
                 c.fillText(on ? 'CONCERT IS ON' : 'CONCERT MODE', 66, 46, 116);
                 c.fillStyle = on ? '#ffe066' : '#5ef2ff';
                 c.font = '800 12px "Baloo 2", "Trebuchet MS", sans-serif';
-                c.fillText(on ? 'click to end the show' : 'click to start the show', 67, 65, 114);
+                c.fillText(on ? 'click: the DJ booth' : 'click: the DJ booth', 67, 65, 114);
             };
             bake(this, 'concert_off', 200, 96, face(false));
             bake(this, 'concert_on', 200, 96, face(true));
@@ -36962,6 +36962,7 @@
                 S.b1 = add(this.add.image(x - 100, y - 2, 'backup_1').setOrigin(0.5, FEET_OA).setScale(1.05 / TEX).setDepth(y - 1));
                 S.b2 = add(this.add.image(x + 100, y - 2, 'backup_6').setOrigin(0.5, FEET_OA).setScale(1.05 / TEX).setDepth(y - 1));
                 S.lbl = add(this.label(x, y - 170, SHOW.star + ' spins ' + (cur.who ? cur.who + ' song: ' : '') + String(cur.title).slice(0, 28), '#3a0f6e'));
+                S.mouth = add(this.add.graphics().setDepth(y + 0.5));
                 S.spot = add(this.add.image(x, y - 50, 'spot').setDisplaySize(380, 240).setTint(0xfff0c0).setAlpha(0.4).setBlendMode(ADD).setDepth(y + 1));
                 S.key = cur.key;
                 this.noteUntil = 0; this.note(SHOW.star + ' is spinning ' + (cur.who ? cur.who + ' song!' : cur.title + '!'), '#ff7ad9');
@@ -36973,6 +36974,11 @@
             S.b1.setY(y - 2 - Math.abs(Math.sin(Math.PI * p + 0.5)) * 10).setAngle(sway * 7);
             S.b2.setY(y - 2 - Math.abs(Math.sin(Math.PI * p - 0.5)) * 10).setAngle(-sway * 7);
             S.spot.setAlpha(0.3 + 0.25 * (1 - bounce));
+            let v = null; try { v = ui.clubVoice ? ui.clubVoice() : null; } catch (e) { }
+            if (v === null) v = Math.max(0, Math.sin(Math.PI * p * 2)) * 0.6;                    // (no song file to listen to: sing along to the beat)
+            const k = 1.35, mx = S.nova.x, my = S.nova.y - (100 - 57) * k * (S.nova.scaleY * TEX / k);
+            S.mouth.clear();
+            if (v > 0.08) { S.mouth.fillStyle(0x5a0f1e, 1); S.mouth.fillEllipse(mx, my, 6.5 * k, (1.5 + v * 6.5) * k); S.mouth.fillStyle(0xff7a8a, 1); S.mouth.fillEllipse(mx, my + (0.8 + v * 2) * k, 3.5 * k, Math.max(1, v * 2.4) * k); }
         }
         djHostTick(time, on, bp) {                                  // DJ Volt: nods along, works the decks, throws a hand up now and then; on the beat when a song is on
             const H = this.djHost; if (!H || !H.img || !H.img.active || REDUCED) return;
@@ -40336,7 +40342,7 @@
             if (on)
                 questHappened('concert');
         }
-        ui.onConcert = () => setConcert(!music.isConcert());
+        ui.onConcert = () => { if (ui.onHotspot) ui.onHotspot('dj', true); else setConcert(!music.isConcert()); };     // (the Concert Mode sign opens the booth, where the show is started)
         let showMusic = false;
         ui.onShow = on => { if (on && !music.isConcert()) {
             showMusic = true;
@@ -49271,7 +49277,7 @@
             mp3Paint();
         }
         mp3Audio.volume = mp3.vol;
-        mp3Audio.addEventListener('play', () => { music.user(true); mp3Paint(); });
+        mp3Audio.addEventListener('play', () => { music.user(true); mp3Paint(); setTimeout(() => { try { if (ui.clubVoice) voxLevel(mp3Audio); } catch (e) { } }, 0); });
         mp3Audio.addEventListener('pause', () => { music.user(false); mp3Paint(); });
         mp3Audio.addEventListener('ended', () => { music.user(false); mp3Step(1); });
         mp3Audio.addEventListener('error', () => { if (mp3Audio.src) { mp3Q('mp3-sub').textContent = 'This song can\'t be played here.'; music.user(false); } });
@@ -49335,6 +49341,22 @@
             const d = music.current(); if (d >= 0 && TRACKS[d]) return { key: 'dj' + d, title: TRACKS[d].name, who: '', kind: 'dj' };
             return null;
         };
+        const VOX = new Map();
+        function voxLevel(el) {                                      // how loud the singing-voice band is in a playing song (0 to 1): what makes the mouths move
+            try {
+                const ac = sfx.context(); if (!ac || ac.state !== 'running' || el.paused) return 0;
+                let V = VOX.get(el);
+                if (!V) { const src = ac.createMediaElementSource(el), an = ac.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0.55; src.connect(an); an.connect(ac.destination); V = { an, buf: new Uint8Array(an.frequencyBinCount), lvl: 0, avg: 0.2 }; VOX.set(el, V); }
+                V.an.getByteFrequencyData(V.buf);
+                const hzPer = ac.sampleRate / 2 / V.buf.length, lo = Math.floor(280 / hzPer), hi = Math.ceil(3200 / hzPer);
+                let sum = 0; for (let i = lo; i < hi; i++) sum += V.buf[i]; const now = sum / (hi - lo) / 255;
+                V.avg += (now - V.avg) * 0.02;                                                    // (against the song's own loudness)
+                const open = clamp((now - V.avg * 0.85) / Math.max(0.08, V.avg * 0.9), 0, 1);
+                V.lvl += (open - V.lvl) * 0.5;
+                return V.lvl;
+            } catch (e) { return 0; }
+        }
+        ui.clubVoice = () => (DJQ.playing && !DJQ.audio.paused ? voxLevel(DJQ.audio) : !mp3Audio.paused && G.loc === 'dance' ? voxLevel(mp3Audio) : null);
         ui.clubBeatPos = () => {                                      // the beat, with its fraction, of what's playing in the club (or null)
             const q = ui.djBeatPos(); if (q !== null) return q;
             if (G.loc !== 'dance') return null;
