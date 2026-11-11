@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794356874';
+<script>window.WANDO_BUILD = '1794357009';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -34174,6 +34174,28 @@
                 c.strokeStyle = '#ff3df2'; c.lineWidth = 3; c.stroke();
                 [[12, 33], [76, 33]].forEach(([cx, cy]) => { c.fillStyle = '#120b3a'; c.beginPath(); rr(c, cx - 1, cy - 1, 10, 20, 4); c.fill(); c.fillStyle = '#ff3df2'; c.beginPath(); rr(c, cx + 1, cy + 1, 6, 16, 3); c.fill(); c.fillStyle = '#00e5ff'; c.fillRect(cx + 3, cy + 6, 2, 6); });
             });
+            bake(this, 'spk_box', 100, 170, c => {                     // a tall speaker cabinet (the cones are separate, so they can thump)
+                inked(c, '#1a1030', '#9d6bff', 2.6, k => rr(k, 6, 6, 88, 158, 10));
+                c.fillStyle = '#120a22'; c.fillRect(14, 150, 72, 6);
+                [[50, 46, 22], [50, 112, 33]].forEach(([x, y, r]) => { c.fillStyle = '#05030c'; disc(c, x, y, r + 3); c.strokeStyle = '#ff3df2'; c.lineWidth = 2; c.beginPath(); c.arc(x, y, r + 3, 0, TAU); c.stroke(); });
+                c.fillStyle = '#00e5ff'; [[16, 16], [84, 16], [16, 154], [84, 154]].forEach(([x, y]) => disc(c, x, y, 2.2));
+            });
+            bake(this, 'spk_cone', 70, 70, c => {
+                const g = c.createRadialGradient(35, 35, 2, 35, 35, 33); g.addColorStop(0, '#5a4a7a'); g.addColorStop(0.35, '#2a2040'); g.addColorStop(0.9, '#3d3058'); g.addColorStop(1, '#120a22');
+                c.fillStyle = g; disc(c, 35, 35, 32);
+                c.strokeStyle = 'rgba(255,255,255,0.18)'; c.lineWidth = 1.5; [26, 18].forEach(r => { c.beginPath(); c.arc(35, 35, r, 0, TAU); c.stroke(); });
+                c.fillStyle = '#7a6aa0'; disc(c, 35, 35, 9); c.fillStyle = 'rgba(255,255,255,0.35)'; disc(c, 32, 32, 3.5);
+            });
+            this.speakers = [];
+            [[158, 372], [1442, 372]].forEach(([sx, sy]) => {
+                if (!this.free(sx, sy, 40)) return;
+                this.prop('spk_box', sx, sy, 164 / 170, { shadow: [6, -3, 96, 26], solids: [[0, -10, 38]], reserve: 50 });
+                const top = sy - 164;                                       // (the cabinet's top edge, in the world)
+                const woof = this.add.image(sx, top + 112, 'spk_cone').setScale(66 / 70 / TEX).setDepth(sy + 0.2);
+                const tw = this.add.image(sx, top + 46, 'spk_cone').setScale(44 / 70 / TEX).setDepth(sy + 0.2);
+                const glow = this.add.image(sx, top + 112, 'glow').setDisplaySize(140, 140).setTint(0xff3df2).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD).setDepth(sy + 0.3);
+                this.speakers.push({ woof, tw, glow, w0: 66 / 70 / TEX, t0: 44 / 70 / TEX, lvl: 0 });
+            });
             this.djHost = { img: this.add.image(800, 186, 'dj_host').setOrigin(0.5, FEET_OA).setScale(1 / TEX).setDepth(200), x: 800, y: 186 };
             this.label(800, 236 - 150, 'DJ Volt · DJ Booth', '#3a0f6e');
             this.hotspot('dj', 800, 276, 72, new Phaser.Geom.Rectangle(690, 124, 220, 112));
@@ -36996,6 +37018,7 @@
             let bp = null; try { bp = ui.clubBeatPos ? ui.clubBeatPos() : null; } catch (e) { }
             this.clubLasers(time, !!cur || showing, bp);
             this.djHostTick(time, !!cur || showing, bp);
+            this.speakerTick(time, bp);
             if (!cur) { if (S.key) { S.objs.forEach(o => o.destroy()); S.objs = []; S.key = ''; } return; }
             const x = 800, y = 480;
             if (S.key !== cur.key) {
@@ -37047,6 +37070,19 @@
                 if (sh !== 'oh') { M.fillStyle(0xffffff, 1); M.fillRect(mx - w * 0.32, my - h / 2 + 0.25 * k, w * 0.64, Math.min(1.3 * k, h * 0.3)); }     // (teeth)
                 if (h > 3 * k) { M.fillStyle(0xff6a86, 1); M.fillEllipse(mx, my + h * 0.22, w * 0.5, h * 0.36); }     // (tongue)
                 M.lineStyle(1.1 * k, 0x2a0a14, 1); M.strokeEllipse(mx, my, w, h);
+            }
+        }
+        speakerTick(time, bp) {                                     // the speakers' cones push out on every thump: from the song's bass if it's a song file, else on the beat
+            if (!this.speakers || !this.speakers.length) return;
+            let b = null;
+            try { b = ui.clubBass ? ui.clubBass() : null; } catch (e) { }
+            if (b === null) { const playing = bp !== null; b = playing ? Math.max(0, 1 - (bp - Math.floor(bp)) * 3.2) * 0.85 : 0; }     // (the club's own music: a kick on each beat)
+            for (const S of this.speakers) {
+                S.lvl = b > S.lvl ? b : S.lvl + (b - S.lvl) * 0.25;                  // (fast out, slower back in, like a real cone)
+                const k = REDUCED ? 0 : S.lvl;
+                S.woof.setScale(S.w0 * (1 + k * 0.16));
+                S.tw.setScale(S.t0 * (1 + k * 0.08));
+                S.glow.setAlpha(k * 0.45);
             }
         }
         djHostTick(time, on, bp) {                                  // DJ Volt: nods along, works the decks, throws a hand up now and then; on the beat when a song is on
@@ -49502,6 +49538,16 @@
                 return V.lvl;
             } catch (e) { return 0; }
         }
+        function bassLevel(el) {                                    // the thump of the low end (0 to 1), against the song's own loudness
+            try {
+                voxLevel(el); const V = VOX.get(el); if (!V) return 0;
+                const ac = sfx.context(), hzPer = ac.sampleRate / 2 / V.buf.length, hi = Math.max(2, Math.ceil(150 / hzPer));
+                let sum = 0; for (let i = 1; i < hi; i++) sum += V.buf[i]; const now = sum / (hi - 1) / 255;
+                V.bavg = V.bavg === undefined ? now : V.bavg + (now - V.bavg) * 0.03;
+                return clamp((now - V.bavg * 0.8) / Math.max(0.06, V.bavg * 0.6), 0, 1);
+            } catch (e) { return 0; }
+        }
+        ui.clubBass = () => (DJQ.playing && !DJQ.audio.paused ? bassLevel(DJQ.audio) : !mp3Audio.paused && G.loc === 'dance' ? bassLevel(mp3Audio) : null);
         ui.clubVoice = () => (DJQ.playing && !DJQ.audio.paused ? voxLevel(DJQ.audio) : !mp3Audio.paused && G.loc === 'dance' ? voxLevel(mp3Audio) : null);
         ui.clubBeatPos = () => {                                      // the beat, with its fraction, of what's playing in the club (or null)
             const q = ui.djBeatPos(); if (q !== null) return q;
