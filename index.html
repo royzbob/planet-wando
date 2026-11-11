@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794362634';
+<script>window.WANDO_BUILD = '1794364351';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -1279,6 +1279,7 @@
   .sound-pop .snd-hint { display: block; font: 700 10.5px/1.2 var(--font-body); opacity: 0.7; }
   .sound-pop .snd-quiet { margin-top: 0; background: transparent; border-style: dashed; }
   .emote-pop { flex-wrap: wrap; width: 292px; max-width: calc(100vw - 24px); box-sizing: border-box; }
+  .emote-pop.sound-pop { flex-wrap: nowrap; flex-direction: column; }
   .emote-pop button.throw-btn { background: #7fd0ff; }
   .dance-moves { display: contents; }
   .dance-moves button { background: #ffd6f4; }
@@ -1307,7 +1308,9 @@
   html[data-screen="pc"] .tpad { display: none !important; }
   .joy { position: absolute; z-index: 25; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.10), rgba(255,255,255,.22)); border: 3px solid rgba(255,255,255,.55); box-shadow: 0 2px 10px rgba(0,0,0,.35); pointer-events: none; }
   .joy-knob { position: absolute; left: 50%; top: 50%; width: 50px; height: 50px; margin: -25px 0 0 -25px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff, #c9d6ff 55%, #7d8fd8); border: 3px solid #24304a; box-shadow: 0 3px 0 rgba(0,0,0,.35); }
-  .joy-ghost { left: max(78px, calc(env(safe-area-inset-left) + 70px)); top: auto; bottom: calc(var(--dock-h) + 130px); margin: 0 0 -55px -55px; opacity: .45; }
+  .joy-ghost { left: max(78px, calc(env(safe-area-inset-left) + 70px)); top: auto; bottom: 26px; margin: 0 0 0 -55px; opacity: .45; }
+  #app[data-loc="dungeon"] .joy-ghost { bottom: 74px; }
+  #app:has(.emote-pop:not([hidden])) .joy-ghost, #app:has(.shop:not([hidden])) .joy-ghost { display: none; }
   html[data-screen="pc"] .joy, html[data-hidejoy="1"] .joy { display: none !important; }
   .joy[hidden] { display: none; }
   #app:has([role="dialog"]:not([hidden]):not(#gate)) .joy-ghost { display: none; }
@@ -1332,6 +1335,7 @@
   html[data-screen="phone"] .plate .plate-name { display: none; }
   html[data-screen="phone"] .plate .plate-area, html[data-screen="phone"] .plate .plate-srv { font-size: 10px; }
   html[data-screen="phone"] .chatbox { width: min(230px, calc(100% - 24px)); }
+  html[data-screen="phone"] #app[data-loc="dungeon"] .chatbox.min { display: none; }
   html[data-screen="phone"] .chatbox-log { height: 84px; }
   @media (max-width: 540px) { html[data-screen="phone"] #app { --dock-h: 164px; } }
   .clock {
@@ -2252,6 +2256,7 @@
   .wmap-today .wmap-soon-b.done { background: #3fbf5f; }
   .wmap-soon-b.wmap-frb { background: #ffd84d; color: #2a1a6a; }
   .wmap-soon-b:hover, .wmap-soon-b:focus-visible { background: var(--sun); color: #2a1a6a; outline: none; }
+  @media (max-width: 540px) { .wmap-head { gap: 6px; padding: 0; } .wmap-head h2 { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 13px !important; letter-spacing: 0.02em; } .wmap-opt { font-size: 11px; } .wmap-head > * { flex-shrink: 0; } .wmap-head h2 { flex-shrink: 1; } }
   @media (max-width: 640px) { .wmap-ev { font-size: 8.5px; padding: 0 4px; border-width: 1.5px; } .wmap-tags .wmap-ev:not(.live):not(.wmap-fr):not(.wmap-car):not(.wmap-soonev) { display: none; } .wmap-soon, .wmap-soon-b { font-size: 10.5px; } }
   @media (max-height: 500px) {
     .wmap { padding: 6px 10px 8px; gap: 4px; border-radius: 16px; }
@@ -2395,6 +2400,27 @@
   .dun-hud .dun-skill:disabled { opacity: 1; filter: saturate(0.5) brightness(0.8); cursor: default; }
   .dun-hud .dun-skill.locked { filter: grayscale(1) brightness(0.6); }
   .dun-hud .dun-atk { width: 76px; height: 76px; border-width: 4px; }
+  .dun-hud .dun-skill, .dun-flask, .tpad button, .dun-swap { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  html[data-screen="phone"] .dun-hud .dun-skill small.dun-key, html[data-screen="phone"] .dun-hud .dun-skill:not(.dun-atk) small { display: none; }
+  .dun-swap { padding: 3px 8px; border: 2px solid #d8a43a; border-radius: 999px; background: rgba(20, 16, 28, 0.85); color: #ffe9a8; font: 800 11px/1.2 var(--font-body); cursor: pointer; }
+  .skill-pick { position: absolute; inset: 0 0 var(--dock-h) 0; z-index: 400; display: grid; place-items: center; background: rgba(10, 6, 20, 0.55); padding: 12px; }
+  .skill-pick[hidden] { display: none; }
+  .skill-pick-box { width: min(440px, 100%); max-height: 100%; overflow: auto; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 3px solid var(--ink); border-radius: 16px; background: var(--cream); color: var(--ink); }
+  .skill-pick-h { font: 800 17px/1.2 var(--font-display); }
+  .skill-pick-box > small { font: 700 12px/1.3 var(--font-body); opacity: .75; }
+  .skill-pick-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .skill-pick-key, .skill-pick-opt { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border: 3px solid #d8d0e8; border-radius: 12px; background: #fff; color: var(--ink); cursor: pointer; font: 800 12px/1.2 var(--font-body); touch-action: manipulation; }
+  .skill-pick-key.on { border-color: #ffb52e; background: #fff4d6; box-shadow: 0 0 0 2px #ffb52e; }
+  .skill-pick-key canvas, .skill-pick-opt canvas { width: 46px; height: 46px; border-radius: 50%; background: #2a2238; }
+  .skill-pick-key > b { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; background: #2a2238; color: #fff; font-size: 24px; }
+  .skill-pick-key small, .skill-pick-opt small { font-size: 10.5px; opacity: .75; text-align: center; }
+  .skill-pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; }
+  .skill-pick-row { position: sticky; bottom: -12px; background: var(--cream); padding: 6px 0 2px; }
+  #app canvas { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .skill-pick-opt.on { border-color: #7dcf6a; background: #f2ffe9; }
+  .skill-pick-opt b { text-align: center; }
+  .skill-pick-row { display: flex; gap: 8px; justify-content: flex-end; }
+  .dun-keys .btn { flex: 0 0 auto; }
   .dun-skill:focus-visible, .dun-flask:focus-visible, .dun-small:focus-visible { outline: 3px solid #fff3a0; outline-offset: 2px; }
   .dun-bottom { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; white-space: nowrap; }
   .dun-flask {
@@ -3543,6 +3569,7 @@
     <ul id="dun-party" class="dun-party" aria-label="Others on this floor"></ul>
     <div id="dun-boss" class="dun-boss" hidden><b id="dun-boss-name">Boss</b><div class="dun-boss-bar"><i id="dun-boss-hp"></i></div></div>
     <div class="dun-right">
+      <button id="dun-swap" class="dun-swap" type="button" aria-label="Choose your skill buttons">⇄ Skills</button>
       <button id="dun-s1" class="dun-skill" type="button">1</button>
       <button id="dun-s2" class="dun-skill" type="button">2</button>
       <button id="dun-s3" class="dun-skill" type="button">3</button>
@@ -4881,6 +4908,14 @@
     const DPR = SMOOTH ? 1 : Math.min(window.devicePixelRatio || 1, 2);
     const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const DEV = { touch: false };
+    (() => {     // (phones: keep the screen awake while you play)
+        let lock = null, asking = false;
+        const get = () => { if (!('wakeLock' in navigator) || lock || asking || !DEV.touch || document.visibilityState !== 'visible')
+            return; asking = true; navigator.wakeLock.request('screen').then(l => { lock = l; l.addEventListener('release', () => { lock = null; }); }).catch(() => { }).then(() => { asking = false; }); };
+        window.addEventListener('touchend', get, { passive: true });
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible')
+            get(); });
+    })();
     const IDLE = { at: Date.now(), AFTER: 3 * 60000 };
     const PEER_DELAY = 220;
     const NET_AWAY = { hiddenAt: 0, HIDDEN: 60000, IDLE: 15 * 60000 };
@@ -30560,6 +30595,8 @@
                 this.dunPop(src.x, src.y - 80 * src.size, '+' + d * 2, '#ff5a6a');
             }
             this.dunPop(this.pz.x, this.pz.y + FOOT - 90, '-' + d, '#ff6b6b', true);
+            if (DEV.touch && navigator.vibrate)
+                try { navigator.vibrate(d > dunMaxHp(Dn) * 0.15 ? 60 : 25); } catch (e) { }
             if (!REDUCED) {
                 this.cameras.main.flash(120, 120, 0, 0);
                 this.cameras.main.shake(100, 0.004);
@@ -39722,6 +39759,14 @@
                 touchy = false; DEV.touch = touchy; if (was !== touchy && SCREEN.mode === 'auto')
                 screenApply(); }, true);
             screenApply();
+            pad.addEventListener('touchstart', e => {
+                const b = e.target.closest('[data-k]'), s = scene();
+                if (!b)
+                    return;
+                e.preventDefault();
+                if (s && s.keyActs && s.keyActs[b.dataset.k])
+                    s.keyActs[b.dataset.k]({ touch: true, repeat: false });
+            }, { passive: false });
             pad.addEventListener('click', e => {
                 const b = e.target.closest('[data-k]'), s = scene();
                 if (!b || !s || !s.keyActs || !s.keyActs[b.dataset.k])
@@ -45016,9 +45061,15 @@
             [[dunPotionBtn, 'potAt'], [dunManaBtn, 'manaAt']].forEach(([b, k]) => b.style.setProperty('--cd', s && s[k] > now ? String((s[k] - now) / (DUN.POT_CD * 1000)) : '0'));
             dunSkillBtns.forEach((b, i) => {
                 const S = list[i], cd = s && s.cds ? Math.max(0, (s.cds[i] - now) / 1000) : 0;
-                b.hidden = !S;
-                if (!S)
+                b.hidden = !S && !(SKILLS[D.cls] || []).some(x => skillRank(D, x.id) > 0);
+                if (!S) {
+                    if (b.dataset.face !== 'empty') {
+                        b.dataset.face = 'empty';
+                        b.replaceChildren(node('b', '', '+'));
+                        b.setAttribute('aria-label', 'Choose a skill for button ' + (i + 1));
+                    }
                     return;
+                }
                 const locked = !(skillRank(D, S.id) > 0), sec = cd > 0 ? Math.ceil(cd) : 0, face = S.id + '|' + (locked ? 'L' : '') + '|' + sec;
                 if (b.dataset.face !== face) {
                     b.dataset.face = face;
@@ -45049,7 +45100,7 @@
             dunMpBar.style.width = Math.round(100 * clamp(D.mp / mmax, 0, 1)) + '%';
             dunMpText.textContent = Math.floor(D.mp) + ' / ' + mmax;
             dunXpBar.style.width = Math.round(100 * D.xp / xpFor(D.level)) + '%';
-            dunLv.textContent = (CLASSES[D.cls] ? CLASSES[D.cls].name + ' · ' : '') + 'Level ' + D.level + (D.pts ? ' · ' + D.pts + ' pts!' : '') + (D.cls && treePts(D) ? ' · ' + treePts(D) + ' skill pts!' : '');
+            dunLv.textContent = (CLASSES[D.cls] ? CLASSES[D.cls].name + ' · ' : '') + 'Lv ' + D.level + (D.pts ? ' · +' + D.pts + ' stat' : '') + (D.cls && treePts(D) ? ' · +' + treePts(D) + ' skill' : '');
             const left = s && s.mons ? s.mons.filter(m => !m.dead).length : 0;
             dunFloorEl.textContent = dunWhere() + (D.run.room ? (left ? '' : ' · cleared') : '');
             dunPotionBtn.firstChild.textContent = String(D.potions + D.big);
@@ -45070,7 +45121,7 @@
                     cx.scale(2, 2);
                     drawSkillIcon(cx, atkFace);
                 }
-                atk.replaceChildren(cv, node('small', '', 'Space'));
+                atk.replaceChildren(cv, node('small', 'dun-key', 'Space'));
             }
             dunLeave.hidden = !D.run.room;
             dunBoonsEl.hidden = !D.run.boons.length;
@@ -45109,6 +45160,14 @@
                         top.appendChild(b);
                     }
                     rows.push(top);
+                    {
+                        const pr = node('div', 'mine-row dun-keys'), pt = node('div', 'mine-text'), sl = dunSlots(D);
+                        pt.append(node('b', '', 'Your skill buttons'), node('small', '', sl.map((S, j) => (j + 1) + ': ' + (S ? S.name : 'empty')).join(' · ')));
+                        const pb = el('button', 'btn', { type: 'button', 'data-act': 'pickskills', 'data-i': '0' });
+                        pb.textContent = '⇄ Change';
+                        pr.append(pt, pb);
+                        rows.push(pr);
+                    }
                     const grid = node('div', 'tree-grid'), nodes = treeNodes(D.cls);
                     TREES[D.cls].forEach((B, bi) => {
                         const col = node('div', 'tree-col'), hd = node('div', 'tree-hd');
@@ -45175,6 +45234,14 @@
                 rows.push(node('p', 'pet-hint', (D.pts ? D.pts + ' points to spend. ' : '') + 'Health ' + dunMaxHp(D) + ' · mana ' + dunMaxMp(D) + ' · ' + (w ? w.name : 'fists') + ' hits for about ' + Math.round(dunPower(D, w)) + ' · ' + Math.round(dunCrit(D) * 100) + '% critical hits'
                     + (w && C && !C.likes.includes(w.t) ? '. (A ' + C.name.toLowerCase() + ' fights poorly with a ' + WEAPON_TYPES[w.t].name.toLowerCase() + ': ' + Math.round(DUN.OFF * 100) + '% damage.)' : '.')));
                 const slots = dunSlots(D).map(S => S && S.id);
+                if (C) {
+                    const pr = node('div', 'mine-row dun-keys'), pt = node('div', 'mine-text');
+                    pt.append(node('b', '', 'Your skill buttons'), node('small', '', slots.map((id, j) => (j + 1) + ': ' + (id ? SKILLS[D.cls].find(S => S.id === id).name : 'empty')).join(' · ')));
+                    const pb = el('button', 'btn', { type: 'button', 'data-act': 'pickskills', 'data-i': '0' });
+                    pb.textContent = '⇄ Change';
+                    pr.append(pt, pb);
+                    rows.push(pr);
+                }
                 (SKILLS[D.cls] || []).forEach(S => {
                     const locked = !(skillRank(D, S.id) > 0), at = slots.indexOf(S.id), li = node('div', 'mine-row' + (locked ? ' dun-locked' : '')), text = node('div', 'mine-text');
                     text.append(node('b', '', S.name + (locked ? ' (learn it in the Skill tree' + (D.level < S.lv ? ' at level ' + S.lv : '') + ')' : ' · rank ' + skillRank(D, S.id) + (at >= 0 ? ' · on key ' + (at + 1) : ''))), node('small', '', S.blurb + ' ' + S.mp + ' mana, ' + S.cd + 's to recharge.'));
@@ -45465,6 +45532,11 @@
             }
             if (act === 'class') {
                 classOpen(false);
+                return '';
+            }
+            if (act === 'pickskills') {
+                if (ui.skillPick)
+                    setTimeout(() => ui.skillPick(0), 0);
                 return '';
             }
             if (act === 'learn') {
@@ -45878,27 +45950,107 @@
                 b.blur();
         });
         dq('dun-close').addEventListener('click', () => dunP.close());
-        dq('dun-attack').addEventListener('click', e => { const s = scene(); if (s && s.dunStrike)
-            s.dunStrike(); if (e.detail > 0)
-            dq('dun-attack').blur(); });
+        const touchNow = (b, down, up) => {     // (phones: react the moment a finger lands, even while the other thumb is on the joystick)
+            b.addEventListener('touchstart', e => { e.preventDefault(); b.dataset.touchAt = String(Date.now()); down(e); }, { passive: false });
+            b.addEventListener('touchend', e => { e.preventDefault(); if (up)
+                up(e); }, { passive: false });
+            b.addEventListener('touchcancel', () => { if (up)
+                up(null); });
+        };
+        const viaTouch = b => Date.now() - Number(b.dataset.touchAt || 0) < 900;
+        const atkBtn = dq('dun-attack');
+        let atkRep = 0;
+        const strike = () => { const s = scene(); if (s && s.dunStrike)
+            s.dunStrike(); };
+        touchNow(atkBtn, () => { strike(); clearInterval(atkRep); atkRep = setInterval(strike, 260); }, () => clearInterval(atkRep));
+        atkBtn.addEventListener('click', e => { if (viaTouch(atkBtn))
+            return; strike(); if (e.detail > 0)
+            atkBtn.blur(); });
+        const castSlot = i => { const S = dunSlots(G.dun)[i], s = scene(); if (!S) {
+            skillPick(i);
+            return;
+        } if (s && s.dunSkill)
+            s.dunSkill(i); paintDunHud(); };
         dunSkillBtns.forEach((b, i) => {
             let hold = 0, held = false;
-            b.addEventListener('pointerdown', () => { held = false; clearTimeout(hold); hold = setTimeout(() => { held = true; const S = dunSlots(G.dun)[i], s = scene(); if (S && s) {
-                s.noteUntil = 0;
-                s.note(S.name + ' (' + S.mp + ' mana): ' + S.blurb, '#9bbcff');
-            } }, 450); });
-            ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, () => clearTimeout(hold)));
-            b.addEventListener('click', e => { if (held) {
-                held = false;
-                return;
-            } const s = scene(); if (s && s.dunSkill)
-                s.dunSkill(i); paintDunHud(); if (e.detail > 0)
+            touchNow(b, () => { held = false; clearTimeout(hold); hold = setTimeout(() => { held = true; skillPick(i); }, 480); }, e => { clearTimeout(hold); if (e && !held)
+                castSlot(i); held = false; });
+            b.addEventListener('contextmenu', e => { e.preventDefault(); skillPick(i); });
+            b.addEventListener('click', e => { if (viaTouch(b))
+                return; castSlot(i); if (e.detail > 0)
                 b.blur(); });
         });
-        dunPotionBtn.addEventListener('click', e => { dunDrink(); if (e.detail > 0)
-            dunPotionBtn.blur(); });
-        dunManaBtn.addEventListener('click', e => { dunDrink('mana'); if (e.detail > 0)
-            dunManaBtn.blur(); });
+        [[dunPotionBtn, () => dunDrink()], [dunManaBtn, () => dunDrink('mana')]].forEach(([b, fn]) => {
+            touchNow(b, fn);
+            b.addEventListener('click', e => { if (viaTouch(b))
+                return; fn(); if (e.detail > 0)
+                b.blur(); });
+        });
+        const pickEl = el('div', 'skill-pick', { role: 'dialog', 'aria-label': 'Choose your skill buttons' });
+        pickEl.hidden = true;
+        document.getElementById('app').appendChild(pickEl);
+        pickEl.addEventListener('click', e => { if (e.target === pickEl)
+            pickEl.hidden = true; });
+        const skillIcon = id => { const cv = el('canvas', '', { width: 96, height: 96, 'aria-hidden': 'true' }), cx = cv.getContext('2d'); if (cx && id) {
+            cx.scale(2, 2);
+            drawSkillIcon(cx, id);
+        } return cv; };
+        function skillPick(k) {
+            const D = G.dun;
+            if (!CLASSES[D.cls])
+                return;
+            const list = (SKILLS[D.cls] || []).filter(S => skillRank(D, S.id) > 0), cur = dunSlots(D).map(x => x && x.id);
+            const box = node('div', 'skill-pick-box');
+            box.append(node('b', 'skill-pick-h', 'Your 3 skill buttons'), node('small', '', 'Tap a button, then tap the skill you want on it.'));
+            const keys = node('div', 'skill-pick-keys');
+            [0, 1, 2].forEach(j => { const b = el('button', 'skill-pick-key' + (j === k ? ' on' : ''), { type: 'button', 'aria-label': 'Button ' + (j + 1) });
+                if (cur[j])
+                    b.appendChild(skillIcon(cur[j]));
+                else
+                    b.appendChild(node('b', '', '+'));
+                b.appendChild(node('small', '', cur[j] ? SKILLS[D.cls].find(S => S.id === cur[j]).name : 'Empty'));
+                b.addEventListener('click', () => skillPick(j));
+                keys.appendChild(b); });
+            box.appendChild(keys);
+            const grid = node('div', 'skill-pick-grid');
+            list.forEach(S => {
+                const at = cur.indexOf(S.id), b = el('button', 'skill-pick-opt' + (at === k ? ' on' : ''), { type: 'button' });
+                b.append(skillIcon(S.id), node('b', '', S.name), node('small', '', 'Rank ' + skillRank(D, S.id) + ' · ' + S.mp + ' mana' + (at >= 0 ? ' · on button ' + (at + 1) : '')));
+                b.addEventListener('click', () => {
+                    const c = dunSlots(D).map(x => x && x.id), was = c.indexOf(S.id);
+                    if (was >= 0)
+                        c[was] = c[k];
+                    c[k] = S.id;
+                    D.slots = c;
+                    saveGame();
+                    sfx.tick();
+                    pickEl.hidden = true;
+                    paintDunHud();
+                    if (dunP.isOpen && dunP.isOpen())
+                        paintDun();
+                    const s = scene();
+                    if (s && s.note) {
+                        s.noteUntil = 0;
+                        s.note(S.name + ' is on button ' + (k + 1) + '.', '#9bbcff');
+                    }
+                });
+                grid.appendChild(b);
+            });
+            if (!list.length)
+                grid.appendChild(node('p', '', 'You have not learned any skills yet. Spend skill points in the Skill tree!'));
+            box.appendChild(grid);
+            const row = node('div', 'skill-pick-row'), tr = el('button', 'btn', { type: 'button' }), cl = el('button', 'btn', { type: 'button' });
+            tr.textContent = '🌳 Skill tree';
+            cl.textContent = 'Done';
+            tr.addEventListener('click', () => { pickEl.hidden = true; dunOpen(false, 'tree'); });
+            cl.addEventListener('click', () => { pickEl.hidden = true; });
+            row.append(tr, cl);
+            box.appendChild(row);
+            pickEl.replaceChildren(box);
+            pickEl.hidden = false;
+        }
+        ui.skillPick = skillPick;
+        dq('dun-swap').addEventListener('click', () => skillPick(0));
         dunLeave.addEventListener('click', e => { const s = scene(); if (s && s.dunGo && G.dun.run.room)
             s.dunGo(0); if (e.detail > 0)
             dunLeave.blur(); });
