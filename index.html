@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794355564';
+<script>window.WANDO_BUILD = '1794355640';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -38489,7 +38489,7 @@
             if (this.wash && !REDUCED)
                 this.wash.tilePositionX += dt * 22;
             if (this.cells.length) {
-                const live = music.isConcert(), show = live && !REDUCED;
+                const live = music.isConcert() || !!(ui.djCurrent && ui.djCurrent()), show = live && !REDUCED;     // (a song from the line: the club goes into Concert Mode)
                 if (this.concert && this.concert.on !== live) {
                     this.concert.on = live;
                     this.concert.btn.setTexture(live ? 'concert_on' : 'concert_off');
@@ -49240,15 +49240,20 @@
         async function mp3Add(files) {
             const ok = [...(files || [])].filter(f => f && (/^audio\//.test(f.type) || /\.(mp3|m4a|aac|ogg|oga|wav|flac|opus|webm)$/i.test(f.name)) && f.size < 60 * 1024 * 1024);
             if (!ok.length) { mp3Q('mp3-sub').textContent = 'Those aren\'t song files (try .mp3).'; return; }
-            const was = mp3.list.length;
+            const got = [];
+            let same = 0;
             for (const f of ok.slice(0, 100)) {
-                const S = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), name: mp3Name(f.name), blob: f, at: Date.now() };
-                mp3.list.push(S);
+                const nm = mp3Name(f.name), had = mp3.list.find(x => x.name.toLowerCase() === nm.toLowerCase());
+                if (had) { got.push(had); same++; continue; }                // (already saved: not again)
+                const S = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), name: nm, blob: f, at: Date.now() };
+                mp3.list.push(S); got.push(S);
                 try { const data = await f.arrayBuffer(); await mp3Db.put({ id: S.id, name: S.name, data, type: f.type || 'audio/mpeg', at: S.at }); }
                 catch (e) { mp3Q('mp3-sub').textContent = 'This browser would not keep that song (it plays until you leave).'; }
                 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { }
             }
-            if (mp3.i < 0 || mp3Audio.paused && was === 0) mp3Load(was, true); else mp3Paint();
+            if (mp3.i < 0 && mp3.list.length) mp3Load(0, false); else mp3Paint();     // (added, not played: press play, or queue it at the DJ booth)
+            if (same) mp3Q('mp3-sub').textContent = same === 1 ? 'You already have that song saved.' : same + ' of those were already saved.';
+            return got;
         }
         function mp3Del(i) {
             const S = mp3.list[i]; if (!S) return;
@@ -49263,7 +49268,7 @@
         function mp3LoadLib() {                                       // your saved songs, back from this browser's storage
             if (mp3Loaded) return;
             mp3Loaded = true;
-            mp3Db.all().then(rows => { (rows || []).sort((a, b) => a.at - b.at).forEach(r => { const blob = r && (r.blob || (r.data ? new Blob([r.data], { type: r.type || 'audio/mpeg' }) : null)); if (blob && !mp3.list.some(x => x.id === r.id)) mp3.list.push({ id: r.id, name: r.name, blob, at: r.at }); }); mp3Paint(); }).catch(() => mp3Paint());
+            mp3Db.all().then(rows => { (rows || []).sort((a, b) => a.at - b.at).forEach(r => { const blob = r && (r.blob || (r.data ? new Blob([r.data], { type: r.type || 'audio/mpeg' }) : null)); if (!blob || mp3.list.some(x => x.id === r.id)) return; if (mp3.list.some(x => x.name.toLowerCase() === String(r.name).toLowerCase())) { mp3Db.del(r.id).catch(() => { }); return; } mp3.list.push({ id: r.id, name: r.name, blob, at: r.at }); }); if (mp3.i < 0 && mp3.list.length) mp3.i = 0; mp3Paint(); }).catch(() => mp3Paint());     // (a song saved twice under one name: kept once)
         }
         setTimeout(mp3LoadLib, 1500);
         function mp3Show(on) {
@@ -49330,11 +49335,10 @@
         };
         ui.djCurrent = () => (DJQ.playing && G.loc === 'dance' && DJQ.cur ? DJQ.cur : null);
         ui.clubSong = () => {                                         // whatever is playing in the club: a player's song at the booth, your own player, or a DJ booth track
-            if (G.loc !== 'dance') return null;
+            if (G.loc !== 'dance') return null;                       // (only a song from the line brings out Nova Starr and her crew)
             const q = ui.djCurrent(); if (q) return { key: q.key, title: q.title, who: q.me ? 'your' : q.name + '\'s', kind: 'queue' };
             const S = mp3.list[mp3.i];
-            if (S && !mp3Audio.paused) { if (S.url) djAnalyze('m' + S.id, S.url); return { key: 'm' + S.id, title: S.name, who: 'your', kind: 'mine' }; }
-            const d = music.current(); if (d >= 0 && TRACKS[d]) return { key: 'dj' + d, title: TRACKS[d].name, who: '', kind: 'dj' };
+            if (S && !mp3Audio.paused && S.url) djAnalyze('m' + S.id, S.url);     // (your own player: the club still dances to its beat)
             return null;
         };
         const VOX = new Map();
@@ -49453,7 +49457,7 @@
         }
         setInterval(() => { try { djTick(); } catch (e) { } }, 1000);
         document.getElementById('djq-go').addEventListener('click', () => { const id = document.getElementById('djq-song').value, S = mp3.list.find(x => x.id === id); if (!S) { document.getElementById('djq-msg').textContent = 'Pick a song first (or add one with ＋ Song).'; return; } djQueue(S.blob, S.name); });
-        document.getElementById('djq-file').addEventListener('change', async e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; await mp3Add([f]); djPaint(); const S = mp3.list[mp3.list.length - 1]; if (S) { document.getElementById('djq-song').value = S.id; } });
+        document.getElementById('djq-file').addEventListener('change', async e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; const got = await mp3Add([f]); djPaint(); const S = got && got[0]; if (S) { document.getElementById('djq-song').value = S.id; document.getElementById('djq-msg').textContent = S.name + ' is ready: press Queue it to play it for the club.'; } });
         document.getElementById('djq-cancel').addEventListener('click', () => djDrop());
         ui.djOpen = () => { mp3LoadLib(); djPaint(); };
         // ── Stats: playtime, monsters beaten, fish, Coins earned and the rest (kept in G.fan.st; the crypt and fish counts come from their own saves) ──
