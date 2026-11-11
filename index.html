@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794355640';
+<script>window.WANDO_BUILD = '1794355783';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -4373,7 +4373,7 @@
             ['#ff7ad9', '#5ef2ff', '#ffd84d', '#7dff5a'].forEach((col, i) => { c.fillStyle = col; c.beginPath(); rr(c, 34 + i * 36, 92, 22, 22, 4); c.fill(); });
         });
     }
-    const SHOW = { name: 'Supernova Live', star: 'Nova Starr', mins: 8, need: 40, prize: 60, force: false };
+    const SHOW = { name: 'Supernova Live', star: 'Nova Starr', mins: 8, need: 40, prize: 60, force: false, never: true };     // (no hourly show: Nova Starr comes out when a player's song plays at the DJ booth)
     const DANCE_PARTY = ['dance', 'party', 'disco', 'twist', 'floss', 'robot', 'moonwalk', 'breakdance', 'superstar'];
     const showOn = (d = new Date()) => !SHOW.never && (SHOW.force || d.getMinutes() < SHOW.mins);
     const showKey = (d = new Date()) => Math.floor(d.getTime() / 3600000);
@@ -4388,7 +4388,7 @@
         { id: 'twist', name: 'The Twist', price: 300, blurb: 'Twist down low and back up.' },
         { id: 'floss', name: 'Floss', price: 400, blurb: 'Swing those arms back and forth.' },
         { id: 'breakdance', name: 'Breakdance', price: 700, blurb: 'Down on the floor and spinning.' },
-        { id: 'superstar', name: 'Superstar', price: 0, shows: 3, blurb: 'See 3 Supernova Live concerts (the Dance House, every hour on the hour) to unlock.' }
+        { id: 'superstar', name: 'Superstar', price: 0, shows: 3, blurb: 'See Nova Starr perform 3 times (she comes out when a player\'s song plays at the Dance House DJ booth) to unlock.' }
     ];
     const BEAT_ROWS = [['k', 'Kick'], ['s', 'Snare'], ['c', 'Clap'], ['h', 'Hi-hat']], BEAT_SCALE = [0, 261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3], BEAT_TOKEN = '::b:';
     function cleanBeat(b) {
@@ -4788,7 +4788,7 @@
         { id: 'rich', name: 'High Roller', icon: '💰', how: 'Hold 5,000 Coins', got: G => G.coins >= 5000 },
         { id: 'stars', name: 'Star Hunter', icon: '⭐', how: 'Find 3 of the daily hidden stars', got: G => (G.login.stars || 0) >= 3 },
         { id: 'spinner', name: 'Lucky Spinner', icon: '🎡', how: 'Spin the Prize Wheel 7 times', got: G => (G.login.spins || 0) >= 7 },
-        { id: 'goer', name: 'Concert Goer', icon: '🎤', how: 'See 3 Supernova Live concerts in the Dance House (every hour on the hour)', got: G => (G.fan.shows || 0) >= 3 },
+        { id: 'goer', name: 'Concert Goer', icon: '🎤', how: 'See Nova Starr perform 3 times in the Dance House (queue a song at the DJ booth)', got: G => (G.fan.shows || 0) >= 3 },
         { id: 'superfan', name: 'Superfan', icon: '🌟', how: 'See 10 Supernova Live concerts in the Dance House', got: G => (G.fan.shows || 0) >= 10 },
         { id: 'dancer', name: 'Dance Machine', icon: '🕺', how: 'Know 6 dance moves', got: G => DANCES.filter(d => danceOwned(G, d)).length >= 6 },
         { id: 'vip', name: 'VIP', icon: '💎', how: 'Reach step 4 of the Star Pass', got: G => !!((G.fan.pc || 0) & 8) },
@@ -36894,15 +36894,15 @@
                 S.sign = this.tag(800, 330, '', 9300, 13).setColor('#ffe066');
             if (time > S.signAt) {
                 S.signAt = time + 1000;
-                const left = Math.max(0, Math.round((showNext().getTime() - Date.now()) / 1000));
-                S.sign.setText(on ? '★ ' + SHOW.name.toUpperCase() + ' · LIVE NOW ★' : 'Next ' + SHOW.name + ' in ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0'));
+                const q = ui.djCurrent ? ui.djCurrent() : null;
+                S.sign.setText(q ? '★ ' + SHOW.star.toUpperCase() + ' · LIVE ★' : 'Queue your song at the DJ booth to bring out ' + SHOW.star + '!');
             }
             if (on && !S.was)
                 this.showStart();
             if (!on && S.was)
                 this.showEnd();
             S.was = on;
-            if (on) {
+            if (on || (ui.djCurrent && ui.djCurrent())) {                      // (a player's song with Nova Starr on stage counts as a show)
                 S.t += dt;
                 if (S.t >= SHOW.need && G.fan.last !== showKey()) {
                     G.fan.last = showKey();
@@ -40349,7 +40349,7 @@
             setConcert(false);
         } };
         let showWarned = -1;
-        setInterval(() => { const d = new Date(); if (d.getMinutes() === 59 && showWarned !== showKey(d)) {
+        setInterval(() => { const d = new Date(); if (!SHOW.never && d.getMinutes() === 59 && showWarned !== showKey(d)) {
             showWarned = showKey(d);
             chatLine('', SHOW.name + ' starts in one minute in the Neon Dance House! Hop on the map to get there.', 'sys');
             const sc = scene();
@@ -47060,7 +47060,7 @@
             const day = dayNumber(now), ev = {}, up = [];
             const add = (loc, txt, live) => { if (loc) (ev[loc] = ev[loc] || []).push({ txt, live: !!live }); };
             const nextAt = (min, every) => { const n = new Date(now.getTime()); const m = now.getMinutes(); n.setSeconds(0, 0); n.setMinutes(m - (((m - min) % every) + every) % every + every); return n; };
-            if (showOn(now)) add('dance', '🎤 ' + SHOW.name + ' NOW', true); else up.push([showNext(now), '🎤 ' + SHOW.name, 'dance']);
+            if (showOn(now)) add('dance', '🎤 ' + SHOW.name + ' NOW', true); else if (!SHOW.never) up.push([showNext(now), '🎤 ' + SHOW.name, 'dance']);
             if (rainOn(now)) add('green', '🪙 Coin Rain NOW', true); else up.push([nextAt(RAIN.from, 60), '🪙 Coin Rain', 'green']);
             if (derbyOn(now)) add('ice', '🏁 Fishing Derby NOW', true); else up.push([nextAt(0, DERBY.every), '🏁 Fishing Derby', 'ice']);
             if (feastOn(now)) add('green', '🦃 Harvest Feast', true);
@@ -48553,7 +48553,7 @@
             };
             return { id: 'dances', title: 'Dance Studio', sub: 'Moves to learn', color: '#ff3df2', burst: 'Learn it, own it!', per: 4,
                 keeper: keeperLook({ body: 0, fringe: 6, back: 6, backStyle: 4, top: 4, topStyle: 53 }),
-                sections: () => [{ name: 'Dance moves', blurb: 'Moves go in your smiley menu. ' + SHOW.name + ' plays at the top of every hour.', items: DANCES.map(item) }] };
+                sections: () => [{ name: 'Dance moves', blurb: 'Moves go in your smiley menu. ' + SHOW.star + ' comes out when a song from the DJ booth line plays.', items: DANCES.map(item) }] };
         }
         function planetBook(loc) {
             const P = PLANETS[loc] || PLANETS.station, D = LOCS[loc];
@@ -49145,7 +49145,7 @@
                 art('New in Town', 'Ice cream truck! Wishing fountain! Hedge maze! Grand Prix! Big Wheel! Claw machine! Freeze Dance! Go check it all out!'),
                 art('Rare of the Day', 'Today only at the Tailor: the ' + rareToday().name + ', 1,500 Coins. Tomorrow it is gone, and a different rare takes its place.'),
                 art('Star Pass', 'Day ' + Math.min(G.fan.pd || 0, STAR_PASS.length) + ' of ' + STAR_PASS.length + '. A prize for every day you play: Coins, a tee, the VIP title, a crown, a jacket and a board.', go('Open the Star Pass', () => ui.book.open(ui.books.pass()))),
-                art(SHOW.name, SHOW.star + ' plays the Neon Dance House at the top of every hour for ' + SHOW.mins + ' minutes. Stay for the show: a ticket stub and ' + SHOW.prize + ' Coins, and a tour tee the first time.', showOn() ? 'THE SHOW IS ON RIGHT NOW!' : 'Next show at ' + showNext().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + '. Ticket stubs so far: ' + (G.fan.shows || 0) + '.'),
+                art(SHOW.name, SHOW.star + ' and her crew take the stage at the Neon Dance House whenever a player\'s song from the DJ booth line plays. Stay for the show: a ticket stub and ' + SHOW.prize + ' Coins (once an hour), and a tour tee the first time.', 'Queue your own song at the DJ booth to start one. Ticket stubs so far: ' + (G.fan.shows || 0) + '.'),
                 art('Coin Rain', 'Every hour at half past, Coins rain down round the plaza on the Village Green for two minutes. ' + (rainOn() ? 'IT IS RAINING COINS RIGHT NOW!' : 'Next one at ' + (() => { const n = new Date(); n.setMinutes(30, 0, 0); if (n <= new Date())
                     n.setHours(n.getHours() + 1); return n.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); })() + '.')),
                 art('Prize Wheel', G.login.spin === day ? 'You have had today\'s spin. Come back tomorrow!' : 'Your free spin is waiting: Coins, bait, even a player card.', G.login.spin === day ? null : go('Spin it', () => ui.wheel.open())),
