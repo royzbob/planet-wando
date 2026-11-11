@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794355783';
+<script>window.WANDO_BUILD = '1794355909';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -4374,6 +4374,7 @@
         });
     }
     const SHOW = { name: 'Supernova Live', star: 'Nova Starr', mins: 8, need: 40, prize: 60, force: false, never: true };     // (no hourly show: Nova Starr comes out when a player's song plays at the DJ booth)
+    const HAT_COVERS = new Set([1, 2, 3, 6, 7, 8, 13, 14, 15, 18, 19, 20, 21, 24, 25, 27, 29, 30, 32, 33, 38]);     // (hats that sit on the crown: hair that sticks up goes under them)
     const DANCE_PARTY = ['dance', 'party', 'disco', 'twist', 'floss', 'robot', 'moonwalk', 'breakdance', 'superstar'];
     const showOn = (d = new Date()) => !SHOW.never && (SHOW.force || d.getMinutes() < SHOW.mins);
     const showKey = (d = new Date()) => Math.floor(d.getTime() / 3600000);
@@ -9054,12 +9055,14 @@
             return;
         }
         if (layer === 'hairBack') {
-            if (L.fringeStyle === 12 && !back)                          // (the afro's puff, behind the head)
-                inked(c, darken(L.fringe, 0.1), ink(L.fringe), lw, side ? (k => k.ellipse(43, 31, 28, 26, 0, 0, TAU)) : (k => k.ellipse(48, 31, 32, 27, 0, 0, TAU)));
+            if (L.fringeStyle === 12 && !back) {                        // (the afro's puff, behind the head: squashed down under a hat)
+                const capd = HAT_COVERS.has(L.hatStyle);
+                inked(c, darken(L.fringe, 0.1), ink(L.fringe), lw, side ? (k => k.ellipse(43, capd ? 36 : 31, capd ? 27 : 28, capd ? 20 : 26, 0, 0, TAU)) : (k => k.ellipse(48, capd ? 36 : 31, capd ? 32 : 32, capd ? 21 : 27, 0, 0, TAU)));
+            }
             if (back || L.backStyle === 8)
                 return;
             const fill = darken(L.back, 0.12), line = ink(L.back), crop = L.backStyle === 6;
-            inked(c, fill, line, lw, side ? (k => k.ellipse(40, 44, crop ? 20.5 : 22, crop ? 22 : 24, 0, 0, TAU)) : (k => k.ellipse(48, 43, crop ? 24 : 25.5, crop ? 22 : 24, 0, 0, TAU)), ...backHairBits(L.backStyle, view));
+            inked(c, fill, line, lw, side ? (k => k.ellipse(40, 44, crop ? 20.5 : 22, crop ? 22 : 24, 0, 0, TAU)) : (k => k.ellipse(48, 43, crop ? 24 : 25.5, crop ? 22 : 24, 0, 0, TAU)), ...(L.backStyle === 4 && HAT_COVERS.has(L.hatStyle) ? [] : backHairBits(L.backStyle, view)));     // (no top bun under a hat)
         }
         else if (layer === 'torso') {
             const guy = L.body === 1;
@@ -9350,18 +9353,18 @@
             }
         }
         else if (layer === 'hairFront') {
-            const col = back ? L.back : L.fringe, fs = L.fringeStyle;
-            const bits = back ? backHairBits(L.backStyle, view) : [];
-            if (!back && fs === 3) {
+            const col = back ? L.back : L.fringe, fs = L.fringeStyle, capped = HAT_COVERS.has(L.hatStyle);
+            const bits = back ? backHairBits(L.backStyle, view).filter((b, i) => !(capped && L.backStyle === 4)) : [];
+            if (!back && fs === 3 && !capped) {
                 (side ? [[38, 21, 41, 8, 48, 17], [47, 17, 54, 6, 58, 19]] : [[35, 23, 33, 9, 44, 17], [43, 18, 48, 6, 53, 18], [52, 17, 63, 9, 61, 23]])
                     .forEach(q => bits.push(k => { k.moveTo(q[0], q[1]); k.lineTo(q[2], q[3]); k.lineTo(q[4], q[5]); k.closePath(); }));
             }
-            if (!back && fs === 10)
+            if (!back && fs === 10 && !capped)
                 (side ? [[40, 20, 42, 11, 48, 18], [48, 18, 55, 10, 57, 20]] : [[37, 21, 36, 12, 44, 18], [44, 17, 49, 9, 53, 17], [52, 18, 60, 12, 59, 22]])
                     .forEach(q => bits.push(k => { k.moveTo(q[0], q[1]); k.quadraticCurveTo((q[0] + q[2]) / 2 - 1, (q[1] + q[3]) / 2, q[2], q[3]); k.quadraticCurveTo((q[2] + q[4]) / 2 + 1, (q[3] + q[5]) / 2, q[4], q[5]); k.closePath(); }));
-            if (fs === 11)
+            if (fs === 11 && !capped)
                 bits.push(side ? k => { k.moveTo(34, 24); k.lineTo(32, 13); k.lineTo(38, 15); k.lineTo(39, 5); k.lineTo(46, 9); k.lineTo(50, 1); k.lineTo(54, 9); k.lineTo(61, 6); k.lineTo(58, 15); k.lineTo(63, 24); k.closePath(); } : k => { k.moveTo(41, 24); k.lineTo(40, 12); k.lineTo(43.5, 14); k.lineTo(44, 5); k.lineTo(48, 8.5); k.lineTo(52, 5); k.lineTo(52.5, 14); k.lineTo(56, 12); k.lineTo(55, 24); k.closePath(); });
-            if (!back && fs === 8)
+            if (!back && fs === 8 && !capped)
                 bits.push(side ? k => k.ellipse(60, 20, 11, 6.5, 0.35, 0, TAU) : k => k.ellipse(45, 18.5, 14, 7, -0.15, 0, TAU));
             let shape;
             const shortFr = [3, 6, 8, 9, 10, 11, 14].includes(fs), cover = fs === 13 || (!shortFr && fs !== 12 && ![6, 8].includes(L.backStyle));     // long hair falls over the ears; short hair sits above them
@@ -9369,7 +9372,7 @@
             if (view === 'front')
                 shape = k => {
                     if (fs === 12) {                                         // afro: a big round crown (the rest of it puffs out behind)
-                        k.moveTo(16, 50); k.bezierCurveTo(10, 14, 33, 7, 48, 7); k.bezierCurveTo(63, 7, 86, 14, 80, 50);
+                        const at = capped ? 13 : 7; k.moveTo(16, 50); k.bezierCurveTo(10, at + 7, 33, at, 48, at); k.bezierCurveTo(63, at, 86, at + 7, 80, 50);
                         k.quadraticCurveTo(78, 55, 73.5, 52); k.quadraticCurveTo(70.5, 40, 67.5, 32); k.quadraticCurveTo(48, 25, 28.5, 32); k.quadraticCurveTo(25.5, 40, 22.5, 52); k.quadraticCurveTo(18, 55, 16, 50);
                         k.closePath(); return;
                     }
