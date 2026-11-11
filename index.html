@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794356471';
+<script>window.WANDO_BUILD = '1794356770';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -11926,7 +11926,31 @@
         c.lineJoin = c.lineCap = 'round';
         drawFigure(c, palette(look), view);
     }
-    function drawFigure(c, L, view) {
+    const FIG_CACHE = new Map();
+    function drawFigure(c, L, view) {                                 // (the same look, at the same size, is drawn once and then copied: the toon inking is slow)
+        try {
+            const T = c && typeof c.getTransform === 'function' ? c.getTransform() : null;
+            if (T && Math.abs(T.b) < 1e-6 && Math.abs(T.c) < 1e-6 && T.a > 0 && Math.abs(T.a - T.d) < 1e-6 && !TOON.inking && c.canvas) {
+                const u = Math.round(T.a * 100) / 100, key = u + '|' + (view || '') + '|' + JSON.stringify(L);
+                let hit = FIG_CACHE.get(key);
+                if (!hit) {
+                    const X0 = -24, Y0 = -60, W = 144, H = 190, cv = document.createElement('canvas');
+                    cv.width = Math.ceil(W * u); cv.height = Math.ceil(H * u);
+                    const k = cv.getContext('2d');
+                    if (!k) throw new Error('no canvas');
+                    k.setTransform(u, 0, 0, u, -X0 * u, -Y0 * u); k.lineJoin = k.lineCap = 'round';
+                    drawFigureNow(k, L, view);
+                    hit = { cv, X0, Y0, u };
+                    FIG_CACHE.set(key, hit);
+                    if (FIG_CACHE.size > 160) FIG_CACHE.delete(FIG_CACHE.keys().next().value);
+                } else { FIG_CACHE.delete(key); FIG_CACHE.set(key, hit); }
+                c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.drawImage(hit.cv, T.e + hit.X0 * u, T.f + hit.Y0 * u); c.restore();
+                return;
+            }
+        } catch (e) { }
+        drawFigureNow(c, L, view);
+    }
+    function drawFigureNow(c, L, view) {
         const back = view === 'back', v = back ? 'back' : 'front', ax = armX(L);
         const layer = name => { c.save(); drawAvatarLayer(c, name, v, L); c.restore(); };
         if (!back)
@@ -24101,6 +24125,7 @@
         });
         ['torso', 'neck', 'head', 'eyes', 'hat'].forEach(layer);
     }
+    const BAKE_CACHE = new Map();
     function bakeAvatar(scene, look) {
         const L = palette(look);
         const AW = CW * LAYERS.length * TEX, AH = (CHA * 3 + 30) * TEX;
@@ -24115,7 +24140,7 @@
         }
         const c = tex.getContext();
         c.setTransform(1, 0, 0, 1, 0, 0);
-        c.clearRect(0, 0, AW, AH);
+        c.clearRect(0, 3 * CHA * TEX, AW, AH - 3 * CHA * TEX);
         const cell = (x, y, w, h, fn) => {
             c.save();
             c.setTransform(TEX, 0, 0, TEX, x * TEX, y * TEX);
@@ -24127,10 +24152,21 @@
             fn();
             c.restore();
         };
-        VIEWS.forEach((v, r) => LAYERS.forEach((l, col) => cell(col * CW, r * CHA, CW, CHA, () => { c.translate(0, AV_TOP); drawAvatarLayer(c, l, v, L); })));
+        const lookKey = JSON.stringify(L), hit = BAKE_CACHE.get(lookKey);
+        if (hit) {                                                      // (a look you wore a moment ago: copied back in, no redrawing)
+            bakeAvatar.n = (bakeAvatar.n || 0) + 1;
+            c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, AW, AH); c.drawImage(hit, 0, 0); tex.refresh();
+            return;
+        }
+        const keep = () => { try { const cp = document.createElement('canvas'); cp.width = AW; cp.height = AH; cp.getContext('2d').drawImage(c.canvas, 0, 0); BAKE_CACHE.set(lookKey, cp); if (BAKE_CACHE.size > 10) BAKE_CACHE.delete(BAKE_CACHE.keys().next().value); } catch (e) { } };
+        const row = (v, r) => { c.clearRect(0, r * CHA * TEX, AW, CHA * TEX); LAYERS.forEach((l, col) => cell(col * CW, r * CHA, CW, CHA, () => { c.translate(0, AV_TOP); drawAvatarLayer(c, l, v, L); })); };
+        const first = Math.max(0, VIEWS.indexOf(scene.view || 'front')), token = (bakeAvatar.n = (bakeAvatar.n || 0) + 1);
+        row(VIEWS[first], first);                                       // (the way you face now: straight away)
         cell(0, 3 * CHA, 16, 20, () => drawLeg(c, L));
         cell(24, 3 * CHA, 14, 26, () => drawArm(c, L));
         tex.refresh();
+        let left = VIEWS.length - 1;
+        VIEWS.forEach((v, r) => { if (r === first) return; setTimeout(() => { if (bakeAvatar.n !== token || !scene.textures || !scene.textures.exists('avatar')) return; c.setTransform(1, 0, 0, 1, 0, 0); row(v, r); tex.refresh(); if (--left === 0) keep(); }, 40 + r * 60); });     // (the other two after, a frame or two apart, not all in one freeze)
     }
     const TM = { W: 1800, H: 1300, WALL: 330 };
     const tradeXmas = () => !!SEASON && SEASON.id === 'winter';
