@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794356770';
+<script>window.WANDO_BUILD = '1794356874';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -37003,7 +37003,7 @@
                 this.bakeStage();
                 const add = o => { S.objs.push(o); return o; }, ADD = Phaser.BlendModes.ADD;
                 add(this.add.image(x, y + 12, 'stage_riser').setOrigin(0.5, 0.75).setScale(1 / TEX).setDepth(y - 30));
-                S.nova = add(this.add.image(x, y - 4, 'novastar').setOrigin(0.5, FEET_OA).setScale(1.35 / TEX).setDepth(y));
+                S.nova = add(this.add.image(x, y - 4, 'novastar').setOrigin(0.5, FEET_OA).setScale(1.5 / TEX).setDepth(y)); S.vibe = 'pop'; S.vibeAt = time + 1500; S.mouthShape = 'ah'; S.lastV = 0;
                 S.b1 = add(this.add.image(x - 100, y - 2, 'backup_1').setOrigin(0.5, FEET_OA).setScale(1.05 / TEX).setDepth(y - 1));
                 S.b2 = add(this.add.image(x + 100, y - 2, 'backup_6').setOrigin(0.5, FEET_OA).setScale(1.05 / TEX).setDepth(y - 1));
                 S.lbl = add(this.label(x, y - 170, SHOW.star + ' spins ' + (cur.who ? cur.who + ' song: ' : '') + String(cur.title).slice(0, 28), '#3a0f6e'));
@@ -37015,15 +37015,39 @@
             if (REDUCED) return;
             let p = bp; if (p === null) p = time / 500;
             const bounce = Math.abs(Math.sin(Math.PI * p)), sway = Math.sin(Math.PI * p);
-            S.nova.setY(y - 4 - bounce * 14).setScale(1.35 / TEX * (1 + (bounce < 0.15 ? (0.15 - bounce) * 0.5 : 0)), 1.35 / TEX * (1 - (bounce < 0.15 ? (0.15 - bounce) * 0.6 : 0)));
+            S.nova.setY(y - 4 - bounce * 14);
+            if (!this.tweens.isTweening(S.nova)) S.nova.setScale(1.5 / TEX * (1 + (bounce < 0.15 ? (0.15 - bounce) * 0.5 : 0)), 1.5 / TEX * (1 - (bounce < 0.15 ? (0.15 - bounce) * 0.6 : 0)));
             S.b1.setY(y - 2 - Math.abs(Math.sin(Math.PI * p + 0.5)) * 10).setAngle(sway * 7);
             S.b2.setY(y - 2 - Math.abs(Math.sin(Math.PI * p - 0.5)) * 10).setAngle(-sway * 7);
             S.spot.setAlpha(0.3 + 0.25 * (1 - bounce));
             let v = null; try { v = ui.clubVoice ? ui.clubVoice() : null; } catch (e) { }
             if (v === null) v = Math.max(0, Math.sin(Math.PI * p * 2)) * 0.6;                    // (no song file to listen to: sing along to the beat)
-            const k = 1.35, mx = S.nova.x, my = S.nova.y - (100 - 57) * k * (S.nova.scaleY * TEX / k);
-            S.mouth.clear();
-            if (v > 0.08) { S.mouth.fillStyle(0x5a0f1e, 1); S.mouth.fillEllipse(mx, my, 6.5 * k, (1.5 + v * 6.5) * k); S.mouth.fillStyle(0xff7a8a, 1); S.mouth.fillEllipse(mx, my + (0.8 + v * 2) * k, 3.5 * k, Math.max(1, v * 2.4) * k); }
+            if (time > S.vibeAt && S.key) {                                    // the song's vibe picks her outfit: fast = rave or rock, middling = pop, slow = chill
+                S.vibeAt = time + 4000;
+                const B = ui.djBeatInfo ? ui.djBeatInfo(S.key) : null;
+                if (B && B.bpm) {
+                    let h = 0; for (const ch of String(S.key)) h = (h * 31 + ch.charCodeAt(0)) | 0;
+                    const vibe = B.bpm >= 128 ? (h & 1 ? 'hype' : 'rock') : B.bpm >= 102 ? 'pop' : 'chill';
+                    if (vibe !== S.vibe) {
+                        S.vibe = vibe; const tx = vibe === 'pop' ? 'novastar' : this.bakeNova(vibe);
+                        this.tweens.add({ targets: S.nova, scaleX: 0.02, duration: 140, yoyo: true, onYoyo: () => S.nova.setTexture(tx) });     // (a quick spin: new outfit)
+                        this.dunPop && this.dunPop(S.nova.x, S.nova.y - 170, { hype: '✨ RAVE MODE', rock: '🔥 ROCK OUT', chill: '🌙 slow jam', pop: '⭐ POP STAR' }[vibe], '#ff7ad9', true);
+                    }
+                }
+            }
+            const k = Math.abs(S.nova.scaleY) * TEX, mx = S.nova.x, my = S.nova.y - (100 - 56.5) * k, M = S.mouth;
+            if (v > 0.16 && S.lastV <= 0.16) S.mouthShape = ['ah', 'oh', 'ee', 'ah', 'oh'][Math.floor(Math.random() * 5)];     // (a new sound, a new shape)
+            S.lastV = v;
+            M.clear();
+            if (v <= 0.1) {                                                       // between lines: a big smile
+                M.lineStyle(1.8 * k, 0x2a0a14, 1); M.beginPath(); M.arc(mx, my - 1.2 * k, 3.6 * k, 0.12 * Math.PI, 0.88 * Math.PI, false); M.strokePath();
+            } else {
+                const sh = S.mouthShape, w = (sh === 'ee' ? 10 : sh === 'oh' ? 4.5 + v * 2 : 8.5) * k, h = (sh === 'ee' ? 1.8 + v * 3.5 : sh === 'oh' ? 3.5 + v * 5.5 : 2.2 + v * 7.5) * k;
+                M.fillStyle(0x3a0812, 1); M.fillEllipse(mx, my, w, h);
+                if (sh !== 'oh') { M.fillStyle(0xffffff, 1); M.fillRect(mx - w * 0.32, my - h / 2 + 0.25 * k, w * 0.64, Math.min(1.3 * k, h * 0.3)); }     // (teeth)
+                if (h > 3 * k) { M.fillStyle(0xff6a86, 1); M.fillEllipse(mx, my + h * 0.22, w * 0.5, h * 0.36); }     // (tongue)
+                M.lineStyle(1.1 * k, 0x2a0a14, 1); M.strokeEllipse(mx, my, w, h);
+            }
         }
         djHostTick(time, on, bp) {                                  // DJ Volt: nods along, works the decks, throws a hand up now and then; on the beat when a song is on
             const H = this.djHost; if (!H || !H.img || !H.img.active || REDUCED) return;
@@ -37118,6 +37142,18 @@
             saveGame();
             if (ui.onState)
                 ui.onState();
+        }
+        bakeNova(vibe) {                                            // Nova Starr's outfit for the song's vibe (baked the first time it's needed)
+            const key = 'nova_' + vibe;
+            if (this.textures.exists(key)) return key;
+            const base = { body: 0, skin: 2, fringe: 6, fringeStyle: 5, back: 6, backStyle: 4, eyes: 4, eyesC: 4, neck: 3, neckC: 4, legs: 7, shoes: 4, shoeStyle: 9 };
+            const V = { pop: { top: 4, topStyle: 53, hat: 3, hatStyle: 22, bottom: 5 },                 // sparkly pop star, tiara
+                hype: { top: 1, topStyle: 36, hat: 5, hatStyle: 16, bottom: 3, fringe: 4, back: 4 },     // galaxy top, headphones: a rave
+                rock: { top: 7, topStyle: 26, hat: 0, hatStyle: 0, bottom: 7, fringe: 8, back: 8, fringeStyle: 11, backStyle: 8 },     // flames and a mohawk
+                chill: { top: 6, topStyle: 63, hat: 2, hatStyle: 36, bottom: 2, backStyle: 0, fringeStyle: 4 } }[vibe] || {};     // ruffles and a flower clip: a slow one
+            const look = Object.assign({}, DEFAULT_LOOK, base, V);
+            bake(this, key, CW, CHA, c => { c.translate(0, AV_TOP); drawFigure(c, palette(look)); c.fillStyle = '#2a2833'; c.fillRect(64, 54, 3, 12); c.fillStyle = '#cfd5e2'; disc(c, 65.5, 52, 3.6); });
+            return key;
         }
         bakeStage() {                                               // the stage, Nova Starr and the band (baked once)
             if (!this.textures.exists('stage_riser'))
@@ -49442,6 +49478,7 @@
             const B = DJQ.beats[DJQ.playing]; if (!B || !B.period) return null;
             return Math.max(0, (DJQ.audio.currentTime - B.phase) / B.period);
         };
+        ui.djBeatInfo = key => DJQ.beats[key] || null;
         ui.djCurrent = () => (DJQ.playing && G.loc === 'dance' && DJQ.cur ? DJQ.cur : null);
         ui.clubSong = () => {                                         // whatever is playing in the club: a player's song at the booth, your own player, or a DJ booth track
             if (G.loc !== 'dance') return null;                       // (only a song from the line brings out Nova Starr and her crew)
