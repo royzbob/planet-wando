@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794357444';
+<script>window.WANDO_BUILD = '1794357514';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -1709,10 +1709,14 @@
   .coll-card .btn { margin-top: auto; }
   .coll-head { margin: 6px 0 2px; font-weight: 800; font-size: 14px; }
   .coll-open { margin-top: 4px; background: linear-gradient(#fff3b0, #ffd84d); }
-  .trade-cv { width: 52px !important; height: auto !important; max-height: 52px; }
+  .trade-cv { width: 64px !important; height: auto !important; max-height: 64px; }
+  .trade-show { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 6px; border-radius: 12px; background: rgba(255, 255, 255, 0.55); min-height: 40px; }
+  .trade-show canvas { width: 84px; height: 84px; border-radius: 12px; box-shadow: 0 2px 0 rgba(29, 20, 36, 0.35); }
+  .trade-show .trade-empty { align-self: center; font: 700 12px/1.2 var(--font-body); opacity: 0.6; }
+  @media (max-width: 560px) { .trade-show canvas { width: 64px; height: 64px; } }
   .trade-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .trade-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 6px; border: 2px dashed rgba(29, 20, 36, 0.25); border-radius: 12px; }
-  .trade-col .dun-row canvas { width: 44px; height: 44px; }
+  .trade-col .dun-row canvas { width: 56px; height: 56px; }
   .trade-acts { display: flex; gap: 8px; justify-content: center; }
   .trade-coins { width: 110px; font: inherit; font-weight: 800; padding: 4px 8px; border: 2px solid var(--ink); border-radius: 10px; }
   @media (max-width: 560px) { .trade-cols { grid-template-columns: 1fr; } }
@@ -45923,6 +45927,11 @@
             if (tr.invite) {
                 head.textContent = 'A trade';
                 rows.push(node('p', 'pet-hint', tr.invite.name + ' wants to trade with you.'));
+                try {                                                       // (what they're showing on their trade sign, if anything)
+                    let ai = null; net.peers.forEach(p => { if (!ai && !p.mine && (p.uid === tr.invite.from || p.name === tr.invite.name) && p.ai) ai = p.ai; });
+                    const it = ai ? tradeItemIn(ai) : null, cv = it ? tradePicOf(it) : null;
+                    if (cv) { const box = node('div', 'trade-show'); box.append(cv, node('span', 'trade-empty', 'They\'re showing: ' + it.name)); rows.push(box); }
+                } catch (e) { }
                 const bar = node('div', 'trade-acts'), a = el('button', 'btn', { type: 'button', 'data-tr': 'yes' }), n = el('button', 'btn', { type: 'button', 'data-tr': 'no' });
                 a.textContent = 'Trade';
                 n.textContent = 'No thanks';
@@ -46049,7 +46058,8 @@
                 return li;
             };
             const mineCol = node('div', 'trade-col'), theirCol = node('div', 'trade-col');
-            mineCol.append(node('div', 'mine-row mine-top', 'You offer' + (m.ready >= 0 ? ' · READY' : '')));
+            const showcase = list => { const box = node('div', 'trade-show'); const pics = list.map(w => { const cv = tradePicOf(w); if (cv) cv.title = w.name; return cv; }).filter(Boolean); if (pics.length) box.append(...pics); else box.appendChild(node('span', 'trade-empty', 'Nothing yet')); return box; };     // (big pictures of what's on the table)
+            mineCol.append(node('div', 'mine-row mine-top', 'You offer' + (m.ready >= 0 ? ' · READY' : '')), showcase(m.w));
             m.w.forEach(w => mineCol.appendChild(row(w, 'off', 'Take back')));
             const coinRow = node('div', 'mine-row'), inp = el('input', 'trade-coins', { id: 'trade-coins', type: 'number', min: '0', max: String(Math.min(G.coins, TRADE.MAXC)), step: '1', inputmode: 'numeric', 'aria-label': 'Coins you offer' });
             inp.value = String(m.coins);
@@ -46060,6 +46070,7 @@
             if (!t)
                 theirCol.appendChild(node('p', 'pet-hint', 'Waiting for ' + tr.otherName + '...'));
             else {
+                theirCol.appendChild(showcase(t.w));
                 t.w.forEach(w => theirCol.appendChild(row(w)));
                 theirCol.appendChild(node('div', 'mine-row', t.coins + ' Coins'));
             }
