@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794365417';
+<script>window.WANDO_BUILD = '1794366031';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -1545,7 +1545,7 @@
   .qty span { min-width: 30px; text-align: center; font: 800 13px/1 var(--font-body); font-variant-numeric: tabular-nums; }
   .shop.closet {
     --w-hi: #7b7fb3; --w-mid: #585c94; --w-lo: #3c3f72; --w-edge: #1f2147; --w-ink: #2a2c55; --w-on: #2fc45f;
-    width: min(800px, calc(100% - 24px)); height: min(540px, calc(100% - 24px)); max-height: none;
+    width: min(800px, calc(100% - 24px)); height: min(540px, calc(100% - var(--dock-h) - 22px)); max-height: none;
     overflow: visible;
     border-color: var(--w-edge); border-radius: 26px;
     background: linear-gradient(160deg, var(--w-hi), var(--w-mid) 46%, var(--w-lo));
@@ -1651,7 +1651,7 @@
   @media (max-height: 600px) { .closet-dial { width: min(200px, 100%); } }
   @media (max-height: 500px) { .closet-dial { width: min(140px, 100%); } .closet-stage h2 { display: none; } }
   @media (max-width: 660px) {                              
-    .shop.closet { height: calc(100% - 24px); }
+    .shop.closet { height: calc(100% - var(--dock-h) - 22px); }
     .closet-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto minmax(0, 1fr); }
     .closet-stage { flex-direction: row; justify-content: center; gap: 12px; padding: 12px 12px 8px; overflow: visible; }
     .closet-stage h2 { display: none; }
@@ -2403,6 +2403,8 @@
   .dun-hud .dun-atk { width: 76px; height: 76px; border-width: 4px; }
   .dun-hud .dun-skill, .dun-flask, .tpad button, .dun-swap { touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   html[data-screen="phone"] .dun-hud .dun-skill small.dun-key, html[data-screen="phone"] .dun-hud .dun-skill:not(.dun-atk) small { display: none; }
+  html[data-screen="phone"] #app:has(.emote-pop:not([hidden])) .dun-hud, html[data-screen="phone"] #app:has([role="dialog"]:not([hidden]):not(#gate):not(.skill-pick)) .dun-hud { visibility: hidden; }
+  html[data-screen="phone"] #app:has([role="dialog"]:not([hidden]):not(#gate)) .chatbox, html[data-screen="phone"] #app:has([role="dialog"]:not([hidden]):not(#gate)) .hint { visibility: hidden; }
   .dun-swap { padding: 3px 8px; border: 2px solid #d8a43a; border-radius: 999px; background: rgba(20, 16, 28, 0.85); color: #ffe9a8; font: 800 11px/1.2 var(--font-body); cursor: pointer; }
   .skill-pick { position: absolute; inset: 0 0 var(--dock-h) 0; z-index: 400; display: grid; place-items: center; background: rgba(10, 6, 20, 0.55); padding: 12px; }
   .skill-pick[hidden] { display: none; }
@@ -40228,17 +40230,22 @@
             if (!socialOn() || !UID_OK.test(to || '') || to === soc.uid)
                 return false;
             const id = mailId(), body = { k, from: soc.uid, fromName: G.name || 'Player', to, text: cleanText(text || '', MAIL.TEXT), at: Date.now() };
-            try {
-                if (k === 'pm')
-                    await mailbox(soc.uid).doc(id).set(body);
-                await mailbox(to).doc(id).set(body);
-                return true;
-            }
-            catch (e) {
-                if (k === 'pm')
-                    mailDrop(id);
-                return false;
-            }
+            for (let tries = 0; tries < 2; tries++)
+                try {
+                    if (k === 'pm')
+                        await mailbox(soc.uid).doc(id).set(body);
+                    await mailbox(to).doc(id).set(body);
+                    soc.err = '';
+                    return true;
+                }
+                catch (e) {
+                    soc.err = String(e && (e.code || e.message) || 'unknown').slice(0, 80);
+                    if (tries)
+                        console.warn('[wando] message not sent:', e);
+                }
+            if (k === 'pm')
+                mailDrop(id);
+            return false;
         }
         const playerKey = name => cleanText(name, 16).toLowerCase();
         function directoryPut() {
@@ -40914,14 +40921,26 @@
             const text = cleanText(ta.value, MAIL.TEXT);
             if (!text)
                 return;
+            const f = friendOf(id);
+            if (f && !f.ok) {
+                ph.note = f.name + ' has not accepted your friend request yet, so they cannot get messages. Ask them to accept it in their Friends List!';
+                ph.draft = text;
+                showView('thread', false, true);
+                return;
+            }
             ta.value = '';
+            ph.note = 'Sending...';
             ph.draft = '';
             pmSend(id, text).then(ok => {
-                if (ok)
+                if (ok) {
+                    ph.note = 'Sent!';
+                    if (ph.view === 'thread' && ph.thread === id)
+                        showView('thread', false, true);
                     return;
+                }
                 if (ph.view === 'thread' && ph.thread === id) {
                     ph.draft = text;
-                    ph.note = socialOn() ? 'That message could not be sent. Try again.' : socialWhy();
+                    ph.note = socialOn() ? 'That message could not be sent (' + (soc.err || 'no reason given') + '). Try again, and tell the game owner what it says.' : socialWhy();
                     showView('thread', false, true);
                 }
             });
@@ -45268,7 +45287,7 @@
             [[dunPotionBtn, 'potAt'], [dunManaBtn, 'manaAt']].forEach(([b, k]) => b.style.setProperty('--cd', s && s[k] > now ? String((s[k] - now) / (DUN.POT_CD * 1000)) : '0'));
             dunSkillBtns.forEach((b, i) => {
                 const S = list[i], cd = s && s.cds ? Math.max(0, (s.cds[i] - now) / 1000) : 0;
-                b.hidden = !S && !(SKILLS[D.cls] || []).some(x => skillRank(D, x.id) > 0);
+                b.hidden = !S && !(SKILLS[D.cls] || []).some(x => skillRank(D, x.id) > 0 && !list.some(y => y && y.id === x.id));
                 if (!S) {
                     if (b.dataset.face !== 'empty') {
                         b.dataset.face = 'empty';
