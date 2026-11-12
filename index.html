@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794446498';
+<script>window.WANDO_BUILD = '1794446771';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -16019,38 +16019,28 @@
         const v = !r || !furnTurns(d) ? 0 : r === 2 ? 2 : 1, o = open && d.opens ? 1 : 0, key = 'furn_' + d.id + '_' + ci + '_' + v + (o ? '_o' : '');
         if (v === 1 && furnSlant(d, 1)) {
             const { SB, T } = WALL_SIDE, W2 = T + 8, back = d.w * SB, H2 = d.h + back + 4;
-            bake(scene, key + 's', W2, H2, c => {
-                const S = 6, end = document.createElement('canvas');
-                end.width = T * S;
-                end.height = d.h * S;
-                const ec = end.getContext('2d');
-                if (!ec)
-                    return;
-                ec.scale(S * T / d.w, S);
-                drawFurn(ec, d, ci, 0);
-                const cap = Math.min(16, d.h * 0.2) * S, foot = H2 - 2, top = foot - d.h;
-                const strip = (y0, y1, a) => { c.globalAlpha = a; c.drawImage(end, 0, 0, end.width, cap, 4, y0, T, y1 - y0); c.globalAlpha = 1; };
+            bake(scene, key + 's', W2, H2, c => {     // (a wall running away from you: its top edge and one end, drawn plain so pieces in a row join up cleanly)
+                const P = furnPalette(d, ci), main = d.pal === 'wood' ? P.a : P.f, foot = H2 - 2, top = foot - d.h, x = 4;
+                c.fillStyle = lighten(main, 0.3);
+                c.fillRect(x, top - back, T, back + 1);
+                c.fillStyle = 'rgba(255,255,255,.25)';
+                c.fillRect(x + 2, top - back, 2, back);
                 if (d.walk) {
-                    const t1 = top - back;
-                    strip(t1, t1 + back * 0.22, 1);
-                    strip(t1 + back * 0.22, top - back * 0.22, 0.55);
-                    strip(top - back * 0.22, top + 1, 1);
+                    c.fillStyle = 'rgba(20,10,30,.45)';
+                    c.fillRect(x + 2, top - back * 0.8, T - 4, back * 0.6);
                 }
-                else
-                    strip(top - back, top + 1, 1);
-                c.drawImage(end, 4, top, T, d.h);
-                c.save();
-                c.globalCompositeOperation = 'source-atop';
-                c.fillStyle = 'rgba(30,18,36,.22)';
-                c.fillRect(4, top, T, d.h);
-                c.restore();
-                c.strokeStyle = 'rgba(40,24,30,.55)';
+                const g = c.createLinearGradient(0, top, 0, foot);
+                g.addColorStop(0, main);
+                g.addColorStop(1, darken(main, 0.18));
+                c.fillStyle = g;
+                c.fillRect(x, top, T, d.h);
+                c.fillStyle = darken(main, 0.4);
+                c.fillRect(x, foot - 5, T, 5);
+                c.fillStyle = 'rgba(255,255,255,.35)';
+                c.fillRect(x, top, T, 1.5);
+                c.strokeStyle = 'rgba(40,24,30,.45)';
                 c.lineWidth = 1;
-                c.strokeRect(4.5, top - back + 0.5, T - 1, d.h + back - 1);
-                c.beginPath();
-                c.moveTo(4, top + 0.5);
-                c.lineTo(4 + T, top + 0.5);
-                c.stroke();
+                c.strokeRect(x + 0.5, top - back + 0.5, T - 1, d.h + back - 1);
             });
             return key + 's';
         }
