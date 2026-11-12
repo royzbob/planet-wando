@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794445616';
+<script>window.WANDO_BUILD = '1794446261';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -15897,7 +15897,46 @@
     const furnSlant = (d, r) => !!(d && d.build && (r || 0) % 2 && furnTurns(d));
     const furnW = (d, r) => (furnSlant(d, r) ? WALL_SIDE.T : r % 2 && furnTurns(d) ? Math.round(d.w * FURN_SIDE) : d.w);
     const furnOrigin = (d, r) => furnSlant(d, r) ? [0.5, 1 - 2 / (d.h + d.w * WALL_SIDE.SB + 4)] : [0.5, d.kind === 'rug' ? 0.5 : d.kind === 'wall' ? 1 : (d.h - 2) / d.h];
+    function drawSeatBack(c, d, ci) {     // (a couch, chair or bed seen from behind: so it can face the TV)
+        const P = furnPalette(d, ci), main = d.pal === 'wood' ? P.a : P.f, dk = darken(main, 0.22), ink = '#2a1a2e', W = d.w, H = d.h;
+        const bed = /bed|bunk|canopy|futon|sleeppod|hammock/.test(d.id), arm = !bed && W > 70 ? Math.max(8, Math.round(W * 0.1)) : 0, top = bed ? H * 0.45 : H * 0.16, r0 = Math.min(14, W * 0.14);
+        c.save();
+        c.lineJoin = c.lineCap = 'round';
+        c.fillStyle = darken(main, 0.5);
+        [0.12, 0.88].forEach(f => c.fillRect(W * f - 3, H - 9, 6, 9));
+        if (arm)
+            [2, W - 2 - arm].forEach(x => inked(c, dk, ink, 2, q => rr(q, x, H * 0.44, arm, H * 0.56 - 7, 6)));
+        inked(c, main, ink, 2, q => rr(q, 2 + arm * 0.7, top, W - 4 - arm * 1.4, H - 7 - top, r0));
+        const g = c.createLinearGradient(0, top, 0, H - 7);
+        g.addColorStop(0, 'rgba(255,255,255,.22)');
+        g.addColorStop(0.35, 'rgba(255,255,255,0)');
+        g.addColorStop(1, 'rgba(0,0,0,.22)');
+        c.fillStyle = g;
+        c.beginPath();
+        rr(c, 3 + arm * 0.7, top + 1, W - 6 - arm * 1.4, H - 9 - top, r0);
+        c.fill();
+        c.strokeStyle = 'rgba(0,0,0,.2)';
+        c.lineWidth = 1.5;
+        const n = W > 130 ? 3 : W > 80 ? 2 : 1;
+        for (let k = 1; k < n; k++) {
+            const x = 2 + arm * 0.7 + (W - 4 - arm * 1.4) * k / n;
+            c.beginPath();
+            c.moveTo(x, top + 6);
+            c.lineTo(x, H - 12);
+            c.stroke();
+        }
+        c.strokeStyle = 'rgba(255,255,255,.28)';
+        c.beginPath();
+        c.moveTo(4 + arm + r0 * 0.5, top + 4);
+        c.lineTo(W - 4 - arm - r0 * 0.5, top + 4);
+        c.stroke();
+        c.restore();
+    }
     function drawFurnView(c, d, ci, r, open) {
+        if (r === 2 && furnTurns(d) && FURN_USE[d.id] === 'sit' && !FURN_ROUND.has(d.id)) {
+            drawSeatBack(c, d, ci);
+            return;
+        }
         if (!r || !furnTurns(d)) {
             drawFurn(c, d, ci, open);
             return;
@@ -33397,8 +33436,15 @@
                 if (ui.onEmote)
                     ui.onEmote('sit');
                 this.seated = rec;
-                this.seatLift = FURN_SEAT[d.id] || 14;
-                this.pz.body.reset(it.x, it.y + 2 - FOOT);
+                const rr0 = furnTurns(d) ? (it.r || 0) : 0, back = rr0 === 2;     // (turned around: you sit facing away, behind the backrest, like watching TV)
+                this.seatLift = (FURN_SEAT[d.id] || 14) + (back ? 6 : 0);
+                this.pz.body.reset(it.x, it.y + (back ? -10 : 2) - FOOT);
+                if (back)
+                    this.setFacing('back', 1);
+                else if (rr0 === 1 || rr0 === 3)
+                    this.setFacing('side', (rr0 === 1 ? 1 : -1) * (it.f ? -1 : 1));
+                else
+                    this.setFacing('front', this.flip || 1);
                 sfx.pop();
                 if (ui.onEvent)
                     ui.onEvent('sit', { loc: this.loc });
