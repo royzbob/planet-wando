@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794446771';
+<script>window.WANDO_BUILD = '1794447187';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -3638,6 +3638,7 @@
         <button id="tray-grid" class="btn" type="button" aria-pressed="true" title="G turns the grid on or off. Hold Shift to put something down off the grid.">Grid</button>
         <button id="tray-turn" class="btn" type="button" hidden>Turn</button>
         <button id="tray-flip" class="btn" type="button" hidden>Flip</button>
+        <button id="tray-move" class="btn" type="button" hidden>Move</button>
         <button id="tray-store" class="btn" type="button" hidden>Put away</button>
         <button id="tray-done" class="btn" type="button">Done</button>
       </div>
@@ -15997,22 +15998,81 @@
             drawFurn(c, d, ci, open);
             return;
         }
+        const side = r % 2 === 1;
+        if (FURN_ROUND.has(d.id) || d.build) {     // (round things look the same from every side)
+            c.save();
+            if (side) {
+                c.translate(d.w / 2, 0);
+                c.scale(FURN_SIDE, 1);
+                c.translate(-d.w / 2, 0);
+            }
+            drawFurn(c, d, ci, open);
+            c.restore();
+            return;
+        }
+        drawFurnTurned(c, d, ci, side, open);
+    }
+    function drawFurnTurned(c, d, ci, side, open) {     // (any piece from the back or side: its own outline, filled with its own colour, shaded, with an edge)
+        const T = c.getTransform ? c.getTransform() : { a: 2, b: 0 }, K = Math.max(1, Math.min(4, Math.hypot(T.a, T.b))), W = Math.ceil(d.w * K), H = Math.ceil(d.h * K);
+        const mk = () => { const cv = document.createElement('canvas'); cv.width = W; cv.height = H; return cv; };
+        const front = mk(), fc = front.getContext('2d');
+        if (!fc)
+            return;
+        fc.scale(K, K);
+        drawFurn(fc, d, ci, open);
+        let R = 0, Gc = 0, B = 0, n = 0;
+        try {
+            const px = fc.getImageData(0, 0, W, H).data;
+            for (let i = 0; i < px.length; i += 16)
+                if (px[i + 3] > 200 && px[i] + px[i + 1] + px[i + 2] > 90) {
+                    R += px[i];
+                    Gc += px[i + 1];
+                    B += px[i + 2];
+                    n++;
+                }
+        }
+        catch (e) { }
+        const hex = v => ('0' + Math.round(v).toString(16)).slice(-2), avg = n ? '#' + hex(R / n) + hex(Gc / n) + hex(B / n) : '#8a7a8a', base = darken(avg, side ? 0.12 : 0.06);
+        const tint = (col) => { const cv = mk(), x = cv.getContext('2d'); x.drawImage(front, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = col; x.fillRect(0, 0, W, H); return cv; };
+        const ink = tint('#2a1a2e'), body = tint(base);
         c.save();
-        if (r % 2) {
+        if (side) {
             c.translate(d.w / 2, 0);
             c.scale(FURN_SIDE, 1);
             c.translate(-d.w / 2, 0);
         }
-        drawFurn(c, d, ci, open);
-        c.restore();
-        if (FURN_ROUND.has(d.id))
-            return;
-        const P = furnPalette(d, ci);
-        c.save();
+        [[-1.4, 0], [1.4, 0], [0, -1.4], [0, 1.4]].forEach(([ox, oy]) => c.drawImage(ink, ox, oy, d.w, d.h));
+        c.drawImage(body, 0, 0, d.w, d.h);
         c.globalCompositeOperation = 'source-atop';
-        c.globalAlpha = r === 2 ? 0.66 : 0.18;
-        c.fillStyle = r !== 2 ? '#2a1a2e' : d.pal === 'fabric' ? P.f : d.pal === 'wood' ? P.a : '#a8a2ac';
+        const g = c.createLinearGradient(0, 0, 0, d.h);
+        g.addColorStop(0, 'rgba(255,255,255,.22)');
+        g.addColorStop(0.45, 'rgba(255,255,255,0)');
+        g.addColorStop(1, 'rgba(0,0,0,.25)');
+        c.fillStyle = g;
         c.fillRect(0, 0, d.w, d.h);
+        if (side) {
+            const e = c.createLinearGradient(0, 0, d.w, 0);
+            e.addColorStop(0, 'rgba(0,0,0,.18)');
+            e.addColorStop(0.7, 'rgba(0,0,0,0)');
+            e.addColorStop(0.78, 'rgba(255,255,255,.28)');
+            e.addColorStop(1, 'rgba(255,255,255,.12)');
+            c.fillStyle = e;
+            c.fillRect(0, 0, d.w, d.h);
+            c.fillStyle = 'rgba(42,26,46,.5)';
+            c.fillRect(d.w * 0.76, 0, d.w * 0.03, d.h);
+        }
+        else {
+            c.strokeStyle = 'rgba(0,0,0,.2)';
+            c.lineWidth = 2;
+            c.beginPath();
+            rr(c, d.w * 0.2, d.h * 0.18, d.w * 0.6, d.h * 0.58, 6);
+            c.stroke();
+            c.strokeStyle = 'rgba(255,255,255,.2)';
+            c.lineWidth = 1.2;
+            c.beginPath();
+            rr(c, d.w * 0.2 + 2, d.h * 0.18 + 2, d.w * 0.6 - 4, d.h * 0.58 - 4, 5);
+            c.stroke();
+        }
         c.restore();
     }
     function bakeFurn(scene, d, ci, r, open) {
@@ -33571,8 +33631,10 @@
                 .setScale((h.it.f && !furnSlant(h.d, r) ? -1 : 1) * (r === 3 ? -1 : 1) / TEX, 1 / TEX).setDepth(9000).setAlpha(0.75);
         }
         homeEditSet(on) { const E = this.homeEdit; if (!E)
-            return; if (!on)
-            this.homeDrop(false); E.on = !!on && this.homeMine; if (E.on)
+            return; if (!on) {
+            this.homeSelect(null);
+            this.homeDrop(false);
+        } E.on = !!on && this.homeMine; if (E.on)
             this.homeStand(true); this.homeGridShow(); }
         homeSpan(d, c, r, f) {
             if (d.kind !== 'floor' || furnSlant(d, r))
@@ -33655,6 +33717,61 @@
             }
             else if (h.from)
                 this.homePut(h.from);
+            if (ui.onHome)
+                ui.onHome();
+        }
+        homeSelect(rec) {
+            const E = this.homeEdit;
+            if (!E)
+                return;
+            if (E.sel && E.sel.img && E.sel.img.active)
+                E.sel.img.clearTint();
+            E.sel = rec && this.homeRecs.includes(rec) ? rec : null;
+            if (E.sel)
+                E.sel.img.setTint(0xbfe4ff);
+            if (ui.onHome)
+                ui.onHome();
+        }
+        homeChange(how) {     // (turn or flip the selected piece without moving it)
+            const E = this.homeEdit, rec = E && E.sel;
+            if (!rec || !this.homeRecs.includes(rec))
+                return false;
+            const it = rec.it, d = rec.d, was = { r: it.r || 0, f: it.f ? 1 : 0, x: it.x, y: it.y };
+            if (how === 'turn' && furnTurns(d))
+                it.r = (was.r + 1) % 4;
+            else
+                it.f = was.f ? 0 : 1;
+            const sp = homeSpot(d, it.x, it.y, it.r || 0, this.homeSides(), false);
+            const fx = this.pz.x, fy = this.pz.y + FOOT, onYou = d.kind === 'floor' && furnSolids(d, it.r || 0).some(([dx, dy, rad]) => Math.hypot(sp.x + dx - fx, sp.y + dy - fy) < rad + 16);
+            if (!sp.ok || onYou) {
+                Object.assign(it, was);
+                this.note(onYou ? 'Step aside first: it would turn into you.' : 'It cannot turn there: keep the doorways clear.', '#ffe066');
+                sfx.buzz();
+                return false;
+            }
+            it.x = sp.x;
+            it.y = sp.y;
+            this.homeTake(rec);
+            const nr = this.homePut(it);
+            E.sel = null;
+            this.homeSelect(nr);
+            sfx.tick();
+            saveGame();
+            return true;
+        }
+        homeMoveSel(store) {
+            const E = this.homeEdit, rec = E && E.sel;
+            if (!rec || !this.homeRecs.includes(rec))
+                return;
+            this.homeSelect(null);
+            this.homeTake(rec);
+            E.held = { it: Object.assign({}, rec.it), d: rec.d, from: rec.it };
+            this.homeGhost();
+            if (store) {
+                this.homeDrop(true);
+                saveGame();
+            }
+            sfx.tick();
             if (ui.onHome)
                 ui.onHome();
         }
@@ -33759,8 +33876,19 @@
             }
             const front = k => (k === 'floor' ? 2 : k === 'wall' ? 1 : 0);
             const rec = this.homeRecs.filter(q => q.hit.contains(x, y)).sort((a, b) => front(b.d.kind) - front(a.d.kind) || b.it.y - a.it.y)[0];
-            if (!rec)
+            if (!rec) {
+                if (E.sel) {
+                    this.homeSelect(null);
+                    return true;
+                }
                 return false;
+            }
+            if (E.sel !== rec) {     // (first tap selects it: Turn and Flip work right where it stands; a second tap picks it up)
+                this.homeSelect(rec);
+                sfx.tick();
+                return true;
+            }
+            this.homeSelect(null);
             this.homeTake(rec);
             E.held = { it: Object.assign({}, rec.it), d: rec.d, from: rec.it };
             this.homeGhost();
@@ -43019,7 +43147,7 @@
         document.getElementById('furn-close').addEventListener('click', () => furnP.close());
         const homeBar = document.getElementById('home-bar'), homeEditBtn = document.getElementById('home-edit'), homeInfo = document.getElementById('home-info'), trayEl = document.getElementById('home-tray');
         const trayList = document.getElementById('tray-list'), trayNote = document.getElementById('tray-note'), trayTabs = document.getElementById('tray-tabs');
-        const trayTurn = document.getElementById('tray-turn'), trayFlip = document.getElementById('tray-flip'), trayStore = document.getElementById('tray-store');
+        const trayTurn = document.getElementById('tray-turn'), trayFlip = document.getElementById('tray-flip'), trayMove = document.getElementById('tray-move'), trayStore = document.getElementById('tray-store');
         const hm = { edit: false, tab: 'furn', list: [], sure: false, note: '', paint: 0, wood: 0, ask: '' };
         Object.keys(G.home.inv).forEach(k => { const d = FURN_BY[k.split(':')[0]]; if (d && d.build) {
             G.coins += d.price * G.home.inv[k];
@@ -43121,9 +43249,11 @@
                     b.appendChild(node('em', '', '×' + x.n));
                 return b;
             }));
-            trayTurn.hidden = !held || !furnTurns(held.d);
-            trayFlip.hidden = trayStore.hidden = !held;
-            trayNote.textContent = held ? cap(furnName(held.d, held.it.c)) + ': click where it should go. ' + (furnTurns(held.d) ? 'R = turn, F = flip' : 'Flip (F) mirrors it.') + (held.d.build ? ' Click a colour below to repaint it.' + (held.from ? ' Put away takes it down.' : '') : held.from ? ' Put away sends it to storage.' : '')
+            const sel = !held && s && s.homeEdit && s.homeEdit.sel && s.homeRecs && s.homeRecs.includes(s.homeEdit.sel) ? s.homeEdit.sel : null, pick = held || sel;
+            trayTurn.hidden = !pick || !furnTurns(pick.d);
+            trayFlip.hidden = trayStore.hidden = !pick;
+            trayMove.hidden = !sel;
+            trayNote.textContent = sel ? cap(furnName(sel.d, sel.it.c)) + ' selected: Turn and Flip change it right where it is. Move picks it up (or tap it again). Tap the floor to unselect.' : held ? cap(furnName(held.d, held.it.c)) + ': click where it should go. ' + (furnTurns(held.d) ? 'R = turn, F = flip' : 'Flip (F) mirrors it.') + (held.d.build ? ' Click a colour below to repaint it.' + (held.from ? ' Put away takes it down.' : '') : held.from ? ' Put away sends it to storage.' : '')
                 : hm.tab === 'rooms' ? hm.note || 'Your ' + HOME.SIZES[Hm.rooms.length - 1].toLowerCase() + ' has ' + Hm.rooms.length + (Hm.rooms.length > 1 ? ' rooms' : ' room') + '. Click a room to go there, or walk through the doors in the side walls. '
                     + (more ? 'Another room costs ' + HOME.ROOMS[Hm.rooms.length] + ' Coins and makes it a ' + HOME.SIZES[Hm.rooms.length].toLowerCase() + '.' : 'A manor is as big as a house gets.')
                     : hm.tab === 'build' ? (hm.ask ? 'What colour should the ' + FURN_BY[hm.ask].name.toLowerCase() + ' be?' : 'Walls and doors are free! Pick one, pick a colour, click to place.')
@@ -43258,13 +43388,20 @@
         gridSet(HOME_GRID.on);
         trayGrid.addEventListener('click', e => { gridSet(!HOME_GRID.on); sfx.tick(); if (e.detail > 0)
             trayGrid.blur(); });
-        trayTurn.addEventListener('click', e => { const s = scene(); if (s && s.homeTurn)
-            s.homeTurn(); if (e.detail > 0)
+        trayTurn.addEventListener('click', e => { const s = scene(); if (s && s.homeEdit && s.homeEdit.held)
+            s.homeTurn(); else if (s && s.homeChange)
+            s.homeChange('turn'); if (e.detail > 0)
             trayTurn.blur(); });
-        trayFlip.addEventListener('click', e => { const s = scene(); if (s && s.homeFlip)
-            s.homeFlip(); if (e.detail > 0)
+        trayFlip.addEventListener('click', e => { const s = scene(); if (s && s.homeEdit && s.homeEdit.held)
+            s.homeFlip(); else if (s && s.homeChange)
+            s.homeChange('flip'); if (e.detail > 0)
             trayFlip.blur(); });
-        trayStore.addEventListener('click', e => { const s = scene(); if (s && s.homeDrop) {
+        trayMove.addEventListener('click', e => { const s = scene(); if (s && s.homeMoveSel)
+            s.homeMoveSel(false); if (e.detail > 0)
+            trayMove.blur(); });
+        trayStore.addEventListener('click', e => { const s = scene(); if (s && s.homeEdit && !s.homeEdit.held && s.homeEdit.sel && s.homeMoveSel)
+            s.homeMoveSel(true);
+        else if (s && s.homeDrop) {
             s.homeDrop(true);
             saveGame();
         } if (e.detail > 0)
@@ -43284,6 +43421,10 @@
                 s.homeTurn();
             else if ((e.key === 'f' || e.key === 'F') && held)
                 s.homeFlip();
+            else if ((e.key === 'r' || e.key === 'R') && s && s.homeEdit && s.homeEdit.sel)
+                s.homeChange('turn');
+            else if ((e.key === 'f' || e.key === 'F') && s && s.homeEdit && s.homeEdit.sel)
+                s.homeChange('flip');
             else if ((e.key === 'Delete' || e.key === 'Backspace') && held) {
                 s.homeDrop(true);
                 saveGame();
