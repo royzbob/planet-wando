@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794445137';
+<script>window.WANDO_BUILD = '1794445341';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2410,6 +2410,19 @@
   html[data-screen="phone"] #app:has(.emote-pop:not([hidden])) .dun-hud, html[data-screen="phone"] #app:has([role="dialog"]:not([hidden]):not(#gate):not(.skill-pick)) .dun-hud { visibility: hidden; }
   html[data-screen="phone"] #app:has([role="dialog"]:not([hidden]):not(#gate)) .chatbox, html[data-screen="phone"] #app:has([role="dialog"]:not([hidden]):not(#gate)) .hint { visibility: hidden; }
   .dun-swap { padding: 3px 8px; border: 2px solid #d8a43a; border-radius: 999px; background: rgba(20, 16, 28, 0.85); color: #ffe9a8; font: 800 11px/1.2 var(--font-body); cursor: pointer; }
+  .hg { position: absolute; inset: 0 0 var(--dock-h) 0; z-index: 420; display: grid; place-items: center; background: rgba(10, 6, 20, 0.6); padding: 10px; }
+  .hg[hidden] { display: none; }
+  .hg-box { width: min(340px, 100%); max-height: 100%; overflow: auto; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 3px solid var(--ink); border-radius: 18px; background: var(--cream); color: var(--ink); }
+  .hg-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 800 16px/1.2 var(--font-display); }
+  .hg-x { width: 32px; height: 32px; border: 2px solid var(--ink); border-radius: 50%; background: #ff6b6b; color: #fff; font: 900 15px/1 var(--font-body); cursor: pointer; }
+  .hg-sub { font: 700 12px/1.3 var(--font-body); opacity: .75; }
+  .hg-cv { width: 100%; height: auto; border-radius: 12px; border: 3px solid var(--ink); touch-action: none; }
+  .hg-info { text-align: center; font: 800 14px/1.3 var(--font-display); }
+  .hg-pad { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 8px; }
+  .hg-pad .btn, .hg-big { font-size: 18px !important; padding: 12px !important; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+  .hg-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .hg-key { min-height: 64px; border: 3px solid var(--ink); border-radius: 12px; font: 800 14px/1 var(--font-display); color: #1d1424; cursor: pointer; touch-action: manipulation; -webkit-user-select: none; user-select: none; transition: transform .06s; }
+  .hg-key.hit { transform: scale(0.92); filter: brightness(1.25); }
   .skill-pick { position: absolute; inset: 0 0 var(--dock-h) 0; z-index: 400; display: grid; place-items: center; background: rgba(10, 6, 20, 0.55); padding: 12px; }
   .skill-pick[hidden] { display: none; }
   .skill-pick-box { width: min(440px, 100%); max-height: 100%; overflow: auto; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 3px solid var(--ink); border-radius: 16px; background: var(--cream); color: var(--ink); }
@@ -7133,6 +7146,8 @@
         const hums = new Map();
         return {
             unlock: get,
+            note: (f, dur, vol, type) => blip(f, f * 0.998, dur || 0.4, vol || 0.12, type || 'triangle'),
+            noise: (dur, vol, f0, f1, q) => hiss(dur, vol, f0, f1, q),
             poke: () => { blip(300, 160, 0.06, 0.13, 'triangle'); hiss(0.05, 0.06, 1400, 900, 2); },
             gather: () => { hiss(0.2, 0.08, 2800, 4400, 0.9); blip(1400, 1700, 0.05, 0.03, 'sine', 0.06); },
             rustle: () => { hiss(0.16, 0.09, 2600, 4200, 0.9); hiss(0.12, 0.05, 5200, 3600, 1.4, 0.08); },
@@ -15859,10 +15874,10 @@
             furnFlair(c, d, cd);
     }
     const FURN_USE = { chair: 'sit', stool: 'sit', armchair: 'sit', sofa: 'sit', beanbag: 'sit', bench: 'sit', rocker: 'sit', throne: 'sit', bed: 'sit', double: 'sit', bunk: 'sit', canopy: 'sit', hammock: 'sit', tub: 'sit', loveseat: 'sit', sectional: 'sit', eggchair: 'sit', gamerchair: 'sit', pouf: 'sit', daybed: 'sit', barstool: 'sit', cushions: 'sit', porchswing: 'sit', deskchair: 'sit', futon: 'sit', carbed: 'sit', cloudbed: 'sit', ufochair: 'sit', sleeppod: 'sit',
-        lavalamp: 'light', shroomlamp: 'light', candles: 'light', discolight: 'light', rocketlamp: 'light', planetlamp: 'light', glowshroom: 'light', crystal: 'light', xmastree: 'light', pumpkin: 'light', retrotv: 'screen', bigtv: 'screen', gamingpc: 'screen', flattv: 'screen', pinball: 'screen', boombox: 'music', speaker: 'music', drums: 'tune', alienplush: 'hug', robot: 'hug',
-        lamp: 'light', fireplace: 'light', lights: 'light', neon: 'light', aquarium: 'light', stove: 'light', tv: 'screen', computer: 'screen', cabinet: 'screen', doorway: 'door',
-        jukebox: 'music', piano: 'tune', guitar: 'tune', gumball: 'treat', fridge: 'treat', teddy: 'hug' };
-    const FURN_SEAT = { chair: 14, stool: 14, armchair: 16, sofa: 16, beanbag: 12, bench: 14, rocker: 14, throne: 22, bed: 46, double: 46, bunk: 30, canopy: 46, hammock: 24, tub: 18, loveseat: 16, sectional: 16, eggchair: 34, gamerchair: 18, pouf: 10, daybed: 14, barstool: 24, cushions: 6, porchswing: 22, deskchair: 16, futon: 14, carbed: 40, cloudbed: 40, ufochair: 16, sleeppod: 40 };
+        lavalamp: 'light', shroomlamp: 'light', candles: 'light', discolight: 'light', rocketlamp: 'light', planetlamp: 'light', glowshroom: 'light', crystal: 'light', xmastree: 'light', pumpkin: 'light', retrotv: 'screen', bigtv: 'screen', gamingpc: 'arcade', flattv: 'screen', pinball: 'arcade', boombox: 'music', speaker: 'music', drums: 'drums', alienplush: 'hug', robot: 'hug',
+        lamp: 'light', fireplace: 'light', lights: 'light', neon: 'light', aquarium: 'light', stove: 'light', tv: 'screen', computer: 'arcade', cabinet: 'arcade', pooltable: 'pool', foosball: 'kick', hoop: 'hoop', dartboard: 'darts', rockhorse: 'sit', doorway: 'door',
+        jukebox: 'music', piano: 'piano', guitar: 'guitar', gumball: 'treat', fridge: 'treat', teddy: 'hug' };
+    const FURN_SEAT = { chair: 14, stool: 14, armchair: 16, sofa: 16, beanbag: 12, bench: 14, rocker: 14, throne: 22, bed: 46, double: 46, bunk: 30, canopy: 46, hammock: 24, tub: 18, loveseat: 16, sectional: 16, eggchair: 34, gamerchair: 18, pouf: 10, daybed: 14, barstool: 24, cushions: 6, porchswing: 22, deskchair: 16, futon: 14, carbed: 40, cloudbed: 40, ufochair: 16, sleeppod: 40, rockhorse: 20 };
     const FURN_GLOW = { lamp: [0xffe9a8, 2.6, 0.5, 0.82], fireplace: [0xff9a2e, 1.6, 0.5, 0.36], lights: [0xffe9a8, 1.1, 0.42, 0.5], neon: [0xff7ad9, 1.7, 0.5, 0.5], aquarium: [0x7fd0f0, 1.5, 0.4, 0.6], stove: [0xff9a2e, 1.2, 0.34, 0.4],
         tv: [0x9fd0ff, 1.6, 0.5, 0.64], computer: [0x9fe8ff, 1.2, 0.45, 0.72], cabinet: [0x39ff14, 1.5, 0.4, 0.62],
         lavalamp: [0xff7ad9, 1.8, 0.45, 0.6], shroomlamp: [0xfff0b0, 2, 0.45, 0.7], candles: [0xffc860, 1.8, 0.4, 0.7], discolight: [0xc8b0ff, 2.2, 0.45, 0.8], rocketlamp: [0xffd080, 2, 0.45, 0.6], planetlamp: [0xb0d8ff, 2, 0.45, 0.72],
@@ -33407,6 +33422,12 @@
                 }
                 sfx.tick();
             }
+            else if (['arcade', 'pool', 'kick', 'hoop', 'darts', 'piano', 'guitar', 'drums'].includes(use)) {
+                this.clearTarget();
+                this.vel.set(0, 0);
+                if (ui.homeGame)
+                    ui.homeGame(use, d.name);
+            }
             else if (use === 'tune') {
                 sfx.chime();
                 this.note(d.id === 'piano' ? 'A little tune.' : 'A quick strum.', '#ffd0f0');
@@ -33589,7 +33610,7 @@
                 this.homeFootKey = '';
             }
             const near = E.on || !this.pz ? null : this.seated || this.homeNear();
-            const text = !near ? '' : this.seated ? 'E · Stand up' : 'E · ' + ({ door: near.it.on ? 'Shut' : 'Open', sit: 'Sit', light: 'Switch', screen: 'Switch', music: 'Play', tune: 'Play', treat: 'Treat', hug: 'Hug' })[FURN_USE[near.d.id]];
+            const text = !near ? '' : this.seated ? 'E · Stand up' : 'E · ' + ({ door: near.it.on ? 'Shut' : 'Open', sit: 'Sit', light: 'Switch', screen: 'Switch', music: 'Play', tune: 'Play', treat: 'Treat', hug: 'Hug', arcade: 'Play', pool: 'Play pool', kick: 'Play', hoop: 'Shoot hoops', darts: 'Throw darts', piano: 'Play', guitar: 'Play', drums: 'Play' })[FURN_USE[near.d.id]];
             if (near)
                 this.homeHint.setPosition(near.it.x, Math.max(22, near.it.y - near.d.h - 22 - (this.seated ? 40 : 0)));
             if (text !== this.homeHintText) {
@@ -50591,6 +50612,248 @@
                 sections: () => [{ name: 'Your trash bag', blurb: 'You have recycled ' + (F.gtn || 0) + ' pieces in all. Your bag holds as much as you pick up. Other players can trade you their bags, too.', items },
                     { name: 'Grabbers this week', blurb: 'Hold a grabber and click trash to pick it up.', items: tools }] };
         }
+        const HG = { el: null, raf: 0, keys: null, best: (() => { try { return JSON.parse(localStorage.getItem('wando-homegames') || '{}') || {}; } catch (e) { return {}; } })() };
+        const hgBest = (k, v) => { if (v > (HG.best[k] || 0)) {
+            HG.best[k] = v;
+            try { localStorage.setItem('wando-homegames', JSON.stringify(HG.best)); } catch (e) { }
+            return true;
+        } return false; };
+        function hgClose() {
+            cancelAnimationFrame(HG.raf);
+            HG.raf = 0;
+            if (HG.keys)
+                window.removeEventListener('keydown', HG.keys, true);
+            HG.keys = null;
+            if (HG.el)
+                HG.el.hidden = true;
+        }
+        function hgShell(title, sub) {
+            if (!HG.el) {
+                HG.el = el('div', 'hg', { role: 'dialog', 'aria-label': 'Game' });
+                document.getElementById('app').appendChild(HG.el);
+                HG.el.addEventListener('click', e => { if (e.target === HG.el)
+                    hgClose(); });
+            }
+            hgClose();
+            const box = node('div', 'hg-box'), head = node('div', 'hg-head'), x = el('button', 'hg-x', { type: 'button', 'aria-label': 'Close' });
+            x.textContent = '✕';
+            x.addEventListener('click', hgClose);
+            head.append(node('b', '', title), x);
+            box.append(head);
+            if (sub)
+                box.append(node('small', 'hg-sub', sub));
+            HG.el.replaceChildren(box);
+            HG.el.hidden = false;
+            return box;
+        }
+        function hgArcade(name) {     // (dodge the falling rocks, grab the stars)
+            const box = hgShell(name + ': Star Dodge', 'Move left and right. Dodge the rocks, grab the stars! Best: ' + (HG.best.arcade || 0));
+            const W = 300, H = 380, cv = el('canvas', 'hg-cv', { width: W * 2, height: H * 2 }), c = cv.getContext('2d'), info = node('div', 'hg-info', 'Tap Start');
+            const pad = node('div', 'hg-pad'), L = el('button', 'btn', { type: 'button' }), S = el('button', 'btn', { type: 'button' }), R = el('button', 'btn', { type: 'button' });
+            L.textContent = '◀';
+            S.textContent = 'Start';
+            R.textContent = '▶';
+            pad.append(L, S, R);
+            box.append(cv, info, pad);
+            c.scale(2, 2);
+            const g = { on: false, x: W / 2, dir: 0, t: 0, score: 0, rocks: [], stars: [], last: 0, drag: null };
+            const hold = (b, d) => { const on = e => { e.preventDefault(); g.dir = d; }, off = () => { if (g.dir === d)
+                g.dir = 0; }; b.addEventListener('touchstart', on, { passive: false }); b.addEventListener('mousedown', on); ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(t => b.addEventListener(t, off)); };
+            hold(L, -1);
+            hold(R, 1);
+            cv.addEventListener('touchmove', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); g.x = clamp((e.touches[0].clientX - r.left) / r.width * W, 14, W - 14); }, { passive: false });
+            cv.addEventListener('mousemove', e => { if (e.buttons) {
+                const r = cv.getBoundingClientRect();
+                g.x = clamp((e.clientX - r.left) / r.width * W, 14, W - 14);
+            } });
+            HG.keys = e => { if (e.key === 'ArrowLeft' || e.key === 'a') {
+                g.dir = -1;
+                e.preventDefault();
+            } else if (e.key === 'ArrowRight' || e.key === 'd') {
+                g.dir = 1;
+                e.preventDefault();
+            } else if (e.key === ' ' && !g.on) {
+                start();
+                e.preventDefault();
+            } else if (e.key === 'Escape')
+                hgClose(); e.stopPropagation(); };
+            window.addEventListener('keydown', HG.keys, true);
+            window.addEventListener('keyup', e => { if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key))
+                g.dir = 0; });
+            const draw = () => {
+                c.fillStyle = '#120b3a';
+                c.fillRect(0, 0, W, H);
+                c.fillStyle = 'rgba(255,255,255,.5)';
+                for (let i = 0; i < 30; i++)
+                    c.fillRect((i * 97) % W, (i * 53 + g.t * 40 * (1 + i % 3)) % H, 1.5, 1.5);
+                g.stars.forEach(s => { c.fillStyle = '#ffd84d'; c.beginPath(); for (let k = 0; k < 10; k++) {
+                    const a = k * Math.PI / 5 - Math.PI / 2, r = k % 2 ? 4 : 9;
+                    c.lineTo(s.x + Math.cos(a) * r, s.y + Math.sin(a) * r);
+                } c.closePath(); c.fill(); });
+                g.rocks.forEach(r => { c.fillStyle = '#8a7a9a'; c.beginPath(); c.arc(r.x, r.y, r.r, 0, TAU); c.fill(); c.fillStyle = '#5a4a6a'; c.beginPath(); c.arc(r.x - r.r * 0.3, r.y - r.r * 0.2, r.r * 0.3, 0, TAU); c.fill(); });
+                c.fillStyle = '#7fe8ff';
+                c.beginPath();
+                c.moveTo(g.x, H - 46);
+                c.lineTo(g.x + 14, H - 18);
+                c.lineTo(g.x - 14, H - 18);
+                c.closePath();
+                c.fill();
+                c.fillStyle = '#ff7a3c';
+                c.fillRect(g.x - 4, H - 18, 8, 6 + Math.random() * 4);
+                c.fillStyle = '#fff';
+                c.font = '800 16px sans-serif';
+                c.fillText('Score ' + g.score, 10, 22);
+            };
+            const end = () => {
+                g.on = false;
+                const nb = hgBest('arcade', g.score);
+                info.textContent = 'Crash! Score ' + g.score + (nb ? ' · NEW BEST!' : ' · Best ' + (HG.best.arcade || 0));
+                S.textContent = 'Again';
+                sfx.buzz();
+            };
+            const step = now => {
+                const dt = Math.min(0.05, (now - (g.last || now)) / 1000);
+                g.last = now;
+                if (g.on) {
+                    g.t += dt;
+                    g.x = clamp(g.x + g.dir * 260 * dt, 14, W - 14);
+                    const speed = 120 + g.t * 9;
+                    if (Math.random() < dt * (1.2 + g.t * 0.08))
+                        g.rocks.push({ x: 10 + Math.random() * (W - 20), y: -12, r: 8 + Math.random() * 10 });
+                    if (Math.random() < dt * 0.6)
+                        g.stars.push({ x: 14 + Math.random() * (W - 28), y: -10 });
+                    g.rocks.forEach(r => { r.y += speed * dt; });
+                    g.stars.forEach(s => { s.y += speed * 0.8 * dt; });
+                    g.rocks = g.rocks.filter(r => r.y < H + 20);
+                    g.score = Math.max(g.score, Math.floor(g.t * 2) + (g.bonus || 0));
+                    g.stars = g.stars.filter(s => { if (Math.hypot(s.x - g.x, s.y - (H - 30)) < 20) {
+                        g.bonus = (g.bonus || 0) + 5;
+                        sfx.coin();
+                        return false;
+                    } return s.y < H + 20; });
+                    if (g.rocks.some(r => Math.hypot(r.x - g.x, r.y - (H - 30)) < r.r + 10))
+                        end();
+                    info.textContent = 'Score ' + g.score;
+                }
+                draw();
+                HG.raf = requestAnimationFrame(step);
+            };
+            const start = () => { Object.assign(g, { on: true, t: 0, score: 0, bonus: 0, rocks: [], stars: [], x: W / 2 }); S.textContent = 'Go!'; sfx.pop(); };
+            S.addEventListener('click', () => { if (!g.on)
+                start(); });
+            HG.raf = requestAnimationFrame(step);
+        }
+        function hgShots(kind, name) {     // (stop the marker in the middle: 5 shots)
+            const T = { hoop: ['Shoot hoops', '🏀', '#ff8a3c', 'Tap when the ball is over the hoop!'], darts: ['Darts', '🎯', '#d8323c', 'Tap when the dart lines up with the bullseye!'], pool: ['Pool', '🎱', '#2f8a4a', 'Tap when the cue lines up with the pocket!'], kick: ['Foosball', '⚽', '#3f8a3a', 'Tap when the ball lines up with the goal!'] }[kind];
+            const box = hgShell(name + ': ' + T[0], T[3] + ' 5 shots. Best: ' + (HG.best[kind] || 0));
+            const W = 300, H = 200, cv = el('canvas', 'hg-cv', { width: W * 2, height: H * 2 }), c = cv.getContext('2d'), info = node('div', 'hg-info', 'Shot 1 of 5'), go = el('button', 'btn hg-big', { type: 'button' });
+            go.textContent = 'TAP!';
+            box.append(cv, info, go);
+            c.scale(2, 2);
+            const g = { shot: 0, score: 0, t: 0, last: 0, stop: null, msg: '' };
+            const draw = () => {
+                c.fillStyle = '#fffaf0';
+                c.fillRect(0, 0, W, H);
+                const zones = [[1, '#ffd84d', 10], [0.55, '#ff9a5c', 5], [0.25, '#ff6b6b', 2]];
+                zones.slice().reverse().forEach(([k, col]) => { c.fillStyle = col; c.fillRect(W / 2 - (W / 2 - 20) * (k === 1 ? 0.08 : k === 0.55 ? 0.3 : 1), 110, (W - 40) * (k === 1 ? 0.08 : k === 0.55 ? 0.3 : 1), 26); });
+                c.fillStyle = T[2];
+                c.font = '48px sans-serif';
+                c.textAlign = 'center';
+                c.fillText(T[1], W / 2, 70);
+                const x = g.stop != null ? g.stop : W / 2 + Math.sin(g.t * (2.4 + g.shot * 0.6)) * (W / 2 - 24);
+                c.fillStyle = '#1d1424';
+                c.beginPath();
+                c.moveTo(x, 106);
+                c.lineTo(x - 9, 92);
+                c.lineTo(x + 9, 92);
+                c.closePath();
+                c.fill();
+                c.fillRect(x - 1.5, 106, 3, 34);
+                c.font = '800 15px sans-serif';
+                c.fillText(g.msg, W / 2, 170);
+                c.textAlign = 'left';
+                c.fillText('Score ' + g.score, 10, 22);
+            };
+            const step = now => {
+                const dt = Math.min(0.05, (now - (g.last || now)) / 1000);
+                g.last = now;
+                if (g.stop == null)
+                    g.t += dt;
+                draw();
+                HG.raf = requestAnimationFrame(step);
+            };
+            const shoot = () => {
+                if (g.shot >= 5) {
+                    Object.assign(g, { shot: 0, score: 0, t: 0, stop: null, msg: '' });
+                    info.textContent = 'Shot 1 of 5';
+                    go.textContent = 'TAP!';
+                    return;
+                }
+                if (g.stop != null)
+                    return;
+                const x = W / 2 + Math.sin(g.t * (2.4 + g.shot * 0.6)) * (W / 2 - 24), off = Math.abs(x - W / 2) / (W / 2 - 20), pts = off < 0.08 ? 10 : off < 0.3 ? 5 : off < 0.65 ? 2 : 0;
+                g.stop = x;
+                g.score += pts;
+                g.shot++;
+                g.msg = pts === 10 ? 'PERFECT! +10' : pts === 5 ? 'Nice! +5' : pts ? 'Close! +2' : 'Miss!';
+                pts >= 5 ? sfx.chime() : pts ? sfx.pop() : sfx.buzz();
+                setTimeout(() => {
+                    if (g.shot >= 5) {
+                        const nb = hgBest(kind, g.score);
+                        info.textContent = 'Done! ' + g.score + ' of 50' + (nb ? ' · NEW BEST!' : ' · Best ' + (HG.best[kind] || 0));
+                        go.textContent = 'Play again';
+                        g.msg = g.score >= 40 ? 'Champion!' : g.score >= 20 ? 'Good game!' : 'Keep practising!';
+                    }
+                    else {
+                        g.stop = null;
+                        g.msg = '';
+                        info.textContent = 'Shot ' + (g.shot + 1) + ' of 5';
+                    }
+                }, 800);
+            };
+            go.addEventListener('touchstart', e => { e.preventDefault(); shoot(); }, { passive: false });
+            go.addEventListener('click', shoot);
+            HG.keys = e => { if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                shoot();
+            } else if (e.key === 'Escape')
+                hgClose(); e.stopPropagation(); };
+            window.addEventListener('keydown', HG.keys, true);
+            HG.raf = requestAnimationFrame(step);
+        }
+        function hgInstrument(kind, name) {     // (a pad of notes you can really play)
+            const box = hgShell(name, kind === 'drums' ? 'Tap the pads to drum. Keys 1 to 8 work too.' : 'Tap the keys to play a tune. Keys 1 to 8 work too.');
+            const notes = [262, 294, 330, 349, 392, 440, 494, 523], names = kind === 'drums' ? ['Kick', 'Snare', 'Hat', 'Clap', 'Tom 1', 'Tom 2', 'Crash', 'Cowbell'] : ['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C'];
+            const cols = ['#ff6b6b', '#ff9a5c', '#ffd84d', '#7dff9a', '#7fe8ff', '#7aa8ff', '#b98cff', '#ff7ad9'];
+            const grid = node('div', 'hg-keys' + (kind === 'drums' ? ' drums' : ''));
+            const play = i => {
+                if (kind === 'piano')
+                    sfx.note(notes[i], 0.7, 0.14, 'triangle');
+                else if (kind === 'guitar') {
+                    sfx.note(notes[i] / 2, 0.5, 0.1, 'sawtooth');
+                    sfx.note(notes[i], 0.35, 0.05, 'triangle');
+                }
+                else
+                    [() => sfx.note(70, 0.25, 0.3, 'sine'), () => sfx.noise(0.15, 0.2, 1800, 1200, 0.8), () => sfx.noise(0.05, 0.12, 8000, 7000, 1.5), () => { sfx.noise(0.08, 0.18, 1500, 1500, 1); sfx.noise(0.06, 0.12, 1300, 1300, 1); }, () => sfx.note(180, 0.25, 0.22, 'sine'), () => sfx.note(120, 0.3, 0.24, 'sine'), () => sfx.noise(0.6, 0.12, 6000, 4000, 0.5), () => sfx.note(800, 0.15, 0.1, 'square')][i]();
+                const k = grid.children[i];
+                if (k) {
+                    k.classList.add('hit');
+                    setTimeout(() => k.classList.remove('hit'), 120);
+                }
+            };
+            names.forEach((n, i) => { const b = el('button', 'hg-key', { type: 'button' }); b.textContent = n; b.style.background = cols[i]; b.addEventListener('touchstart', e => { e.preventDefault(); play(i); }, { passive: false }); b.addEventListener('mousedown', () => play(i)); grid.appendChild(b); });
+            box.append(grid);
+            HG.keys = e => { const i = '12345678'.indexOf(e.key); if (i >= 0) {
+                e.preventDefault();
+                play(i);
+            } else if (e.key === 'Escape')
+                hgClose(); e.stopPropagation(); };
+            window.addEventListener('keydown', HG.keys, true);
+        }
+        ui.homeGame = (use, name) => { if (use === 'arcade')
+            hgArcade(name); else if (['pool', 'kick', 'hoop', 'darts'].includes(use))
+            hgShots(use, name); else
+            hgInstrument(use, name); };
         ui.books = { yard: yardBook, florist: () => furnBook('plant'), harvest: harvestBook, icefish: iceFishBook, ferris: ferrisBook, candy: candyBook, claw: clawBook, castle: castleBook, icecream: iceBook, wish: wishBook, tailor: tailorBook, board: boardBook, furn: furnBook, store: storeBook, coll: collBook, car: carBook, dances: danceBook, planet: planetBook, pass: passBook, gifts: giftBook, pgame: pgameBook, missions: missionBook };
         ui.carNote = () => { const s = scene(); if (s)
             s.note('No cars inside! Drive on the Green or the beach.', '#ffe9a8'); };
