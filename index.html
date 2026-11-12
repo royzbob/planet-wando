@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794448220';
+<script>window.WANDO_BUILD = '1794481613';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2411,6 +2411,9 @@
   html[data-screen="phone"] .dun-hud .dun-skill small.dun-key, html[data-screen="phone"] .dun-hud .dun-skill:not(.dun-atk) small { display: none; }
   html[data-screen="phone"] #app:has(.emote-pop:not([hidden])) .dun-hud, html[data-screen="phone"] #app:has([role="dialog"]:not([hidden]):not(#gate):not(.skill-pick)) .dun-hud { visibility: hidden; }
   html[data-screen="phone"] #app:has([role="dialog"]:not([hidden]):not(#gate)) .chatbox, html[data-screen="phone"] #app:has([role="dialog"]:not([hidden]):not(#gate)) .hint { visibility: hidden; }
+  .tray-tile.tray-buy { position: relative; }
+  .tray-tile.tray-buy canvas { opacity: 0.55; }
+  .tray-price { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); padding: 0 6px; border-radius: 999px; background: #ffd84d; color: #2b2033; font: 800 11px/1.5 var(--font-body); pointer-events: none; }
   .dun-swap { padding: 3px 8px; border: 2px solid #d8a43a; border-radius: 999px; background: rgba(20, 16, 28, 0.85); color: #ffe9a8; font: 800 11px/1.2 var(--font-body); cursor: pointer; }
   .hg { position: absolute; inset: 0 0 var(--dock-h) 0; z-index: 420; display: grid; place-items: center; background: rgba(10, 6, 20, 0.6); padding: 10px; }
   .hg[hidden] { display: none; }
@@ -4774,6 +4777,8 @@
             const n = (x, hi) => (Number.isFinite(x) ? clamp(Math.floor(x), 0, hi) : 0);
             f.st = { pt: n(v.st.pt, 1e9), dp: n(v.st.dp, 1e5), ld: n(v.st.ld, 1e7), ce: n(v.st.ce, 1e12), ko: n(v.st.ko, 1e7), ex: n(v.st.ex, 1e5), since: n(v.st.since, 1e7) };
         }
+        if (Array.isArray(v.claims))
+            f.claims = v.claims.filter(k => typeof k === 'string' && k.length < 40).slice(0, 50);
         if (v.ex && typeof v.ex === 'object' && Number.isInteger(v.ex.day) && Array.isArray(v.ex.v))
             f.ex = { day: v.ex.day, v: v.ex.v.filter(k => typeof k === 'string' && k.length < 20).slice(0, 20), paid: !!v.ex.paid };
         if (Array.isArray(v.dances))
@@ -43580,7 +43585,7 @@
             else if (yard)
                 hm.list = (hm.tab === 'walls' ? YARD_BACKS : YARD_GROUNDS).map((x, i) => ({ style: i, yardStyle: true, on: (hm.tab === 'walls' ? R.wall : R.floor) === i }));
             else
-                hm.list = (hm.tab === 'walls' ? Hm.walls : Hm.floors).map(i => ({ style: i, on: (hm.tab === 'walls' ? R.wall : R.floor) === i }));
+                hm.list = (hm.tab === 'walls' ? HOME_WALLS : HOME_FLOORS).map((w, i) => ({ style: i, on: (hm.tab === 'walls' ? R.wall : R.floor) === i, own: (hm.tab === 'walls' ? Hm.walls : Hm.floors).includes(i), price: w.price, name: w.name })).sort((a, b) => (b.own ? 1 : 0) - (a.own ? 1 : 0) || a.style - b.style);     // (every style shows: yours first, the rest with a price to buy right here)
             trayList.replaceChildren(...hm.list.map((x, i) => {
                 const name = x.back ? 'Back' : x.sw ? x.name : x.d ? cap(furnName(x.d, x.c)) : x.add ? 'Add a room for ' + x.add + ' Coins' : x.R ? 'Room ' + (x.room + 1) : x.yardTile ? 'Back yard' : x.yardStyle ? (hm.tab === 'walls' ? YARD_BACKS : YARD_GROUNDS)[x.style].name : (hm.tab === 'walls' ? HOME_WALLS : HOME_FLOORS)[x.style].name;
                 const b = el('button', 'tray-tile' + (x.add ? ' tray-add' : ''), { type: 'button', 'data-i': i, title: name, 'aria-label': name + (x.free ? ', free' : x.d ? ', ' + x.n + ' in storage' : ''), 'aria-pressed': String(x.d ? !!held && !held.from && held.it.t === x.t && held.it.c === x.c : !!x.on) });
@@ -43613,6 +43618,11 @@
                 else
                     drawStyleTile(cv, hm.tab === 'walls', x.style, x.yardStyle);
                 b.appendChild(cv);
+                if (x.own === false) {
+                    b.classList.add('tray-buy');
+                    b.appendChild(node('span', 'tray-price', x.price + 'c'));
+                    b.title = x.name + ': ' + x.price + ' Coins';
+                }
                 if (x.R)
                     b.appendChild(node('span', '', 'Room ' + (x.room + 1)));
                 if (x.yardTile)
@@ -43643,7 +43653,7 @@
                 : hm.tab === 'rooms' ? hm.note || 'Your ' + HOME.SIZES[Hm.rooms.length - 1].toLowerCase() + ' has ' + Hm.rooms.length + (Hm.rooms.length > 1 ? ' rooms' : ' room') + '. Click a room to go there, or walk through the doors in the side walls. '
                     + (more ? 'Another room costs ' + HOME.ROOMS[Hm.rooms.length] + ' Coins and makes it a ' + HOME.SIZES[Hm.rooms.length].toLowerCase() + '.' : 'A manor is as big as a house gets.')
                     : hm.tab === 'build' ? (hm.ask ? 'What colour should the ' + FURN_BY[hm.ask].name.toLowerCase() + ' be?' : 'Walls and doors are free! Pick one, pick a colour, click to place.')
-                        : (hm.tab === 'walls' || hm.tab === 'floors') ? 'Tap one to cover the whole room, or turn on 🖌 Brush to paint just part of it. ↶ Undo takes back a change. More ' + (hm.tab === 'walls' ? 'wallpapers' : 'floors') + ' are in the Homestead catalog (scroll its side tabs down to ' + (hm.tab === 'walls' ? 'Wallpaper' : 'Floors') + ').' : hm.tab !== 'furn' ? 'Click one to place it. Hold Shift to place it off the grid.'
+                        : (hm.tab === 'walls' || hm.tab === 'floors') ? hm.note || 'Faded ones with a price are not yours yet: tap to buy. Tap one to cover the whole room, or turn on 🖌 Brush to paint just part of it. ↶ Undo takes back a change. More ' + (hm.tab === 'walls' ? 'wallpapers' : 'floors') + ' are in the Homestead catalog (scroll its side tabs down to ' + (hm.tab === 'walls' ? 'Wallpaper' : 'Floors') + ').' : hm.tab !== 'furn' ? 'Click one to place it. Hold Shift to place it off the grid.'
                             : (hm.list.length ? 'Click a piece below, then click in the room. ' : 'Nothing in storage! Get furniture at Homestead. ') + 'Click a piece in the room to move it. ' + R.items.length + ' of ' + HOME.MAX + ' placed in this room.';
         }
         function homeEdit(on) {
@@ -43753,6 +43763,22 @@
             }
             else {
                 const R = s.homeRoom();
+                if (x.own === false) {     // (buy it on the spot)
+                    if (G.coins < x.price) {
+                        hm.note = x.name + ' costs ' + x.price + ' Coins. You have ' + G.coins + '.';
+                        sfx.buzz();
+                        paintTray();
+                        return;
+                    }
+                    G.coins -= x.price;
+                    const own = hm.tab === 'walls' ? Hm.walls : Hm.floors;
+                    own.push(x.style);
+                    own.sort((a, c) => a - c);
+                    sfx.coin();
+                    if (typeof paintState === 'function')
+                        paintState();
+                    saveGame();
+                }
                 if (s.homeBrush) {
                     s.homeBrush.erase = false;
                     s.homeBrush.style = x.style;
@@ -51755,6 +51781,27 @@
                 hgClose(); e.stopPropagation(); };
             window.addEventListener('keydown', HG.keys, true);
         }
+        const OWNER_GIFTS = [{ id: 'pool-royzbob-1', who: 'royzbob', t: 'pooltable', c: 0, msg: 'A gift from the owner of Planet Wando: a pool table! It is waiting in your house storage (Decorate).' }];     // (one-time gifts from the game's owner, by player name)
+        setInterval(() => {
+            if (!G || !G.name || !G.fan || !G.home)
+                return;
+            const me = String(G.name).trim().toLowerCase();
+            OWNER_GIFTS.forEach(g => {
+                if (g.who !== me || (G.fan.claims || []).includes(g.id) || !FURN_BY[g.t])
+                    return;
+                G.fan.claims = (G.fan.claims || []).concat(g.id);
+                const key = furnKey(g.t, g.c);
+                G.home.inv[key] = Math.min(99, (G.home.inv[key] || 0) + 1);
+                saveGame();
+                chatLineSys('🎁 ' + g.msg);
+                sfx.chime();
+                const s = scene();
+                if (s && s.note) {
+                    s.noteUntil = 0;
+                    s.note('🎁 You got a pool table! Find it in Decorate → Storage.', '#ffe066');
+                }
+            });
+        }, 4000);
         ui.homeGame = (use, name, key) => { if (use === 'arcade')
             hgArcade(name); else if (use === 'pool') {
             let k = 'solo';
