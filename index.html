@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794446261';
+<script>window.WANDO_BUILD = '1794446498';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -15892,14 +15892,14 @@
         glowshroom: [0x9dff5a, 1.8, 0.4, 0.5], crystal: [0xc7a6f2, 1.8, 0.45, 0.5], xmastree: [0xffe9a8, 1.4, 0.4, 0.5], pumpkin: [0xff9a2e, 1.8, 0.45, 0.5], retrotv: [0x9fd0ff, 1.4, 0.4, 0.55], bigtv: [0xff9ad5, 1.4, 0.45, 0.7], gamingpc: [0x9fe8ff, 1.3, 0.45, 0.72], flattv: [0x9fd0ff, 1.4, 0.4, 0.5], pinball: [0xffe066, 1.4, 0.4, 0.7] };
     const FURN_ROUND = new Set(['stool', 'beanbag', 'dining', 'coffee', 'round', 'lamp', 'plant', 'cactus', 'tree', 'vase', 'globe', 'trophy', 'tub', 'hammock', 'gumball', 'pouf', 'barstool', 'bin', 'cooler', 'lavalamp', 'shroomlamp', 'candles', 'discolight', 'fan', 'bonsai', 'sunflowers', 'palm', 'fern', 'glowshroom', 'planetlamp', 'crystal', 'xmastree', 'snowman', 'pumpkin', 'fishbowl']);
     const FURN_SIDE = 0.56;
-    const furnTurns = d => d.kind === 'floor' && d.id !== 'pillar';
+    const furnTurns = d => d.kind === 'floor';
     const WALL_SIDE = { SB: 0.5, T: 16 };
     const furnSlant = (d, r) => !!(d && d.build && (r || 0) % 2 && furnTurns(d));
     const furnW = (d, r) => (furnSlant(d, r) ? WALL_SIDE.T : r % 2 && furnTurns(d) ? Math.round(d.w * FURN_SIDE) : d.w);
     const furnOrigin = (d, r) => furnSlant(d, r) ? [0.5, 1 - 2 / (d.h + d.w * WALL_SIDE.SB + 4)] : [0.5, d.kind === 'rug' ? 0.5 : d.kind === 'wall' ? 1 : (d.h - 2) / d.h];
     function drawSeatBack(c, d, ci) {     // (a couch, chair or bed seen from behind: so it can face the TV)
         const P = furnPalette(d, ci), main = d.pal === 'wood' ? P.a : P.f, dk = darken(main, 0.22), ink = '#2a1a2e', W = d.w, H = d.h;
-        const bed = /bed|bunk|canopy|futon|sleeppod|hammock/.test(d.id), arm = !bed && W > 70 ? Math.max(8, Math.round(W * 0.1)) : 0, top = bed ? H * 0.45 : H * 0.16, r0 = Math.min(14, W * 0.14);
+        const bed = /bed|bunk|canopy|futon|sleeppod|hammock|double|daybed/.test(d.id), arm = !bed && W > 70 ? Math.max(8, Math.round(W * 0.1)) : 0, top = bed ? H * 0.45 : H * 0.16, r0 = Math.min(14, W * 0.14);
         c.save();
         c.lineJoin = c.lineCap = 'round';
         c.fillStyle = darken(main, 0.5);
@@ -15932,7 +15932,63 @@
         c.stroke();
         c.restore();
     }
+    function drawSeatSide(c, d, ci) {     // (a seat seen from the side, facing right: the back is on the left)
+        const P = furnPalette(d, ci), wood = d.pal === 'wood', main = wood ? P.a : P.f, dk = darken(main, 0.2), lt = wood ? lighten(main, 0.2) : P.fl, ink = '#2a1a2e', W = d.w, H = d.h, sw = Math.round(W * FURN_SIDE), x0 = (W - sw) / 2;
+        const bed = /bed|bunk|canopy|futon|sleeppod|hammock|double|daybed/.test(d.id), plain = wood && !bed && W < 80;
+        c.save();
+        c.lineJoin = c.lineCap = 'round';
+        c.fillStyle = darken(main, 0.5);
+        [x0 + 4, x0 + sw - 10].forEach(x => c.fillRect(x, H - 9, 6, 9));
+        if (bed) {
+            inked(c, wood ? P.a : darken(main, 0.15), ink, 2, q => rr(q, x0, H * 0.12, 12, H * 0.88 - 6, 5));
+            inked(c, main, ink, 2, q => rr(q, x0 + 8, H * 0.5, sw - 8, H * 0.5 - 8, 6));
+            inked(c, '#fffaf0', ink, 1.5, q => q.ellipse(x0 + 10 + Math.min(16, sw * 0.22), H * 0.5, Math.min(14, sw * 0.2), 6, 0, 0, TAU));
+            if (sw > 50)
+                inked(c, lt, ink, 1.5, q => rr(q, x0 + sw * 0.5, H * 0.47, sw * 0.46, 8, 4));
+        }
+        else if (plain) {
+            c.fillStyle = darken(main, 0.45);
+            [x0 + 3, x0 + sw - 8].forEach(x => c.fillRect(x, H * 0.56, 5, H * 0.44));
+            inked(c, main, ink, 2, q => rr(q, x0 + 2, H * 0.04, 8, H * 0.56, 3));
+            inked(c, main, ink, 2, q => rr(q, x0, H * 0.52, sw, 8, 3));
+            if (d.pal !== 'wood' || P.f)
+                inked(c, lt, ink, 1.5, q => rr(q, x0 + 6, H * 0.47, sw - 8, 6, 3));
+        }
+        else {
+            const arm = W > 60;
+            inked(c, main, ink, 2, q => rr(q, x0, H * 0.12, Math.max(12, sw * 0.3), H * 0.88 - 8, 9));
+            inked(c, main, ink, 2, q => rr(q, x0, H * 0.48, sw, H * 0.52 - 8, 7));
+            inked(c, lt, ink, 1.6, q => rr(q, x0 + sw * 0.26, H * 0.42, sw * 0.72, 10, 5));
+            if (arm) {
+                inked(c, dk, ink, 2, q => rr(q, x0 + sw * 0.06, H * 0.36, sw * 0.9, H * 0.64 - 8, 9));
+                c.fillStyle = 'rgba(255,255,255,.18)';
+                c.beginPath();
+                rr(c, x0 + sw * 0.1, H * 0.38, sw * 0.82, 6, 3);
+                c.fill();
+            }
+        }
+        c.restore();
+    }
+    function drawTvSide(c, d, ci) {     // (a TV from the side: a thin screen on its stand)
+        const P = furnPalette(d, ci), ink = '#2a1a2e', W = d.w, H = d.h, sw = Math.round(W * FURN_SIDE), x0 = (W - sw) / 2;
+        c.save();
+        inked(c, P.a, ink, 2, q => rr(q, x0, H * 0.6, sw, H * 0.4 - 4, 5));
+        c.fillStyle = 'rgba(0,0,0,.15)';
+        c.fillRect(x0 + 4, H * 0.66, sw - 8, 3);
+        inked(c, '#2a2430', ink, 2, q => rr(q, x0 + sw * 0.36, H * 0.06, sw * 0.26, H * 0.55, 4));
+        c.fillStyle = '#4a4458';
+        c.fillRect(x0 + sw * 0.45, H * 0.6 - 4, sw * 0.08, 5);
+        c.restore();
+    }
     function drawFurnView(c, d, ci, r, open) {
+        if (r % 2 && furnTurns(d) && !d.build && FURN_USE[d.id] === 'sit' && !FURN_ROUND.has(d.id)) {
+            drawSeatSide(c, d, ci);
+            return;
+        }
+        if (r % 2 && furnTurns(d) && /tv$/.test(d.id)) {
+            drawTvSide(c, d, ci);
+            return;
+        }
         if (r === 2 && furnTurns(d) && FURN_USE[d.id] === 'sit' && !FURN_ROUND.has(d.id)) {
             drawSeatBack(c, d, ci);
             return;
