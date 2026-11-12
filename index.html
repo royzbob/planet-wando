@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794395350';
+<script>window.WANDO_BUILD = '1794444206';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2385,6 +2385,7 @@
   .dun-party .party-hp { display: block; height: 5px; margin: 2px 0 1px; border-radius: 3px; background: rgba(0, 0, 0, 0.55); overflow: hidden; }
   .dun-party .party-hp b { display: block; height: 100%; border-radius: 3px; transition: width 0.25s; }
   @media (max-width: 520px) { .dun-row { flex-wrap: wrap; } .dun-row > .mine-text { flex: 1 1 calc(100% - 96px); min-width: 0; } .dun-row > .btn { flex: 0 0 auto; } }     
+  .dun-pot { flex-wrap: wrap; gap: 6px; } .dun-pot .mine-text { flex: 1 1 100%; } .dun-pot .btn { flex: 1 1 auto; }
   .dun-forge { flex-wrap: wrap; gap: 6px; } .dun-forge .mine-text { flex: 1 1 100%; } .dun-forge .btn { font-size: 12px; }
   .dun-party li { padding: 1px 8px; border-left: 4px solid #c8102e; border-radius: 3px; background: rgba(20, 16, 28, 0.7); color: #fff; font: 800 12.5px/1.4 var(--font-display); text-shadow: 1px 1px 0 #000; }
   .dun-right { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -29617,8 +29618,8 @@
                 let x = fx, y = fy;
                 for (let k = 0; k < Math.abs(dist); k += 8) {
                     const nx = clamp(x + dx * 8 * Math.sign(dist), B.x + 16, B.x + B.w - 16), ny = clamp(y + dy * 8 * Math.sign(dist), B.y + 16, B.y + B.h - 8);
-                    if (this.dunWalls.some(w => Math.hypot(nx - w.x, ny - w.y) < w.r + 14))
-                        break;
+                    if (this.dunWalls.some(w => Math.hypot(nx - w.x, ny - w.y) < w.r + 14) || (this.halls && !this.halls.walk(nx, ny, 16)) || (this.halls && !this.halls.walk(nx, ny - 24, 8)))
+                        break;     // (dashes, charges and blinks stop at the crypt walls instead of passing through them)
                     x = nx;
                     y = ny;
                 }
@@ -30662,6 +30663,7 @@
                         if (m && !m.dead && Math.hypot(mp[i + 1] - m.x, mp[i + 2] - m.y) < 400) {
                             m.x += (mp[i + 1] - m.x) * k;
                             m.y += (mp[i + 2] - m.y) * k;
+                            this.dunFree(m);
                         }
                     }
             }
@@ -31029,6 +31031,17 @@
                     else if (m.okx != null) {
                         m.x = m.okx;
                         m.y = m.oky;
+                    }
+                }
+                if (!ok(m.x, m.y)) {     // (still in a wall: put it at the nearest spot inside a room or hall)
+                    let best = null, bd = Infinity;
+                    this.halls.rects.forEach(R => { const x = clamp(m.x, R.x + 18, R.x + R.w - 18), y = clamp(m.y, R.y + 18, R.y + R.h - 18), d = Math.hypot(x - m.x, y - m.y); if (d < bd) {
+                        bd = d;
+                        best = { x, y };
+                    } });
+                    if (best) {
+                        m.x = best.x;
+                        m.y = best.y;
                     }
                 }
                 if (ok(m.x, m.y)) {
@@ -45654,12 +45667,21 @@
             }
             else {
                 [['potion', 'Potion', DUN.POTION, 'Heals ' + DUN.POTION_HEAL + ' health (H).', D.potions], ['big', 'Big potion', DUN.BIG_POTION, 'Heals ' + DUN.BIG_HEAL + ' health (H).', D.big], ['mana', 'Mana potion', DUN.MANA_POTION, 'Restores ' + DUN.MANA_HEAL + ' mana (M).', D.mana]].forEach(([id, name, price, blurb, have]) => {
-                    const li = node('div', 'mine-row'), text = node('div', 'mine-text');
+                    const li = node('div', 'mine-row dun-pot'), text = node('div', 'mine-text');
                     text.append(node('b', '', name + ' · you have ' + have), node('small', '', price + ' Coins. ' + blurb));
                     const b = el('button', 'btn', { type: 'button', 'data-act': 'buy', 'data-i': id });
                     b.textContent = 'Buy · ' + price;
                     b.disabled = G.coins < price || have >= 99;
-                    li.append(text, b);
+                    const sb = el('button', 'btn', { type: 'button', 'data-act': 'sellpot', 'data-i': id });
+                    sb.textContent = 'Sell · ' + Math.floor(price / 2);
+                    sb.disabled = have < 1;
+                    li.append(text, b, sb);
+                    if (id === 'potion') {
+                        const mx = el('button', 'btn', { type: 'button', 'data-act': 'mixpot', 'data-i': '0', title: '3 potions make 1 big potion' });
+                        mx.textContent = 'Mix 3 → Big';
+                        mx.disabled = have < 3;
+                        li.appendChild(mx);
+                    }
                     rows.push(li);
                 });
             }
@@ -45907,7 +45929,29 @@
                 sfx.coin();
                 return 'Bought.';
             }
+            if (act === 'mixpot')
+                return potMix();
+            if (act === 'sellpot' && dn.shop) {
+                const price = i === 'big' ? DUN.BIG_POTION : i === 'mana' ? DUN.MANA_POTION : DUN.POTION, field = i === 'big' ? 'big' : i === 'mana' ? 'mana' : 'potions', pay = Math.floor(price / 2);
+                if (!(D[field] > 0))
+                    return 'You have none of those to sell.';
+                D[field]--;
+                G.coins += pay;
+                sfx.coin();
+                return 'Sold for ' + pay + ' Coins.';
+            }
             return '';
+        }
+        function potMix() {     // (3 potions make 1 big potion)
+            const D = G.dun;
+            if (D.potions < 3)
+                return 'You need 3 potions to mix a big one (you have ' + D.potions + ').';
+            if (D.big >= 99)
+                return 'You cannot carry more big potions.';
+            D.potions -= 3;
+            D.big++;
+            sfx.chime();
+            return 'Mixed 3 potions into a big potion!';
         }
         function dunDrink(kind) {
             const D = G.dun, s = scene(), now = s && s.time ? s.time.now : 0, key = kind === 'mana' ? 'manaAt' : 'potAt';
@@ -46173,7 +46217,7 @@
             const b = e.target.closest('[data-act]');
             if (!b || b.disabled)
                 return;
-            dn.note = dunAct(b.dataset.act, ['buy', 'stat', 'af', 'slot', 'unwear', 'learn'].includes(b.dataset.act) ? b.dataset.i : Number(b.dataset.i));
+            dn.note = dunAct(b.dataset.act, ['buy', 'sellpot', 'stat', 'af', 'slot', 'unwear', 'learn'].includes(b.dataset.act) ? b.dataset.i : Number(b.dataset.i));
             paintState();
             paintDun();
             paintDunHud();
@@ -48365,7 +48409,7 @@
             [['potions', 'Potion', '#e8323c', false, 'Heals ' + DUN.POTION_HEAL + ' health in the crypt (H).', ''], ['big', 'Big potion', '#ff3d8a', true, 'Heals ' + DUN.BIG_HEAL + ' health in the crypt (H).', ''], ['mana', 'Mana potion', '#3b7bff', false, 'Restores ' + DUN.MANA_HEAL + ' mana in the crypt (M).', 'mana']].forEach(([f, name, col, big, blurb, kind]) => {
                 if (D[f] > 0)
                     out.push({ key: 'l:' + f, cat: 'l', name, sub: blurb, r: -1, n: D[f], on: false, draw: () => invCv(40, 40, c => drawBottle(c, col, big)),
-                        acts: inDun ? [['Drink', () => (dunDrink(kind || undefined) ? '' : 'You do not need one now.')]] : [] });
+                        acts: (inDun ? [['Drink', () => (dunDrink(kind || undefined) ? '' : 'You do not need one now.')]] : []).concat(f === 'potions' && D[f] >= 3 ? [['Mix 3 into a big one', () => potMix()]] : []) });
             });
             Object.keys(SHELLS).forEach(k => { const n = G.shells[k] || 0; if (n > 0)
                 out.push({ key: 'l:shell:' + k, cat: 'l', name: SHELLS[k].name, sub: SHELLS[k].rarity + ' shell. The Shovel Shop pays ' + SHELLS[k].value + ' Coins.', r: { common: 0, rare: 2, legendary: 4 }[k], n, on: false, draw: () => invCv(40, 40, c => drawShellIcon(c, SHELLS[k].hex)), acts: [] }); });
