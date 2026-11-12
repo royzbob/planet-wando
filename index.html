@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794444206';
+<script>window.WANDO_BUILD = '1794444873';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2433,6 +2433,8 @@
     font: 800 20px/1 var(--font-display); color: #fff; text-shadow: 0 2px 0 #000;
   }
   .dun-flask.hp { background: radial-gradient(circle at 38% 30%, #ff9a9a, #d81830 45%, #6a0010); }
+  .dun-flask.big::before { content: 'BIG'; position: absolute; left: 50%; top: 4px; transform: translateX(-50%); z-index: 2; font: 900 8px/1 var(--font-display); letter-spacing: 0.06em; color: #fff; text-shadow: 0 1px 0 #000; pointer-events: none; }
+  .dun-flask.big { width: 62px; height: 62px; background: radial-gradient(circle at 38% 30%, #ffb0d8, #e8287a 45%, #6a0036); }
   .dun-flask.mp { background: radial-gradient(circle at 38% 30%, #a8c4ff, #2a5ae8 45%, #0a1a5a); }
   .dun-flask span { position: relative; z-index: 1; }
   .dun-flask::after { content: ''; position: absolute; inset: 0; background: conic-gradient(rgba(10, 6, 16, 0.7) calc(var(--cd, 0) * 360deg), transparent 0); pointer-events: none; }
@@ -3578,7 +3580,7 @@
     <ul id="dun-party" class="dun-party" aria-label="Others on this floor"></ul>
     <div id="dun-boss" class="dun-boss" hidden><b id="dun-boss-name">Boss</b><div class="dun-boss-bar"><i id="dun-boss-hp"></i></div></div>
     <div class="dun-right">
-      <button id="dun-swap" class="dun-swap" type="button" aria-label="Choose your skill buttons">⇄ Skills</button>
+      <button id="dun-skills" class="dun-swap" type="button" aria-label="Choose your skill buttons">⇄ Skills</button>
       <button id="dun-s1" class="dun-skill" type="button">1</button>
       <button id="dun-s2" class="dun-skill" type="button">2</button>
       <button id="dun-s3" class="dun-skill" type="button">3</button>
@@ -3587,7 +3589,8 @@
     <div class="dun-bottom">
       <button id="dun-leave" class="dun-small" type="button" hidden>Back to camp</button>
       <button id="dun-bagbtn" class="dun-small" type="button" title="B">Bag</button>
-      <button id="dun-potion" class="dun-flask hp" type="button" title="Health potion (H)"><span>0</span></button>
+      <button id="dun-potion" class="dun-flask hp" type="button" title="Potion: heals 50 (H)"><span>0</span></button>
+      <button id="dun-big" class="dun-flask hp big" type="button" title="Big potion: heals 100 (J)"><span>0</span></button>
       <span id="dun-bad" class="dun-bad">Bad Guys: 0</span>
       <button id="dun-mana" class="dun-flask mp" type="button" title="Mana potion (M)"><span>0</span></button>
       <span id="dun-weapon" class="dun-weapon">Fists</span>
@@ -45253,7 +45256,7 @@
         ui.pets = { ps, pc, open: petsOpen, adopt: petAdopt, care: petOpen, act: careDo, rub: careRub, check: petCheck, frame: careFrame, stats: careStats };
         const dq = id => document.getElementById(id);
         const dunHud = dq('dun-hud'), dunHpBar = dq('dun-hp'), dunHpText = dq('dun-hp-text'), dunMpBar = dq('dun-mp'), dunMpText = dq('dun-mp-text');
-        const dunXpBar = dq('dun-xp'), dunLv = dq('dun-level'), dunFloorEl = dq('dun-floor'), dunPotionBtn = dq('dun-potion'), dunManaBtn = dq('dun-mana'), dunLeave = dq('dun-leave');
+        const dunXpBar = dq('dun-xp'), dunLv = dq('dun-level'), dunFloorEl = dq('dun-floor'), dunPotionBtn = dq('dun-potion'), dunBigBtn = dq('dun-big'), dunManaBtn = dq('dun-mana'), dunLeave = dq('dun-leave');
         const dunSkillBtns = [dq('dun-s1'), dq('dun-s2'), dq('dun-s3')];
         const dunP = makePanel(dq('dun')), dunTabs = dq('dun-tabs'), dunList = dq('dun-list'), dunMsg = dq('dun-msg');
         const classP = makePanel(dq('dunclass')), classList = dq('dunclass-list'), classMsg = dq('dunclass-msg');
@@ -45302,7 +45305,7 @@
                 dq('dun-boss-name').textContent = boss.name + ' (' + boss.lv + ')' + (boss.raged ? ' · ENRAGED' : '');
                 dq('dun-boss-hp').style.width = Math.round(100 * clamp(boss.hp / boss.max, 0, 1)) + '%';
             }
-            [[dunPotionBtn, 'potAt'], [dunManaBtn, 'manaAt']].forEach(([b, k]) => b.style.setProperty('--cd', s && s[k] > now ? String((s[k] - now) / (DUN.POT_CD * 1000)) : '0'));
+            [[dunPotionBtn, 'potAt'], [dunBigBtn, 'potAt'], [dunManaBtn, 'manaAt']].forEach(([b, k]) => b.style.setProperty('--cd', s && s[k] > now ? String((s[k] - now) / (DUN.POT_CD * 1000)) : '0'));
             dunSkillBtns.forEach((b, i) => {
                 const S = list[i], cd = s && s.cds ? Math.max(0, (s.cds[i] - now) / 1000) : 0;
                 b.hidden = !S && !(SKILLS[D.cls] || []).some(x => skillRank(D, x.id) > 0 && !list.some(y => y && y.id === x.id));
@@ -45347,11 +45350,14 @@
             dunLv.textContent = (CLASSES[D.cls] ? CLASSES[D.cls].name + ' · ' : '') + 'Lv ' + D.level + (D.pts ? ' · +' + D.pts + ' stat' : '') + (D.cls && treePts(D) ? ' · +' + treePts(D) + ' skill' : '');
             const left = s && s.mons ? s.mons.filter(m => !m.dead).length : 0;
             dunFloorEl.textContent = dunWhere() + (D.run.room ? (left ? '' : ' · cleared') : '');
-            dunPotionBtn.firstChild.textContent = String(D.potions + D.big);
-            dunPotionBtn.disabled = !(D.potions + D.big) || D.hp >= max;
+            dunPotionBtn.firstChild.textContent = String(D.potions);
+            dunPotionBtn.disabled = !D.potions || D.hp >= max;
+            dunBigBtn.firstChild.textContent = String(D.big);
+            dunBigBtn.disabled = !D.big || D.hp >= max;
+            dunBigBtn.setAttribute('aria-label', 'Big potion, ' + D.big + ' left');
             dunManaBtn.firstChild.textContent = String(D.mana);
             dunManaBtn.disabled = !D.mana || D.mp >= mmax;
-            dunPotionBtn.setAttribute('aria-label', 'Health potion, ' + (D.potions + D.big) + ' left');
+            dunPotionBtn.setAttribute('aria-label', 'Potion, ' + D.potions + ' left');
             dunManaBtn.setAttribute('aria-label', 'Mana potion, ' + D.mana + ' left');
             dq('dun-name').textContent = G.name || 'You';
             dq('dun-bad').textContent = D.run.room ? 'Bad Guys: ' + left : 'Camp';
@@ -45982,10 +45988,9 @@
                 }
             }
             else {
-                const max = dunMaxHp(D);
-                if (D.hp >= max || !(D.potions + D.big))
+                const max = dunMaxHp(D), big = kind === 'big' ? true : kind === 'small' ? false : !!D.big && (!D.potions || max - D.hp > DUN.POTION_HEAL * 1.5);     // (H picks for you; the two flasks pick exactly)
+                if (D.hp >= max || (big ? !D.big : !D.potions))
                     return false;
-                const big = D.big && (!D.potions || max - D.hp > DUN.POTION_HEAL * 1.5);
                 if (big)
                     D.big--;
                 else
@@ -46256,7 +46261,7 @@
                 return; castSlot(i); if (e.detail > 0)
                 b.blur(); });
         });
-        [[dunPotionBtn, () => dunDrink()], [dunManaBtn, () => dunDrink('mana')]].forEach(([b, fn]) => {
+        [[dunPotionBtn, () => dunDrink('small')], [dunBigBtn, () => dunDrink('big')], [dunManaBtn, () => dunDrink('mana')]].forEach(([b, fn]) => {
             touchNow(b, fn);
             b.addEventListener('click', e => { if (viaTouch(b))
                 return; fn(); if (e.detail > 0)
@@ -46326,7 +46331,7 @@
             pickEl.hidden = false;
         }
         ui.skillPick = skillPick;
-        dq('dun-swap').addEventListener('click', () => skillPick(0));
+        dq('dun-skills').addEventListener('click', () => skillPick(0));
         dunLeave.addEventListener('click', e => { const s = scene(); if (s && s.dunGo && G.dun.run.room)
             s.dunGo(0); if (e.detail > 0)
             dunLeave.blur(); });
@@ -46346,6 +46351,8 @@
                 return;
             if (e.key === 'h' || e.key === 'H')
                 dunDrink();
+            else if (e.key === 'j' || e.key === 'J')
+                dunDrink('big');
             else if (e.key === 'm' || e.key === 'M')
                 dunDrink('mana');
             else if (e.key === 'b' || e.key === 'B') {
@@ -48409,7 +48416,7 @@
             [['potions', 'Potion', '#e8323c', false, 'Heals ' + DUN.POTION_HEAL + ' health in the crypt (H).', ''], ['big', 'Big potion', '#ff3d8a', true, 'Heals ' + DUN.BIG_HEAL + ' health in the crypt (H).', ''], ['mana', 'Mana potion', '#3b7bff', false, 'Restores ' + DUN.MANA_HEAL + ' mana in the crypt (M).', 'mana']].forEach(([f, name, col, big, blurb, kind]) => {
                 if (D[f] > 0)
                     out.push({ key: 'l:' + f, cat: 'l', name, sub: blurb, r: -1, n: D[f], on: false, draw: () => invCv(40, 40, c => drawBottle(c, col, big)),
-                        acts: (inDun ? [['Drink', () => (dunDrink(kind || undefined) ? '' : 'You do not need one now.')]] : []).concat(f === 'potions' && D[f] >= 3 ? [['Mix 3 into a big one', () => potMix()]] : []) });
+                        acts: (inDun ? [['Drink', () => (dunDrink(f === 'big' ? 'big' : f === 'potions' ? 'small' : kind || undefined) ? '' : 'You do not need one now.')]] : []).concat(f === 'potions' && D[f] >= 3 ? [['Mix 3 into a big one', () => potMix()]] : []) });
             });
             Object.keys(SHELLS).forEach(k => { const n = G.shells[k] || 0; if (n > 0)
                 out.push({ key: 'l:shell:' + k, cat: 'l', name: SHELLS[k].name, sub: SHELLS[k].rarity + ' shell. The Shovel Shop pays ' + SHELLS[k].value + ' Coins.', r: { common: 0, rare: 2, legendary: 4 }[k], n, on: false, draw: () => invCv(40, 40, c => drawShellIcon(c, SHELLS[k].hex)), acts: [] }); });
