@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794447747';
+<script>window.WANDO_BUILD = '1794448220';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2422,6 +2422,7 @@
   .hg-info { text-align: center; font: 800 14px/1.3 var(--font-display); }
   .hg-pad { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 8px; }
   .hg-pad .btn, .hg-big { font-size: 18px !important; padding: 12px !important; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+  .hg-box.hg-wide { width: min(600px, 100%); }
   .hg-arcs { display: flex; flex-direction: column; gap: 8px; }
   .hg-arc { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border: 3px solid #120b3a; border-radius: 12px; background: #1a1038; color: var(--arc); cursor: pointer; text-align: left; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--arc) 40%, transparent); }
   .hg-arc b { font: 900 16px/1.1 var(--font-display); text-shadow: 0 0 8px var(--arc); }
@@ -2690,6 +2691,8 @@
   .catbook.plain .cb-tabs, .catbook.plain .cb-turn { display: none; }
   .catbook.cbphone .cb-pages { display: block; overflow-y: auto; overscroll-behavior: contain; padding: 10px; border-radius: 10px; background: linear-gradient(90deg, #fffdf6, #f6efdc); -webkit-overflow-scrolling: touch; }
   .catbook.cbphone .cb-turn { display: none; }
+  .catbook.cbphone .cb-tabs { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .catbook.cbphone .cb-tabs::-webkit-scrollbar { display: none; }
   .cb-phone .cb-sec { margin: 14px 0 6px; }
   .cb-phone .cb-sec:first-child { margin-top: 0; }
   .catbook.cbphone .cb-tag { position: static; align-self: center; order: 3; }
@@ -3636,6 +3639,8 @@
       <p id="tray-note" class="tray-note" role="status"></p>
       <div class="tray-acts">
         <button id="tray-brush" class="btn" type="button" aria-pressed="false" hidden>🖌 Brush</button>
+        <button id="tray-erase" class="btn" type="button" aria-pressed="false" hidden>🧽 Eraser</button>
+        <button id="tray-undo" class="btn" type="button" hidden>↶ Undo</button>
         <button id="tray-grid" class="btn" type="button" aria-pressed="true" title="G turns the grid on or off. Hold Shift to put something down off the grid.">Grid</button>
         <button id="tray-turn" class="btn" type="button" hidden>Turn</button>
         <button id="tray-flip" class="btn" type="button" hidden>Flip</button>
@@ -16079,8 +16084,19 @@
     FURN.forEach(d => { d.kind = d.kind || 'floor'; FURN_BY[d.id] = d; });
     const furnColors = d => (d.pal === 'wood' ? FURN_WOODS.length : d.pal === 'fabric' ? FURN_FABRICS.length : 1);
     const furnKey = (id, c) => id + ':' + c;
+    const FURN_CORE = new Set(['chair', 'stool', 'armchair', 'sofa', 'beanbag', 'bench', 'dining', 'coffee', 'side', 'desk', 'round', 'bed', 'double', 'bunk', 'lamp', 'plant', 'nightstand', 'fridge', 'stove', 'sink', 'counter', 'toilet', 'basin', 'shower', 'tub', 'tv', 'bookcase', 'dresser', 'wardrobe', 'rug-round', 'rug', 'curtains', 'window', 'painting']);
+    const FURN_LAUNCH = { week: 4, ids: new Set(['recliner', 'chaise', 'pingpong', 'airhockey', 'punchbag', 'karaoke', 'console', 'cherrytree', 'succulents', 'kcounter', 'espresso', 'wallclock', 'mirror', 'wallshelf', 'rug-checker', 'hottub']) };
+    function furnStock(d, w = armoryWeek()) {     // (the Homestead store changes every week: basics always, the rest come and go, pricey pieces rarely)
+        if (!d || d.build || d.prize || FURN_CORE.has(d.id))
+            return { on: true, r: 0, back: 0, last: false, fresh: false };
+        const rare = d.price >= 1500, cycle = rare ? 10 : 6, win = rare ? 2 : 3;
+        if (FURN_LAUNCH.ids.has(d.id) && w >= FURN_LAUNCH.week && w < FURN_LAUNCH.week + 3)
+            return { on: true, r: rare ? 2 : 1, back: 0, last: w === FURN_LAUNCH.week + 2, fresh: w === FURN_LAUNCH.week };
+        const ph = parseInt(hashStr(d.id), 36) % cycle, pos = (((w + ph) % cycle) + cycle) % cycle, on = pos < win;
+        return { on, r: rare ? 2 : 1, back: on ? 0 : cycle - pos, last: on && pos === win - 1, fresh: on && pos === 0 };
+    }
     function furnWeekPicks(w = armoryWeek()) {
-        const R = rng(dunHash(w, 4242)), pool = FURN.filter(d => !d.prize && !d.build && d.kind === 'floor'), out = [];
+        const R = rng(dunHash(w, 4242)), pool = FURN.filter(d => !d.prize && !d.build && d.kind === 'floor' && furnStock(d, w).on), out = [];
         for (let t = 0; t < 200 && out.length < 6; t++) {
             const d = pool[Math.floor(R() * pool.length)];
             if (out.some(p => p.d === d))
@@ -24448,6 +24464,7 @@
             lv: Number.isInteger(q.lv) ? clamp(q.lv, 1, 50) : 0,
             cl: Number.isInteger(q.cl) && Object.keys(CLASSES)[q.cl] ? Object.keys(CLASSES)[q.cl] : '',
             jp: Number.isInteger(q.jp) ? clamp(q.jp, 0, 999) : 0,
+            pg: q.loc === 'home' && Array.isArray(q.pg) && q.pg.length === 7 && typeof q.pg[0] === 'string' && q.pg[0].length < 120 && typeof q.pg[1] === 'string' && /^[a-z0-9]{4,16}$/.test(q.pg[1]) && (q.pg[2] === 0 || q.pg[2] === 1) && Number.isInteger(q.pg[3]) && q.pg[3] >= 0 && [4, 5, 6].every(i => Number.isFinite(q.pg[i]) && Math.abs(q.pg[i]) <= 1) ? q.pg.slice(0, 7) : null,
             djk: q.loc === 'dance' && Array.isArray(q.djk) ? q.djk.slice(0, 4).filter(r => Array.isArray(r) && r.length === 8 && typeof r[0] === 'string' && /^[a-z0-9]{6,24}$/i.test(r[0]) && typeof r[1] === 'string' && Number.isInteger(r[2]) && r[2] > 0 && r[2] <= 900 && Number.isFinite(r[3]) && (r[4] === 0 || r[4] === 1) && Number.isInteger(r[5]) && r[5] > 0 && r[5] <= 30 && typeof r[6] === 'string' && r[6].length < 80 && typeof r[7] === 'string').map(r => [r[0], cleanText(r[1], 40), r[2], r[3], r[4], r[5], r[6], cleanText(r[7], 16)]) : null,
             djc: Array.isArray(q.djc) ? q.djc.filter(k => typeof k === 'string' && /^[a-z0-9]{6,24}$/i.test(k)).slice(0, 4) : null,
             ts: Number.isFinite(q.ts) && q.ts > 0 ? q.ts : 0,
@@ -33837,7 +33854,7 @@
                 this.clearTarget();
                 this.vel.set(0, 0);
                 if (ui.homeGame)
-                    ui.homeGame(use, d.name);
+                    ui.homeGame(use, d.name, it);
             }
             else if (use === 'tune') {
                 sfx.chime();
@@ -34058,6 +34075,37 @@
                     this.homePaints.push(this.add.tileSprite(x, 0, w, HOME.WALL, bakeHomeWall(this, st)).setOrigin(0).setTileScale(1 / TEX).setTilePosition(x * TEX, 0).setDepth(-949));
             });
         }
+        homePaintSnap() {     // (remember how the room looked, for Undo)
+            const R = this.homeRoom();
+            if (!R || this.homeAt === -1)
+                return;
+            const st = this.homeUndo = this.homeUndo || [];
+            st.push({ at: this.homeAt, w: R.wall, f: R.floor, fp: R.fp ? R.fp.map(q => q.slice()) : null, wp: R.wp ? R.wp.map(q => q.slice()) : null });
+            if (st.length > 40)
+                st.shift();
+        }
+        homePaintUndo() {
+            const st = this.homeUndo || [];
+            while (st.length && st[st.length - 1].at !== this.homeAt)
+                st.pop();
+            const u = st.pop(), R = this.homeRoom();
+            if (!u || !R)
+                return false;
+            R.wall = u.w;
+            R.floor = u.f;
+            if (u.fp)
+                R.fp = u.fp;
+            else
+                delete R.fp;
+            if (u.wp)
+                R.wp = u.wp;
+            else
+                delete R.wp;
+            this.homeStyle();
+            sfx.tick();
+            saveGame();
+            return true;
+        }
         homePaintAt(x, y) {
             const B = this.homeBrush, R = this.homeRoom(), F = HOME.FLOOR, C = PAINT.CELL;
             if (!B || !R || this.homeAt === -1)
@@ -34075,9 +34123,9 @@
                     return false;
                 i = Math.floor((y - F.y) / C) * PAINT.FC + Math.floor((x - F.x) / C);
             }
-            const list = R[key] = (R[key] || []).filter(q => q[0] !== i), had = (this.homePaintedAt || '') === key + i + ':' + B.style;
-            if (B.style !== base)
-                list.push([i, B.style]);
+            const want = B.erase ? base : B.style, list = R[key] = (R[key] || []).filter(q => q[0] !== i), had = (this.homePaintedAt || '') === key + i + ':' + want;
+            if (want !== base)
+                list.push([i, want]);
             if (!list.length)
                 delete R[key];
             if (!had) {
@@ -34102,14 +34150,21 @@
                 const p = this.input.activePointer;
                 if (p.isDown) {
                     const wp = this.cameras.main.getWorldPoint(p.x, p.y);
+                    if (!this.homeStroke) {
+                        this.homeStroke = true;
+                        this.homePaintSnap();
+                    }
                     this.homePaintAt(wp.x, wp.y);
                 }
-                else if (this.homePaintDirty) {
-                    this.homePaintDirty = false;
-                    this.homePaintedAt = '';
-                    saveGame();
-                    if (ui.onHome)
-                        ui.onHome();
+                else {
+                    this.homeStroke = false;
+                    if (this.homePaintDirty) {
+                        this.homePaintDirty = false;
+                        this.homePaintedAt = '';
+                        saveGame();
+                        if (ui.onHome)
+                            ui.onHome();
+                    }
                 }
             }
             if (E.held && E.ghost) {
@@ -43464,7 +43519,7 @@
         document.getElementById('furn-close').addEventListener('click', () => furnP.close());
         const homeBar = document.getElementById('home-bar'), homeEditBtn = document.getElementById('home-edit'), homeInfo = document.getElementById('home-info'), trayEl = document.getElementById('home-tray');
         const trayList = document.getElementById('tray-list'), trayNote = document.getElementById('tray-note'), trayTabs = document.getElementById('tray-tabs');
-        const trayBrush = document.getElementById('tray-brush'), trayTurn = document.getElementById('tray-turn'), trayFlip = document.getElementById('tray-flip'), trayMove = document.getElementById('tray-move'), trayStore = document.getElementById('tray-store');
+        const trayBrush = document.getElementById('tray-brush'), trayErase = document.getElementById('tray-erase'), trayUndo = document.getElementById('tray-undo'), trayTurn = document.getElementById('tray-turn'), trayFlip = document.getElementById('tray-flip'), trayMove = document.getElementById('tray-move'), trayStore = document.getElementById('tray-store');
         const hm = { edit: false, tab: 'furn', list: [], sure: false, note: '', paint: 0, wood: 0, ask: '' };
         Object.keys(G.home.inv).forEach(k => { const d = FURN_BY[k.split(':')[0]]; if (d && d.build) {
             G.coins += d.price * G.home.inv[k];
@@ -43576,15 +43631,19 @@
                     s.homeBrush.kind = hm.tab === 'walls' ? 'wall' : 'floor';
                 trayBrush.setAttribute('aria-pressed', String(!!(s && s.homeBrush)));
                 trayBrush.textContent = s && s.homeBrush ? '🖌 Brush: on' : '🖌 Brush: off';
+                trayErase.hidden = !paintTab || !(s && s.homeBrush);
+                trayErase.setAttribute('aria-pressed', String(!!(s && s.homeBrush && s.homeBrush.erase)));
+                trayUndo.hidden = !paintTab;
+                trayUndo.disabled = !(s && s.homeUndo && s.homeUndo.some(u => u.at === s.homeAt));
             }
             trayTurn.hidden = !pick || !furnTurns(pick.d);
             trayFlip.hidden = trayStore.hidden = !pick;
             trayMove.hidden = !sel;
-            trayNote.textContent = s && s.homeBrush && (hm.tab === 'walls' || hm.tab === 'floors') ? 'Brush on: pick a ' + (hm.tab === 'walls' ? 'wallpaper' : 'floor') + ' below, then tap or drag on the ' + (hm.tab === 'walls' ? 'wall' : 'floor') + ' to paint just those spots. Painting the room\'s own style rubs paint out. Turn the brush off to do the whole room.' : sel ? cap(furnName(sel.d, sel.it.c)) + ' selected: Turn and Flip change it right where it is. Move picks it up (or tap it again). Tap the floor to unselect.' : held ? cap(furnName(held.d, held.it.c)) + ': click where it should go. ' + (furnTurns(held.d) ? 'R = turn, F = flip' : 'Flip (F) mirrors it.') + (held.d.build ? ' Click a colour below to repaint it.' + (held.from ? ' Put away takes it down.' : '') : held.from ? ' Put away sends it to storage.' : '')
+            trayNote.textContent = s && s.homeBrush && s.homeBrush.erase && (hm.tab === 'walls' || hm.tab === 'floors') ? 'Eraser on: tap or drag to rub paint off. Undo takes back your last stroke.' : s && s.homeBrush && (hm.tab === 'walls' || hm.tab === 'floors') ? 'Brush on: pick a ' + (hm.tab === 'walls' ? 'wallpaper' : 'floor') + ' below, then tap or drag on the ' + (hm.tab === 'walls' ? 'wall' : 'floor') + ' to paint just those spots. Painting the room\'s own style rubs paint out. Turn the brush off to do the whole room.' : sel ? cap(furnName(sel.d, sel.it.c)) + ' selected: Turn and Flip change it right where it is. Move picks it up (or tap it again). Tap the floor to unselect.' : held ? cap(furnName(held.d, held.it.c)) + ': click where it should go. ' + (furnTurns(held.d) ? 'R = turn, F = flip' : 'Flip (F) mirrors it.') + (held.d.build ? ' Click a colour below to repaint it.' + (held.from ? ' Put away takes it down.' : '') : held.from ? ' Put away sends it to storage.' : '')
                 : hm.tab === 'rooms' ? hm.note || 'Your ' + HOME.SIZES[Hm.rooms.length - 1].toLowerCase() + ' has ' + Hm.rooms.length + (Hm.rooms.length > 1 ? ' rooms' : ' room') + '. Click a room to go there, or walk through the doors in the side walls. '
                     + (more ? 'Another room costs ' + HOME.ROOMS[Hm.rooms.length] + ' Coins and makes it a ' + HOME.SIZES[Hm.rooms.length].toLowerCase() + '.' : 'A manor is as big as a house gets.')
                     : hm.tab === 'build' ? (hm.ask ? 'What colour should the ' + FURN_BY[hm.ask].name.toLowerCase() + ' be?' : 'Walls and doors are free! Pick one, pick a colour, click to place.')
-                        : hm.tab !== 'furn' ? 'Click one to place it. Hold Shift to place it off the grid.'
+                        : (hm.tab === 'walls' || hm.tab === 'floors') ? 'Tap one to cover the whole room, or turn on 🖌 Brush to paint just part of it. ↶ Undo takes back a change. More ' + (hm.tab === 'walls' ? 'wallpapers' : 'floors') + ' are in the Homestead catalog (scroll its side tabs down to ' + (hm.tab === 'walls' ? 'Wallpaper' : 'Floors') + ').' : hm.tab !== 'furn' ? 'Click one to place it. Hold Shift to place it off the grid.'
                             : (hm.list.length ? 'Click a piece below, then click in the room. ' : 'Nothing in storage! Get furniture at Homestead. ') + 'Click a piece in the room to move it. ' + R.items.length + ' of ' + HOME.MAX + ' placed in this room.';
         }
         function homeEdit(on) {
@@ -43695,12 +43754,15 @@
             else {
                 const R = s.homeRoom();
                 if (s.homeBrush) {
+                    s.homeBrush.erase = false;
                     s.homeBrush.style = x.style;
                     hm.brushStyle = x.style;
                     sfx.tick();
                     paintTray();
                     return;
                 }
+                if (s.homePaintSnap)
+                    s.homePaintSnap();
                 if (hm.tab === 'walls')
                     R.wall = x.style;
                 else
@@ -43730,6 +43792,15 @@
             if (e.detail > 0)
                 trayBrush.blur();
         });
+        trayErase.addEventListener('click', e => { const s = scene(); if (s && s.homeBrush) {
+            s.homeBrush.erase = !s.homeBrush.erase;
+            sfx.tick();
+            paintTray();
+        } if (e.detail > 0)
+            trayErase.blur(); });
+        trayUndo.addEventListener('click', e => { const s = scene(); if (s && s.homePaintUndo && !s.homePaintUndo())
+            sfx.buzz(); paintTray(); if (e.detail > 0)
+            trayUndo.blur(); });
         const trayGrid = document.getElementById('tray-grid');
         const gridSet = on => { HOME_GRID.on = on; try {
             localStorage.setItem('meadowmere-grid', on ? '1' : '0');
@@ -47438,7 +47509,7 @@
                 return;
             } const pc = plainFurnOk(t, Number(ci)); if (pc >= 0 && String(pc) === ci) {
                 for (let i = 0; i < G.home.inv[key]; i++)
-                    out.push({ k: 'h', u: key + ':' + i, name: cap(furnName(FURN_BY[t], pc)), r: 0, obj: { t, c: pc } });
+                    out.push({ k: 'h', u: key + ':' + i, name: cap(furnName(FURN_BY[t], pc)), r: furnStock(FURN_BY[t]).r, obj: { t, c: pc } });
                 return;
             } const d = furnCollOf(Number(ci)); if (!d)
                 return; for (let i = 0; i < G.home.inv[key]; i++)
@@ -48533,7 +48604,7 @@
             if (px !== netMine.lx || py !== netMine.ly) { netMine.lx = px; netMine.ly = py; netMine.ts = Date.now(); }     // (when you were last here: others play your walk back smoothly)
             return { v: 1, ts: netMine.ts || 0, who: G.name, loc: s.loc, x: Math.round(s.pz.x), y: Math.round(s.pz.y + FOOT), em: s.emoteOn ? s.emoteKind : '',
                 boat: s.boating ? G.gear.boat : 0, car: G.riding && !s.boating ? carCode(G.board) : 0, hk: s.honks || 0, sh: G.riding && !s.boating && shineOn() ? 1 : 0, pk: parkedCode(), party: s.loc === 'home' && s.homeMine && G.fan.host ? 1 : 0, gr: s.rushN || 0, look, say: net.say,
-                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), sp: s.spar ? [Math.max(0, Math.round(s.spar.hp)), s.spar.max] : 0, pv: s.spar && s.pvOut ? s.pvOut : 0, sl: s.sparLost || 0, bo: s.fish && s.bobber && s.bobber.visible ? [Math.round(s.bobber.x), Math.round(s.bobber.y), s.fish.state === 'bite' || s.fish.state === 'reel' ? 1 : 0] : 0, dn: s.loc === 'dungeon' && s.downAt ? 1 : 0, lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, cl: G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1, dj: s.loc === 'dance' && ui.djReq ? ui.djReq() : 0, djk: s.loc === 'dance' && ui.djKnown ? ui.djKnown() : 0, djc: ui.djCancel ? ui.djCancel() : 0, jp: s.loc === 'dance' ? s.hops || 0 : 0, sx: ui.statsShare ? ui.statsShare() : 0, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
+                kb: s.kick || 0, fi: s.ice && s.ice.line ? (s.ice.line.phase === 'reel' ? 2 : 1) : 0, ic: Date.now() < TREAT.until && TREAT.i >= 0 ? TREAT.i + 1 : 0, fw: s.ferris && s.ferris.ride ? s.ferris.ride.car + 1 : 0, lc: s.lastCatch || 0, dg: s.coopOut ? s.coopOut() : 0, hw: netHeld(s), ar: netArmor(s), sp: s.spar ? [Math.max(0, Math.round(s.spar.hp)), s.spar.max] : 0, pv: s.spar && s.pvOut ? s.pvOut : 0, sl: s.sparLost || 0, bo: s.fish && s.bobber && s.bobber.visible ? [Math.round(s.bobber.x), Math.round(s.bobber.y), s.fish.state === 'bite' || s.fish.state === 'reel' ? 1 : 0] : 0, dn: s.loc === 'dungeon' && s.downAt ? 1 : 0, lt: s.loc === 'dungeon' && LOOT_SHOUT[0] ? LOOT_SHOUT : 0, sw: s.loc === 'dungeon' ? [s.swingN || 0, s.swingDir || 1, s.castN || 0, s.castId || ''] : 0, hp: s.loc === 'dungeon' && G.dun && G.dun.run.room ? [Math.max(0, Math.round(G.dun.hp)), dunMaxHp(G.dun), G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1] : 0, bd: netBoard(s), ai: s.loc === 'trade' && net.ad && net.adItem ? net.adItem : 0, sv: SRV.id, dv: screenPhone() ? 'm' : 'd', afk: isIdle() ? 1 : 0, uid: account.uid || '', house: s.loc === 'home' ? houseKey(s) : '', pg: s.loc === 'home' && ui.poolNet ? ui.poolNet() : 0, lift: s.ride ? (() => { const o = s.others.get(s.ride.id); return o && o.carModel >= 0 ? CAR_MODELS[o.carModel].seat + 6 : 0; })() : s.seated ? s.seatLift : 0, fl: s.loc === 'dungeon' ? dunPlace(G.dun) : s.loc === 'trade' ? G.troom || 0 : 0, tb: s.loc === 'trade' && s.seated && s.seated.table ? s.seated.table.n * 2 + s.seated.table.side : 0, lv: G.dun.level, cl: G.dun.cls ? Object.keys(CLASSES).indexOf(G.dun.cls) : -1, dj: s.loc === 'dance' && ui.djReq ? ui.djReq() : 0, djk: s.loc === 'dance' && ui.djKnown ? ui.djKnown() : 0, djc: ui.djCancel ? ui.djCancel() : 0, jp: s.loc === 'dance' ? s.hops || 0 : 0, sx: ui.statsShare ? ui.statsShare() : 0, card: cardOn() ? cardOn().c : -1, ti: titleIdx(G.title), ad: s.loc === 'trade' ? net.ad || '' : '', pet: G.pet && G.pet.out ? petCode(G.pet) : -1 };
         }
         const netHeld = s => { const D = G.dun, w = s.loc === 'dungeon' && D && D.eq >= 0 ? D.bag[D.eq] : null; return w && Number.isInteger(w.c) ? w.c : -1; };
         const netArmor = s => { const W = s.loc === 'dungeon' && G.dun && G.dun.worn; return W && (W.h || W.b) ? [W.h ? [W.h.a, W.h.r] : 0, W.b ? [W.b.a, W.b.r] : 0] : 0; };
@@ -50550,7 +50621,7 @@
                     { name: 'Your boards', blurb: 'From earlier weeks.', items: earlier.map(item), empty: 'No boards from earlier weeks.' }] };
         }
         function furnBook(only) {
-            const item = it => ({ id: 'f:' + it.id, name: it.name, price: it.price, owned: !!it.owned,
+            const item0 = it => ({ id: 'f:' + it.id, name: it.name, price: it.price, owned: !!it.owned,
                 priceText: it.owned ? 'Yours' : !it.price ? 'Free' : it.price + ' Coins' + (it.d && ownedOf(furnKey(it.d.id, it.c)) ? ' · you have ' + ownedOf(furnKey(it.d.id, it.c)) : ''),
                 btn: it.owned ? 'Owned' : 'Buy', disabled: !!it.owned || G.coins < it.price,
                 draw: cv => { cv.width = 200; cv.height = 150; if (it.d)
@@ -50577,6 +50648,20 @@
                     saveGame();
                     return said;
                 } });
+            const item = it => {
+                const o = item0(it), st = it.d ? furnStock(it.d) : null;
+                if (!st)
+                    return o;
+                if (!st.on)
+                    return Object.assign(o, { priceText: 'Sold out · back in ' + st.back + ' week' + (st.back === 1 ? '' : 's') + (it.d && ownedOf(furnKey(it.d.id, it.c)) ? ' · you have ' + ownedOf(furnKey(it.d.id, it.c)) : ''), btn: 'Sold out', disabled: true, tag: st.r === 2 ? 'Rare' : 'Away', act: () => 'Sold out this week. Trade with a friend, or wait for it to come back!' });
+                if (st.fresh)
+                    o.tag = o.tag || 'New this week';
+                else if (st.last)
+                    o.tag = o.tag || 'Leaving soon!';
+                else if (st.r === 2)
+                    o.tag = o.tag || 'Rare';
+                return o;
+            };
             if (only === 'plant')
                 return { id: 'florist', title: 'Flower Shop', sub: 'Plants & flowers', color: '#ff8fb8', burst: 'Fresh today!', per: 6,
                     keeper: keeperLook({ body: 0, fringe: 5, back: 5, backStyle: 1, top: 3, topStyle: 4 }),
@@ -50626,7 +50711,7 @@
                     } };
             return { id: 'furn', title: 'Homestead', sub: 'Furniture catalog', color: '#7fd06a', burst: 'Everything for your home!', per: 6,
                 keeper: keeperLook({ body: 1, fringe: 2, back: 2, top: 1, topStyle: 2 }),
-                sections: () => [{ name: 'This week\'s picks', blurb: '25% off this week only!', items: furnWeekPicks().map(p => Object.assign(item({ id: 'pick:' + p.d.id + ':' + p.c, d: p.d, c: p.c, name: cap(furnName(p.d, p.c)), price: p.price }), { tag: '25% off · was ' + p.d.price })) }]
+                sections: () => [{ name: 'New and back this week', blurb: 'Pieces come and go every week. Rare ones only visit now and then: when they leave, trading is the only way to get one!', items: FURN.filter(d => !d.prize && !d.build && d.cat !== 'build' && furnStock(d).fresh).map(d => item({ id: d.id, d, c: fsColor(d), name: d.name, price: d.price })) }, { name: 'Leaving soon', blurb: 'Last week in the store!', items: FURN.filter(d => !d.prize && !d.build && d.cat !== 'build' && furnStock(d).last).map(d => item({ id: d.id, d, c: fsColor(d), name: d.name, price: d.price })) }, { name: 'This week\'s picks', blurb: '25% off this week only!', items: furnWeekPicks().map(p => Object.assign(item({ id: 'pick:' + p.d.id + ':' + p.c, d: p.d, c: p.c, name: cap(furnName(p.d, p.c)), price: p.price }), { tag: '25% off · was ' + p.d.price })) }]
                     .concat(FS_CATS.map(([cat, name]) => { const keepCat = fs.cat; fs.cat = cat; const list = furnItems(); fs.cat = keepCat; return { name, items: list.map(item) }; })) };
         }
         function storeBook(shop) {
@@ -51227,6 +51312,8 @@
             return true;
         } return false; };
         function hgClose() {
+            PL.g = null;
+            PL.key = '';
             cancelAnimationFrame(HG.raf);
             HG.raf = 0;
             if (HG.keys)
@@ -51265,6 +51352,301 @@
                 e.stopPropagation();
             } };
             window.addEventListener('keydown', HG.keys, true);
+        }
+        const POOL = { W: 400, H: 200, R: 7, RAIL: 18, PR: 13, MAXV: 980, FRICT: 230, DT: 1 / 240, COLS: ['#ffffff', '#ffc93c', '#2f6ad8', '#e8323c', '#7a3fb8', '#ff8a1e', '#2f9a4a', '#8a1e2a', '#1d1424'] };
+        const PL = { g: null, key: '', gid: '', seat: 0, opp: null, seenOpp: false };
+        function poolRack() {     // (always the same rack, so both players start from the same table)
+            const b = [{ n: 0, x: POOL.W * 0.25, y: POOL.H / 2, vx: 0, vy: 0, in: false }], order = [1, 9, 2, 10, 8, 3, 11, 4, 12, 5, 13, 6, 14, 7, 15], d = POOL.R * 2 + 0.2, x0 = POOL.W * 0.72;
+            let k = 0;
+            for (let row = 0; row < 5; row++)
+                for (let i = 0; i <= row; i++)
+                    b.push({ n: order[k++], x: x0 + row * d * 0.866, y: POOL.H / 2 + (i - row / 2) * d, vx: 0, vy: 0, in: false });
+            return b;
+        }
+        const poolGroup = n => (n === 8 ? 'eight' : n < 8 ? 'solid' : 'stripe');
+        const POCKETS = [[0, 0], [POOL.W / 2, -3], [POOL.W, 0], [0, POOL.H], [POOL.W / 2, POOL.H + 3], [POOL.W, POOL.H]];
+        function poolStep(g) {     // (one fixed step of physics: no randomness, no trig, so both players' tables stay the same)
+            const B = g.balls, R = POOL.R, dt = POOL.DT;
+            let moving = false;
+            B.forEach(b => {
+                if (b.in || (b.vx === 0 && b.vy === 0))
+                    return;
+                b.x += b.vx * dt;
+                b.y += b.vy * dt;
+                const sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy), k = sp > 0 ? Math.max(0, 1 - POOL.FRICT * dt / sp) : 0;
+                b.vx *= k;
+                b.vy *= k;
+                if (sp * k < 3) {
+                    b.vx = 0;
+                    b.vy = 0;
+                }
+                for (const [px, py] of POCKETS) {
+                    const dx = b.x - px, dy = b.y - py;
+                    if (dx * dx + dy * dy < POOL.PR * POOL.PR) {
+                        b.in = true;
+                        b.vx = b.vy = 0;
+                        g.potted.push(b.n);
+                        g.ev.push('pot');
+                        break;
+                    }
+                }
+                if (b.in)
+                    return;
+                if (b.x < R) { b.x = R + (R - b.x); b.vx = -b.vx * 0.82; g.ev.push('rail'); }
+                if (b.x > POOL.W - R) { b.x = POOL.W - R - (b.x - (POOL.W - R)); b.vx = -b.vx * 0.82; g.ev.push('rail'); }
+                if (b.y < R) { b.y = R + (R - b.y); b.vy = -b.vy * 0.82; g.ev.push('rail'); }
+                if (b.y > POOL.H - R) { b.y = POOL.H - R - (b.y - (POOL.H - R)); b.vy = -b.vy * 0.82; g.ev.push('rail'); }
+                moving = true;
+            });
+            for (let i = 0; i < B.length; i++)
+                for (let j = i + 1; j < B.length; j++) {
+                    const a = B[i], b = B[j];
+                    if (a.in || b.in)
+                        continue;
+                    const dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy;
+                    if (d2 >= 4 * R * R || d2 === 0)
+                        continue;
+                    const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, rel = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+                    const push = (2 * R - d) / 2;
+                    a.x -= nx * push;
+                    a.y -= ny * push;
+                    b.x += nx * push;
+                    b.y += ny * push;
+                    if (rel > 0) {
+                        const j2 = rel * 0.96;
+                        a.vx -= j2 * nx;
+                        a.vy -= j2 * ny;
+                        b.vx += j2 * nx;
+                        b.vy += j2 * ny;
+                        if (g.first == null && (a.n === 0 || b.n === 0))
+                            g.first = a.n === 0 ? b.n : a.n;
+                        g.ev.push('hit');
+                        moving = true;
+                    }
+                }
+            return moving;
+        }
+        function poolNew(seat, gid, opp) {
+            return { balls: poolRack(), turn: 0, groups: [null, null], seq: 0, rolling: false, potted: [], first: null, ev: [], msg: '', over: null, seat, gid, opp, last: null, shooter: 0 };
+        }
+        function poolShoot(g, dx, dy, pw) {
+            const cue = g.balls[0];
+            if (cue.in) {
+                cue.in = false;
+                cue.x = POOL.W * 0.25;
+                cue.y = POOL.H / 2;
+            }
+            cue.vx = dx * pw * POOL.MAXV;
+            cue.vy = dy * pw * POOL.MAXV;
+            g.rolling = true;
+            g.potted = [];
+            g.first = null;
+            g.shooter = g.turn;
+            g.seq++;
+        }
+        function poolSettle(g) {     // (the rules, once the balls stop)
+            const me = g.shooter, other = 1 - me, cueIn = g.balls[0].in, mine = g.groups[me], pots = g.potted.filter(n => n !== 0);
+            const left = grp => g.balls.filter(b => b.n !== 0 && b.n !== 8 && !b.in && poolGroup(b.n) === grp).length;
+            const clearedBefore = mine && left(mine) === 0 && !pots.some(n => poolGroup(n) === mine);
+            let foul = cueIn || g.first == null || (mine && g.first !== 8 && poolGroup(g.first) !== mine) || (mine && g.first === 8 && !clearedBefore) || (!mine && g.first === 8);
+            if (pots.includes(8)) {
+                const won = !!mine && left(mine) === 0 && !cueIn;
+                g.over = won ? me : other;
+                g.msg = (won ? 'The 8-ball goes down: ' : (cueIn ? 'Scratched on the 8: ' : 'The 8-ball went down too early: ')) + poolName(g, g.over) + ' wins!';
+                return;
+            }
+            if (!g.groups[0] && !foul && pots.length) {
+                const grp = poolGroup(pots[0]);
+                g.groups[me] = grp;
+                g.groups[other] = grp === 'solid' ? 'stripe' : 'solid';
+            }
+            const own = g.groups[me], keep = !foul && pots.some(n => !own || poolGroup(n) === own);
+            if (cueIn) {
+                g.balls[0].in = false;
+                g.balls[0].x = POOL.W * 0.25;
+                g.balls[0].y = POOL.H / 2;
+                g.balls[0].vx = g.balls[0].vy = 0;
+            }
+            if (!keep)
+                g.turn = g.opp ? other : g.turn;
+            g.msg = foul ? (cueIn ? 'Scratch! ' : g.first == null ? 'Missed everything! ' : 'Foul: hit the wrong ball first! ') + poolName(g, g.turn) + ' to shoot.' : keep ? 'Nice shot! ' + poolName(g, g.turn) + ' goes again.' : poolName(g, g.turn) + ' to shoot.';
+        }
+        const poolName = (g, seat) => (!g.opp ? 'You' : seat === g.seat ? 'You' : (g.opp.name || 'Friend'));
+        ui.poolNet = () => (PL.g && PL.key ? [PL.key, PL.gid, PL.seat, PL.g.last ? PL.g.last[0] : 0, PL.g.last ? PL.g.last[1] : 0, PL.g.last ? PL.g.last[2] : 0, PL.g.last ? PL.g.last[3] : 0] : 0);
+        function poolPeers() {
+            const out = [];
+            net.peers.forEach(p => { if (!p.mine && p.loc === 'home' && Array.isArray(p.pg) && p.pg[0] === PL.key)
+                out.push(p); });
+            return out;
+        }
+        function hgPool(name, key) {
+            const box = hgShell(name + ': 8-ball pool', 'Drag back from the white ball to aim, let go to shoot. Solids or stripes, then the 8-ball last.');
+            box.classList.add('hg-wide');
+            PL.key = key;
+            const host = poolPeers().find(p => p.pg[2] === 0 && p.pg[3] === 0 && !poolPeers().some(q => q.pg[1] === p.pg[1] && q.pg[2] === 1));
+            PL.gid = host ? host.pg[1] : Math.random().toString(36).slice(2, 10);
+            PL.seat = host ? 1 : 0;
+            PL.g = poolNew(PL.seat, PL.gid, host ? { name: host.name, id: host.id } : null);
+            PL.g.msg = host ? 'You joined ' + (host.name || 'your friend') + '\'s game. They break.' : 'Waiting for a friend to come to the table... or just practise. You break!';
+            const S = 1.5, TW = POOL.W + POOL.RAIL * 2, TH = POOL.H + POOL.RAIL * 2, cv = el('canvas', 'hg-cv', { width: TW * S, height: TH * S }), c = cv.getContext('2d'), info = node('div', 'hg-info', ''), row = node('div', 'hg-pad pool-row');
+            const again = el('button', 'btn', { type: 'button' });
+            again.textContent = 'New game';
+            row.append(again);
+            box.append(cv, info, row);
+            const aim = { on: false, x: 0, y: 0 };
+            const toT = e => { const r = cv.getBoundingClientRect(), pt = e.touches ? e.touches[0] || e.changedTouches[0] : e; return { x: (pt.clientX - r.left) / r.width * TW - POOL.RAIL, y: (pt.clientY - r.top) / r.height * TH - POOL.RAIL }; };
+            const canShoot = () => { const g = PL.g; return g && !g.rolling && g.over == null && (!g.opp || g.turn === PL.seat); };
+            const down = e => { if (!canShoot())
+                return; e.preventDefault(); const t = toT(e); aim.on = true; aim.x = t.x; aim.y = t.y; };
+            const move = e => { if (!aim.on)
+                return; e.preventDefault(); const t = toT(e); aim.x = t.x; aim.y = t.y; };
+            const up = e => {
+                if (!aim.on)
+                    return;
+                aim.on = false;
+                const g = PL.g, cue = g.balls[0], dx = cue.x - aim.x, dy = cue.y - aim.y, d = Math.sqrt(dx * dx + dy * dy), pw = Math.min(1, d / 130);
+                if (pw < 0.05 || !canShoot())
+                    return;
+                const ux = Math.round(dx / d * 10000) / 10000, uy = Math.round(dy / d * 10000) / 10000, pr = Math.round(pw * 1000) / 1000;
+                poolShoot(g, ux, uy, pr);
+                g.last = [g.seq, ux, uy, pr];
+                sfx.clack();
+            };
+            cv.addEventListener('mousedown', down);
+            cv.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', up);
+            cv.addEventListener('touchstart', down, { passive: false });
+            cv.addEventListener('touchmove', move, { passive: false });
+            cv.addEventListener('touchend', up);
+            again.addEventListener('click', () => {
+                if (PL.g && PL.g.opp && PL.g.over == null)
+                    return;
+                const opp = PL.g && PL.g.opp, seat = PL.seat;
+                PL.gid = opp && seat === 1 ? PL.gid : Math.random().toString(36).slice(2, 10);
+                PL.g = poolNew(seat, PL.gid, null);
+                PL.seat = 0;
+                PL.g.seat = 0;
+                PL.g.msg = 'New rack! Waiting for a friend... or just practise.';
+            });
+            const ball = (b) => {
+                const x = (b.x + POOL.RAIL) * S, y = (b.y + POOL.RAIL) * S, r = POOL.R * S, col = POOL.COLS[b.n > 8 ? b.n - 8 : b.n];
+                c.fillStyle = b.n > 8 ? '#ffffff' : col;
+                c.beginPath();
+                c.arc(x, y, r, 0, TAU);
+                c.fill();
+                if (b.n > 8) {
+                    c.save();
+                    c.beginPath();
+                    c.arc(x, y, r, 0, TAU);
+                    c.clip();
+                    c.fillStyle = col;
+                    c.fillRect(x - r, y - r * 0.5, r * 2, r);
+                    c.restore();
+                }
+                if (b.n) {
+                    c.fillStyle = '#ffffff';
+                    c.beginPath();
+                    c.arc(x, y, r * 0.45, 0, TAU);
+                    c.fill();
+                    c.fillStyle = '#1d1424';
+                    c.font = '800 ' + Math.round(r * 0.75) + 'px sans-serif';
+                    c.textAlign = 'center';
+                    c.textBaseline = 'middle';
+                    c.fillText(String(b.n), x, y + 0.5);
+                }
+                c.strokeStyle = 'rgba(0,0,0,.4)';
+                c.lineWidth = 1;
+                c.beginPath();
+                c.arc(x, y, r, 0, TAU);
+                c.stroke();
+            };
+            const draw = () => {
+                const g = PL.g;
+                c.fillStyle = '#6a3a1e';
+                c.fillRect(0, 0, TW * S, TH * S);
+                c.fillStyle = '#1f8a4a';
+                c.fillRect(POOL.RAIL * S, POOL.RAIL * S, POOL.W * S, POOL.H * S);
+                c.strokeStyle = 'rgba(255,255,255,.12)';
+                c.beginPath();
+                c.moveTo((POOL.RAIL + POOL.W * 0.25) * S, POOL.RAIL * S);
+                c.lineTo((POOL.RAIL + POOL.W * 0.25) * S, (POOL.RAIL + POOL.H) * S);
+                c.stroke();
+                c.fillStyle = '#0a0610';
+                POCKETS.forEach(([x, y]) => { c.beginPath(); c.arc((x + POOL.RAIL) * S, (y + POOL.RAIL) * S, POOL.PR * S, 0, TAU); c.fill(); });
+                g.balls.forEach(b => { if (!b.in)
+                    ball(b); });
+                const cue = g.balls[0];
+                if (aim.on && !cue.in) {
+                    const dx = cue.x - aim.x, dy = cue.y - aim.y, d = Math.sqrt(dx * dx + dy * dy) || 1, pw = Math.min(1, d / 130), ux = dx / d, uy = dy / d;
+                    c.strokeStyle = 'rgba(255,255,255,.7)';
+                    c.setLineDash([6, 6]);
+                    c.lineWidth = 2;
+                    c.beginPath();
+                    c.moveTo((cue.x + POOL.RAIL) * S, (cue.y + POOL.RAIL) * S);
+                    c.lineTo((cue.x + POOL.RAIL + ux * 300) * S, (cue.y + POOL.RAIL + uy * 300) * S);
+                    c.stroke();
+                    c.setLineDash([]);
+                    c.strokeStyle = '#c8945a';
+                    c.lineWidth = 5;
+                    c.beginPath();
+                    c.moveTo((cue.x + POOL.RAIL - ux * (12 + pw * 40)) * S, (cue.y + POOL.RAIL - uy * (12 + pw * 40)) * S);
+                    c.lineTo((cue.x + POOL.RAIL - ux * (150 + pw * 40)) * S, (cue.y + POOL.RAIL - uy * (150 + pw * 40)) * S);
+                    c.stroke();
+                    c.fillStyle = pw > 0.8 ? '#ff5a5a' : pw > 0.45 ? '#ffd84d' : '#7dff9a';
+                    c.fillRect(8 * S, (TH - 10) * S, (TW - 16) * S * pw, 5 * S);
+                }
+                const gs = g.groups, you = g.opp ? PL.seat : g.turn;
+                info.textContent = g.msg + (gs[0] && g.over == null ? ' (You: ' + (gs[you] === 'solid' ? 'solids 1-7' : 'stripes 9-15') + ')' : '') + (g.opp && g.over == null && !g.rolling ? (g.turn === PL.seat ? ' · YOUR TURN' : ' · ' + (g.opp.name || 'Friend') + '\'s turn') : '');
+                again.disabled = !!(g.opp && g.over == null);
+            };
+            const tick = () => {
+                const g = PL.g;
+                if (!HG.el || HG.el.hidden || !PL.g)
+                    return;
+                const peers = poolPeers(), same = peers.filter(p => p.pg[1] === PL.gid && p.pg[2] !== PL.seat);
+                if (!g.opp && same.length) {
+                    g.opp = { name: same[0].name, id: same[0].id };
+                    g.msg = (same[0].name || 'A friend') + ' joined! ' + (PL.seat === 0 ? 'You break.' : 'They break.');
+                    sfx.chime();
+                }
+                else if (g.opp && !same.some(p => p.id === g.opp.id) && !g.rolling) {
+                    g.msg = (g.opp.name || 'Your friend') + ' left the table. Keep practising!';
+                    g.opp = null;
+                }
+                if (g.opp && !g.rolling && g.over == null && g.turn !== PL.seat) {
+                    const p = same.find(q => q.id === g.opp.id);
+                    if (p && p.pg[3] === g.seq + 1) {
+                        poolShoot(g, p.pg[4], p.pg[5], p.pg[6]);
+                        sfx.clack();
+                    }
+                }
+                if (g.rolling) {
+                    let still = true;
+                    for (let k = 0; k < 4; k++)
+                        still = !poolStep(g) && still;
+                    if (g.ev.length) {
+                        if (g.ev.includes('pot'))
+                            sfx.pop();
+                        else if (g.ev.includes('hit'))
+                            sfx.tick();
+                        g.ev.length = 0;
+                    }
+                    if (still) {
+                        g.rolling = false;
+                        poolSettle(g);
+                        if (g.over != null)
+                            g.over === PL.seat || !g.opp ? sfx.chime() : sfx.buzz();
+                    }
+                }
+                draw();
+                HG.raf = requestAnimationFrame(tick);
+            };
+            HG.keys = e => { if (e.key === 'Escape') {
+                hgClose();
+                e.stopPropagation();
+            } };
+            window.addEventListener('keydown', HG.keys, true);
+            HG.raf = requestAnimationFrame(tick);
         }
         function hgShots(kind, name) {     // (stop the marker in the middle: 5 shots)
             const T = { hoop: ['Shoot hoops', '🏀', '#ff8a3c', 'Tap when the ball is over the hoop!'], darts: ['Darts', '🎯', '#d8323c', 'Tap when the dart lines up with the bullseye!'], pool: ['Pool', '🎱', '#2f8a4a', 'Tap when the cue lines up with the pocket!'], kick: ['Foosball', '⚽', '#3f8a3a', 'Tap when the ball lines up with the goal!'], pong: ['Ping pong', '🏓', '#2f6ad8', 'Tap when the paddle meets the ball!'], puck: ['Air hockey', '🏒', '#d8323c', 'Tap when the puck lines up with the goal!'] }[kind];
@@ -51373,8 +51755,15 @@
                 hgClose(); e.stopPropagation(); };
             window.addEventListener('keydown', HG.keys, true);
         }
-        ui.homeGame = (use, name) => { if (use === 'arcade')
-            hgArcade(name); else if (['pool', 'kick', 'hoop', 'darts', 'pong', 'puck'].includes(use))
+        ui.homeGame = (use, name, key) => { if (use === 'arcade')
+            hgArcade(name); else if (use === 'pool') {
+            let k = 'solo';
+            try {
+                k = houseKey(scene()) + ':' + Math.round(key.x) + ',' + Math.round(key.y);
+            }
+            catch (e) { }
+            hgPool(name, k);
+        } else if (['kick', 'hoop', 'darts', 'pong', 'puck'].includes(use))
             hgShots(use, name); else
             hgInstrument(use, name); };
         ui.books = { yard: yardBook, florist: () => furnBook('plant'), harvest: harvestBook, icefish: iceFishBook, ferris: ferrisBook, candy: candyBook, claw: clawBook, castle: castleBook, icecream: iceBook, wish: wishBook, tailor: tailorBook, board: boardBook, furn: furnBook, store: storeBook, coll: collBook, car: carBook, dances: danceBook, planet: planetBook, pass: passBook, gifts: giftBook, pgame: pgameBook, missions: missionBook };
