@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794445341';
+<script>window.WANDO_BUILD = '1794445616';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -1840,6 +1840,8 @@
     box-shadow: 0 6px 0 #05010f, 0 0 0 2px var(--arc), 0 0 36px rgba(255, 61, 242, 0.45);
   }
   .arc-scrim { background: rgba(8, 2, 24, 0.74); }
+  html[data-screen="phone"] .shop.arcade { max-height: calc(100% - var(--dock-h) - 14px); top: calc((100% - var(--dock-h)) / 2); }
+  html[data-screen="phone"] .arc-screen { height: auto; width: calc(100% - 28px); max-height: calc(100vh - var(--dock-h) - 260px); min-height: 0; }
   .arc-marquee {
     flex: none; display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 16px;
     background: linear-gradient(90deg, #ff3df2, #7b3fd1 50%, #00b8e0); border-bottom: 3px solid #05010f;
@@ -2420,6 +2422,10 @@
   .hg-info { text-align: center; font: 800 14px/1.3 var(--font-display); }
   .hg-pad { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 8px; }
   .hg-pad .btn, .hg-big { font-size: 18px !important; padding: 12px !important; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+  .hg-arcs { display: flex; flex-direction: column; gap: 8px; }
+  .hg-arc { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border: 3px solid #120b3a; border-radius: 12px; background: #1a1038; color: var(--arc); cursor: pointer; text-align: left; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--arc) 40%, transparent); }
+  .hg-arc b { font: 900 16px/1.1 var(--font-display); text-shadow: 0 0 8px var(--arc); }
+  .hg-arc small { font: 700 11px/1.2 var(--font-body); color: #d8d0f0; }
   .hg-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .hg-key { min-height: 64px; border: 3px solid var(--ink); border-radius: 12px; font: 800 14px/1 var(--font-display); color: #1d1424; cursor: pointer; touch-action: manipulation; -webkit-user-select: none; user-select: none; transition: transform .06s; }
   .hg-key.hit { transform: scale(0.92); filter: brightness(1.25); }
@@ -2632,18 +2638,18 @@
   .cb-page.right { background: linear-gradient(90deg, #d8ccaa, #fffdf6 12%, #f6efdc); box-shadow: inset 14px 0 18px -14px rgba(90, 60, 20, 0.45); }
   .cb-sec { margin: 0 0 4px; padding: 6px 12px; border-radius: 8px; background: linear-gradient(#ffc93c, #ff9f1a); color: #ffffff; font: 900 20px/1.1 var(--font-display); text-transform: uppercase;
     text-shadow: 2px 2px 0 #3a1a00, -2px 2px 0 #3a1a00, 2px -2px 0 #3a1a00, -2px -2px 0 #3a1a00; }
-  .cb-blurb { margin: 2px 0 8px; font: 700 12px/1.35 var(--font-body); color: #5a4a3a; }
+  .cb-blurb { margin: 2px 0 8px; font: 700 14px/1.4 var(--font-body); color: #5a4a3a; }
   .cb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .cb-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 6px 8px; border-radius: 12px; background: #ffffff;
     box-shadow: 0 0 0 2px #e8dcc0, 0 3px 0 #d8caa4; text-align: center; }
   .cb-item.owned { box-shadow: 0 0 0 2px #5cc86e, 0 3px 0 #3f9a4a; }
   .cb-pic { width: 100%; max-width: 150px; height: auto; aspect-ratio: 1; }
-  .cb-num { position: absolute; left: 6px; top: 6px; width: 26px; height: 26px; display: grid; place-items: center; color: #ffffff; font: 900 12px/1 var(--font-display);
+  .cb-num { position: absolute; left: 6px; top: 6px; width: 26px; height: 26px; display: grid; place-items: center; color: #ffffff; font: 900 13px/1 var(--font-display);
     background: linear-gradient(135deg, #7fe0ff, #2f88df); clip-path: polygon(50% 0, 100% 40%, 50% 100%, 0 40%); }
-  .cb-tag { position: absolute; right: 6px; top: 6px; padding: 1px 7px; border-radius: 999px; background: #ff5a8a; color: #ffffff; font: 800 10px/1.6 var(--font-body); }
-  .cb-name { font: 800 13px/1.15 var(--font-display); color: #2b2033; }
-  .cb-price { font: 800 12px/1.3 var(--font-body); color: #b8700a; } .cb-price.owned { color: #2f8a4a; }
-  .cb-buy { padding: 4px 12px; font-size: 13px; }
+  .cb-tag { position: absolute; right: 6px; top: 6px; padding: 1px 7px; border-radius: 999px; background: #ff5a8a; color: #ffffff; font: 800 12px/1.6 var(--font-body); }
+  .cb-name { font: 800 16px/1.2 var(--font-display); color: #2b2033; text-align: center; }
+  .cb-price { font: 800 14px/1.3 var(--font-body); color: #b8700a; } .cb-price.owned { color: #2f8a4a; }
+  .cb-buy { padding: 7px 14px; font-size: 15px; }
   .cb-cover { position: relative; display: flex; flex-direction: column; align-items: center; padding: 0 14px 16px; text-align: center; cursor: pointer; overflow: hidden;
     background: linear-gradient(160deg, color-mix(in srgb, var(--cb) 55%, white), var(--cb)); }
   .cb-kick { align-self: stretch; margin: 0 -14px 4px; padding: 6px; background: #1d6ac8; color: #ffffff; font: 900 15px/1.2 var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
@@ -2676,7 +2682,7 @@
   .cb-foot { display: flex; align-items: center; justify-content: center; gap: 12px; }
   .cb-turn { width: 48px; height: 48px; border: 3px solid #0a1430; border-radius: 50%; background: linear-gradient(#ffd84d, #ffb52e); color: #2b2033; font: 900 20px/1 var(--font-display); cursor: pointer; box-shadow: 0 3px 0 #0a1430; }
   .cb-turn:disabled { opacity: 0.4; cursor: default; }
-  .cb-info { margin: 0; min-width: 0; flex: 1; max-width: 520px; padding: 6px 14px; border: 3px solid #0a1430; border-radius: 14px; background: var(--cream); color: var(--ink); text-align: center; font: 700 12px/1.35 var(--font-body); }
+  .cb-info { margin: 0; min-width: 0; flex: 1; max-width: 520px; padding: 6px 14px; border: 3px solid #0a1430; border-radius: 14px; background: var(--cream); color: var(--ink); text-align: center; font: 700 14px/1.35 var(--font-body); }
   .cb-msg { font-weight: 800; color: #2f8a4a; }
   .catbook.plain { width: min(560px, calc(100% - 16px)); }
   .catbook.plain .cb-book { padding: 12px; background: linear-gradient(135deg, #9a6a3e, #6a4222); }
@@ -2686,19 +2692,21 @@
   .catbook.cbphone .cb-turn { display: none; }
   .cb-phone .cb-sec { margin: 14px 0 6px; }
   .cb-phone .cb-sec:first-child { margin-top: 0; }
+  .catbook.cbphone .cb-tag { position: static; align-self: center; order: 3; }
+  .catbook.cbphone { width: calc(100% - 10px); }
   .cb-lazy { background: rgba(0, 0, 0, 0.04); border-radius: 12px; }
   .pl-head { display: flex; align-items: center; gap: 10px; margin: 0 40px 8px 0; }
   .pl-keeper { width: 64px; height: auto; flex: none; }
   .pl-title { margin: 0; color: #5a3416; font: 900 24px/1.05 var(--font-display); }
   .pl-sub { margin: 2px 0 0; color: #8a6a4a; font: 800 13px/1.2 var(--font-body); }
   .pl-sec { margin: 10px 0 2px; color: #2b2033; font: 900 16px/1.2 var(--font-display); border-bottom: 2px solid #e8dcc0; padding-bottom: 2px; }
-  .pl-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid #f0e6d0; }
+  .pl-row { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 4px; border-bottom: 1px solid #f0e6d0; }
   .pl-row.owned .pl-price { color: #2f8a4a; }
-  .pl-pic { width: 56px; height: 56px; }
+  .pl-pic { width: 72px; height: 72px; }
   .pl-txt { display: flex; flex-direction: column; min-width: 0; }
-  .pl-name { font: 800 14px/1.2 var(--font-display); color: #2b2033; }
-  .pl-tag { font: 700 11px/1.3 var(--font-body); color: #6a5a4a; }
-  .pl-price { font: 800 12px/1.3 var(--font-body); color: #b8700a; }
+  .pl-name { font: 800 16px/1.2 var(--font-display); color: #2b2033; }
+  .pl-tag { font: 700 13px/1.3 var(--font-body); color: #6a5a4a; }
+  .pl-price { font: 800 14px/1.3 var(--font-body); color: #b8700a; }
   .cb-flip { position: absolute; top: 0; bottom: 0; width: 50%; pointer-events: none; background: linear-gradient(90deg, #f6efdc, #fffdf6 60%, #e8dcc0); box-shadow: 0 0 24px rgba(0, 0, 0, 0.3); backface-visibility: hidden; }
   .cb-flip.fwd { right: 0; transform-origin: left center; animation: cb-fwd 0.5s ease-in forwards; }
   .cb-flip.back { left: 0; transform-origin: right center; animation: cb-back 0.5s ease-in forwards; }
@@ -42589,6 +42597,18 @@
             });
         }
         function arcFinish(left) {
+            if (arc.home) {
+                const st = arc.st;
+                arc.won = { score: st.score, coins: 0, bonus: 0, medal: 0, best: false };
+                arc.mode = left ? 'title' : 'over';
+                arc.lock = 0.9;
+                arc.held = {};
+                arc.press = [];
+                arc.t = left ? 0 : arc.t;
+                arcMsg.textContent = 'Game over: ' + st.score + ' points. Free play at home: for coins and medals, play at the Star Arcade in the mall.';
+                arcInfo();
+                return;
+            }
             const st = arc.st, game = arc.game, A = G.arcade, was = A.best[game.id] || 0, had = A.medal[game.id] || 0;
             const coins = arcadeCoins(game, st.score), medal = arcadeMedal(game, st.score);
             let bonus = 0;
@@ -42618,12 +42638,13 @@
         }
         function arcStart() {
             if (arc.mode === 'title') {
-                if (G.coins < ARC.COST) {
+                if (!arc.home && G.coins < ARC.COST) {
                     arcMsg.textContent = 'A credit is ' + ARC.COST + ' Coins, and you have ' + G.coins + '.';
                     sfx.buzz();
                     return;
                 }
-                G.coins -= ARC.COST;
+                if (!arc.home)
+                    G.coins -= ARC.COST;
                 arc.st = arc.game.make(Math.random);
                 arc.mode = 'play';
                 arc.press = [];
@@ -42676,6 +42697,8 @@
                 s.steering = false;
             }
             arc.game = arcadeGame(id);
+            arc.home = !!arc.homeNext;     // (your own machine at home: free play, no coins or medals)
+            arc.homeNext = false;
             arc.mode = 'title';
             arc.st = null;
             arc.won = null;
@@ -42687,7 +42710,7 @@
             arcTitle.textContent = arc.game.name;
             arcEl.style.setProperty('--arc', arc.game.css);
             arcEl.classList.toggle('hires', !!arc.game.hires);
-            arcMsg.textContent = 'Press START (or Space) to drop a coin in. A credit is ' + ARC.COST + ' Coins.';
+            arcMsg.textContent = arc.home ? 'Your own machine: free play! Press START (or Space). Coins and medals are only at the Star Arcade in the mall.' : 'Press START (or Space) to drop a coin in. A credit is ' + ARC.COST + ' Coins.';
             arcInfo();
             arcDraw();
             arcScrim.hidden = false;
@@ -42695,6 +42718,7 @@
             cancelAnimationFrame(arc.raf);
             arc.raf = requestAnimationFrame(arcFrame);
         }
+        ui.homeArcade = id => { arc.homeNext = true; ui.onHotspot('arcade', true, id); };
         const arcCloseCard = arcP.close;
         arcP.close = () => {
             if (arc.mode === 'play' && arc.st)
@@ -50646,102 +50670,17 @@
             HG.el.hidden = false;
             return box;
         }
-        function hgArcade(name) {     // (dodge the falling rocks, grab the stars)
-            const box = hgShell(name + ': Star Dodge', 'Move left and right. Dodge the rocks, grab the stars! Best: ' + (HG.best.arcade || 0));
-            const W = 300, H = 380, cv = el('canvas', 'hg-cv', { width: W * 2, height: H * 2 }), c = cv.getContext('2d'), info = node('div', 'hg-info', 'Tap Start');
-            const pad = node('div', 'hg-pad'), L = el('button', 'btn', { type: 'button' }), S = el('button', 'btn', { type: 'button' }), R = el('button', 'btn', { type: 'button' });
-            L.textContent = '◀';
-            S.textContent = 'Start';
-            R.textContent = '▶';
-            pad.append(L, S, R);
-            box.append(cv, info, pad);
-            c.scale(2, 2);
-            const g = { on: false, x: W / 2, dir: 0, t: 0, score: 0, rocks: [], stars: [], last: 0, drag: null };
-            const hold = (b, d) => { const on = e => { e.preventDefault(); g.dir = d; }, off = () => { if (g.dir === d)
-                g.dir = 0; }; b.addEventListener('touchstart', on, { passive: false }); b.addEventListener('mousedown', on); ['touchend', 'touchcancel', 'mouseup', 'mouseleave'].forEach(t => b.addEventListener(t, off)); };
-            hold(L, -1);
-            hold(R, 1);
-            cv.addEventListener('touchmove', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); g.x = clamp((e.touches[0].clientX - r.left) / r.width * W, 14, W - 14); }, { passive: false });
-            cv.addEventListener('mousemove', e => { if (e.buttons) {
-                const r = cv.getBoundingClientRect();
-                g.x = clamp((e.clientX - r.left) / r.width * W, 14, W - 14);
-            } });
-            HG.keys = e => { if (e.key === 'ArrowLeft' || e.key === 'a') {
-                g.dir = -1;
-                e.preventDefault();
-            } else if (e.key === 'ArrowRight' || e.key === 'd') {
-                g.dir = 1;
-                e.preventDefault();
-            } else if (e.key === ' ' && !g.on) {
-                start();
-                e.preventDefault();
-            } else if (e.key === 'Escape')
-                hgClose(); e.stopPropagation(); };
+        function hgArcade(name) {     // (the same games as the Star Arcade in the mall, free play)
+            const box = hgShell(name, 'Pick a game. Free play at home (coins and medals are only at the mall).');
+            const grid = node('div', 'hg-arcs');
+            ARCADE_GAMES.forEach(g => { const b = el('button', 'hg-arc', { type: 'button' }); b.style.setProperty('--arc', g.css); b.append(node('b', '', g.name), node('small', '', g.how.charAt(0) + g.how.slice(1).toLowerCase())); b.addEventListener('click', () => { hgClose(); if (ui.homeArcade)
+                ui.homeArcade(g.id); }); grid.appendChild(b); });
+            box.append(grid);
+            HG.keys = e => { if (e.key === 'Escape') {
+                hgClose();
+                e.stopPropagation();
+            } };
             window.addEventListener('keydown', HG.keys, true);
-            window.addEventListener('keyup', e => { if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key))
-                g.dir = 0; });
-            const draw = () => {
-                c.fillStyle = '#120b3a';
-                c.fillRect(0, 0, W, H);
-                c.fillStyle = 'rgba(255,255,255,.5)';
-                for (let i = 0; i < 30; i++)
-                    c.fillRect((i * 97) % W, (i * 53 + g.t * 40 * (1 + i % 3)) % H, 1.5, 1.5);
-                g.stars.forEach(s => { c.fillStyle = '#ffd84d'; c.beginPath(); for (let k = 0; k < 10; k++) {
-                    const a = k * Math.PI / 5 - Math.PI / 2, r = k % 2 ? 4 : 9;
-                    c.lineTo(s.x + Math.cos(a) * r, s.y + Math.sin(a) * r);
-                } c.closePath(); c.fill(); });
-                g.rocks.forEach(r => { c.fillStyle = '#8a7a9a'; c.beginPath(); c.arc(r.x, r.y, r.r, 0, TAU); c.fill(); c.fillStyle = '#5a4a6a'; c.beginPath(); c.arc(r.x - r.r * 0.3, r.y - r.r * 0.2, r.r * 0.3, 0, TAU); c.fill(); });
-                c.fillStyle = '#7fe8ff';
-                c.beginPath();
-                c.moveTo(g.x, H - 46);
-                c.lineTo(g.x + 14, H - 18);
-                c.lineTo(g.x - 14, H - 18);
-                c.closePath();
-                c.fill();
-                c.fillStyle = '#ff7a3c';
-                c.fillRect(g.x - 4, H - 18, 8, 6 + Math.random() * 4);
-                c.fillStyle = '#fff';
-                c.font = '800 16px sans-serif';
-                c.fillText('Score ' + g.score, 10, 22);
-            };
-            const end = () => {
-                g.on = false;
-                const nb = hgBest('arcade', g.score);
-                info.textContent = 'Crash! Score ' + g.score + (nb ? ' · NEW BEST!' : ' · Best ' + (HG.best.arcade || 0));
-                S.textContent = 'Again';
-                sfx.buzz();
-            };
-            const step = now => {
-                const dt = Math.min(0.05, (now - (g.last || now)) / 1000);
-                g.last = now;
-                if (g.on) {
-                    g.t += dt;
-                    g.x = clamp(g.x + g.dir * 260 * dt, 14, W - 14);
-                    const speed = 120 + g.t * 9;
-                    if (Math.random() < dt * (1.2 + g.t * 0.08))
-                        g.rocks.push({ x: 10 + Math.random() * (W - 20), y: -12, r: 8 + Math.random() * 10 });
-                    if (Math.random() < dt * 0.6)
-                        g.stars.push({ x: 14 + Math.random() * (W - 28), y: -10 });
-                    g.rocks.forEach(r => { r.y += speed * dt; });
-                    g.stars.forEach(s => { s.y += speed * 0.8 * dt; });
-                    g.rocks = g.rocks.filter(r => r.y < H + 20);
-                    g.score = Math.max(g.score, Math.floor(g.t * 2) + (g.bonus || 0));
-                    g.stars = g.stars.filter(s => { if (Math.hypot(s.x - g.x, s.y - (H - 30)) < 20) {
-                        g.bonus = (g.bonus || 0) + 5;
-                        sfx.coin();
-                        return false;
-                    } return s.y < H + 20; });
-                    if (g.rocks.some(r => Math.hypot(r.x - g.x, r.y - (H - 30)) < r.r + 10))
-                        end();
-                    info.textContent = 'Score ' + g.score;
-                }
-                draw();
-                HG.raf = requestAnimationFrame(step);
-            };
-            const start = () => { Object.assign(g, { on: true, t: 0, score: 0, bonus: 0, rocks: [], stars: [], x: W / 2 }); S.textContent = 'Go!'; sfx.pop(); };
-            S.addEventListener('click', () => { if (!g.on)
-                start(); });
-            HG.raf = requestAnimationFrame(step);
         }
         function hgShots(kind, name) {     // (stop the marker in the middle: 5 shots)
             const T = { hoop: ['Shoot hoops', '🏀', '#ff8a3c', 'Tap when the ball is over the hoop!'], darts: ['Darts', '🎯', '#d8323c', 'Tap when the dart lines up with the bullseye!'], pool: ['Pool', '🎱', '#2f8a4a', 'Tap when the cue lines up with the pocket!'], kick: ['Foosball', '⚽', '#3f8a3a', 'Tap when the ball lines up with the goal!'] }[kind];
