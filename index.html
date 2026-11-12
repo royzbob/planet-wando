@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794447187';
+<script>window.WANDO_BUILD = '1794447747';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -3635,6 +3635,7 @@
       <div id="tray-tabs" class="seg" role="group" aria-label="What to place"></div>
       <p id="tray-note" class="tray-note" role="status"></p>
       <div class="tray-acts">
+        <button id="tray-brush" class="btn" type="button" aria-pressed="false" hidden>🖌 Brush</button>
         <button id="tray-grid" class="btn" type="button" aria-pressed="true" title="G turns the grid on or off. Hold Shift to put something down off the grid.">Grid</button>
         <button id="tray-turn" class="btn" type="button" hidden>Turn</button>
         <button id="tray-flip" class="btn" type="button" hidden>Flip</button>
@@ -13666,6 +13667,7 @@
     const dayKey = (d = new Date()) => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
     const dayNumber = (d = new Date()) => Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
     const msToMidnight = (d = new Date()) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime() - d.getTime();
+    const PAINT = { CELL: 60, FC: 17, FR: 9, WC: 19 };     // (paint grid: floor squares and wall strips)
     const HOME = { PRICE: 3000, ROOMS: [0, 4000, 8000, 15000], SIZES: ['Cottage', 'House', 'Villa', 'Manor'], MAX: 100, W: 1100, H: 800, WALL: 170, FLOOR: { x: 60, y: 214, w: 980, h: 526 }, EDGE: { x: 40, y: 176, w: 1020, h: 564 }, DOOR_Y: 470 };
     const FURN_WOODS = [['Oak', '#c98b4a', '#8a5a34', '#e6ad6a'], ['Walnut', '#7a4a2e', '#4a2a18', '#9a6a44'], ['White', '#f3efe6', '#b9b2a4', '#ffffff'], ['Black', '#3a3540', '#17131c', '#5a5462'],
         ['Pine', '#e6c58a', '#b08a4a', '#f6dfae'], ['Cherry', '#b5533c', '#7a2f20', '#d0705a']];
@@ -15834,6 +15836,243 @@
                 c.beginPath();
                 c.arc(25, 26, 15, -2.6, -1.9);
                 c.stroke();
+            } },
+        { id: 'recliner', name: 'Recliner', cat: 'seat', price: 700, w: 80, h: 76, pal: 'fabric', nu: true, draw(c, P) {
+                c.fillStyle = '#3a2a2a';
+                c.fillRect(14, 68, 6, 7);
+                c.fillRect(60, 68, 6, 7);
+                fbox(c, 10, 6, 60, 46, 14, P.f);
+                c.fillStyle = 'rgba(0,0,0,.12)';
+                c.fillRect(38, 12, 3, 30);
+                fbox(c, 3, 32, 18, 34, 7, P.fd);
+                fbox(c, 59, 32, 18, 34, 7, P.fd);
+                fbox(c, 18, 38, 44, 22, 7, P.fl);
+                fbox(c, 22, 58, 36, 12, 5, P.fd);
+            } },
+        { id: 'chaise', name: 'Chaise lounge', cat: 'seat', price: 900, w: 124, h: 62, pal: 'fabric', nu: true, draw(c, P) {
+                c.fillStyle = '#3a2a2a';
+                [10, 108].forEach(x => c.fillRect(x, 54, 6, 8));
+                fbox(c, 4, 28, 116, 26, 9, P.f);
+                inked(c, P.f, FL, 2, k => { k.moveTo(4, 50); k.lineTo(4, 14); k.quadraticCurveTo(6, 4, 20, 6); k.quadraticCurveTo(40, 10, 42, 30); k.lineTo(42, 50); k.closePath(); });
+                fbox(c, 40, 24, 76, 12, 6, P.fl);
+                fbox(c, 12, 16, 24, 14, 6, P.fl, 1.6);
+            } },
+        { id: 'bookcase', name: 'Bookshelf', cat: 'store', price: 650, w: 80, h: 122, pal: 'wood', nu: true, draw(c, P) {
+                fbox(c, 4, 4, 72, 114, 4, P.a);
+                fbox(c, 10, 10, 60, 102, 2, P.c, 1.4);
+                const books = ['#e8504a', '#3fa7f5', '#ffc93c', '#2fbf8f', '#8b5cf6', '#ff8fb8', '#ff9a3c', '#5a6ad8'];
+                [12, 46, 80].forEach((y, row) => {
+                    let x = 12;
+                    for (let k = 0; x < 64; k++) {
+                        const w = 5 + ((k * 7 + row * 3) % 4), h = 24 - ((k * 5 + row) % 7);
+                        if (row === 1 && k === 4) {
+                            x += 10;
+                            continue;
+                        }
+                        fbox(c, x, y + 30 - h, w, h, 1, books[(k + row * 3) % books.length], 1.2);
+                        x += w + 1;
+                    }
+                    fbox(c, 8, y + 30, 64, 5, 1, P.a, 1.4);
+                });
+            } },
+        { id: 'pingpong', name: 'Ping pong table', cat: 'fun', price: 1100, w: 152, h: 82, pal: '', nu: true, draw(c) {
+                c.fillStyle = '#2b2233';
+                [[16, 56], [130, 56], [34, 50], [112, 50]].forEach(([x, y]) => c.fillRect(x, y, 6, 82 - y));
+                fbox(c, 6, 22, 140, 36, 4, '#2f6ad8');
+                c.fillStyle = '#ffffff';
+                c.fillRect(8, 39, 136, 2);
+                c.fillRect(74, 24, 2, 32);
+                fbox(c, 72, 12, 8, 46, 1, 'rgba(240,240,240,.85)', 1.4);
+                c.strokeStyle = 'rgba(40,40,60,.4)';
+                c.lineWidth = 1;
+                for (let y = 16; y < 56; y += 5) {
+                    c.beginPath();
+                    c.moveTo(73, y);
+                    c.lineTo(79, y);
+                    c.stroke();
+                }
+                fdisc(c, 24, 30, 8, '#e8504a', 1.6);
+                fbox(c, 22, 36, 4, 10, 1, '#8a5a34', 1.2);
+                fdisc(c, 128, 46, 8, '#e8504a', 1.6);
+                fdisc(c, 100, 30, 3, '#ffffff', 1);
+            } },
+        { id: 'airhockey', name: 'Air hockey', cat: 'fun', price: 1400, w: 142, h: 80, pal: '', nu: true, draw(c) {
+                c.fillStyle = '#2b2233';
+                [[14, 60], [122, 60]].forEach(([x, y]) => c.fillRect(x, y, 7, 20));
+                fbox(c, 4, 16, 134, 48, 9, '#d8323c');
+                fbox(c, 10, 20, 122, 38, 6, '#eaf4ff', 1.6);
+                c.strokeStyle = '#d8323c';
+                c.lineWidth = 2;
+                c.beginPath();
+                c.moveTo(71, 22);
+                c.lineTo(71, 56);
+                c.stroke();
+                c.beginPath();
+                c.arc(71, 39, 9, 0, TAU);
+                c.stroke();
+                c.fillStyle = '#2b2233';
+                c.fillRect(10, 32, 4, 14);
+                c.fillRect(128, 32, 4, 14);
+                fdisc(c, 40, 40, 7, '#3fa7f5', 1.6);
+                fdisc(c, 104, 36, 7, '#ffc93c', 1.6);
+                fdisc(c, 62, 30, 4, '#2b2233', 1.2);
+            } },
+        { id: 'punchbag', name: 'Punching bag', cat: 'fun', price: 450, w: 54, h: 124, pal: 'fabric', nu: true, draw(c, P) {
+                fbox(c, 6, 112, 42, 10, 4, '#4a4458');
+                fbox(c, 24, 4, 6, 110, 2, '#6a6478', 1.6);
+                fbox(c, 22, 2, 30, 6, 2, '#6a6478', 1.6);
+                c.strokeStyle = '#3a3448';
+                c.lineWidth = 1.6;
+                c.beginPath();
+                c.moveTo(46, 8);
+                c.lineTo(42, 22);
+                c.stroke();
+                fbox(c, 28, 22, 24, 70, 11, P.f);
+                c.fillStyle = 'rgba(255,255,255,.2)';
+                c.fillRect(32, 28, 4, 56);
+                c.fillStyle = P.fd;
+                c.fillRect(29, 40, 22, 4);
+                c.fillRect(29, 72, 22, 4);
+            } },
+        { id: 'karaoke', name: 'Karaoke machine', cat: 'tech', price: 950, w: 64, h: 112, pal: 'fabric', nu: true, draw(c, P) {
+                fbox(c, 6, 60, 52, 50, 6, '#2b2233');
+                fbox(c, 12, 66, 40, 20, 3, '#5ad8ff', 1.4);
+                c.fillStyle = '#ffffff';
+                c.fillRect(16, 72, 26, 2);
+                c.fillRect(16, 78, 18, 2);
+                fdisc(c, 20, 98, 7, '#4a4458', 1.4);
+                fdisc(c, 44, 98, 7, '#4a4458', 1.4);
+                fbox(c, 30, 14, 4, 46, 1, '#8a8a9a', 1.4);
+                fbox(c, 26, 4, 12, 16, 6, P.f, 1.6);
+                c.fillStyle = 'rgba(255,255,255,.4)';
+                c.fillRect(29, 7, 3, 9);
+            } },
+        { id: 'console', name: 'Game console', cat: 'tech', price: 1100, w: 104, h: 84, pal: 'wood', nu: true, draw(c, P) {
+                fbox(c, 4, 52, 96, 30, 4, P.a);
+                fbox(c, 12, 60, 34, 16, 2, P.c, 1.4);
+                fbox(c, 58, 60, 34, 16, 2, P.c, 1.4);
+                fbox(c, 10, 4, 84, 48, 5, '#2b2233');
+                fbox(c, 15, 9, 74, 38, 2, '#1a1430', 1.2);
+                c.fillStyle = '#5ad8ff';
+                c.fillRect(17, 36, 70, 9);
+                c.fillStyle = '#7ccf55';
+                c.fillRect(17, 30, 18, 6);
+                c.fillRect(52, 24, 22, 6);
+                c.fillStyle = '#ffd84d';
+                disc(c, 30, 20, 3);
+                c.fillStyle = '#e8504a';
+                c.fillRect(42, 28, 6, 8);
+                fbox(c, 40, 52, 24, 6, 2, '#ece8f2', 1.2);
+                fbox(c, 66, 70, 18, 9, 4, '#ece8f2', 1.2);
+            } },
+        { id: 'cherrytree', name: 'Cherry blossom', cat: 'plant', price: 520, w: 74, h: 112, pal: '', nu: true, draw(c) {
+                fbox(c, 22, 88, 30, 22, 4, '#c8743a');
+                fbox(c, 19, 84, 36, 8, 3, '#a85a2a');
+                inked(c, '#6a4a34', FL, 1.6, k => { k.moveTo(35, 86); k.quadraticCurveTo(30, 60, 36, 44); k.lineTo(40, 44); k.quadraticCurveTo(36, 62, 41, 86); k.closePath(); });
+                [[37, 32, 22], [18, 42, 14], [56, 42, 14], [26, 22, 12], [48, 20, 12]].forEach(([x, y, r]) => fdisc(c, x, y, r, '#ffb3d1', 1.6));
+                c.fillStyle = '#ff7ab0';
+                [[30, 30], [44, 36], [20, 44], [56, 40], [38, 18], [26, 22]].forEach(([x, y]) => disc(c, x, y, 2.2));
+            } },
+        { id: 'succulents', name: 'Succulent box', cat: 'plant', price: 180, w: 66, h: 44, pal: 'wood', nu: true, draw(c, P) {
+                [[14, 18, '#7ccf9a'], [33, 14, '#5ab87a'], [52, 18, '#9ad8a8']].forEach(([x, y, col]) => {
+                    for (let k = 0; k < 6; k++) {
+                        const a = k / 6 * TAU;
+                        inked(c, col, FL, 1.2, q => q.ellipse(x + Math.cos(a) * 5, y + Math.sin(a) * 3, 5, 3, a, 0, TAU));
+                    }
+                    fdisc(c, x, y, 3, lighten(col, 0.3), 1);
+                });
+                fbox(c, 4, 22, 58, 20, 3, P.a);
+                c.fillStyle = 'rgba(0,0,0,.12)';
+                c.fillRect(6, 30, 54, 2);
+            } },
+        { id: 'kcounter', name: 'Kitchen counter', cat: 'kitchen', price: 600, w: 124, h: 80, pal: 'wood', nu: true, draw(c, P) {
+                fbox(c, 4, 26, 116, 52, 3, P.a);
+                fbox(c, 2, 20, 120, 10, 2, '#e8e4ec');
+                [[10, 34], [46, 34], [82, 34]].forEach(([x, y]) => {
+                    fbox(c, x, y, 32, 38, 2, P.b, 1.4);
+                    fbox(c, x + 13, y + 16, 6, 3, 1, '#c8c0d0', 1);
+                });
+                fbox(c, 70, 6, 34, 16, 3, '#d8dce8');
+                fbox(c, 74, 9, 22, 10, 2, '#2b2233', 1.2);
+                fbox(c, 12, 10, 14, 12, 2, '#ffd84d', 1.2);
+                fbox(c, 30, 12, 10, 10, 2, '#e8504a', 1.2);
+            } },
+        { id: 'espresso', name: 'Cocoa machine', cat: 'kitchen', price: 380, w: 46, h: 70, pal: 'fabric', nu: true, draw(c, P) {
+                fbox(c, 6, 6, 34, 60, 6, P.f);
+                fbox(c, 10, 12, 26, 10, 3, '#2b2233', 1.4);
+                c.fillStyle = '#5ad8ff';
+                c.fillRect(13, 15, 12, 4);
+                fbox(c, 10, 30, 26, 26, 3, P.fd, 1.4);
+                fbox(c, 20, 30, 6, 8, 1, '#8a8a9a', 1.2);
+                fbox(c, 16, 44, 14, 12, 3, '#ffffff', 1.4);
+                c.fillStyle = '#7a4a2a';
+                c.fillRect(18, 45, 10, 3);
+            } },
+        { id: 'wallclock', name: 'Wall clock', cat: 'wall', kind: 'wall', price: 160, w: 48, h: 48, pal: 'wood', nu: true, draw(c, P) {
+                fdisc(c, 24, 24, 21, P.a);
+                fdisc(c, 24, 24, 16, '#fffaf0', 1.4);
+                c.fillStyle = '#2b2233';
+                for (let k = 0; k < 12; k++) {
+                    const a = k * TAU / 12;
+                    c.fillRect(24 + Math.cos(a) * 13 - 1, 24 + Math.sin(a) * 13 - 1, 2, 2);
+                }
+                c.strokeStyle = '#2b2233';
+                c.lineWidth = 2;
+                c.beginPath();
+                c.moveTo(24, 24);
+                c.lineTo(24, 14);
+                c.moveTo(24, 24);
+                c.lineTo(31, 27);
+                c.stroke();
+                c.fillStyle = '#e8504a';
+                disc(c, 24, 24, 2);
+            } },
+        { id: 'mirror', name: 'Wall mirror', cat: 'wall', kind: 'wall', price: 300, w: 56, h: 80, pal: 'wood', nu: true, draw(c, P) {
+                inked(c, P.a, FL, 2, k => k.ellipse(28, 40, 24, 36, 0, 0, TAU));
+                inked(c, '#cfe6f2', FL, 1.4, k => k.ellipse(28, 40, 18, 30, 0, 0, TAU));
+                c.fillStyle = 'rgba(255,255,255,.7)';
+                c.beginPath();
+                c.moveTo(16, 30);
+                c.lineTo(26, 16);
+                c.lineTo(30, 20);
+                c.lineTo(20, 36);
+                c.closePath();
+                c.fill();
+            } },
+        { id: 'wallshelf', name: 'Wall shelf', cat: 'wall', kind: 'wall', price: 220, w: 96, h: 46, pal: 'wood', nu: true, draw(c, P) {
+                fbox(c, 4, 34, 88, 8, 2, P.a);
+                fbox(c, 12, 40, 6, 6, 1, P.c, 1.2);
+                fbox(c, 78, 40, 6, 6, 1, P.c, 1.2);
+                fbox(c, 10, 14, 14, 20, 2, '#e8504a', 1.2);
+                fbox(c, 25, 18, 10, 16, 2, '#3fa7f5', 1.2);
+                fdisc(c, 52, 26, 8, '#ffd84d', 1.4);
+                fbox(c, 66, 20, 16, 14, 3, '#7ccf55', 1.2);
+                fdisc(c, 74, 16, 6, '#5ab87a', 1.2);
+            } },
+        { id: 'rug-checker', name: 'Checker rug', cat: 'rug', kind: 'rug', price: 240, w: 140, h: 84, pal: 'fabric', nu: true, draw(c, P) {
+                fbox(c, 4, 4, 132, 76, 10, P.f);
+                c.save();
+                c.beginPath();
+                rr(c, 10, 10, 120, 64, 6);
+                c.clip();
+                for (let y = 0; y < 4; y++)
+                    for (let x = 0; x < 8; x++) {
+                        c.fillStyle = (x + y) % 2 ? P.fl : '#fffaf0';
+                        c.fillRect(10 + x * 15, 10 + y * 16, 15, 16);
+                    }
+                c.restore();
+            } },
+        { id: 'hottub', name: 'Hot tub', cat: 'yard', price: 2400, w: 134, h: 74, pal: 'wood', nu: true, draw(c, P) {
+                fbox(c, 4, 22, 126, 50, 10, P.a);
+                c.fillStyle = 'rgba(0,0,0,.14)';
+                for (let x = 14; x < 124; x += 12)
+                    c.fillRect(x, 30, 2, 40);
+                inked(c, '#7fe0f0', FL, 1.6, k => k.ellipse(67, 26, 56, 14, 0, 0, TAU));
+                c.fillStyle = 'rgba(255,255,255,.75)';
+                [[40, 24, 3], [60, 30, 2.4], [84, 22, 3.4], [96, 28, 2], [52, 20, 2]].forEach(([x, y, r]) => disc(c, x, y, r));
+                c.strokeStyle = 'rgba(255,255,255,.55)';
+                c.lineWidth = 2;
+                [[40, 10], [70, 6], [96, 10]].forEach(([x, y]) => { c.beginPath(); c.moveTo(x, y + 10); c.quadraticCurveTo(x - 5, y + 4, x, y); c.stroke(); });
             } }
     ];
     const FURN_BY = {};
@@ -15885,13 +16124,13 @@
     const FURN_USE = { chair: 'sit', stool: 'sit', armchair: 'sit', sofa: 'sit', beanbag: 'sit', bench: 'sit', rocker: 'sit', throne: 'sit', bed: 'sit', double: 'sit', bunk: 'sit', canopy: 'sit', hammock: 'sit', tub: 'sit', loveseat: 'sit', sectional: 'sit', eggchair: 'sit', gamerchair: 'sit', pouf: 'sit', daybed: 'sit', barstool: 'sit', cushions: 'sit', porchswing: 'sit', deskchair: 'sit', futon: 'sit', carbed: 'sit', cloudbed: 'sit', ufochair: 'sit', sleeppod: 'sit',
         lavalamp: 'light', shroomlamp: 'light', candles: 'light', discolight: 'light', rocketlamp: 'light', planetlamp: 'light', glowshroom: 'light', crystal: 'light', xmastree: 'light', pumpkin: 'light', retrotv: 'screen', bigtv: 'screen', gamingpc: 'arcade', flattv: 'screen', pinball: 'arcade', boombox: 'music', speaker: 'music', drums: 'drums', alienplush: 'hug', robot: 'hug',
         lamp: 'light', fireplace: 'light', lights: 'light', neon: 'light', aquarium: 'light', stove: 'light', tv: 'screen', computer: 'arcade', cabinet: 'arcade', pooltable: 'pool', foosball: 'kick', hoop: 'hoop', dartboard: 'darts', rockhorse: 'sit', doorway: 'door',
-        jukebox: 'music', piano: 'piano', guitar: 'guitar', gumball: 'treat', fridge: 'treat', teddy: 'hug' };
-    const FURN_SEAT = { chair: 14, stool: 14, armchair: 16, sofa: 16, beanbag: 12, bench: 14, rocker: 14, throne: 22, bed: 46, double: 46, bunk: 30, canopy: 46, hammock: 24, tub: 18, loveseat: 16, sectional: 16, eggchair: 34, gamerchair: 18, pouf: 10, daybed: 14, barstool: 24, cushions: 6, porchswing: 22, deskchair: 16, futon: 14, carbed: 40, cloudbed: 40, ufochair: 16, sleeppod: 40, rockhorse: 20 };
+        jukebox: 'music', piano: 'piano', guitar: 'guitar', recliner: 'sit', chaise: 'sit', hottub: 'sit', pingpong: 'pong', airhockey: 'puck', punchbag: 'punch', karaoke: 'music', console: 'arcade', espresso: 'treat', gumball: 'treat', fridge: 'treat', teddy: 'hug' };
+    const FURN_SEAT = { chair: 14, stool: 14, armchair: 16, sofa: 16, beanbag: 12, bench: 14, rocker: 14, throne: 22, bed: 46, double: 46, bunk: 30, canopy: 46, hammock: 24, tub: 18, loveseat: 16, sectional: 16, eggchair: 34, gamerchair: 18, pouf: 10, daybed: 14, barstool: 24, cushions: 6, porchswing: 22, deskchair: 16, futon: 14, carbed: 40, cloudbed: 40, ufochair: 16, sleeppod: 40, rockhorse: 20, recliner: 16, chaise: 14, hottub: 4 };
     const FURN_GLOW = { lamp: [0xffe9a8, 2.6, 0.5, 0.82], fireplace: [0xff9a2e, 1.6, 0.5, 0.36], lights: [0xffe9a8, 1.1, 0.42, 0.5], neon: [0xff7ad9, 1.7, 0.5, 0.5], aquarium: [0x7fd0f0, 1.5, 0.4, 0.6], stove: [0xff9a2e, 1.2, 0.34, 0.4],
         tv: [0x9fd0ff, 1.6, 0.5, 0.64], computer: [0x9fe8ff, 1.2, 0.45, 0.72], cabinet: [0x39ff14, 1.5, 0.4, 0.62],
         lavalamp: [0xff7ad9, 1.8, 0.45, 0.6], shroomlamp: [0xfff0b0, 2, 0.45, 0.7], candles: [0xffc860, 1.8, 0.4, 0.7], discolight: [0xc8b0ff, 2.2, 0.45, 0.8], rocketlamp: [0xffd080, 2, 0.45, 0.6], planetlamp: [0xb0d8ff, 2, 0.45, 0.72],
         glowshroom: [0x9dff5a, 1.8, 0.4, 0.5], crystal: [0xc7a6f2, 1.8, 0.45, 0.5], xmastree: [0xffe9a8, 1.4, 0.4, 0.5], pumpkin: [0xff9a2e, 1.8, 0.45, 0.5], retrotv: [0x9fd0ff, 1.4, 0.4, 0.55], bigtv: [0xff9ad5, 1.4, 0.45, 0.7], gamingpc: [0x9fe8ff, 1.3, 0.45, 0.72], flattv: [0x9fd0ff, 1.4, 0.4, 0.5], pinball: [0xffe066, 1.4, 0.4, 0.7] };
-    const FURN_ROUND = new Set(['stool', 'beanbag', 'dining', 'coffee', 'round', 'lamp', 'plant', 'cactus', 'tree', 'vase', 'globe', 'trophy', 'tub', 'hammock', 'gumball', 'pouf', 'barstool', 'bin', 'cooler', 'lavalamp', 'shroomlamp', 'candles', 'discolight', 'fan', 'bonsai', 'sunflowers', 'palm', 'fern', 'glowshroom', 'planetlamp', 'crystal', 'xmastree', 'snowman', 'pumpkin', 'fishbowl']);
+    const FURN_ROUND = new Set(['hottub', 'stool', 'beanbag', 'dining', 'coffee', 'round', 'lamp', 'plant', 'cactus', 'tree', 'vase', 'globe', 'trophy', 'tub', 'hammock', 'gumball', 'pouf', 'barstool', 'bin', 'cooler', 'lavalamp', 'shroomlamp', 'candles', 'discolight', 'fan', 'bonsai', 'sunflowers', 'palm', 'fern', 'glowshroom', 'planetlamp', 'crystal', 'xmastree', 'snowman', 'pumpkin', 'fishbowl']);
     const FURN_SIDE = 0.56;
     const furnTurns = d => d.kind === 'floor';
     const WALL_SIDE = { SB: 0.5, T: 16 };
@@ -16762,6 +17001,12 @@
                 room.wall = R.wall;
             if (Number.isInteger(R.floor) && R.floor >= 0 && R.floor < HOME_FLOORS.length)
                 room.floor = R.floor;
+            const paints = (a, n, max) => (Array.isArray(a) ? a : []).filter(q => Array.isArray(q) && Number.isInteger(q[0]) && q[0] >= 0 && q[0] < n && Number.isInteger(q[1]) && q[1] >= 0 && q[1] < max).slice(0, n).map(q => [q[0], q[1]]);
+            const fp = paints(R.fp, PAINT.FC * PAINT.FR, HOME_FLOORS.length), wp = paints(R.wp, PAINT.WC, HOME_WALLS.length);
+            if (fp.length)
+                room.fp = fp;
+            if (wp.length)
+                room.wp = wp;
             (Array.isArray(R.items) ? R.items : []).slice(0, HOME.MAX).forEach(it => {
                 if (!it || !good(it.t, it.c) || !Number.isFinite(it.x) || !Number.isFinite(it.y))
                     return;
@@ -33582,7 +33827,13 @@
                 }
                 sfx.tick();
             }
-            else if (['arcade', 'pool', 'kick', 'hoop', 'darts', 'piano', 'guitar', 'drums'].includes(use)) {
+            else if (use === 'punch') {
+                sfx.thud();
+                this.note(['POW!', 'BAM!', 'WHAM!', 'Nice jab!'][Math.floor(Math.random() * 4)], '#ffd0c8');
+                if (rec.img && !REDUCED)
+                    this.tweens.add({ targets: rec.img, angle: { from: -6, to: 0 }, duration: 380, ease: 'Elastic.out' });
+            }
+            else if (['arcade', 'pool', 'kick', 'hoop', 'darts', 'pong', 'puck', 'piano', 'guitar', 'drums'].includes(use)) {
                 this.clearTarget();
                 this.vel.set(0, 0);
                 if (ui.homeGame)
@@ -33594,7 +33845,7 @@
             }
             else if (use === 'treat') {
                 sfx.pop();
-                this.note(d.id === 'gumball' ? 'A gumball! ' + ['Cherry', 'Lemon', 'Mint', 'Grape', 'Bubblegum'][Math.floor(Math.random() * 5)] + '.' : 'A cold snack. Yum.', '#ffd0f0');
+                this.note(d.id === 'gumball' ? 'A gumball! ' + ['Cherry', 'Lemon', 'Mint', 'Grape', 'Bubblegum'][Math.floor(Math.random() * 5)] + '.' : d.id === 'espresso' ? 'A hot cocoa. Mmm, marshmallows.' : 'A cold snack. Yum.', '#ffd0f0');
             }
             else if (use === 'hug') {
                 sfx.pop();
@@ -33632,6 +33883,7 @@
         }
         homeEditSet(on) { const E = this.homeEdit; if (!E)
             return; if (!on) {
+            this.homeBrush = null;
             this.homeSelect(null);
             this.homeDrop(false);
         } E.on = !!on && this.homeMine; if (E.on)
@@ -33788,7 +34040,56 @@
         }
         homeFlip() { const h = this.homeEdit && this.homeEdit.held; if (!h)
             return; h.it.f = h.it.f ? 0 : 1; this.homeGhost(); sfx.tick(); }
+        homePaintDraw() {     // (painted squares of floor and strips of wallpaper on top of the room's own)
+            (this.homePaints || []).forEach(o => o.destroy());
+            this.homePaints = [];
+            const R = this.homeRoom(), F = HOME.FLOOR, C = PAINT.CELL;
+            if (this.homeAt === -1 || !R)
+                return;
+            const ok = (q, n, m) => Array.isArray(q) && Number.isInteger(q[0]) && q[0] >= 0 && q[0] < n && Number.isInteger(q[1]) && q[1] >= 0 && q[1] < m;
+            (R.fp || []).filter(q => ok(q, PAINT.FC * PAINT.FR, HOME_FLOORS.length)).forEach(([i, st]) => {
+                const col = i % PAINT.FC, row = Math.floor(i / PAINT.FC), x = F.x + col * C, y = F.y + row * C, w = Math.min(C, F.x + F.w - x), h = Math.min(C, F.y + F.h - y);
+                if (w > 0 && h > 0)
+                    this.homePaints.push(this.add.tileSprite(x, y, w, h, bakeHomeFloor(this, st)).setOrigin(0).setTileScale(1 / TEX).setTilePosition(x * TEX, y * TEX).setDepth(-999));
+            });
+            (R.wp || []).filter(q => ok(q, PAINT.WC, HOME_WALLS.length)).forEach(([i, st]) => {
+                const x = i * C, w = Math.min(C, HOME.W - x);
+                if (w > 0)
+                    this.homePaints.push(this.add.tileSprite(x, 0, w, HOME.WALL, bakeHomeWall(this, st)).setOrigin(0).setTileScale(1 / TEX).setTilePosition(x * TEX, 0).setDepth(-949));
+            });
+        }
+        homePaintAt(x, y) {
+            const B = this.homeBrush, R = this.homeRoom(), F = HOME.FLOOR, C = PAINT.CELL;
+            if (!B || !R || this.homeAt === -1)
+                return false;
+            let key = 'fp', i = -1, base = R.floor;
+            if (B.kind === 'wall') {
+                if (y > HOME.WALL + 10 || x < 0 || x >= HOME.W)
+                    return false;
+                key = 'wp';
+                base = R.wall;
+                i = Math.floor(x / C);
+            }
+            else {
+                if (x < F.x || x >= F.x + F.w || y < F.y || y >= F.y + F.h)
+                    return false;
+                i = Math.floor((y - F.y) / C) * PAINT.FC + Math.floor((x - F.x) / C);
+            }
+            const list = R[key] = (R[key] || []).filter(q => q[0] !== i), had = (this.homePaintedAt || '') === key + i + ':' + B.style;
+            if (B.style !== base)
+                list.push([i, B.style]);
+            if (!list.length)
+                delete R[key];
+            if (!had) {
+                this.homePaintedAt = key + i + ':' + B.style;
+                this.homePaintDraw();
+                sfx.tick();
+                this.homePaintDirty = true;
+            }
+            return true;
+        }
         homeStyle() {
+            this.homePaintDraw();
             const R = this.homeRoom(), yard = this.homeAt === -1;
             this.homeFloor.setTexture(yard ? bakeYardGround(this, R.floor) : bakeHomeFloor(this, R.floor));
             this.homeWall.setTexture(yard ? bakeYardBack(this, R.wall) : bakeHomeWall(this, R.wall));
@@ -33797,6 +34098,20 @@
         }
         homeUpdate() {
             const E = this.homeEdit;
+            if (this.homeBrush && E.on && !E.held) {
+                const p = this.input.activePointer;
+                if (p.isDown) {
+                    const wp = this.cameras.main.getWorldPoint(p.x, p.y);
+                    this.homePaintAt(wp.x, wp.y);
+                }
+                else if (this.homePaintDirty) {
+                    this.homePaintDirty = false;
+                    this.homePaintedAt = '';
+                    saveGame();
+                    if (ui.onHome)
+                        ui.onHome();
+                }
+            }
             if (E.held && E.ghost) {
                 const p = this.input.activePointer, wp = this.cameras.main.getWorldPoint(p.x, p.y), sp = this.homeSpan(E.held.d, E.held.it.c, E.held.it.r || 0, E.held.it.f), s = homeSpot(E.held.d, wp.x, wp.y, E.held.it.r, this.homeSides(), HOME_GRID.on && !HOME_GRID.free, sp);
                 E.ghost.setPosition(s.x, s.y).setTint(s.ok ? 0xffffff : 0xff7070);
@@ -33827,7 +34142,7 @@
                 this.homeFootKey = '';
             }
             const near = E.on || !this.pz ? null : this.seated || this.homeNear();
-            const text = !near ? '' : this.seated ? 'E · Stand up' : 'E · ' + ({ door: near.it.on ? 'Shut' : 'Open', sit: 'Sit', light: 'Switch', screen: 'Switch', music: 'Play', tune: 'Play', treat: 'Treat', hug: 'Hug', arcade: 'Play', pool: 'Play pool', kick: 'Play', hoop: 'Shoot hoops', darts: 'Throw darts', piano: 'Play', guitar: 'Play', drums: 'Play' })[FURN_USE[near.d.id]];
+            const text = !near ? '' : this.seated ? 'E · Stand up' : 'E · ' + ({ door: near.it.on ? 'Shut' : 'Open', sit: 'Sit', light: 'Switch', screen: 'Switch', music: 'Play', tune: 'Play', treat: 'Treat', hug: 'Hug', punch: 'Punch', pong: 'Play ping pong', puck: 'Play air hockey', arcade: 'Play', pool: 'Play pool', kick: 'Play', hoop: 'Shoot hoops', darts: 'Throw darts', piano: 'Play', guitar: 'Play', drums: 'Play' })[FURN_USE[near.d.id]];
             if (near)
                 this.homeHint.setPosition(near.it.x, Math.max(22, near.it.y - near.d.h - 22 - (this.seated ? 40 : 0)));
             if (text !== this.homeHintText) {
@@ -33837,6 +34152,8 @@
         }
         homeClick(x, y) {
             const E = this.homeEdit, Hm = G.home, items = this.homeRoom().items;
+            if (this.homeBrush && E.on && !E.held)
+                return true;     // (painting: taps paint, they don't pick things up)
             if (E.held) {
                 const h = E.held, r = h.it.r || 0, s = homeSpot(h.d, x, y, r, this.homeSides(), HOME_GRID.on && !HOME_GRID.free, this.homeSpan(h.d, h.it.c, r, h.it.f)), fx = this.pz.x, fy = this.pz.y + FOOT;
                 const onYou = h.d.kind === 'floor' && furnSolids(h.d, r).some(([dx, dy, rad]) => Math.hypot(s.x + dx - fx, s.y + dy - fy) < rad + 16);
@@ -43147,7 +43464,7 @@
         document.getElementById('furn-close').addEventListener('click', () => furnP.close());
         const homeBar = document.getElementById('home-bar'), homeEditBtn = document.getElementById('home-edit'), homeInfo = document.getElementById('home-info'), trayEl = document.getElementById('home-tray');
         const trayList = document.getElementById('tray-list'), trayNote = document.getElementById('tray-note'), trayTabs = document.getElementById('tray-tabs');
-        const trayTurn = document.getElementById('tray-turn'), trayFlip = document.getElementById('tray-flip'), trayMove = document.getElementById('tray-move'), trayStore = document.getElementById('tray-store');
+        const trayBrush = document.getElementById('tray-brush'), trayTurn = document.getElementById('tray-turn'), trayFlip = document.getElementById('tray-flip'), trayMove = document.getElementById('tray-move'), trayStore = document.getElementById('tray-store');
         const hm = { edit: false, tab: 'furn', list: [], sure: false, note: '', paint: 0, wood: 0, ask: '' };
         Object.keys(G.home.inv).forEach(k => { const d = FURN_BY[k.split(':')[0]]; if (d && d.build) {
             G.coins += d.price * G.home.inv[k];
@@ -43250,10 +43567,20 @@
                 return b;
             }));
             const sel = !held && s && s.homeEdit && s.homeEdit.sel && s.homeRecs && s.homeRecs.includes(s.homeEdit.sel) ? s.homeEdit.sel : null, pick = held || sel;
+            {
+                const paintTab = (hm.tab === 'walls' || hm.tab === 'floors') && !yard, sb = s && s.homeBrush;
+                trayBrush.hidden = !paintTab;
+                if (!paintTab && s && sb)
+                    s.homeBrush = null;
+                if (s && s.homeBrush)
+                    s.homeBrush.kind = hm.tab === 'walls' ? 'wall' : 'floor';
+                trayBrush.setAttribute('aria-pressed', String(!!(s && s.homeBrush)));
+                trayBrush.textContent = s && s.homeBrush ? '🖌 Brush: on' : '🖌 Brush: off';
+            }
             trayTurn.hidden = !pick || !furnTurns(pick.d);
             trayFlip.hidden = trayStore.hidden = !pick;
             trayMove.hidden = !sel;
-            trayNote.textContent = sel ? cap(furnName(sel.d, sel.it.c)) + ' selected: Turn and Flip change it right where it is. Move picks it up (or tap it again). Tap the floor to unselect.' : held ? cap(furnName(held.d, held.it.c)) + ': click where it should go. ' + (furnTurns(held.d) ? 'R = turn, F = flip' : 'Flip (F) mirrors it.') + (held.d.build ? ' Click a colour below to repaint it.' + (held.from ? ' Put away takes it down.' : '') : held.from ? ' Put away sends it to storage.' : '')
+            trayNote.textContent = s && s.homeBrush && (hm.tab === 'walls' || hm.tab === 'floors') ? 'Brush on: pick a ' + (hm.tab === 'walls' ? 'wallpaper' : 'floor') + ' below, then tap or drag on the ' + (hm.tab === 'walls' ? 'wall' : 'floor') + ' to paint just those spots. Painting the room\'s own style rubs paint out. Turn the brush off to do the whole room.' : sel ? cap(furnName(sel.d, sel.it.c)) + ' selected: Turn and Flip change it right where it is. Move picks it up (or tap it again). Tap the floor to unselect.' : held ? cap(furnName(held.d, held.it.c)) + ': click where it should go. ' + (furnTurns(held.d) ? 'R = turn, F = flip' : 'Flip (F) mirrors it.') + (held.d.build ? ' Click a colour below to repaint it.' + (held.from ? ' Put away takes it down.' : '') : held.from ? ' Put away sends it to storage.' : '')
                 : hm.tab === 'rooms' ? hm.note || 'Your ' + HOME.SIZES[Hm.rooms.length - 1].toLowerCase() + ' has ' + Hm.rooms.length + (Hm.rooms.length > 1 ? ' rooms' : ' room') + '. Click a room to go there, or walk through the doors in the side walls. '
                     + (more ? 'Another room costs ' + HOME.ROOMS[Hm.rooms.length] + ' Coins and makes it a ' + HOME.SIZES[Hm.rooms.length].toLowerCase() + '.' : 'A manor is as big as a house gets.')
                     : hm.tab === 'build' ? (hm.ask ? 'What colour should the ' + FURN_BY[hm.ask].name.toLowerCase() + ' be?' : 'Walls and doors are free! Pick one, pick a colour, click to place.')
@@ -43367,6 +43694,13 @@
             }
             else {
                 const R = s.homeRoom();
+                if (s.homeBrush) {
+                    s.homeBrush.style = x.style;
+                    hm.brushStyle = x.style;
+                    sfx.tick();
+                    paintTray();
+                    return;
+                }
                 if (hm.tab === 'walls')
                     R.wall = x.style;
                 else
@@ -43378,6 +43712,23 @@
             paintTray();
             if (e.detail > 0)
                 b.blur();
+        });
+        trayBrush.addEventListener('click', e => {
+            const s = scene();
+            if (!s || !s.homeRoom)
+                return;
+            if (s.homeBrush)
+                s.homeBrush = null;
+            else {
+                const R = s.homeRoom(), wall = hm.tab === 'walls';
+                s.homeBrush = { kind: wall ? 'wall' : 'floor', style: wall ? R.wall : R.floor };
+                if (s.homeSelect)
+                    s.homeSelect(null);
+            }
+            sfx.tick();
+            paintTray();
+            if (e.detail > 0)
+                trayBrush.blur();
         });
         const trayGrid = document.getElementById('tray-grid');
         const gridSet = on => { HOME_GRID.on = on; try {
@@ -43437,14 +43788,14 @@
             }
         });
         const HOUSE_WAIT = 3000, HOUSE_MAX = 60000;
-        const packRoom = R => [R.wall, R.floor, R.items.map(it => [it.t, it.c, it.x, it.y, it.r || 0, it.f ? 1 : 0, it.on ? 1 : 0])];
+        const packRoom = R => [R.wall, R.floor, R.items.map(it => [it.t, it.c, it.x, it.y, it.r || 0, it.f ? 1 : 0, it.on ? 1 : 0])].concat((R.fp && R.fp.length) || (R.wp && R.wp.length) ? [[R.fp || [], R.wp || []]] : []);
         const housePack = h => JSON.stringify(h.rooms.map(packRoom).concat(h.yard ? [['Y'].concat(packRoom(h.yard))] : []));
         function houseUnpack(text) {
             try {
                 const a = JSON.parse(text);
                 if (!Array.isArray(a) || !a.length)
                     return null;
-                const room = R => (Array.isArray(R) ? { wall: R[0], floor: R[1], items: (Array.isArray(R[2]) ? R[2] : []).map(q => (Array.isArray(q) ? { t: q[0], c: q[1], x: q[2], y: q[3], r: q[4], f: q[5], on: q[6] } : null)) } : null);
+                const room = R => (Array.isArray(R) ? { wall: R[0], floor: R[1], items: (Array.isArray(R[2]) ? R[2] : []).map(q => (Array.isArray(q) ? { t: q[0], c: q[1], x: q[2], y: q[3], r: q[4], f: q[5], on: q[6] } : null)), fp: Array.isArray(R[3]) ? R[3][0] : null, wp: Array.isArray(R[3]) ? R[3][1] : null } : null);
                 const y = a.length > 1 && Array.isArray(a[a.length - 1]) && a[a.length - 1][0] === 'Y' ? a.pop().slice(1) : null;
                 const rooms = a.map(room);
                 if (y)
@@ -50916,7 +51267,7 @@
             window.addEventListener('keydown', HG.keys, true);
         }
         function hgShots(kind, name) {     // (stop the marker in the middle: 5 shots)
-            const T = { hoop: ['Shoot hoops', '🏀', '#ff8a3c', 'Tap when the ball is over the hoop!'], darts: ['Darts', '🎯', '#d8323c', 'Tap when the dart lines up with the bullseye!'], pool: ['Pool', '🎱', '#2f8a4a', 'Tap when the cue lines up with the pocket!'], kick: ['Foosball', '⚽', '#3f8a3a', 'Tap when the ball lines up with the goal!'] }[kind];
+            const T = { hoop: ['Shoot hoops', '🏀', '#ff8a3c', 'Tap when the ball is over the hoop!'], darts: ['Darts', '🎯', '#d8323c', 'Tap when the dart lines up with the bullseye!'], pool: ['Pool', '🎱', '#2f8a4a', 'Tap when the cue lines up with the pocket!'], kick: ['Foosball', '⚽', '#3f8a3a', 'Tap when the ball lines up with the goal!'], pong: ['Ping pong', '🏓', '#2f6ad8', 'Tap when the paddle meets the ball!'], puck: ['Air hockey', '🏒', '#d8323c', 'Tap when the puck lines up with the goal!'] }[kind];
             const box = hgShell(name + ': ' + T[0], T[3] + ' 5 shots. Best: ' + (HG.best[kind] || 0));
             const W = 300, H = 200, cv = el('canvas', 'hg-cv', { width: W * 2, height: H * 2 }), c = cv.getContext('2d'), info = node('div', 'hg-info', 'Shot 1 of 5'), go = el('button', 'btn hg-big', { type: 'button' });
             go.textContent = 'TAP!';
@@ -51023,7 +51374,7 @@
             window.addEventListener('keydown', HG.keys, true);
         }
         ui.homeGame = (use, name) => { if (use === 'arcade')
-            hgArcade(name); else if (['pool', 'kick', 'hoop', 'darts'].includes(use))
+            hgArcade(name); else if (['pool', 'kick', 'hoop', 'darts', 'pong', 'puck'].includes(use))
             hgShots(use, name); else
             hgInstrument(use, name); };
         ui.books = { yard: yardBook, florist: () => furnBook('plant'), harvest: harvestBook, icefish: iceFishBook, ferris: ferrisBook, candy: candyBook, claw: clawBook, castle: castleBook, icecream: iceBook, wish: wishBook, tailor: tailorBook, board: boardBook, furn: furnBook, store: storeBook, coll: collBook, car: carBook, dances: danceBook, planet: planetBook, pass: passBook, gifts: giftBook, pgame: pgameBook, missions: missionBook };
