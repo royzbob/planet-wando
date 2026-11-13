@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794532287';
+<script>window.WANDO_BUILD = '1794532412';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17144,17 +17144,21 @@
         catch (e) {
             return true;
         } })() };
+    const HOME_GRID0 = { x: HOME.EDGE.x, y: HOME.FLOOR.y };     // (where the grid lines start: flush with the left wall)
+    const HOME_REACH = { x: HOME.EDGE.x, y: HOME.EDGE.y, w: HOME.EDGE.w, h: HOME.FLOOR.y + HOME.FLOOR.h - HOME.EDGE.y };
     function homeSpot(d, x, y, r, doors, snap, span) {
-        const F = d.build ? HOME.EDGE : HOME.FLOOR, half = furnW(d, r || 0) / 2;
+        const F = d.build ? HOME.EDGE : HOME_REACH, half = furnW(d, r || 0) / 2;     // (furniture can go right up to the walls)
         if (d.kind === 'wall')
             return { x: clamp(Math.round(x), 44 + half, HOME.W - 44 - half), y: clamp(Math.round(y), d.h + 6, 148), ok: true };
         const top = (d.kind === 'rug' ? F.y + d.h / 2 - 20 : d.build ? F.y : F.y + 6) + (furnSlant(d, r) ? Math.round(d.w * WALL_SIDE.SB) : 0), bottom = d.kind === 'rug' ? F.y + F.h - d.h / 2 : F.y + F.h;
         let px = clamp(Math.round(x), F.x + half, F.x + F.w - half), py = clamp(Math.round(y), top, bottom);
         if (snap) {
-            const S = HOME_GRID.step, RH = HOME_GRID.rowH, F0 = HOME.FLOOR, L0 = furnSlant(d, r) ? 0 : span ? span[0] : -furnW(d, r || 0) / 2;
+            const S = HOME_GRID.step, RH = HOME_GRID.rowH, F0 = HOME_GRID0, L0 = furnSlant(d, r) ? 0 : span ? span[0] : -furnW(d, r || 0) / 2;
             const gx = v => F0.x + v * S, gy = v => F0.y + v * RH;
             const lo = Math.ceil((F.x + half + L0 - F0.x) / S - 1e-6), hi = Math.floor((F.x + F.w - half + L0 - F0.x) / S + 1e-6);
             px = gx(clamp(Math.round((x + L0 - F0.x) / S), lo, Math.max(lo, hi))) - L0;
+            if (Math.round((x + L0 - F0.x) / S) > hi && !d.build)
+                px = F.x + F.w - half;     // (and flush against the right wall too)
             const tlo = Math.ceil((top - F0.y) / RH - 1e-6), thi = Math.floor((bottom - F0.y) / RH + 1e-6);
             py = gy(clamp(Math.round((y - F0.y) / RH), tlo, Math.max(tlo, thi)));
         }
@@ -17165,7 +17169,7 @@
         return { x: px, y: py, ok: d.kind !== 'floor' || !(front || sides || back) };
     }
     function homeFootprint(d, x, y, r, open, span) {
-        const S = HOME_GRID.step, F = HOME.FLOOR, z = furnSolids(d, r, open);
+        const S = HOME_GRID.step, F = HOME_GRID0, z = furnSolids(d, r, open);
         let a, b, c, e;
         if (z.length) {
             a = Math.min(...z.map(q => q[0] - q[2]));
@@ -34190,17 +34194,18 @@
         homeGridShow() {
             const want = !!(this.homeEdit && this.homeEdit.on && HOME_GRID.on);
             if (want && !this.homeGridG) {
-                const F = HOME.FLOOR, S = HOME_GRID.step, g = this.add.graphics().setDepth(-855);
+                const F = HOME_GRID0, S = HOME_GRID.step, g = this.add.graphics().setDepth(-855);
                 const line = (x0, y0, x1, y1, major) => {
                     g.lineStyle(major ? 2 : 1, 0x1a1020, major ? 0.32 : 0.22);
                     g.lineBetween(x0 + 1, y0 + 1, x1 + 1, y1 + 1);
                     g.lineStyle(major ? 2 : 1, 0xffffff, major ? 0.5 : 0.32);
                     g.lineBetween(x0, y0, x1, y1);
                 };
-                for (let x = F.x, i = 0; x <= F.x + F.w; x += S, i++)
-                    line(x, F.y, x, F.y + F.h, i % 4 === 0);
-                for (let y = F.y, i = 0; y <= F.y + F.h; y += HOME_GRID.rowH, i++)
-                    line(F.x, y, F.x + F.w, y, i % 4 === 0);
+                const A = HOME_REACH, RH = HOME_GRID.rowH, i0 = Math.ceil((A.x - F.x) / S), j0 = Math.ceil((A.y - F.y) / RH);     // (the grid covers the whole floor, wall to wall)
+                for (let i = i0, x = F.x + i * S; x <= A.x + A.w; i++, x += S)
+                    line(x, A.y, x, A.y + A.h, ((i % 4) + 4) % 4 === 0);
+                for (let j = j0, y = F.y + j * RH; y <= A.y + A.h; j++, y += RH)
+                    line(A.x, y, A.x + A.w, y, ((j % 4) + 4) % 4 === 0);
                 this.homeGridG = g;
             }
             if (this.homeGridG)
