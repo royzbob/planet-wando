@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794529322';
+<script>window.WANDO_BUILD = '1794529657';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2426,6 +2426,23 @@
   .hg-pad { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 8px; }
   .hg-pad .btn, .hg-big { font-size: 18px !important; padding: 12px !important; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
   .hg-box.hg-wide { width: min(600px, 100%); }
+  .tv-card { display: flex; flex-direction: column; gap: 4px; padding: 10px; border: 3px solid var(--ink); border-radius: 18px; background: #3a2a22; color: #fff3dc; }
+  .tv-scr { position: relative; aspect-ratio: 4 / 3; max-height: 52vh; border: 3px solid #120b0a; border-radius: 14px; overflow: hidden; background: #000; }
+  .tv-vid { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
+  .tv-snow { position: absolute; inset: 0; display: grid; place-items: center; padding: 12px; text-align: center; color: #fff; font: 800 15px/1.3 var(--font-display); background: repeating-linear-gradient(0deg, #222 0 2px, #444 2px 4px, #2c2c2c 4px 5px); animation: tvSnow .25s steps(3) infinite; }
+  .tv-snow[hidden] { display: none; }
+  @keyframes tvSnow { to { background-position: 0 7px; } }
+  .tv-chan { font: 900 13px/1 var(--font-display); color: #ffd84d; letter-spacing: .04em; }
+  .tv-card.ad .tv-chan { color: #7dffd0; }
+  .tv-title { font: 800 16px/1.25 var(--font-display); }
+  .tv-next { font: 700 12px/1.3 var(--font-body); opacity: .8; }
+  .tv-row { display: grid; grid-template-columns: 1fr 1.3fr 1fr; gap: 8px; }
+  .tv-row .btn { touch-action: manipulation; }
+  .tv-guide { display: flex; flex-direction: column; gap: 6px; }
+  .tv-g { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 12px; background: #fff; color: var(--ink); cursor: pointer; text-align: left; touch-action: manipulation; }
+  .tv-g b { font: 800 14px/1.2 var(--font-display); }
+  .tv-g small { font: 700 11px/1.25 var(--font-body); opacity: .75; }
+  .tv-g.on { background: #ffd84d; }
   .hg-arcs { display: flex; flex-direction: column; gap: 8px; }
   .hg-arc { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border: 3px solid #120b3a; border-radius: 12px; background: #1a1038; color: var(--arc); cursor: pointer; text-align: left; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--arc) 40%, transparent); }
   .hg-arc b { font: 900 16px/1.1 var(--font-display); text-shadow: 0 0 8px var(--arc); }
@@ -33830,7 +33847,25 @@
                 if (this.homeMine)
                     saveGame();
             }
-            else if (use === 'light' || use === 'screen') {
+            else if (use === 'screen') {
+                if (!it.on) {
+                    it.on = 1;
+                    this.homeGlow(rec);
+                    if (this.homeMine)
+                        saveGame();
+                }
+                sfx.tick();
+                this.clearTarget();
+                this.vel.set(0, 0);
+                if (ui.homeGame)
+                    ui.homeGame('screen', d.name, it, () => { if (!it.on)
+                        return; it.on = 0; try {
+                        this.homeGlow(rec);
+                    }
+                    catch (e) { } if (this.homeMine)
+                        saveGame(); });
+            }
+            else if (use === 'light') {
                 it.on = it.on ? 0 : 1;
                 this.homeGlow(rec);
                 sfx.tick();
@@ -51354,6 +51389,7 @@
             return true;
         } return false; };
         function hgClose() {
+            tvStop();
             PL.g = null;
             PL.key = '';
             cancelAnimationFrame(HG.raf);
@@ -51854,8 +51890,174 @@
                 }
             });
         }, 4000);
-        ui.homeGame = (use, name, key) => { if (use === 'arcade')
-            hgArcade(name); else if (use === 'pool') {
+        // ---- Wando TV: old public-domain films and cartoons streamed from the Internet Archive, with 1950s commercial breaks ----
+        // Everyone sees the same thing at the same time (the schedule runs off the clock), so friends on the couch watch together.
+        const IA = (id, f) => 'https://archive.org/download/' + id + '/' + encodeURIComponent(f);
+        const TV_ADS = [['commercials-from-50s', 'commercials from 50s.ia.mp4', 1858], ['misc1950s-ia-copy-part2', 'misc1950s-ia-copy-part2.mp4', 603], ['AssortedPublicServiceAnnouncements', 'AssortedPublicServiceAnnouncementsOf1950s60s_512kb.mp4', 744]];
+        const MM = (t, y, n) => ['Merrie Melodies: ' + t + ' (' + y + ')', 'merrie-melodies-philip-l-oro-prints', 'Merrie Melodies - ' + t + ' (' + y + ', Philip L\'Oro print).mp4', n];
+        const SUP = (t, f, n) => ['Superman: ' + t + ' (Fleischer)', 'MaxFleischerSuperman', f, n];
+        const BB = (t, id, f, n) => ['Betty Boop: ' + t, id, f, n];
+        const TV_CH = [
+            { n: 2, name: 'Movie Night', blurb: 'Classic feature films', shows: [
+                ['House on Haunted Hill (1959)', 'house_on_haunted_hill_ipod', 'house_on_haunted_hill_512kb.mp4', 4483],
+                ['His Girl Friday (1940)', 'HisGirlFriday-1940', 'CaryGrant-1940-HisGirlFriday.mp4', 5291],
+                ['Plan 9 from Outer Space (1959)', 'plan-9-from-outer-space', 'plan-9-from-outer-space.mp4', 4700],
+                ['Carnival of Souls (1962)', 'CarnivalOfSouls_ipod', 'CarnivalOfSouls_512kb.mp4', 4979]] },
+            { n: 4, name: 'Cartoon Corner', blurb: 'Mickey, Superman, Popeye, Betty Boop and the Merrie Melodies gang', shows: [
+                ['Steamboat Willie (1928)', 'SteamboatWillie', 'Steamboat Willie.mp4', 442],
+                SUP('The Mad Scientist', 'Superman.mp4', 626), MM('Falling Hare', 1943, 490), BB('Minnie the Moocher', 'bb_minnie_the_moocher', 'bb_minnie_the_moocher_512kb.mp4', 466),
+                MM('The Wacky Wabbit', 1942, 422), ['Popeye Meets Sindbad the Sailor (1936)', 'Popeye_meetsSinbadtheSailor', 'Popeye_meetsSinbadtheSailor_512kb.mp4', 966],
+                SUP('The Mechanical Monsters', 'Superman-TheMechanicalMonsters.mp4', 614), MM('A Corny Concerto', 1943, 437), BB('The Old Man of the Mountain', 'bb_old_man_of_the_mountain', 'bb_old_man_of_the_mountain_512kb.mp4', 412),
+                MM('Daffy Duck and the Dinosaur', 1939, 451), SUP('Billion Dollar Limited', 'Superman - Billion Dollar Limited.mp4', 514), MM('Fresh Hare', 1942, 425),
+                BB('Betty in Blunderland', 'bb_betty_in_blunderland', 'bb_betty_in_blunderland_512kb.mp4', 393), SUP('The Arctic Giant', 'Superman-TheArcticGiant.mp4', 515), MM('All This and Rabbit Stew', 1941, 366),
+                ['Popeye Meets Ali Baba\'s Forty Thieves (1937)', 'PopeyeAliBaba', 'PopeyeAliBaba_512kb.mp4', 1018], MM('Hollywood Steps Out', 1941, 432), SUP('The Bulleteers', 'Superman-TheBulleteers.mp4', 480),
+                BB('Happy You and Merry Me', 'bb_happy_you', 'bb_happy_you_512kb.mp4', 395), MM('The Wabbit Who Came to Supper', 1942, 445), SUP('Electric Earthquake', 'Superman-ElectricEarthquake.mp4', 522),
+                MM('Hamateur Night', 1939, 446), BB('The Betty Boop Limited', 'TheBettyBoopLimited', 'Betty_Boop_Bimbo_and_Koko_-_The_Betty_Boop_Limited_512kb.mp4', 395), SUP('Volcano', 'Superman-Volcano.mp4', 476),
+                MM('Prest-O Change-O', 1939, 401), SUP('Terror on the Midway', 'Superman-TerrorOnTheMidway.mp4', 501), MM('The Early Worm Gets the Bird', 1940, 492),
+                SUP('Japoteurs', 'Superman-Japoteurs.mp4', 545), MM('An Itch in Time', 1943, 488), SUP('The Underground World', 'Superman-TheUndergroundWorld1943.mp4', 494),
+                MM('Robin Hood Makes Good', 1939, 452), SUP('Showdown', 'Superman-Showdown.mp4', 495), MM('Circus Today', 1940, 511), SUP('The Mummy Strikes', 'Superman-TheMummyStrikes.mp4', 468)] }
+        ];
+        const TV_BREAK = 75, TV_PART = 22 * 60;
+        TV_CH.forEach((ch, ci) => {     // (lay the channel out once: show pieces, with a commercial break after every show and every 22 minutes of a film)
+            const segs = [];
+            let t = 0, ads = 0;
+            const ad = () => { const A = TV_ADS[ads % TV_ADS.length], room = A[2] - TV_BREAK - 5, off = ((ads * 7919 + ci * 104729) % 9973) / 9973 * room; segs.push({ ad: true, title: 'Commercial break', id: A[0], f: A[1], t0: Math.floor(off), dur: TV_BREAK, at: t }); t += TV_BREAK; ads++; };
+            ch.shows.forEach(([title, id, f, len]) => {
+                for (let a = 0; a < len - 1; a += TV_PART) {
+                    const dur = Math.min(TV_PART, len - a);
+                    segs.push({ title, id, f, t0: a, dur, at: t, part: a > 0 });
+                    t += dur;
+                    if (a + TV_PART < len - 60)
+                        ad();
+                }
+                ad();
+            });
+            ch.segs = segs;
+            ch.loop = t;
+        });
+        const TV = { ch: 0, v: null, seg: null, src: '', timer: 0, ui: null, off: null, ducked: false };
+        function tvNow(ch) {
+            const C = TV_CH[ch], p = ((Date.now() / 1000 + ch * 1777) % C.loop + C.loop) % C.loop;
+            let i = 0;
+            while (i < C.segs.length - 1 && C.segs[i + 1].at <= p)
+                i++;
+            return { seg: C.segs[i], into: p - C.segs[i].at, i };
+        }
+        function tvNext(ch, i) {
+            const C = TV_CH[ch];
+            for (let k = 1; k < C.segs.length; k++) {
+                const g = C.segs[(i + k) % C.segs.length];
+                if (!g.ad && !g.part)
+                    return g;
+            }
+            return null;
+        }
+        function tvStop() {
+            clearInterval(TV.timer);
+            TV.timer = 0;
+            if (TV.v) {
+                try { TV.v.pause(); } catch (e) { }
+                TV.v.removeAttribute('src');
+                try { TV.v.load(); } catch (e) { }
+            }
+            TV.v = null;
+            TV.seg = null;
+            TV.src = '';
+            TV.ui = null;
+            if (TV.ducked && music.user)
+                music.user(false);
+            TV.ducked = false;
+        }
+        function tvTune(fresh) {     // (put the right thing on screen for this moment)
+            const U = TV.ui, v = TV.v;
+            if (!U || !v)
+                return;
+            const { seg, into, i } = tvNow(TV.ch), C = TV_CH[TV.ch], want = seg.t0 + into, url = IA(seg.id, seg.f);
+            U.chan.textContent = 'CH ' + C.n + ' · ' + C.name;
+            U.title.textContent = seg.ad ? '📺 Commercial break: 1950s ads and PSAs' : seg.title;
+            const nx = tvNext(TV.ch, i), left = Math.max(0, Math.round((seg.dur - into) / 60));
+            U.next.textContent = seg.ad ? 'Back soon: ' + C.segs[(i + 1) % C.segs.length].title : (nx ? 'Up next: ' + nx.title + (left ? ' (in about ' + left + ' min)' : '') : '');
+            U.card.classList.toggle('ad', !!seg.ad);
+            if (url !== TV.src) {
+                TV.src = url;
+                TV.seg = seg;
+                U.snow.hidden = false;
+                U.msg.textContent = 'Tuning in…';
+                v.src = url;
+                const seek = () => { v.removeEventListener('loadedmetadata', seek); try { v.currentTime = seg.t0 + tvNow(TV.ch).into; } catch (e) { } };
+                v.addEventListener('loadedmetadata', seek);
+                tvPlay();
+                return;
+            }
+            TV.seg = seg;
+            if (fresh || Math.abs(v.currentTime - want) > 15)
+                try { v.currentTime = want; } catch (e) { }
+            if (v.paused)
+                tvPlay();
+        }
+        function tvPlay() {
+            const v = TV.v, U = TV.ui;
+            if (!v)
+                return;
+            const p = v.play();
+            if (p && p.catch)
+                p.catch(() => { if (TV.v !== v)
+                    return; v.muted = true; U.mute.textContent = '🔇 Tap for sound'; v.play().catch(() => { }); });
+        }
+        function hgTv(name, off) {
+            const box = hgShell(name, 'Old movies and cartoons on Wando TV, with 1950s commercials. Your friends see the same show at the same time.');
+            box.classList.add('hg-wide');
+            const card = node('div', 'tv-card'), scr = node('div', 'tv-scr'), v = el('video', 'tv-vid', { playsinline: '', 'webkit-playsinline': '', preload: 'auto' }), snow = node('div', 'tv-snow'), msg = node('b', '', 'Tuning in…');
+            snow.append(msg);
+            scr.append(v, snow);
+            const chan = node('b', 'tv-chan', ''), title = node('div', 'tv-title', ''), next = node('small', 'tv-next', '');
+            const row = node('div', 'tv-row'), prev = el('button', 'btn', { type: 'button' }), nxt = el('button', 'btn', { type: 'button' }), mute = el('button', 'btn', { type: 'button' }), offB = el('button', 'btn', { type: 'button' });
+            prev.textContent = '◀ CH';
+            nxt.textContent = 'CH ▶';
+            mute.textContent = '🔊 Sound on';
+            offB.textContent = '⏻ Turn off';
+            row.append(prev, mute, nxt);
+            const guide = node('div', 'tv-guide');
+            TV_CH.forEach((C, k) => { const b = el('button', 'tv-g', { type: 'button' }); b.append(node('b', '', 'CH ' + C.n + ' ' + C.name), node('small', '', C.blurb)); b.addEventListener('click', () => go(k)); guide.append(b); });
+            card.append(scr, chan, title, next);
+            box.append(card, row, guide, offB, node('small', 'hg-sub', 'Films stream from the Internet Archive (archive.org). All are public domain.'));
+            TV.v = v;
+            TV.ui = { chan, title, next, snow, msg, mute, card };
+            TV.off = off;
+            if (!TV.ducked && music.user) {
+                music.user(true);
+                TV.ducked = true;
+            }
+            const mark = () => guide.querySelectorAll('.tv-g').forEach((b, k) => b.classList.toggle('on', k === TV.ch));
+            const go = k => { TV.ch = (k + TV_CH.length) % TV_CH.length; mark(); sfx.tick(); tvTune(true); };
+            prev.addEventListener('click', () => go(TV.ch - 1));
+            nxt.addEventListener('click', () => go(TV.ch + 1));
+            mute.addEventListener('click', () => { v.muted = !v.muted; mute.textContent = v.muted ? '🔇 Sound off' : '🔊 Sound on'; if (v.paused)
+                tvPlay(); });
+            offB.addEventListener('click', () => { const f = TV.off; hgClose(); if (f)
+                f(); });
+            v.addEventListener('playing', () => { snow.hidden = true; });
+            v.addEventListener('waiting', () => { msg.textContent = 'Tuning in…'; snow.hidden = false; });
+            v.addEventListener('error', () => { if (TV.v !== v)
+                return; msg.textContent = 'No signal. Check your internet, or try the other channel.'; snow.hidden = false; });
+            v.addEventListener('timeupdate', () => { const g = TV.seg; if (g && v.currentTime >= g.t0 + g.dur - 0.25)
+                tvTune(true); });
+            v.addEventListener('ended', () => tvTune(true));
+            v.addEventListener('click', () => { if (v.paused)
+                tvPlay(); });
+            mark();
+            tvTune(true);
+            TV.timer = setInterval(() => { if (!HG.el || HG.el.hidden)
+                return tvStop(); tvTune(false); }, 5000);
+            HG.keys = e => { if (e.key === 'Escape') {
+                hgClose();
+                e.stopPropagation();
+            } };
+            window.addEventListener('keydown', HG.keys, true);
+        }
+        ui.homeGame = (use, name, key, off) => { if (use === 'arcade')
+            hgArcade(name); else if (use === 'screen')
+            hgTv(name, off); else if (use === 'pool') {
             let k = 'solo';
             try {
                 k = houseKey(scene()) + ':' + Math.round(key.x) + ',' + Math.round(key.y);
