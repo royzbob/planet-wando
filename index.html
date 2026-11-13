@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794530152';
+<script>window.WANDO_BUILD = '1794530347';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -52071,15 +52071,17 @@
                 tvTune(!same);
                 tvLabels();
             }
-            const S = TV_SCR[best.d.id], img = best.img, bnd = img.getBounds(), fx = bnd.width / best.d.w, fy = bnd.height / best.d.h, flip = img.scaleX < 0;
+            const d = best.d, R = TV_SCR[d.id], ex = furnDepth(d), q = ex ? Math.min(0.93, (d.h - 2) / (d.h + ex), d.w / (d.w + 1.5 * ex)) : 0.93;     // (the set is baked a little smaller than its box: match that)
+            const S = [d.w / 2 + (R[0] - d.w / 2) * q, d.h - 1.5 + (R[1] - d.h) * q, R[2] * q, R[3] * q, R[4] * q];
+            const img = best.img, bnd = img.getBounds(), fx = bnd.width / d.w, fy = bnd.height / d.h, flip = img.scaleX < 0;
             const wx = flip ? bnd.right - (S[0] + S[2]) * fx : bnd.x + S[0] * fx, wy = bnd.y + S[1] * fy;
             const cr = cv.getBoundingClientRect(), sr = v.parentNode.getBoundingClientRect(), k = cr.width / s.scale.width, z = cam.zoom * k;
             const L = cr.left - sr.left + (cam.x + (wx - cam.worldView.x) * cam.zoom) * k, T = cr.top - sr.top + (cam.y + (wy - cam.worldView.y) * cam.zoom) * k;
             const st = v.style;
-            st.left = L.toFixed(1) + 'px';
-            st.top = T.toFixed(1) + 'px';
-            st.width = (S[2] * fx * z).toFixed(1) + 'px';
-            st.height = (S[3] * fy * z).toFixed(1) + 'px';
+            st.left = (L - 1).toFixed(1) + 'px';
+            st.top = (T - 1).toFixed(1) + 'px';
+            st.width = (S[2] * fx * z + 2).toFixed(1) + 'px';
+            st.height = (S[3] * fy * z + 2).toFixed(1) + 'px';
             st.borderRadius = (S[4] * fx * z).toFixed(1) + 'px';
             v.hidden = false;
             const vol = Math.max(0.12, Math.min(1, 1 - (Math.hypot(best.it.x - s.pz.x, best.it.y - s.pz.y) - 120) / 700));
