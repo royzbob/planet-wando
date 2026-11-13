@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794532412';
+<script>window.WANDO_BUILD = '1794532809';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -13802,7 +13802,7 @@
     const dayKey = (d = new Date()) => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
     const dayNumber = (d = new Date()) => Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
     const msToMidnight = (d = new Date()) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime() - d.getTime();
-    const PAINT = { CELL: 60, FC: 17, FR: 9, WC: 19 };     // (paint grid: floor squares and wall strips)
+    const PAINT = { CELL: 60, FC: 17, FR: 10, WC: 19, X0: 40, Y0: 176, X1: 1060, Y1: 740 };     // (version 2: the floor squares reach every wall)     // (paint grid: floor squares and wall strips)
     const HOME = { PRICE: 3000, ROOMS: [0, 4000, 8000, 15000], SIZES: ['Cottage', 'House', 'Villa', 'Manor'], MAX: 100, W: 1100, H: 800, WALL: 170, FLOOR: { x: 60, y: 214, w: 980, h: 526 }, EDGE: { x: 40, y: 176, w: 1020, h: 564 }, DOOR_Y: 470 };
     const FURN_WOODS = [['Oak', '#c98b4a', '#8a5a34', '#e6ad6a'], ['Walnut', '#7a4a2e', '#4a2a18', '#9a6a44'], ['White', '#f3efe6', '#b9b2a4', '#ffffff'], ['Black', '#3a3540', '#17131c', '#5a5462'],
         ['Pine', '#e6c58a', '#b08a4a', '#f6dfae'], ['Cherry', '#b5533c', '#7a2f20', '#d0705a']];
@@ -17215,7 +17215,8 @@
             if (Number.isInteger(R.floor) && R.floor >= 0 && R.floor < HOME_FLOORS.length)
                 room.floor = R.floor;
             const paints = (a, n, max) => (Array.isArray(a) ? a : []).filter(q => Array.isArray(q) && Number.isInteger(q[0]) && q[0] >= 0 && q[0] < n && Number.isInteger(q[1]) && q[1] >= 0 && q[1] < max).slice(0, n).map(q => [q[0], q[1]]);
-            const fp = paints(R.fp, PAINT.FC * PAINT.FR, HOME_FLOORS.length), wp = paints(R.wp, PAINT.WC, HOME_WALLS.length);
+            const fp = paints(R.pv === 2 ? R.fp : (Array.isArray(R.fp) ? R.fp : []).map(q => (Array.isArray(q) && Number.isInteger(q[0]) && q[0] >= 0 && q[0] < 153 ? [q[0] + PAINT.FC, q[1]] : null)), PAINT.FC * PAINT.FR, HOME_FLOORS.length), wp = paints(R.wp, PAINT.WC, HOME_WALLS.length);
+            room.pv = 2;
             if (fp.length)
                 room.fp = fp;
             if (wp.length)
@@ -34313,12 +34314,12 @@
         homePaintDraw() {     // (painted squares of floor and strips of wallpaper on top of the room's own)
             (this.homePaints || []).forEach(o => o.destroy());
             this.homePaints = [];
-            const R = this.homeRoom(), F = HOME.FLOOR, C = PAINT.CELL;
+            const R = this.homeRoom(), C = PAINT.CELL;
             if (this.homeAt === -1 || !R)
                 return;
             const ok = (q, n, m) => Array.isArray(q) && Number.isInteger(q[0]) && q[0] >= 0 && q[0] < n && Number.isInteger(q[1]) && q[1] >= 0 && q[1] < m;
             (R.fp || []).filter(q => ok(q, PAINT.FC * PAINT.FR, HOME_FLOORS.length)).forEach(([i, st]) => {
-                const col = i % PAINT.FC, row = Math.floor(i / PAINT.FC), x = F.x + col * C, y = F.y + row * C, w = Math.min(C, F.x + F.w - x), h = Math.min(C, F.y + F.h - y);
+                const col = i % PAINT.FC, row = Math.floor(i / PAINT.FC), x = PAINT.X0 + col * C, y = PAINT.Y0 + row * C, w = Math.min(C, PAINT.X1 - x), h = Math.min(C, PAINT.Y1 - y);
                 if (w > 0 && h > 0)
                     this.homePaints.push(this.add.tileSprite(x, y, w, h, bakeHomeFloor(this, st)).setOrigin(0).setTileScale(1 / TEX).setTilePosition(x * TEX, y * TEX).setDepth(-999));
             });
@@ -34328,12 +34329,17 @@
                     this.homePaints.push(this.add.tileSprite(x, 0, w, HOME.WALL, bakeHomeWall(this, st)).setOrigin(0).setTileScale(1 / TEX).setTilePosition(x * TEX, 0).setDepth(-949));
             });
         }
-        homePaintSnap() {     // (remember how the room looked, for Undo)
+        homePaintSnap(later) {     // (remember how the room looked, for Undo; a brush stroke only keeps it once it changes something)
             const R = this.homeRoom();
             if (!R || this.homeAt === -1)
                 return;
+            const snap = { at: this.homeAt, w: R.wall, f: R.floor, fp: R.fp ? R.fp.map(q => q.slice()) : null, wp: R.wp ? R.wp.map(q => q.slice()) : null };
+            if (later) {
+                this.homePending = snap;
+                return;
+            }
             const st = this.homeUndo = this.homeUndo || [];
-            st.push({ at: this.homeAt, w: R.wall, f: R.floor, fp: R.fp ? R.fp.map(q => q.slice()) : null, wp: R.wp ? R.wp.map(q => q.slice()) : null });
+            st.push(snap);
             if (st.length > 40)
                 st.shift();
         }
@@ -34341,7 +34347,10 @@
             const st = this.homeUndo || [];
             while (st.length && st[st.length - 1].at !== this.homeAt)
                 st.pop();
-            const u = st.pop(), R = this.homeRoom();
+            const R = this.homeRoom(), same = u => u.w === R.wall && u.f === R.floor && JSON.stringify(u.fp || []) === JSON.stringify(R.fp || []) && JSON.stringify(u.wp || []) === JSON.stringify(R.wp || []);
+            while (st.length && st[st.length - 1].at === this.homeAt && R && same(st[st.length - 1]))
+                st.pop();     // (skip steps that look just like now)
+            const u = st.length && st[st.length - 1].at === this.homeAt ? st.pop() : null;
             if (!u || !R)
                 return false;
             R.wall = u.w;
@@ -34357,10 +34366,12 @@
             this.homeStyle();
             sfx.tick();
             saveGame();
+            if (account.cloud)
+                cloudFlush();
             return true;
         }
         homePaintAt(x, y) {
-            const B = this.homeBrush, R = this.homeRoom(), F = HOME.FLOOR, C = PAINT.CELL;
+            const B = this.homeBrush, R = this.homeRoom(), C = PAINT.CELL;
             if (!B || !R || this.homeAt === -1)
                 return false;
             let key = 'fp', i = -1, base = R.floor;
@@ -34372,11 +34383,22 @@
                 i = Math.floor(x / C);
             }
             else {
-                if (x < F.x || x >= F.x + F.w || y < F.y || y >= F.y + F.h)
+                if (x < PAINT.X0 || x >= PAINT.X1 || y < PAINT.Y0 || y >= PAINT.Y1)
                     return false;
-                i = Math.floor((y - F.y) / C) * PAINT.FC + Math.floor((x - F.x) / C);
+                i = Math.floor((y - PAINT.Y0) / C) * PAINT.FC + Math.floor((x - PAINT.X0) / C);
             }
-            const want = B.erase ? base : B.style, list = R[key] = (R[key] || []).filter(q => q[0] !== i), had = (this.homePaintedAt || '') === key + i + ':' + want;
+            const want0 = B.erase ? base : B.style, now = ((R[key] || []).find(q => q[0] === i) || [i, base])[1];
+            if (now === want0)
+                return true;
+            if (this.homePending) {     // (the first real change of a stroke is what Undo goes back to)
+                const st = this.homeUndo = this.homeUndo || [];
+                st.push(this.homePending);
+                if (st.length > 40)
+                    st.shift();
+                this.homePending = null;
+            }
+            R.pv = 2;
+            const want = want0, list = R[key] = (R[key] || []).filter(q => q[0] !== i), had = (this.homePaintedAt || '') === key + i + ':' + want;
             if (want !== base)
                 list.push([i, want]);
             if (!list.length)
@@ -34604,7 +34626,7 @@
                     const wp = this.cameras.main.getWorldPoint(p.x, p.y);
                     if (!this.homeStroke) {
                         this.homeStroke = true;
-                        this.homePaintSnap();
+                        this.homePaintSnap(true);
                     }
                     this.homePaintAt(wp.x, wp.y);
                     if (this.homePaintDirty && Date.now() - (this.homePaintSavedAt || 0) > 1500) {
@@ -44460,14 +44482,14 @@
             }
         });
         const HOUSE_WAIT = 3000, HOUSE_MAX = 60000;
-        const packRoom = R => [R.wall, R.floor, R.items.map(it => [it.t, it.c, it.x, it.y, it.r || 0, it.f ? 1 : 0, it.on ? 1 : 0].concat(it.ch || Number.isInteger(it.vol) ? [it.ch || 0] : [], Number.isInteger(it.vol) ? [it.vol] : []))].concat((R.fp && R.fp.length) || (R.wp && R.wp.length) ? [[R.fp || [], R.wp || []]] : []);
+        const packRoom = R => [R.wall, R.floor, R.items.map(it => [it.t, it.c, it.x, it.y, it.r || 0, it.f ? 1 : 0, it.on ? 1 : 0].concat(it.ch || Number.isInteger(it.vol) ? [it.ch || 0] : [], Number.isInteger(it.vol) ? [it.vol] : []))].concat((R.fp && R.fp.length) || (R.wp && R.wp.length) ? [[R.fp || [], R.wp || [], 2]] : []);
         const housePack = h => JSON.stringify(h.rooms.map(packRoom).concat(h.yard ? [['Y'].concat(packRoom(h.yard))] : [], h.wx ? [['W', h.wx]] : []));
         function houseUnpack(text) {
             try {
                 const a = JSON.parse(text);
                 if (!Array.isArray(a) || !a.length)
                     return null;
-                const room = R => (Array.isArray(R) ? { wall: R[0], floor: R[1], items: (Array.isArray(R[2]) ? R[2] : []).map(q => (Array.isArray(q) ? { t: q[0], c: q[1], x: q[2], y: q[3], r: q[4], f: q[5], on: q[6], ch: q[7], vol: q[8] } : null)), fp: Array.isArray(R[3]) ? R[3][0] : null, wp: Array.isArray(R[3]) ? R[3][1] : null } : null);
+                const room = R => (Array.isArray(R) ? { wall: R[0], floor: R[1], items: (Array.isArray(R[2]) ? R[2] : []).map(q => (Array.isArray(q) ? { t: q[0], c: q[1], x: q[2], y: q[3], r: q[4], f: q[5], on: q[6], ch: q[7], vol: q[8] } : null)), fp: Array.isArray(R[3]) ? R[3][0] : null, wp: Array.isArray(R[3]) ? R[3][1] : null, pv: Array.isArray(R[3]) ? R[3][2] : 0 } : null);
                 const wx = a.length > 1 && Array.isArray(a[a.length - 1]) && a[a.length - 1][0] === 'W' ? a.pop()[1] : null;
                 const y = a.length > 1 && Array.isArray(a[a.length - 1]) && a[a.length - 1][0] === 'Y' ? a.pop().slice(1) : null;
                 const rooms = a.map(room);
