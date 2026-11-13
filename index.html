@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794529657';
+<script>window.WANDO_BUILD = '1794529895';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2426,6 +2426,9 @@
   .hg-pad { display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 8px; }
   .hg-pad .btn, .hg-big { font-size: 18px !important; padding: 12px !important; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
   .hg-box.hg-wide { width: min(600px, 100%); }
+  .room-tv { position: absolute; z-index: 1; object-fit: cover; background: #000; pointer-events: none; }
+  .room-tv[hidden] { display: none; }
+  .room-tv.snow { background: repeating-linear-gradient(0deg, #222 0 2px, #555 2px 3px, #2c2c2c 3px 5px); }
   .tv-card { display: flex; flex-direction: column; gap: 4px; padding: 10px; border: 3px solid var(--ink); border-radius: 18px; background: #3a2a22; color: #fff3dc; }
   .tv-scr { position: relative; aspect-ratio: 4 / 3; max-height: 52vh; border: 3px solid #120b0a; border-radius: 14px; overflow: hidden; background: #000; }
   .tv-vid { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
@@ -33848,13 +33851,15 @@
                     saveGame();
             }
             else if (use === 'screen') {
+                sfx.tick();
                 if (!it.on) {
                     it.on = 1;
                     this.homeGlow(rec);
                     if (this.homeMine)
                         saveGame();
+                    this.note('TV on! Tap it again for the remote.', '#9fd0ff');
+                    return;
                 }
-                sfx.tick();
                 this.clearTarget();
                 this.vel.set(0, 0);
                 if (ui.homeGame)
@@ -34198,6 +34203,11 @@
         }
         homeUpdate() {
             const E = this.homeEdit;
+            if (ui.roomTv)
+                try {
+                    ui.roomTv(this);
+                }
+                catch (e) { }
             if (this.homeBrush && E.on && !E.held) {
                 const p = this.input.activePointer;
                 if (p.isDown) {
@@ -51935,7 +51945,8 @@
             ch.segs = segs;
             ch.loop = t;
         });
-        const TV = { ch: 0, v: null, seg: null, src: '', timer: 0, ui: null, off: null, ducked: false };
+        const TV = { ch: 0, muted: false, v: null, rec: null, src: '', seg: null, seen: 0, ui: null, off: null, ducked: false, vol: 1, tune: 0 };
+        const TV_SCR = { tv: [11, 9, 80, 42, 3], retrotv: [9, 22, 44, 38, 10], bigtv: [9, 9, 126, 54, 2], flattv: [7, 7, 98, 52, 2] };     // (where the glass is on each set)
         function tvNow(ch) {
             const C = TV_CH[ch], p = ((Date.now() / 1000 + ch * 1777) % C.loop + C.loop) % C.loop;
             let i = 0;
@@ -51952,103 +51963,156 @@
             }
             return null;
         }
-        function tvStop() {
-            clearInterval(TV.timer);
-            TV.timer = 0;
-            if (TV.v) {
-                try { TV.v.pause(); } catch (e) { }
-                TV.v.removeAttribute('src');
-                try { TV.v.load(); } catch (e) { }
-            }
-            TV.v = null;
+        function tvStop() {     // (closing the remote: the picture stays on the TV in the room)
+            TV.ui = null;
+            TV.off = null;
+        }
+        function tvVideo() {
+            if (TV.v)
+                return TV.v;
+            const v = TV.v = el('video', 'room-tv', { playsinline: '', 'webkit-playsinline': '', preload: 'auto', 'aria-hidden': 'true' });
+            v.hidden = true;
+            document.getElementById('stage').appendChild(v);
+            v.addEventListener('timeupdate', () => { const g = TV.seg; if (g && v.currentTime >= g.t0 + g.dur - 0.25)
+                tvTune(true); });
+            v.addEventListener('ended', () => tvTune(true));
+            v.addEventListener('playing', () => v.classList.remove('snow'));
+            v.addEventListener('waiting', () => v.classList.add('snow'));
+            v.addEventListener('error', () => { if (TV.src)
+                v.classList.add('snow'); });
+            setInterval(() => { if (TV.rec && performance.now() - TV.seen > 400)
+                tvOff(); else if (TV.rec)
+                tvTune(false); tvLabels(); }, 1000);
+            return v;
+        }
+        function tvOff() {     // (no TV on in front of you: stop the stream)
+            const v = TV.v;
+            TV.rec = null;
             TV.seg = null;
             TV.src = '';
-            TV.ui = null;
+            if (v) {
+                v.hidden = true;
+                try { v.pause(); } catch (e) { }
+                v.removeAttribute('src');
+                try { v.load(); } catch (e) { }
+            }
             if (TV.ducked && music.user)
                 music.user(false);
             TV.ducked = false;
         }
-        function tvTune(fresh) {     // (put the right thing on screen for this moment)
-            const U = TV.ui, v = TV.v;
-            if (!U || !v)
+        function tvPlay() {
+            const v = TV.v;
+            if (!v)
                 return;
-            const { seg, into, i } = tvNow(TV.ch), C = TV_CH[TV.ch], want = seg.t0 + into, url = IA(seg.id, seg.f);
-            U.chan.textContent = 'CH ' + C.n + ' · ' + C.name;
-            U.title.textContent = seg.ad ? '📺 Commercial break: 1950s ads and PSAs' : seg.title;
-            const nx = tvNext(TV.ch, i), left = Math.max(0, Math.round((seg.dur - into) / 60));
-            U.next.textContent = seg.ad ? 'Back soon: ' + C.segs[(i + 1) % C.segs.length].title : (nx ? 'Up next: ' + nx.title + (left ? ' (in about ' + left + ' min)' : '') : '');
-            U.card.classList.toggle('ad', !!seg.ad);
+            v.muted = TV.muted;
+            const p = v.play();
+            if (p && p.catch)
+                p.catch(() => { if (TV.v !== v || v.muted)
+                    return; v.muted = true; TV.blocked = true; tvLabels(); v.play().catch(() => { }); });
+        }
+        function tvTune(fresh) {     // (put the right thing on the set for this moment of the schedule)
+            const v = TV.v;
+            if (!v || !TV.rec)
+                return;
+            const { seg, into } = tvNow(TV.ch), want = seg.t0 + into, url = IA(seg.id, seg.f);
             if (url !== TV.src) {
                 TV.src = url;
                 TV.seg = seg;
-                U.snow.hidden = false;
-                U.msg.textContent = 'Tuning in…';
+                v.classList.add('snow');
                 v.src = url;
                 const seek = () => { v.removeEventListener('loadedmetadata', seek); try { v.currentTime = seg.t0 + tvNow(TV.ch).into; } catch (e) { } };
                 v.addEventListener('loadedmetadata', seek);
                 tvPlay();
+                tvLabels();
                 return;
             }
-            TV.seg = seg;
-            if (fresh || Math.abs(v.currentTime - want) > 15)
+            if (TV.seg !== seg) {
+                TV.seg = seg;
+                tvLabels();
+            }
+            if ((fresh || Math.abs(v.currentTime - want) > 15) && v.readyState > 0)
                 try { v.currentTime = want; } catch (e) { }
             if (v.paused)
                 tvPlay();
         }
-        function tvPlay() {
-            const v = TV.v, U = TV.ui;
-            if (!v)
+        function tvLabels() {
+            const U = TV.ui;
+            if (!U)
                 return;
-            const p = v.play();
-            if (p && p.catch)
-                p.catch(() => { if (TV.v !== v)
-                    return; v.muted = true; U.mute.textContent = '🔇 Tap for sound'; v.play().catch(() => { }); });
+            const { seg, into, i } = tvNow(TV.ch), C = TV_CH[TV.ch], nx = tvNext(TV.ch, i), left = nx ? Math.max(0, Math.round((((nx.at - seg.at - into) % C.loop) + C.loop) % C.loop / 60)) : 0;
+            U.chan.textContent = 'CH ' + C.n + ' · ' + C.name;
+            U.title.textContent = seg.ad ? '📺 Commercial break: 1950s ads and PSAs' : seg.title;
+            U.next.textContent = seg.ad ? 'Back soon: ' + C.segs[(i + 1) % C.segs.length].title : nx ? 'Up next: ' + nx.title + (left ? ' (in about ' + left + ' min)' : '') : '';
+            U.card.classList.toggle('ad', !!seg.ad);
+            U.mute.textContent = TV.muted || (TV.v && TV.v.muted) ? '🔇 Sound off' : '🔊 Sound on';
+            U.guide.querySelectorAll('.tv-g').forEach((b, k) => b.classList.toggle('on', k === TV.ch));
         }
-        function hgTv(name, off) {
-            const box = hgShell(name, 'Old movies and cartoons on Wando TV, with 1950s commercials. Your friends see the same show at the same time.');
-            box.classList.add('hg-wide');
-            const card = node('div', 'tv-card'), scr = node('div', 'tv-scr'), v = el('video', 'tv-vid', { playsinline: '', 'webkit-playsinline': '', preload: 'auto' }), snow = node('div', 'tv-snow'), msg = node('b', '', 'Tuning in…');
-            snow.append(msg);
-            scr.append(v, snow);
-            const chan = node('b', 'tv-chan', ''), title = node('div', 'tv-title', ''), next = node('small', 'tv-next', '');
+        ui.roomTv = s => {     // (every frame at home: show the picture on the nearest TV that's on and facing out)
+            let best = null, bd = Infinity;
+            (s.homeRecs || []).forEach(rec => { const d = rec.d, it = rec.it; if (!it.on || !TV_SCR[d.id] || (it.r || 0) !== 0 || !rec.img || !rec.img.active)
+                return; const dd = Math.hypot(it.x - s.pz.x, it.y - s.pz.y); if (dd < bd) {
+                bd = dd;
+                best = rec;
+            } });
+            if (!best) {
+                if (TV.rec)
+                    tvOff();
+                return;
+            }
+            const v = tvVideo(), cv = s.game.canvas, cam = s.cameras.main;
+            TV.seen = performance.now();
+            if (TV.rec !== best) {
+                TV.rec = best;
+                TV.src = '';
+                tvTune(true);
+            }
+            const S = TV_SCR[best.d.id], img = best.img, bnd = img.getBounds(), fx = bnd.width / best.d.w, fy = bnd.height / best.d.h, flip = img.scaleX < 0;
+            const wx = flip ? bnd.right - (S[0] + S[2]) * fx : bnd.x + S[0] * fx, wy = bnd.y + S[1] * fy;
+            const cr = cv.getBoundingClientRect(), sr = v.parentNode.getBoundingClientRect(), k = cr.width / s.scale.width, z = cam.zoom * k;
+            const L = cr.left - sr.left + (cam.x + (wx - cam.worldView.x) * cam.zoom) * k, T = cr.top - sr.top + (cam.y + (wy - cam.worldView.y) * cam.zoom) * k;
+            const st = v.style;
+            st.left = L.toFixed(1) + 'px';
+            st.top = T.toFixed(1) + 'px';
+            st.width = (S[2] * fx * z).toFixed(1) + 'px';
+            st.height = (S[3] * fy * z).toFixed(1) + 'px';
+            st.borderRadius = (S[4] * fx * z).toFixed(1) + 'px';
+            v.hidden = false;
+            const vol = Math.max(0.12, Math.min(1, 1 - (bd - 120) / 700));
+            if (Math.abs(vol - TV.vol) > 0.04) {
+                TV.vol = vol;
+                v.volume = vol;
+            }
+            const loud = !v.muted && !v.paused;
+            if (loud !== TV.ducked && music.user) {
+                music.user(loud);
+                TV.ducked = loud;
+            }
+        };
+        function hgTv(name, off, it) {     // (the remote: channels, sound, off. The picture plays on the TV itself)
+            const box = hgShell(name + ' remote', it && (it.r || 0) !== 0 ? 'Turn the TV to face the room to see the picture. ' : 'The show plays right on your TV. Friends in the house see the same thing at the same time.');
+            const card = node('div', 'tv-card'), chan = node('b', 'tv-chan', ''), title = node('div', 'tv-title', ''), next = node('small', 'tv-next', '');
             const row = node('div', 'tv-row'), prev = el('button', 'btn', { type: 'button' }), nxt = el('button', 'btn', { type: 'button' }), mute = el('button', 'btn', { type: 'button' }), offB = el('button', 'btn', { type: 'button' });
             prev.textContent = '◀ CH';
             nxt.textContent = 'CH ▶';
-            mute.textContent = '🔊 Sound on';
             offB.textContent = '⏻ Turn off';
             row.append(prev, mute, nxt);
             const guide = node('div', 'tv-guide');
             TV_CH.forEach((C, k) => { const b = el('button', 'tv-g', { type: 'button' }); b.append(node('b', '', 'CH ' + C.n + ' ' + C.name), node('small', '', C.blurb)); b.addEventListener('click', () => go(k)); guide.append(b); });
-            card.append(scr, chan, title, next);
+            card.append(chan, title, next);
             box.append(card, row, guide, offB, node('small', 'hg-sub', 'Films stream from the Internet Archive (archive.org). All are public domain.'));
-            TV.v = v;
-            TV.ui = { chan, title, next, snow, msg, mute, card };
+            TV.ui = { chan, title, next, mute, card, guide };
             TV.off = off;
-            if (!TV.ducked && music.user) {
-                music.user(true);
-                TV.ducked = true;
-            }
-            const mark = () => guide.querySelectorAll('.tv-g').forEach((b, k) => b.classList.toggle('on', k === TV.ch));
-            const go = k => { TV.ch = (k + TV_CH.length) % TV_CH.length; mark(); sfx.tick(); tvTune(true); };
+            const go = k => { TV.ch = (k + TV_CH.length) % TV_CH.length; sfx.tick(); TV.src = ''; tvTune(true); tvLabels(); };
             prev.addEventListener('click', () => go(TV.ch - 1));
             nxt.addEventListener('click', () => go(TV.ch + 1));
-            mute.addEventListener('click', () => { v.muted = !v.muted; mute.textContent = v.muted ? '🔇 Sound off' : '🔊 Sound on'; if (v.paused)
-                tvPlay(); });
+            mute.addEventListener('click', () => { const v = TV.v, quiet = TV.muted || (v && v.muted); TV.muted = !quiet; TV.blocked = false; if (v) {
+                v.muted = TV.muted;
+                if (v.paused)
+                    tvPlay();
+            } tvLabels(); });
             offB.addEventListener('click', () => { const f = TV.off; hgClose(); if (f)
                 f(); });
-            v.addEventListener('playing', () => { snow.hidden = true; });
-            v.addEventListener('waiting', () => { msg.textContent = 'Tuning in…'; snow.hidden = false; });
-            v.addEventListener('error', () => { if (TV.v !== v)
-                return; msg.textContent = 'No signal. Check your internet, or try the other channel.'; snow.hidden = false; });
-            v.addEventListener('timeupdate', () => { const g = TV.seg; if (g && v.currentTime >= g.t0 + g.dur - 0.25)
-                tvTune(true); });
-            v.addEventListener('ended', () => tvTune(true));
-            v.addEventListener('click', () => { if (v.paused)
-                tvPlay(); });
-            mark();
-            tvTune(true);
-            TV.timer = setInterval(() => { if (!HG.el || HG.el.hidden)
-                return tvStop(); tvTune(false); }, 5000);
+            tvLabels();
             HG.keys = e => { if (e.key === 'Escape') {
                 hgClose();
                 e.stopPropagation();
@@ -52057,7 +52121,7 @@
         }
         ui.homeGame = (use, name, key, off) => { if (use === 'arcade')
             hgArcade(name); else if (use === 'screen')
-            hgTv(name, off); else if (use === 'pool') {
+            hgTv(name, off, key); else if (use === 'pool') {
             let k = 'solo';
             try {
                 k = houseKey(scene()) + ':' + Math.round(key.x) + ',' + Math.round(key.y);
