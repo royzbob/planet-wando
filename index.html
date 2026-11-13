@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794529895';
+<script>window.WANDO_BUILD = '1794530152';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -17052,7 +17052,7 @@
                 if (!it || !good(it.t, it.c) || !Number.isFinite(it.x) || !Number.isFinite(it.y))
                     return;
                 const d = FURN_BY[it.t], r = furnTurns(d) && Number.isInteger(it.r) && it.r >= 0 && it.r < 4 ? it.r : 0, s = homeSpot(d, it.x, it.y, r);
-                room.items.push({ t: it.t, c: it.c, x: s.x, y: s.y, r, f: it.f ? 1 : 0, on: it.on ? 1 : 0 });
+                room.items.push(Object.assign({ t: it.t, c: it.c, x: s.x, y: s.y, r, f: it.f ? 1 : 0, on: it.on ? 1 : 0 }, Number.isInteger(it.ch) && it.ch > 0 && it.ch < 16 ? { ch: it.ch } : {}));
             });
             return room;
         });
@@ -43946,14 +43946,14 @@
             }
         });
         const HOUSE_WAIT = 3000, HOUSE_MAX = 60000;
-        const packRoom = R => [R.wall, R.floor, R.items.map(it => [it.t, it.c, it.x, it.y, it.r || 0, it.f ? 1 : 0, it.on ? 1 : 0])].concat((R.fp && R.fp.length) || (R.wp && R.wp.length) ? [[R.fp || [], R.wp || []]] : []);
+        const packRoom = R => [R.wall, R.floor, R.items.map(it => [it.t, it.c, it.x, it.y, it.r || 0, it.f ? 1 : 0, it.on ? 1 : 0].concat(it.ch ? [it.ch] : []))].concat((R.fp && R.fp.length) || (R.wp && R.wp.length) ? [[R.fp || [], R.wp || []]] : []);
         const housePack = h => JSON.stringify(h.rooms.map(packRoom).concat(h.yard ? [['Y'].concat(packRoom(h.yard))] : []));
         function houseUnpack(text) {
             try {
                 const a = JSON.parse(text);
                 if (!Array.isArray(a) || !a.length)
                     return null;
-                const room = R => (Array.isArray(R) ? { wall: R[0], floor: R[1], items: (Array.isArray(R[2]) ? R[2] : []).map(q => (Array.isArray(q) ? { t: q[0], c: q[1], x: q[2], y: q[3], r: q[4], f: q[5], on: q[6] } : null)), fp: Array.isArray(R[3]) ? R[3][0] : null, wp: Array.isArray(R[3]) ? R[3][1] : null } : null);
+                const room = R => (Array.isArray(R) ? { wall: R[0], floor: R[1], items: (Array.isArray(R[2]) ? R[2] : []).map(q => (Array.isArray(q) ? { t: q[0], c: q[1], x: q[2], y: q[3], r: q[4], f: q[5], on: q[6], ch: q[7] } : null)), fp: Array.isArray(R[3]) ? R[3][0] : null, wp: Array.isArray(R[3]) ? R[3][1] : null } : null);
                 const y = a.length > 1 && Array.isArray(a[a.length - 1]) && a[a.length - 1][0] === 'Y' ? a.pop().slice(1) : null;
                 const rooms = a.map(room);
                 if (y)
@@ -51980,7 +51980,7 @@
             v.addEventListener('waiting', () => v.classList.add('snow'));
             v.addEventListener('error', () => { if (TV.src)
                 v.classList.add('snow'); });
-            setInterval(() => { if (TV.rec && performance.now() - TV.seen > 400)
+            setInterval(() => { if (TV.rec && performance.now() - TV.seen > 1500)
                 tvOff(); else if (TV.rec)
                 tvTune(false); tvLabels(); }, 1000);
             return v;
@@ -52050,7 +52050,7 @@
         ui.roomTv = s => {     // (every frame at home: show the picture on the nearest TV that's on and facing out)
             let best = null, bd = Infinity;
             (s.homeRecs || []).forEach(rec => { const d = rec.d, it = rec.it; if (!it.on || !TV_SCR[d.id] || (it.r || 0) !== 0 || !rec.img || !rec.img.active)
-                return; const dd = Math.hypot(it.x - s.pz.x, it.y - s.pz.y); if (dd < bd) {
+                return; const dd = Math.hypot(it.x - s.pz.x, it.y - s.pz.y) - (TV.rec && TV.rec.it === it ? 150 : 0); if (dd < bd) {
                 bd = dd;
                 best = rec;
             } });
@@ -52061,10 +52061,15 @@
             }
             const v = tvVideo(), cv = s.game.canvas, cam = s.cameras.main;
             TV.seen = performance.now();
-            if (TV.rec !== best) {
+            const ch = Number.isInteger(best.it.ch) && best.it.ch < TV_CH.length ? best.it.ch : 0;
+            if (TV.rec !== best || TV.ch !== ch) {
+                const same = TV.rec && TV.ch === ch;
                 TV.rec = best;
-                TV.src = '';
-                tvTune(true);
+                TV.ch = ch;
+                if (!same)
+                    TV.src = '';
+                tvTune(!same);
+                tvLabels();
             }
             const S = TV_SCR[best.d.id], img = best.img, bnd = img.getBounds(), fx = bnd.width / best.d.w, fy = bnd.height / best.d.h, flip = img.scaleX < 0;
             const wx = flip ? bnd.right - (S[0] + S[2]) * fx : bnd.x + S[0] * fx, wy = bnd.y + S[1] * fy;
@@ -52077,7 +52082,7 @@
             st.height = (S[3] * fy * z).toFixed(1) + 'px';
             st.borderRadius = (S[4] * fx * z).toFixed(1) + 'px';
             v.hidden = false;
-            const vol = Math.max(0.12, Math.min(1, 1 - (bd - 120) / 700));
+            const vol = Math.max(0.12, Math.min(1, 1 - (Math.hypot(best.it.x - s.pz.x, best.it.y - s.pz.y) - 120) / 700));
             if (Math.abs(vol - TV.vol) > 0.04) {
                 TV.vol = vol;
                 v.volume = vol;
@@ -52102,7 +52107,14 @@
             box.append(card, row, guide, offB, node('small', 'hg-sub', 'Films stream from the Internet Archive (archive.org). All are public domain.'));
             TV.ui = { chan, title, next, mute, card, guide };
             TV.off = off;
-            const go = k => { TV.ch = (k + TV_CH.length) % TV_CH.length; sfx.tick(); TV.src = ''; tvTune(true); tvLabels(); };
+            if (it && Number.isInteger(it.ch) && it.ch < TV_CH.length)
+                TV.ch = it.ch;
+            const go = k => { TV.ch = (k + TV_CH.length) % TV_CH.length; sfx.tick(); if (it) {
+                it.ch = TV.ch || undefined;
+                const s = scene();
+                if (s && s.homeMine)
+                    saveGame();
+            } TV.src = ''; tvTune(true); tvLabels(); };
             prev.addEventListener('click', () => go(TV.ch - 1));
             nxt.addEventListener('click', () => go(TV.ch + 1));
             mute.addEventListener('click', () => { const v = TV.v, quiet = TV.muted || (v && v.muted); TV.muted = !quiet; TV.blocked = false; if (v) {
