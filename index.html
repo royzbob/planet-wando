@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794530822';
+<script>window.WANDO_BUILD = '1794531415';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2429,6 +2429,12 @@
   .room-tv { position: absolute; z-index: 1; object-fit: cover; background: #000; pointer-events: none; }
   .room-tv[hidden] { display: none; }
   .room-tv.snow { background: repeating-linear-gradient(0deg, #222 0 2px, #555 2px 3px, #2c2c2c 3px 5px); }
+  .hg-dial { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 12px; background: #fff; }
+  .hg-dial b { font: 800 14px/1.2 var(--font-display); }
+  .hg-dial input { width: 100%; height: 32px; accent-color: #ff8a1e; touch-action: manipulation; }
+  .hg-wx { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hg-wx .btn:first-child { grid-column: 1 / -1; }
+  .hg-wx .btn.on { background: #7dffd0 !important; }
   .tv-card { display: flex; flex-direction: column; gap: 4px; padding: 10px; border: 3px solid var(--ink); border-radius: 18px; background: #3a2a22; color: #fff3dc; }
   .tv-scr { position: relative; aspect-ratio: 4 / 3; max-height: 52vh; border: 3px solid #120b0a; border-radius: 14px; overflow: hidden; background: #000; }
   .tv-vid { width: 100%; height: 100%; object-fit: contain; display: block; background: #000; }
@@ -7184,7 +7190,87 @@
             ['sawtooth', 48, 130, 0.5, 11, 6, 700, 0.65, 0.5], ['sawtooth', 64, 190, 0.35, 20, 4, 1100, 0.55, 0.5], ['square', 52, 140, 0.3, 8, 7, 800, 0.5, 0.5],
             ['sawtooth', 90, 330, 0.25, 40, 6, 2400, 0.5, 0.5], ['sawtooth', 34, 95, 0.8, 13, 5, 520, 0.9, 0.5], ['sine', 240, 520, 0.45, 6, 22, 3200, 0.75, 1.5]];
         const hums = new Map();
+        const ambs = new Map(), ambBufs = {};
+        const AMB = {     // (looping ambience: filtered noise shaped like rain, wind or a fire's roar)
+            rain: { buf: 'white', type: 'bandpass', f: 2200, q: 0.35, g: 0.5 },
+            rain_in: { buf: 'white', type: 'lowpass', f: 700, q: 0.4, g: 0.75 },
+            wind: { buf: 'brown', type: 'lowpass', f: 520, q: 1.2, g: 1.1, lfo: 0.13, depth: 320 },
+            wind_in: { buf: 'brown', type: 'lowpass', f: 260, q: 0.9, g: 1, lfo: 0.11, depth: 120 },
+            fire: { buf: 'brown', type: 'lowpass', f: 420, q: 0.6, g: 1.3, lfo: 0.7, depth: 90 }
+        };
+        const ambBuf = (a, kind) => {
+            if (ambBufs[kind])
+                return ambBufs[kind];
+            const n = a.sampleRate * 3, b = a.createBuffer(1, n, a.sampleRate), d = b.getChannelData(0);
+            let last = 0;
+            for (let i = 0; i < n; i++) {
+                const w = Math.random() * 2 - 1;
+                if (kind === 'brown') {
+                    last = (last + 0.02 * w) / 1.02;
+                    d[i] = last * 3.5;
+                }
+                else
+                    d[i] = w;
+            }
+            return ambBufs[kind] = b;
+        };
+        setInterval(() => { const now = Date.now(); for (const [k, h] of ambs)
+            if (now - h.seen > 1500) {
+                ambs.delete(k);
+                try {
+                    h.g.gain.setTargetAtTime(0.0001, h.a.currentTime, 0.25);
+                }
+                catch (e) { }
+                setTimeout(() => { try {
+                    h.src.stop();
+                    if (h.lfo)
+                        h.lfo.stop();
+                    h.g.disconnect();
+                }
+                catch (e) { } }, 1200);
+            } }, 500);
         return {
+            amb: (key, model, vol) => {     // (keep a loop going: call at least once a second, or it fades out)
+                const a = get(), M = AMB[model];
+                if (!a || !M)
+                    return;
+                let h = ambs.get(key);
+                if (h && h.model !== model) {
+                    h.seen = 0;
+                    h = null;
+                }
+                if (!h) {
+                    const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+                    src.buffer = ambBuf(a, M.buf);
+                    src.loop = true;
+                    f.type = M.type;
+                    f.frequency.value = M.f;
+                    f.Q.value = M.q;
+                    g.gain.value = 0.0001;
+                    src.connect(f);
+                    f.connect(g);
+                    g.connect(a.destination);
+                    let lfo = null;
+                    if (M.lfo) {
+                        lfo = a.createOscillator();
+                        const lg = a.createGain();
+                        lfo.frequency.value = M.lfo;
+                        lg.gain.value = M.depth;
+                        lfo.connect(lg);
+                        lg.connect(f.frequency);
+                        lfo.start();
+                    }
+                    src.start(0, Math.random() * 2);
+                    h = { a, src, f, g, lfo, model, seen: 0, v: -1 };
+                    ambs.set(key + '', h);
+                }
+                h.seen = Date.now();
+                const v = AUDIO.muted || AUDIO.fx === false ? 0 : Math.max(0, vol) * M.g * 0.16 * AUDIO.duck * (AUDIO.fvol ?? 0.7);
+                if (Math.abs(v - h.v) > 0.002) {
+                    h.v = v;
+                    h.g.gain.setTargetAtTime(Math.max(0.0001, v), a.currentTime, 0.35);
+                }
+            },
             unlock: get,
             note: (f, dur, vol, type) => blip(f, f * 0.998, dur || 0.4, vol || 0.12, type || 'triangle'),
             noise: (dur, vol, f0, f1, q) => hiss(dur, vol, f0, f1, q),
@@ -13369,6 +13455,7 @@
     }
     const RAIN = { value: 3, max: 14, from: 30, mins: 2, force: false };
     const WEATHER = { force: '', bite: 0.75, places: ['green', 'beach'] };
+    const WX_KINDS = ['clear', 'rain', 'snow', 'leaves'];
     const seasonNow = (d = new Date()) => { const m = d.getMonth(); return m === 11 || m <= 1 ? 'winter' : m <= 4 ? 'spring' : m <= 7 ? 'summer' : 'fall'; };
     const weatherNow = (d = new Date()) => { if (WEATHER.force)
         return WEATHER.force; const h = dunHash(Math.floor(d.getTime() / 3600000), 6061) % 100, se = seasonNow(d);     // (it changes every hour: snow in winter, blowing leaves in fall, rain any time)
@@ -16130,6 +16217,29 @@
                 fbox(c, 64, 12, 4, 66, 1, P.a, 1.2);
                 fbox(c, 0, 80, 132, 10, 3, P.b, 1.6);
             } },
+        { id: 'wallfire', name: 'Wall fireplace', cat: 'wall', kind: 'wall', price: 2200, w: 116, h: 100, pal: '', nu: true, draw(c) {
+                fbox(c, 4, 10, 108, 88, 4, '#a8a29a');
+                c.strokeStyle = 'rgba(58,42,34,.3)';
+                c.lineWidth = 1.5;
+                c.beginPath();
+                for (let y = 26; y < 96; y += 14) {
+                    c.moveTo(6, y);
+                    c.lineTo(110, y);
+                }
+                for (let i = 0; i < 14; i++) {
+                    const x = 14 + (i % 7) * 15 + (Math.floor(i / 7) % 2 ? 7 : 0), y = 12 + Math.floor(i / 7) * 14;
+                    c.moveTo(x, y);
+                    c.lineTo(x, y + 14);
+                }
+                c.stroke();
+                inked(c, '#2b2233', FL, 2, k => { k.moveTo(28, 96); k.lineTo(28, 58); k.arc(58, 58, 30, Math.PI, 0); k.lineTo(88, 96); k.closePath(); });
+                c.fillStyle = 'rgba(255,120,40,.18)';
+                oval(c, 58, 91, 22, 5);
+                fbox(c, 37, 87, 42, 6, 3, '#6a3f26', 1.4);
+                fbox(c, 43, 91, 32, 6, 3, '#7a4a2e', 1.4);
+                fbox(c, 0, 2, 116, 12, 3, '#c98b4a');
+                fbox(c, 22, 94, 72, 5, 2, '#5a5560', 1.2);
+            } },
         { id: 'roundwin', name: 'Round window', cat: 'wall', kind: 'wall', price: 420, w: 72, h: 72, pal: 'wood', nu: true, draw(c, P) {
                 inked(c, P.a, FL, 2, k => k.arc(36, 36, 33, 0, TAU));
                 const g = c.createLinearGradient(0, 10, 0, 62);
@@ -16150,12 +16260,13 @@
     FURN.forEach(d => { d.kind = d.kind || 'floor'; FURN_BY[d.id] = d; });
     const furnColors = d => (d.pal === 'wood' ? FURN_WOODS.length : d.pal === 'fabric' ? FURN_FABRICS.length : 1);
     const furnKey = (id, c) => id + ':' + c;
+    const HOME_FIRE = { fireplace: { cx: 57, base: 95, logs: [[36, 92, 42], [42, 96, 32]] }, wallfire: { cx: 58, base: 90, logs: [[37, 87, 42], [43, 91, 32]] } };     // (where the flames sit in each fireplace)
     const HOME_WIN = {     // (glass and window bars, so the weather outside shows through)
-        window: { glass: [[29, 13], [61, 13], [68, 40], [73, 77], [17, 77], [22, 40]], bars: [[43, 13, 4, 64], [22, 43, 46, 4]] },
-        picwindow: { glass: [[12, 12], [120, 12], [120, 78], [12, 78]], bars: [[64, 12, 4, 66]], bar: 'wood' },
+        window: { glass: [[29, 13], [61, 13], [68, 40], [73, 77], [17, 77], [22, 40]], bars: [[43, 13, 4, 64], [22, 43, 46, 4]], sill: [18, 72, 77] },
+        picwindow: { glass: [[12, 12], [120, 12], [120, 78], [12, 78]], bars: [[64, 12, 4, 66]], bar: 'wood', sill: [12, 120, 78] },
         roundwin: { glass: [[36, 10], [46, 12], [54, 18], [60, 26], [62, 36], [60, 46], [54, 54], [46, 60], [36, 62], [26, 60], [18, 54], [12, 46], [10, 36], [12, 26], [18, 18], [26, 12]], bars: [[34, 10, 4, 52], [10, 34, 52, 4]], bar: 'wood' }
     };
-    const FURN_CORE = new Set(['picwindow', 'roundwin', 'chair', 'stool', 'armchair', 'sofa', 'beanbag', 'bench', 'dining', 'coffee', 'side', 'desk', 'round', 'bed', 'double', 'bunk', 'lamp', 'plant', 'nightstand', 'fridge', 'stove', 'sink', 'counter', 'toilet', 'basin', 'shower', 'tub', 'tv', 'bookcase', 'dresser', 'wardrobe', 'rug-round', 'rug', 'curtains', 'window', 'painting']);
+    const FURN_CORE = new Set(['picwindow', 'roundwin', 'wallfire', 'chair', 'stool', 'armchair', 'sofa', 'beanbag', 'bench', 'dining', 'coffee', 'side', 'desk', 'round', 'bed', 'double', 'bunk', 'lamp', 'plant', 'nightstand', 'fridge', 'stove', 'sink', 'counter', 'toilet', 'basin', 'shower', 'tub', 'tv', 'bookcase', 'dresser', 'wardrobe', 'rug-round', 'rug', 'curtains', 'window', 'painting']);
     const FURN_LAUNCH = { week: 4, ids: new Set(['recliner', 'chaise', 'pingpong', 'airhockey', 'punchbag', 'karaoke', 'console', 'cherrytree', 'succulents', 'kcounter', 'espresso', 'wallclock', 'mirror', 'wallshelf', 'rug-checker', 'hottub']) };
     function furnStock(d, w = armoryWeek()) {     // (the Homestead store changes every week: basics always, the rest come and go, pricey pieces rarely)
         if (!d || d.build || d.prize || FURN_CORE.has(d.id))
@@ -16210,10 +16321,10 @@
     }
     const FURN_USE = { chair: 'sit', stool: 'sit', armchair: 'sit', sofa: 'sit', beanbag: 'sit', bench: 'sit', rocker: 'sit', throne: 'sit', bed: 'sit', double: 'sit', bunk: 'sit', canopy: 'sit', hammock: 'sit', tub: 'sit', loveseat: 'sit', sectional: 'sit', eggchair: 'sit', gamerchair: 'sit', pouf: 'sit', daybed: 'sit', barstool: 'sit', cushions: 'sit', porchswing: 'sit', deskchair: 'sit', futon: 'sit', carbed: 'sit', cloudbed: 'sit', ufochair: 'sit', sleeppod: 'sit',
         lavalamp: 'light', shroomlamp: 'light', candles: 'light', discolight: 'light', rocketlamp: 'light', planetlamp: 'light', glowshroom: 'light', crystal: 'light', xmastree: 'light', pumpkin: 'light', retrotv: 'screen', bigtv: 'screen', gamingpc: 'arcade', flattv: 'screen', pinball: 'arcade', boombox: 'music', speaker: 'music', drums: 'drums', alienplush: 'hug', robot: 'hug',
-        lamp: 'light', fireplace: 'light', lights: 'light', neon: 'light', aquarium: 'light', stove: 'light', tv: 'screen', computer: 'arcade', cabinet: 'arcade', pooltable: 'pool', foosball: 'kick', hoop: 'hoop', dartboard: 'darts', rockhorse: 'sit', doorway: 'door',
+        lamp: 'light', fireplace: 'fire', wallfire: 'fire', window: 'window', picwindow: 'window', roundwin: 'window', lights: 'light', neon: 'light', aquarium: 'light', stove: 'light', tv: 'screen', computer: 'arcade', cabinet: 'arcade', pooltable: 'pool', foosball: 'kick', hoop: 'hoop', dartboard: 'darts', rockhorse: 'sit', doorway: 'door',
         jukebox: 'music', piano: 'piano', guitar: 'guitar', recliner: 'sit', chaise: 'sit', hottub: 'sit', pingpong: 'pong', airhockey: 'puck', punchbag: 'punch', karaoke: 'music', console: 'arcade', espresso: 'treat', gumball: 'treat', fridge: 'treat', teddy: 'hug' };
     const FURN_SEAT = { chair: 14, stool: 14, armchair: 16, sofa: 16, beanbag: 12, bench: 14, rocker: 14, throne: 22, bed: 46, double: 46, bunk: 30, canopy: 46, hammock: 24, tub: 18, loveseat: 16, sectional: 16, eggchair: 34, gamerchair: 18, pouf: 10, daybed: 14, barstool: 24, cushions: 6, porchswing: 22, deskchair: 16, futon: 14, carbed: 40, cloudbed: 40, ufochair: 16, sleeppod: 40, rockhorse: 20, recliner: 16, chaise: 14, hottub: 4 };
-    const FURN_GLOW = { lamp: [0xffe9a8, 2.6, 0.5, 0.82], fireplace: [0xff9a2e, 1.6, 0.5, 0.36], lights: [0xffe9a8, 1.1, 0.42, 0.5], neon: [0xff7ad9, 1.7, 0.5, 0.5], aquarium: [0x7fd0f0, 1.5, 0.4, 0.6], stove: [0xff9a2e, 1.2, 0.34, 0.4],
+    const FURN_GLOW = { lamp: [0xffe9a8, 2.6, 0.5, 0.82], fireplace: [0xff9a2e, 1.6, 0.5, 0.36], wallfire: [0xff9a2e, 1.6, 0.5, 0.3], lights: [0xffe9a8, 1.1, 0.42, 0.5], neon: [0xff7ad9, 1.7, 0.5, 0.5], aquarium: [0x7fd0f0, 1.5, 0.4, 0.6], stove: [0xff9a2e, 1.2, 0.34, 0.4],
         tv: [0x9fd0ff, 1.6, 0.5, 0.64], computer: [0x9fe8ff, 1.2, 0.45, 0.72], cabinet: [0x39ff14, 1.5, 0.4, 0.62],
         lavalamp: [0xff7ad9, 1.8, 0.45, 0.6], shroomlamp: [0xfff0b0, 2, 0.45, 0.7], candles: [0xffc860, 1.8, 0.4, 0.7], discolight: [0xc8b0ff, 2.2, 0.45, 0.8], rocketlamp: [0xffd080, 2, 0.45, 0.6], planetlamp: [0xb0d8ff, 2, 0.45, 0.72],
         glowshroom: [0x9dff5a, 1.8, 0.4, 0.5], crystal: [0xc7a6f2, 1.8, 0.45, 0.5], xmastree: [0xffe9a8, 1.4, 0.4, 0.5], pumpkin: [0xff9a2e, 1.8, 0.45, 0.5], retrotv: [0x9fd0ff, 1.4, 0.4, 0.55], bigtv: [0xff9ad5, 1.4, 0.45, 0.7], gamingpc: [0x9fe8ff, 1.3, 0.45, 0.72], flattv: [0x9fd0ff, 1.4, 0.4, 0.5], pinball: [0xffe066, 1.4, 0.4, 0.7] };
@@ -17098,7 +17209,7 @@
                 if (!it || !good(it.t, it.c) || !Number.isFinite(it.x) || !Number.isFinite(it.y))
                     return;
                 const d = FURN_BY[it.t], r = furnTurns(d) && Number.isInteger(it.r) && it.r >= 0 && it.r < 4 ? it.r : 0, s = homeSpot(d, it.x, it.y, r);
-                room.items.push(Object.assign({ t: it.t, c: it.c, x: s.x, y: s.y, r, f: it.f ? 1 : 0, on: it.on ? 1 : 0 }, Number.isInteger(it.ch) && it.ch > 0 && it.ch < 16 ? { ch: it.ch } : {}));
+                room.items.push(Object.assign({ t: it.t, c: it.c, x: s.x, y: s.y, r, f: it.f ? 1 : 0, on: it.on ? 1 : 0 }, Number.isInteger(it.ch) && it.ch > 0 && it.ch < 16 ? { ch: it.ch } : {}, Number.isInteger(it.vol) && it.vol >= 0 && it.vol <= 10 ? { vol: it.vol } : {}));
             });
             return room;
         });
@@ -17115,6 +17226,8 @@
                 out.yard.items.push({ t: it.t, c: it.c, x: s.x, y: s.y, r, f: it.f ? 1 : 0, on: it.on ? 1 : 0 });
             });
         }
+        if (typeof h.wx === 'string' && WX_KINDS.includes(h.wx))
+            out.wx = h.wx;
         out.walls = list((Array.isArray(h.walls) ? h.walls : []).concat(out.rooms.map(R => R.wall)), HOME_WALLS.length);
         out.floors = list((Array.isArray(h.floors) ? h.floors : []).concat(out.rooms.map(R => R.floor)), HOME_FLOORS.length);
         if (h.inv && typeof h.inv === 'object')
@@ -28426,6 +28539,13 @@
                 this.time.__safe = true;
             }
             const D = this.D = LOCS[this.loc];
+            this.wxKind = null;
+            this.wxG = null;
+            this.wxWash = null;
+            this.wxP = null;
+            this.rainFx = null;
+            this.rainWash = null;
+            this.wxFx = null;
             this.R = rng(D.seed);
             this.trip = null;
             this.leftAt = 0;
@@ -33921,6 +34041,26 @@
                     catch (e) { } if (this.homeMine)
                         saveGame(); });
             }
+            else if (use === 'fire' || use === 'window') {
+                sfx.tick();
+                if (use === 'fire' && !it.on) {
+                    it.on = 1;
+                    this.homeGlow(rec);
+                    if (this.homeMine)
+                        saveGame();
+                    this.note('The fire is lit. Tap it again for the volume.', '#ffb347');
+                    return;
+                }
+                this.clearTarget();
+                this.vel.set(0, 0);
+                if (ui.homeGame)
+                    ui.homeGame(use, d.name, it, () => { if (!it.on)
+                        return; it.on = 0; try {
+                        this.homeGlow(rec);
+                    }
+                    catch (e) { } if (this.homeMine)
+                        saveGame(); });
+            }
             else if (use === 'light') {
                 it.on = it.on ? 0 : 1;
                 this.homeGlow(rec);
@@ -34253,12 +34393,13 @@
                 this.homeFrame.setTexture(yard ? 'ground_yard' : 'ground_home');
         }
         homeAmbience() {     // (a real fire in the fireplace, and the weather outside showing through the windows)
-            const now = performance.now(), dt = Math.min(0.05, (now - (this.ambAt || now)) / 1000), t = now / 1000;
+            const now = performance.now(), dt = Math.min(0.05, (now - (this.ambAt || now)) / 1000), t = now / 1000, R = Math.random;
             this.ambAt = now;
-            let fireNear = Infinity;
-            const kind = weatherNow(), night = daylight(clockHour()).night;
+            let fireV = 0, winV = 0;
+            const kind = this.wxHere ? this.wxHere() : weatherNow(), night = daylight(clockHour()).night, me = this.pz || { x: 0, y: 0 };
+            const near = (it, far) => Math.max(0, Math.min(1, 1 - (Math.hypot(it.x - me.x, it.y - me.y) - 90) / far)), dial = it => (Number.isInteger(it.vol) ? it.vol : 6) / 10;
             for (const rec of this.homeRecs || []) {
-                const d = rec.d, it = rec.it, W = HOME_WIN[d.id], fire = d.id === 'fireplace' && it.on && !(it.r || 0);
+                const d = rec.d, it = rec.it, W = HOME_WIN[d.id], F = HOME_FIRE[d.id], fire = F && it.on && !(it.r || 0);
                 if (!W && !fire) {
                     if (rec.fx) {
                         rec.fx.destroy();
@@ -34273,32 +34414,26 @@
                 const b = rec.img.getBounds(), ex = furnDepth(d), q = ex ? Math.min(0.93, (d.h - 2) / (d.h + ex), d.w / (d.w + 1.5 * ex)) : 0.93, fx = b.width / d.w, fy = b.height / d.h, flip = rec.img.scaleX < 0, sc = q * fx;
                 const X = lx => { const u = d.w / 2 + (lx - d.w / 2) * q; return flip ? b.right - u * fx : b.x + u * fx; }, Y = ly => b.y + (d.h - 1.5 + (ly - d.h) * q) * fy, pt = (lx, ly) => ({ x: X(lx), y: Y(ly) });
                 if (fire) {
-                    fireNear = Math.min(fireNear, Math.hypot(it.x - this.pz.x, it.y - this.pz.y));
-                    const tongue = (bx, h, w, col, a, k) => { const sw = Math.sin(t * 6.3 + k * 2.1) * 2.6 + Math.sin(t * 11 + k) * 1.2; g.fillStyle(col, a); g.fillPoints([pt(bx - w, 95), pt(bx - w * 0.7 + sw * 0.4, 95 - h * 0.45), pt(bx + sw, 95 - h), pt(bx + w * 0.7 + sw * 0.4, 95 - h * 0.45), pt(bx + w, 95)], true); };
-                    for (let k = 0; k < 5; k++) {
-                        const bx = 41 + k * 8, h = 16 + 13 * (0.5 + 0.5 * Math.sin(t * (5 + k) + k * 1.7)) * (k === 2 ? 1.35 : k % 4 ? 1.05 : 0.75) + Math.random() * 2.5;
-                        tongue(bx, h, 6.5, 0xff5a12, 0.92, k);
-                    }
-                    for (let k = 0; k < 4; k++) {
-                        const bx = 45 + k * 8, h = 10 + 8 * (0.5 + 0.5 * Math.sin(t * (7 + k) + k * 2.3)) + Math.random() * 2;
-                        tongue(bx, h, 4.5, 0xffa51f, 0.95, k + 7);
-                    }
+                    fireV = Math.max(fireV, near(it, 650) * dial(it));
+                    const cx = F.cx, base = F.base;
+                    const tongue = (bx, h, w, col, a, k) => { const sw = Math.sin(t * 6.3 + k * 2.1) * 2.6 + Math.sin(t * 11 + k) * 1.2; g.fillStyle(col, a); g.fillPoints([pt(bx - w, base), pt(bx - w * 0.7 + sw * 0.4, base - h * 0.45), pt(bx + sw, base - h), pt(bx + w * 0.7 + sw * 0.4, base - h * 0.45), pt(bx + w, base)], true); };
+                    for (let k = 0; k < 5; k++)
+                        tongue(cx - 16 + k * 8, 16 + 13 * (0.5 + 0.5 * Math.sin(t * (5 + k) + k * 1.7)) * (k === 2 ? 1.35 : k % 4 ? 1.05 : 0.75) + R() * 2.5, 6.5, 0xff5a12, 0.92, k);
+                    for (let k = 0; k < 4; k++)
+                        tongue(cx - 12 + k * 8, 10 + 8 * (0.5 + 0.5 * Math.sin(t * (7 + k) + k * 2.3)) + R() * 2, 4.5, 0xffa51f, 0.95, k + 7);
                     for (let k = 0; k < 3; k++)
-                        tongue(49 + k * 8, 6 + 5 * (0.5 + 0.5 * Math.sin(t * 9 + k)), 3, 0xffe680, 0.95, k + 13);
-                    g.fillStyle(0x6a3f26, 1);
-                    g.fillRoundedRect(Math.min(X(36), X(78)), Y(92), Math.abs(X(78) - X(36)), 6 * sc, 3 * sc);
-                    g.fillStyle(0x7a4a2e, 1);
-                    g.fillRoundedRect(Math.min(X(42), X(74)), Y(96), Math.abs(X(74) - X(42)), 6 * sc, 3 * sc);
+                        tongue(cx - 8 + k * 8, 6 + 5 * (0.5 + 0.5 * Math.sin(t * 9 + k)), 3, 0xffe680, 0.95, k + 13);
+                    F.logs.forEach(([lx, ly, lw], i) => { g.fillStyle(i ? 0x7a4a2e : 0x6a3f26, 1); g.fillRoundedRect(Math.min(X(lx), X(lx + lw)), Y(ly), Math.abs(X(lx + lw) - X(lx)), 6 * sc, 3 * sc); });
                     g.fillStyle(0xff7a1a, 0.55 + 0.3 * Math.sin(t * 13));
-                    g.fillRect(Math.min(X(44), X(70)), Y(97.5), Math.abs(X(70) - X(44)), 1.4 * sc);
+                    g.fillRect(Math.min(X(cx - 13), X(cx + 13)), Y(base + 2.5), Math.abs(X(cx + 13) - X(cx - 13)), 1.4 * sc);
                     const em = rec.embers || (rec.embers = []);
-                    if (!REDUCED && em.length < 7 && Math.random() < dt * 5)
-                        em.push({ x: 46 + Math.random() * 22, y: 86, v: 14 + Math.random() * 16, ph: Math.random() * TAU, life: 1 });
+                    if (!REDUCED && em.length < 7 && R() < dt * 5)
+                        em.push({ x: cx - 11 + R() * 22, y: base - 9, v: 14 + R() * 16, ph: R() * TAU, life: 1 });
                     for (let i = em.length - 1; i >= 0; i--) {
                         const e = em[i];
                         e.y -= e.v * dt;
                         e.life -= dt * 0.7;
-                        if (e.life <= 0 || e.y < 40) {
+                        if (e.life <= 0 || e.y < base - 55) {
                             em.splice(i, 1);
                             continue;
                         }
@@ -34307,8 +34442,10 @@
                     }
                     continue;
                 }
+                if (kind !== 'clear')
+                    winV = Math.max(winV, near(it, 520) * dial(it));
                 const P = W.glass.map(([x, y]) => pt(x, y));     // (the glass: tint it for the hour and the weather, then the weather falling past)
-                const tint = kind === 'rain' ? [0x5a6a82, 0.42] : kind === 'snow' ? [0xd4dde8, 0.3] : null;
+                const tint = kind === 'rain' ? [0x56667e, 0.45] : kind === 'snow' ? [0xd4dde8, 0.32] : kind === 'leaves' ? [0xffc890, 0.12] : null;
                 if (tint) {
                     g.fillStyle(tint[0], tint[1]);
                     g.fillPoints(P, true);
@@ -34321,50 +34458,95 @@
                 const inside = (x, y) => { let c = false; const G = W.glass; for (let i = 0, j = G.length - 1; i < G.length; j = i++)
                     if ((G[i][1] > y) !== (G[j][1] > y) && x < (G[j][0] - G[i][0]) * (y - G[i][1]) / (G[j][1] - G[i][1]) + G[i][0])
                         c = !c; return c; };
-                const want = kind === 'rain' ? 16 : kind === 'snow' ? 18 : kind === 'leaves' ? 5 : 0, area = (x1 - x0) * (y1 - y0) / 3600, n = Math.round(want * Math.max(0.6, area));
+                const want = kind === 'rain' ? 22 : kind === 'snow' ? 26 : kind === 'leaves' ? 5 : 0, area = (x1 - x0) * (y1 - y0) / 3600, n = Math.round(want * Math.max(0.6, area));
                 if (rec.wk !== kind) {
                     rec.wk = kind;
                     rec.ps = [];
+                    rec.drops = [];
                 }
-                const ps = rec.ps || (rec.ps = []), spawn = top => ({ x: x0 + Math.random() * (x1 - x0), y: top ? y0 - Math.random() * 10 : y0 + Math.random() * (y1 - y0), s: Math.random(), ph: Math.random() * TAU, c: [0xe8732c, 0xd9452b, 0xf2b33d, 0xc9302c][Math.floor(Math.random() * 4)] });
+                const ps = rec.ps || (rec.ps = []), spawn = top => ({ x: x0 + R() * (x1 - x0), y: top ? y0 - R() * 10 : y0 + R() * (y1 - y0), s: R(), l: R() < 0.4 ? 1 : 0, ph: R() * TAU, fl: R() * TAU, c: [0xe8732c, 0xd9452b, 0xf2b33d, 0xc9302c, 0xa8642a][Math.floor(R() * 5)] });
                 while (ps.length < n)
                     ps.push(spawn(false));
                 ps.length = Math.min(ps.length, n);
+                const gust = 18 + 14 * Math.sin(t * 0.37) + 6 * Math.sin(t * 1.3);
                 for (let i = 0; i < ps.length; i++) {
                     const p0 = ps[i];
                     if (kind === 'rain') {
-                        p0.y += (150 + p0.s * 60) * dt;
-                        p0.x -= 22 * dt;
+                        p0.y += (p0.l ? 210 : 140 + p0.s * 30) * dt;
+                        p0.x -= (p0.l ? 30 : 20) * dt;
                     }
                     else if (kind === 'snow') {
-                        p0.y += (9 + p0.s * 9) * dt;
-                        p0.x += Math.sin(t * 1.4 + p0.ph) * 6 * dt;
+                        p0.y += (p0.l ? 14 + p0.s * 6 : 6 + p0.s * 5) * dt;
+                        p0.x += (Math.sin(t * (0.8 + p0.s) + p0.ph) * 6 + 3) * dt;
                     }
                     else {
-                        p0.y += (10 + p0.s * 10) * dt;
-                        p0.x += (16 + p0.s * 14) * dt;
+                        p0.y += (9 + p0.s * 8 + Math.sin(t * 2.3 + p0.ph) * 8) * dt;
+                        p0.x += (gust * (0.6 + p0.s * 0.5)) * dt;
+                        p0.fl += (2 + p0.s * 4) * dt;
                     }
                     if (p0.y > y1 + 4 || p0.x < x0 - 6 || p0.x > x1 + 6) {
                         ps[i] = spawn(true);
-                        if (kind === 'leaves')
-                            ps[i].x = x0 - 4 + Math.random() * (x1 - x0) * 0.5;
+                        if (kind === 'leaves') {
+                            ps[i].x = x0 - 4;
+                            ps[i].y = y0 + R() * (y1 - y0) * 0.6;
+                        }
                         continue;
                     }
-                    if (!inside(p0.x, p0.y) || (kind === 'rain' && !inside(p0.x + 1.2, p0.y - 5)))
-                        continue;
                     if (kind === 'rain') {
-                        g.lineStyle(Math.max(1, 0.7 * sc), 0xd8e8ff, 0.75);
-                        g.lineBetween(X(p0.x), Y(p0.y), X(p0.x + 1.2), Y(p0.y - 5));
+                        const len = p0.l ? 7 : 4.5;
+                        if (!inside(p0.x, p0.y) || !inside(p0.x + len * 0.14, p0.y - len))
+                            continue;
+                        g.lineStyle(Math.max(1, (p0.l ? 0.8 : 0.5) * sc), 0xd8e8ff, p0.l ? 0.6 : 0.32);
+                        g.lineBetween(X(p0.x), Y(p0.y), X(p0.x + len * 0.14), Y(p0.y - len));
                     }
                     else if (kind === 'snow') {
-                        g.fillStyle(0xffffff, 0.95);
-                        g.fillCircle(X(p0.x), Y(p0.y), (0.7 + p0.s * 0.8) * sc);
+                        if (!inside(p0.x, p0.y))
+                            continue;
+                        g.fillStyle(0xffffff, p0.l ? 0.95 : 0.7);
+                        g.fillCircle(X(p0.x), Y(p0.y), (p0.l ? 1.1 + p0.s * 0.6 : 0.5 + p0.s * 0.4) * sc);
                     }
                     else {
-                        const a = t * 3 + p0.ph, ca = Math.cos(a) * 2.2, sa = Math.sin(a) * 1.2;
+                        if (!inside(p0.x, p0.y))
+                            continue;
+                        const a = t * 2.5 + p0.ph, ca = Math.cos(a), sa = Math.sin(a), L = 2.6 + p0.s, Wd = L * 0.55 * Math.cos(p0.fl), lp = (u, v) => pt(p0.x + u * ca - v * sa, p0.y + u * sa + v * ca);
                         g.fillStyle(p0.c, 1);
-                        g.fillPoints([pt(p0.x - ca, p0.y - sa), pt(p0.x + sa, p0.y - ca * 0.5), pt(p0.x + ca, p0.y + sa), pt(p0.x - sa, p0.y + ca * 0.5)], true);
+                        g.fillPoints([lp(L, 0), lp(L * 0.3, Wd), lp(-L * 0.6, Wd * 0.8), lp(-L, 0), lp(-L * 0.6, -Wd * 0.8), lp(L * 0.3, -Wd)], true);
                     }
+                }
+                if (kind === 'rain') {     // (drops on the glass that cling, then run down)
+                    const dr = rec.drops || (rec.drops = []);
+                    if (dr.length < 7 * Math.max(0.6, area) && R() < dt * 3)
+                        dr.push({ x: x0 + R() * (x1 - x0), y: y0 + R() * (y1 - y0) * 0.7, r: 0.8 + R() * 1, run: 0 });
+                    for (let i = dr.length - 1; i >= 0; i--) {
+                        const q0 = dr[i];
+                        if (!q0.run && R() < dt * 0.35)
+                            q0.run = 8 + R() * 14;
+                        q0.y += q0.run * dt;
+                        if (q0.y > y1) {
+                            dr.splice(i, 1);
+                            continue;
+                        }
+                        if (!inside(q0.x, q0.y))
+                            continue;
+                        if (q0.run) {
+                            g.lineStyle(Math.max(1, 0.5 * sc), 0xe8f2ff, 0.25);
+                            g.lineBetween(X(q0.x), Y(q0.y - 6), X(q0.x), Y(q0.y));
+                        }
+                        g.fillStyle(0xe8f2ff, 0.55);
+                        g.fillCircle(X(q0.x), Y(q0.y), q0.r * sc);
+                        g.fillStyle(0xffffff, 0.8);
+                        g.fillCircle(X(q0.x - q0.r * 0.3), Y(q0.y - q0.r * 0.3), q0.r * 0.35 * sc);
+                    }
+                }
+                if (kind === 'snow' && W.sill) {     // (a little drift of snow along the bottom of the glass)
+                    const [sx0, sx1, sy] = W.sill, pts = [];
+                    for (let k = 0; k <= 10; k++) {
+                        const xx = sx0 + (sx1 - sx0) * k / 10;
+                        pts.push(pt(xx, sy - 2.2 - Math.sin(k * 1.9 + it.x) * 0.9));
+                    }
+                    pts.push(pt(sx1, sy), pt(sx0, sy));
+                    g.fillStyle(0xffffff, 0.95);
+                    g.fillPoints(pts, true);
                 }
                 if (rec.barCol == null)
                     try {
@@ -34379,17 +34561,15 @@
                 g.fillStyle(rec.barCol, 1);
                 W.bars.forEach(([x, y, w, h]) => g.fillRect(Math.min(X(x), X(x + w)), Y(y), Math.abs(X(x + w) - X(x)), h * sc));
             }
-            if (fireNear < 700 && this.pz) {     // (crackle and a soft roar, louder as you get close)
-                const v = Math.max(0, Math.min(1, 1 - (fireNear - 80) / 600));
-                if ((this.fireRoar = (this.fireRoar || 0) - dt) <= 0) {
-                    this.fireRoar = 0.32;
-                    sfx.noise(0.6, 0.03 * v, 420, 240, 0.6);
-                }
-                if (Math.random() < dt * 4)
-                    sfx.noise(0.02 + Math.random() * 0.04, (0.06 + Math.random() * 0.1) * v, 2600 + Math.random() * 3200, 1400, 1.6);
-                if (Math.random() < dt * 0.6)
-                    sfx.noise(0.08, 0.12 * v, 900 + Math.random() * 600, 500, 1.2);
+            if (fireV > 0.01) {     // (the fire: a low roar and crackles, as loud as its dial)
+                sfx.amb('fire', 'fire', fireV);
+                if (R() < dt * 4)
+                    sfx.noise(0.02 + R() * 0.04, (0.06 + R() * 0.1) * fireV, 2600 + R() * 3200, 1400, 1.6);
+                if (R() < dt * 0.6)
+                    sfx.noise(0.08, 0.12 * fireV, 900 + R() * 600, 500, 1.2);
             }
+            if (winV > 0.01 && this.homeAt !== -1)     // (the weather outside, heard through the window)
+                sfx.amb('wxin', kind === 'rain' ? 'rain_in' : 'wind_in', winV * (kind === 'snow' ? 0.5 : 1));
         }
         homeUpdate() {
             const E = this.homeEdit;
@@ -34453,7 +34633,7 @@
                 this.homeFootKey = '';
             }
             const near = E.on || !this.pz ? null : this.seated || this.homeNear();
-            const text = !near ? '' : this.seated ? 'E · Stand up' : 'E · ' + ({ door: near.it.on ? 'Shut' : 'Open', sit: 'Sit', light: 'Switch', screen: 'Switch', music: 'Play', tune: 'Play', treat: 'Treat', hug: 'Hug', punch: 'Punch', pong: 'Play ping pong', puck: 'Play air hockey', arcade: 'Play', pool: 'Play pool', kick: 'Play', hoop: 'Shoot hoops', darts: 'Throw darts', piano: 'Play', guitar: 'Play', drums: 'Play' })[FURN_USE[near.d.id]];
+            const text = !near ? '' : this.seated ? 'E · Stand up' : 'E · ' + ({ door: near.it.on ? 'Shut' : 'Open', sit: 'Sit', light: 'Switch', screen: near.it.on ? 'Remote' : 'Turn on', fire: near.it.on ? 'Fire' : 'Light', window: 'Look out', music: 'Play', tune: 'Play', treat: 'Treat', hug: 'Hug', punch: 'Punch', pong: 'Play ping pong', puck: 'Play air hockey', arcade: 'Play', pool: 'Play pool', kick: 'Play', hoop: 'Shoot hoops', darts: 'Throw darts', piano: 'Play', guitar: 'Play', drums: 'Play' })[FURN_USE[near.d.id]];
             if (near)
                 this.homeHint.setPosition(near.it.x, this.seated ? near.it.y + 30 : Math.max(22, near.it.y - near.d.h - 22));     // (sitting: the hint goes under the seat, out of the way of the TV)
             if (text !== this.homeHintText) {
@@ -37716,58 +37896,150 @@
             this.npcReact(kind);
             return kind;
         }
+        wxHere() {     // (what's falling here right now: your own pick at home, real weather elsewhere)
+            if (this.loc === 'home') {
+                const H = this.homeOf || G.home;
+                return H && H.wx && WX_KINDS.includes(H.wx) ? H.wx : weatherNow();
+            }
+            return weatherNow();
+        }
         weatherTick() {
-            const out = WEATHER.places.includes(this.loc) || (this.loc === 'home' && this.homeAt === -1), kind = out ? weatherNow() : 'clear';
-            if (kind !== this.wxKind) {     // (snow and blowing leaves; rain is below)
-                if (this.wxFx) {
-                    this.wxFx.destroy();
-                    this.wxFx = null;
-                }
-                const w = this.scale.width || 1280, h = this.scale.height || 720, was = this.wxKind;
-                this.wxKind = kind;
-                if (kind === 'snow') {
-                    this.wxFx = this.add.particles(0, 0, 'dust', { x: { min: -60, max: w + 60 }, y: -20, lifespan: 14000, speedY: { min: 45, max: 95 }, speedX: { min: -35, max: 25 },
-                        scale: { min: 0.12, max: 0.3 }, alpha: { start: 0.95, end: 0.7 }, tint: 0xffffff, quantity: 1, frequency: REDUCED ? 220 : 60 }).setScrollFactor(0).setDepth(9795);
-                    if (was && was !== 'snow') {
-                        this.noteUntil = 0;
-                        this.note('It\'s snowing!', '#ffffff');
+            const out = WEATHER.places.includes(this.loc) || (this.loc === 'home' && this.homeAt === -1), kind = out ? this.wxHere() : 'clear', was = this.wxKind;
+            if (kind === was)
+                return;
+            this.wxKind = kind;
+            this.wxP = null;
+            if (this.wxWash) {
+                this.wxWash.destroy();
+                this.wxWash = null;
+            }
+            const w = this.scale.width || 1280, h = this.scale.height || 720, wash = { rain: [0x1c2a40, 0.22], snow: [0xdfe8f2, 0.1], leaves: [0xffa860, 0.05] }[kind];
+            if (wash)
+                this.wxWash = this.add.rectangle(0, 0, w * 2, h * 2, wash[0], wash[1]).setOrigin(0).setScrollFactor(0).setDepth(9790);
+            if (!this.wxG)
+                this.wxG = this.add.graphics().setScrollFactor(0).setDepth(9795);
+            this.wxG.clear();
+            if (was == null || this.loc === 'home')
+                return;
+            this.noteUntil = 0;
+            if (kind === 'rain')
+                this.note('It\'s raining! Fish bite faster now.', '#bfd8ff');
+            else if (kind === 'snow')
+                this.note('It\'s snowing!', '#ffffff');
+            else if (kind === 'leaves')
+                this.note('A breeze sends fall leaves swirling.', '#ffb347');
+            else if (was === 'rain')
+                this.note('The rain has stopped.', '#ffe9a8');
+        }
+        wxDraw(dt) {     // (rain, snow and leaves drawn by hand every frame: layers, wind gusts, splashes, tumbling leaves)
+            const kind = this.wxKind, g = this.wxG;
+            if (!g || !kind || kind === 'clear')
+                return;
+            const w = this.scale.width || 1280, h = this.scale.height || 720, U = Math.max(1, h / 720), t = performance.now() / 1000, R = Math.random, area = Math.min(1.6, w * h / 921600);
+            const vol = 0.55 * (this.loc === 'home' ? 1 : 0.9);
+            if (kind === 'rain') {
+                sfx.amb('wx', 'rain', vol);
+                if (R() < dt * 5)
+                    sfx.noise(0.015, 0.025 * vol, 4500 + R() * 2500, 2500, 2);
+            }
+            else
+                sfx.amb('wx', 'wind', kind === 'snow' ? vol * 0.45 : vol * (0.8 + 0.4 * Math.sin(t * 0.37)));
+            if (kind === 'leaves' && R() < dt * 1.4)
+                sfx.noise(0.14, 0.035 * vol, 3200, 2400, 0.7);
+            g.clear();
+            if (REDUCED && kind !== 'snow')
+                return;
+            let P = this.wxP;
+            if (!P || P.kind !== kind || P.w !== w || P.h !== h) {
+                P = this.wxP = { kind, w, h, a: [], sp: [] };
+                const n = kind === 'rain' ? Math.round(180 * area) : kind === 'snow' ? Math.round(200 * area) : Math.round(34 * Math.max(0.8, area));
+                for (let i = 0; i < n; i++)
+                    P.a.push(this.wxNew(kind, w, h, U, false, i / n));
+            }
+            const wind = kind === 'leaves' ? U * (70 + 55 * Math.sin(t * 0.37) + 25 * Math.sin(t * 1.3)) : kind === 'snow' ? U * (14 + 12 * Math.sin(t * 0.23)) : -U * 130;
+            if (kind === 'rain') {
+                for (const layer of [0, 1]) {
+                    g.lineStyle(layer ? 1.7 * U : 1 * U, 0xd4e4ff, layer ? 0.5 : 0.24);
+                    for (const d of P.a) {
+                        if (d.l !== layer)
+                            continue;
+                        d.y += d.vy * dt;
+                        d.x += wind * (d.vy / 1000) * dt * 1.1;
+                        if (d.y >= d.ty) {
+                            if (d.l && P.sp.length < 70 && R() < 0.7)
+                                P.sp.push({ x: d.x, y: d.ty, a: 0 });
+                            Object.assign(d, this.wxNew('rain', w, h, U, true));
+                            continue;
+                        }
+                        const sl = wind * 1.1 / 1000;
+                        g.lineBetween(d.x, d.y, d.x - sl * d.len, d.y - d.len);
                     }
                 }
-                else if (kind === 'leaves') {
-                    if (!this.textures.exists('leaf_fx'))
-                        bake(this, 'leaf_fx', 16, 12, c => { c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(1, 6); c.quadraticCurveTo(8, -2, 15, 6); c.quadraticCurveTo(8, 14, 1, 6); c.fill(); c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(2, 5.5, 12, 1); });
-                    this.wxFx = this.add.particles(0, 0, 'leaf_fx', { x: -30, y: { min: -40, max: h * 0.7 }, lifespan: 9000, speedX: { min: 90, max: 170 }, speedY: { min: 20, max: 60 },
-                        rotate: { start: 0, end: 540 }, scale: { min: 0.8, max: 1.3 }, alpha: { start: 1, end: 0.6 }, tint: [0xe8732c, 0xd9452b, 0xf2b33d, 0xa8642a, 0xc9302c], quantity: 1, frequency: REDUCED ? 700 : 260 }).setScrollFactor(0).setDepth(9795);
-                    if (was && was !== 'leaves') {
-                        this.noteUntil = 0;
-                        this.note('A breeze sends fall leaves swirling.', '#ffb347');
+                for (let i = P.sp.length - 1; i >= 0; i--) {
+                    const sp = P.sp[i];
+                    sp.a += dt / 0.3;
+                    if (sp.a >= 1) {
+                        P.sp.splice(i, 1);
+                        continue;
                     }
+                    const r = (2 + 9 * sp.a) * U;
+                    g.lineStyle(1 * U, 0xdce9ff, 0.45 * (1 - sp.a));
+                    g.strokeEllipse(sp.x, sp.y, r * 2, r * 0.7);
+                    g.fillStyle(0xdce9ff, 0.6 * (1 - sp.a));
+                    const hop = Math.sin(Math.PI * sp.a) * 7 * U;
+                    g.fillCircle(sp.x - r * 0.7, sp.y - hop, 1.1 * U);
+                    g.fillCircle(sp.x + r * 0.6, sp.y - hop * 0.8, 1 * U);
                 }
+                return;
             }
-            const rain = kind === 'rain';
-            if (rain && !this.rainFx) {
-                const w = this.scale.width || 1280, h = this.scale.height || 720;
-                this.rainWash = this.add.rectangle(0, 0, w * 2, h * 2, 0x203048, 0.16).setOrigin(0).setScrollFactor(0).setDepth(9790);
-                this.rainFx = this.add.particles(0, 0, 'dust', { x: { min: -100, max: w + 100 }, y: -20, lifespan: 1100, speedY: { min: 700, max: 900 }, speedX: { min: -140, max: -100 },
-                    scaleX: 0.05, scaleY: 0.5, alpha: { start: 0.55, end: 0.25 }, tint: 0xbfd8ff, quantity: REDUCED ? 1 : 3, frequency: REDUCED ? 80 : 16 }).setScrollFactor(0).setDepth(9795);
-                if (this.wxWas === 'clear') {
-                    this.noteUntil = 0;
-                    this.note('It\'s raining! Fish bite faster now.', '#bfd8ff');
+            if (kind === 'snow') {
+                for (const f of P.a) {
+                    f.y += f.vy * dt;
+                    f.x += (wind * (0.5 + f.l * 0.4) + Math.sin(t * f.fr + f.ph) * f.sw) * dt;
+                    if (f.y > h + 12 || f.x > w + 20 || f.x < -20) {
+                        Object.assign(f, this.wxNew('snow', w, h, U, true));
+                        continue;
+                    }
+                    if (f.l === 2) {
+                        g.fillStyle(0xffffff, 0.22);
+                        g.fillCircle(f.x, f.y, f.r * 1.9);
+                    }
+                    g.fillStyle(0xffffff, f.al);
+                    g.fillCircle(f.x, f.y, f.r);
                 }
+                return;
             }
-            else if (!rain && this.rainFx) {
-                this.rainFx.destroy();
-                this.rainFx = null;
-                if (this.rainWash) {
-                    this.rainWash.destroy();
-                    this.rainWash = null;
+            for (const L of P.a) {     // (leaves: carried by gusts, fluttering and tumbling over)
+                L.x += (wind * L.k + Math.sin(t * 1.7 + L.ph) * 18 * U) * dt;
+                L.y += (L.vy + Math.sin(t * 2.3 + L.ph) * 26 * U) * dt;
+                L.ang += L.spin * dt * (0.6 + wind / (120 * U));
+                L.fl += L.fs * dt;
+                if (L.x > w + 40 || L.y > h + 40) {
+                    Object.assign(L, this.wxNew('leaves', w, h, U, true));
+                    continue;
                 }
-                if (this.wxWas === 'rain') {
-                    this.noteUntil = 0;
-                    this.note('The rain has stopped.', '#ffe9a8');
-                }
+                const len = L.s, wid = L.s * 0.55 * (0.3 + 0.7 * Math.abs(Math.cos(L.fl))), ca = Math.cos(L.ang), sa = Math.sin(L.ang), pt = (u, v) => ({ x: L.x + u * ca - v * sa, y: L.y + u * sa + v * ca });
+                const shade = Math.cos(L.fl) < 0 ? 0.78 : 1, c = L.c, col = (((c >> 16 & 255) * shade) << 16) | (((c >> 8 & 255) * shade) << 8) | ((c & 255) * shade);
+                g.fillStyle(col, 1);
+                g.fillPoints([pt(len / 2, 0), pt(len * 0.18, wid / 2), pt(-len * 0.3, wid * 0.42), pt(-len / 2, 0), pt(-len * 0.3, -wid * 0.42), pt(len * 0.18, -wid / 2)], true);
+                g.lineStyle(Math.max(1, 0.9 * U), 0x5a2a10, 0.55);
+                const a0 = pt(-len * 0.62, 0), a1 = pt(len * 0.42, 0);
+                g.lineBetween(a0.x, a0.y, a1.x, a1.y);
             }
-            this.wxWas = rain ? 'rain' : 'clear';
+        }
+        wxNew(kind, w, h, U, top, frac) {
+            const R = Math.random;
+            if (kind === 'rain') {
+                const l = R() < 0.35 ? 1 : 0, vy = (l ? 1250 + R() * 250 : 850 + R() * 200) * U;
+                return { l, vy, len: (l ? 36 + R() * 18 : 16 + R() * 10) * U, x: R() * (w + 300), y: top ? -60 * U - R() * h * 0.4 : R() * h, ty: h * (0.25 + R() * 0.78) };
+            }
+            if (kind === 'snow') {
+                const l = R() < 0.5 ? 0 : R() < 0.7 ? 1 : 2;
+                return { l, r: (l === 0 ? 0.9 + R() * 0.7 : l === 1 ? 1.8 + R() * 1 : 3 + R() * 1.6) * U, vy: (l === 0 ? 24 + R() * 14 : l === 1 ? 42 + R() * 22 : 75 + R() * 35) * U, al: l === 0 ? 0.6 : l === 1 ? 0.82 : 0.95,
+                    x: R() * w, y: top ? -10 - R() * 40 : R() * h, ph: R() * TAU, fr: 0.6 + R() * 0.9, sw: (8 + R() * 18) * U };
+            }
+            return { x: top ? -30 - R() * 120 : R() * w, y: top ? -h * 0.15 + R() * h * 0.8 : R() * h, s: (14 + R() * 9) * U, k: 0.6 + R() * 0.5, vy: (32 + R() * 26) * U, ang: R() * TAU, spin: (R() < 0.5 ? -1 : 1) * (1.5 + R() * 3), fl: R() * TAU, fs: 2 + R() * 5, ph: R() * TAU,
+                c: [0xe8732c, 0xd9452b, 0xf2b33d, 0xa8642a, 0xc9302c, 0xe39b2d][Math.floor(R() * 6)] };
         }
         starHide() {
             const day = dayNumber();
@@ -39936,6 +40208,11 @@
                 this.wxNext = time + 2000;
                 this.weatherTick();
             }
+            if (this.wxKind && this.wxKind !== 'clear')
+                try {
+                    this.wxDraw(dt);
+                }
+                catch (e) { }
             if (this.fish && (this.fish.state === 'wait' || this.fish.state === 'cast') && !isTyping()
                 && (k.RIGHT.isDown || k.D.isDown || k.LEFT.isDown || k.A.isDown || k.DOWN.isDown || k.S.isDown || k.UP.isDown || k.W.isDown))
                 this.endFishing();
@@ -44167,18 +44444,21 @@
             }
         });
         const HOUSE_WAIT = 3000, HOUSE_MAX = 60000;
-        const packRoom = R => [R.wall, R.floor, R.items.map(it => [it.t, it.c, it.x, it.y, it.r || 0, it.f ? 1 : 0, it.on ? 1 : 0].concat(it.ch ? [it.ch] : []))].concat((R.fp && R.fp.length) || (R.wp && R.wp.length) ? [[R.fp || [], R.wp || []]] : []);
-        const housePack = h => JSON.stringify(h.rooms.map(packRoom).concat(h.yard ? [['Y'].concat(packRoom(h.yard))] : []));
+        const packRoom = R => [R.wall, R.floor, R.items.map(it => [it.t, it.c, it.x, it.y, it.r || 0, it.f ? 1 : 0, it.on ? 1 : 0].concat(it.ch || Number.isInteger(it.vol) ? [it.ch || 0] : [], Number.isInteger(it.vol) ? [it.vol] : []))].concat((R.fp && R.fp.length) || (R.wp && R.wp.length) ? [[R.fp || [], R.wp || []]] : []);
+        const housePack = h => JSON.stringify(h.rooms.map(packRoom).concat(h.yard ? [['Y'].concat(packRoom(h.yard))] : [], h.wx ? [['W', h.wx]] : []));
         function houseUnpack(text) {
             try {
                 const a = JSON.parse(text);
                 if (!Array.isArray(a) || !a.length)
                     return null;
-                const room = R => (Array.isArray(R) ? { wall: R[0], floor: R[1], items: (Array.isArray(R[2]) ? R[2] : []).map(q => (Array.isArray(q) ? { t: q[0], c: q[1], x: q[2], y: q[3], r: q[4], f: q[5], on: q[6], ch: q[7] } : null)), fp: Array.isArray(R[3]) ? R[3][0] : null, wp: Array.isArray(R[3]) ? R[3][1] : null } : null);
+                const room = R => (Array.isArray(R) ? { wall: R[0], floor: R[1], items: (Array.isArray(R[2]) ? R[2] : []).map(q => (Array.isArray(q) ? { t: q[0], c: q[1], x: q[2], y: q[3], r: q[4], f: q[5], on: q[6], ch: q[7], vol: q[8] } : null)), fp: Array.isArray(R[3]) ? R[3][0] : null, wp: Array.isArray(R[3]) ? R[3][1] : null } : null);
+                const wx = a.length > 1 && Array.isArray(a[a.length - 1]) && a[a.length - 1][0] === 'W' ? a.pop()[1] : null;
                 const y = a.length > 1 && Array.isArray(a[a.length - 1]) && a[a.length - 1][0] === 'Y' ? a.pop().slice(1) : null;
                 const rooms = a.map(room);
                 if (y)
                     rooms.yard = room(y);
+                if (wx)
+                    rooms.wx = wx;
                 return rooms;
             }
             catch (e) {
@@ -44224,7 +44504,7 @@
             if (!s || s.leaving || busy())
                 return '';
             const was = hv.visit;
-            hv.visit = { id, name: f.name, home: cleanHome({ owned: true, rooms, yard: rooms.yard }) };
+            hv.visit = { id, name: f.name, home: cleanHome({ owned: true, rooms, yard: rooms.yard, wx: rooms.wx }) };
             s.travelTo('home', true);
             if (!s.leaving) {
                 hv.visit = was;
@@ -52305,7 +52585,7 @@
             st.height = (S[3] * fy * z + 2).toFixed(1) + 'px';
             st.borderRadius = (S[4] * fx * z).toFixed(1) + 'px';
             v.hidden = false;
-            const vol = Math.max(0.12, Math.min(1, 1 - (Math.hypot(best.it.x - s.pz.x, best.it.y - s.pz.y) - 120) / 700));
+            const vol = Math.max(0.12, Math.min(1, 1 - (Math.hypot(best.it.x - s.pz.x, best.it.y - s.pz.y) - 120) / 700)) * (Number.isInteger(best.it.vol) ? best.it.vol : 8) / 10;
             if (Math.abs(vol - TV.vol) > 0.04) {
                 TV.vol = vol;
                 v.volume = vol;
@@ -52316,6 +52596,51 @@
                 TV.ducked = loud;
             }
         };
+        function hgDial(box, it, label, def = 6) {     // (a volume dial for anything in the house that makes sound)
+            const wrap = node('label', 'hg-dial'), cap = node('b', '', ''), r = el('input', '', { type: 'range', min: '0', max: '10', step: '1' });
+            const show = () => { const v = Number.isInteger(it.vol) ? it.vol : def; r.value = String(v); cap.textContent = (v ? '🔊 ' : '🔇 ') + label + ': ' + (v ? v + ' / 10' : 'off'); };
+            r.addEventListener('input', () => { it.vol = Math.round(Number(r.value)); show(); });
+            r.addEventListener('change', () => { const s = scene(); if (s && s.homeMine)
+                saveGame(); sfx.tick(); });
+            wrap.append(cap, r);
+            show();
+            box.append(wrap);
+            return wrap;
+        }
+        function hgFire(name, off, it) {
+            const box = hgShell(name, 'Turn the crackle up or down, or put the fire out.');
+            hgDial(box, it, 'Fire sound');
+            const out = el('button', 'btn', { type: 'button' });
+            out.textContent = '💨 Put out the fire';
+            out.addEventListener('click', () => { hgClose(); if (off)
+                off(); });
+            box.append(out);
+            HG.keys = e => { if (e.key === 'Escape') {
+                hgClose();
+                e.stopPropagation();
+            } };
+            window.addEventListener('keydown', HG.keys, true);
+        }
+        function hgWindow(name, it) {     // (pick the weather outside your house, and how loud it sounds through this window)
+            const s = scene(), mine = !!(s && s.homeMine), H = s && s.homeOf ? s.homeOf : G.home;
+            const box = hgShell(name, mine ? 'Pick the weather outside your house. Real weather follows the season and changes every hour.' : 'This is the weather your friend picked for outside their house.');
+            const grid = node('div', 'hg-wx'), real = weatherNow(), NAMES = { clear: '☀️ Clear', rain: '🌧️ Rain', snow: '❄️ Snow', leaves: '🍂 Fall leaves' };
+            const opts = [['', '🌎 Real weather (now: ' + NAMES[real].split(' ').slice(1).join(' ').toLowerCase() + ')']].concat(WX_KINDS.map(k => [k, NAMES[k]]));
+            const paint = () => grid.querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.wx || '') === (H.wx || '')));
+            opts.forEach(([k, lab]) => { const b = el('button', 'btn', { type: 'button' }); b.dataset.wx = k; b.textContent = lab; b.disabled = !mine; b.addEventListener('click', () => { if (k)
+                H.wx = k;
+            else
+                delete H.wx; saveGame(); sfx.tick(); paint(); const sc = scene(); if (sc)
+                sc.wxNext = 0; }); grid.append(b); });
+            box.append(grid);
+            paint();
+            hgDial(box, it, 'Outdoor sound');
+            HG.keys = e => { if (e.key === 'Escape') {
+                hgClose();
+                e.stopPropagation();
+            } };
+            window.addEventListener('keydown', HG.keys, true);
+        }
         function hgTv(name, off, it) {     // (the remote: channels, sound, off. The picture plays on the TV itself)
             const box = hgShell(name + ' remote', it && (it.r || 0) !== 0 ? 'Turn the TV to face the room to see the picture. ' : 'The show plays right on your TV. Friends in the house see the same thing at the same time.');
             const card = node('div', 'tv-card'), chan = node('b', 'tv-chan', ''), title = node('div', 'tv-title', ''), next = node('small', 'tv-next', '');
@@ -52327,7 +52652,10 @@
             const guide = node('div', 'tv-guide');
             TV_CH.forEach((C, k) => { const b = el('button', 'tv-g', { type: 'button' }); b.append(node('b', '', 'CH ' + C.n + ' ' + C.name), node('small', '', C.blurb)); b.addEventListener('click', () => go(k)); guide.append(b); });
             card.append(chan, title, next);
-            box.append(card, row, guide, offB, node('small', 'hg-sub', 'Films stream from the Internet Archive (archive.org). All are public domain.'));
+            box.append(card, row);
+            if (it)
+                hgDial(box, it, 'TV volume', 8);
+            box.append(guide, offB, node('small', 'hg-sub', 'Films stream from the Internet Archive (archive.org). All are public domain.'));
             TV.ui = { chan, title, next, mute, card, guide };
             TV.off = off;
             if (it && Number.isInteger(it.ch) && it.ch < TV_CH.length)
@@ -52356,7 +52684,9 @@
         }
         ui.homeGame = (use, name, key, off) => { if (use === 'arcade')
             hgArcade(name); else if (use === 'screen')
-            hgTv(name, off, key); else if (use === 'pool') {
+            hgTv(name, off, key); else if (use === 'fire')
+            hgFire(name, off, key); else if (use === 'window')
+            hgWindow(name, key); else if (use === 'pool') {
             let k = 'solo';
             try {
                 k = houseKey(scene()) + ':' + Math.round(key.x) + ',' + Math.round(key.y);
