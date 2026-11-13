@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794481613';
+<script>window.WANDO_BUILD = '1794529322';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -33905,6 +33905,7 @@
         }
         homeEditSet(on) { const E = this.homeEdit; if (!E)
             return; if (!on) {
+            this.homePaintSave();
             this.homeBrush = null;
             this.homeSelect(null);
             this.homeDrop(false);
@@ -34134,12 +34135,23 @@
             if (!list.length)
                 delete R[key];
             if (!had) {
-                this.homePaintedAt = key + i + ':' + B.style;
+                this.homePaintedAt = key + i + ':' + want;
                 this.homePaintDraw();
                 sfx.tick();
                 this.homePaintDirty = true;
             }
             return true;
+        }
+        homePaintSave() {     // (keep paint and erasing safe: write it down right away, and send it to the account now)
+            if (!this.homePaintDirty)
+                return;
+            this.homePaintDirty = false;
+            this.homePaintSavedAt = Date.now();
+            saveGame();
+            if (account.cloud)
+                cloudFlush();
+            if (ui.onHome)
+                ui.onHome();
         }
         homeStyle() {
             this.homePaintDraw();
@@ -34160,16 +34172,16 @@
                         this.homePaintSnap();
                     }
                     this.homePaintAt(wp.x, wp.y);
+                    if (this.homePaintDirty && Date.now() - (this.homePaintSavedAt || 0) > 1500) {
+                        this.homePaintDirty = false;
+                        this.homePaintSavedAt = Date.now();
+                        saveGame();
+                    }
                 }
                 else {
                     this.homeStroke = false;
-                    if (this.homePaintDirty) {
-                        this.homePaintDirty = false;
-                        this.homePaintedAt = '';
-                        saveGame();
-                        if (ui.onHome)
-                            ui.onHome();
-                    }
+                    this.homePaintedAt = '';
+                    this.homePaintSave();
                 }
             }
             if (E.held && E.ghost) {
@@ -43635,8 +43647,10 @@
             {
                 const paintTab = (hm.tab === 'walls' || hm.tab === 'floors') && !yard, sb = s && s.homeBrush;
                 trayBrush.hidden = !paintTab;
-                if (!paintTab && s && sb)
+                if (!paintTab && s && sb) {
+                    s.homePaintSave();
                     s.homeBrush = null;
+                }
                 if (s && s.homeBrush)
                     s.homeBrush.kind = hm.tab === 'walls' ? 'wall' : 'floor';
                 trayBrush.setAttribute('aria-pressed', String(!!(s && s.homeBrush)));
@@ -43805,8 +43819,10 @@
             const s = scene();
             if (!s || !s.homeRoom)
                 return;
-            if (s.homeBrush)
+            if (s.homeBrush) {
+                s.homePaintSave();
                 s.homeBrush = null;
+            }
             else {
                 const R = s.homeRoom(), wall = hm.tab === 'walls';
                 s.homeBrush = { kind: wall ? 'wall' : 'floor', style: wall ? R.wall : R.floor };
@@ -51604,14 +51620,50 @@
                 const cue = g.balls[0];
                 if (aim.on && !cue.in) {
                     const dx = cue.x - aim.x, dy = cue.y - aim.y, d = Math.sqrt(dx * dx + dy * dy) || 1, pw = Math.min(1, d / 130), ux = dx / d, uy = dy / d;
-                    c.strokeStyle = 'rgba(255,255,255,.7)';
-                    c.setLineDash([6, 6]);
-                    c.lineWidth = 2;
-                    c.beginPath();
-                    c.moveTo((cue.x + POOL.RAIL) * S, (cue.y + POOL.RAIL) * S);
-                    c.lineTo((cue.x + POOL.RAIL + ux * 300) * S, (cue.y + POOL.RAIL + uy * 300) * S);
-                    c.stroke();
-                    c.setLineDash([]);
+                    {     // (aim guide: where the cue ball meets the first ball, and where that ball will go)
+                        const R2 = POOL.R * 2, X = v => (v + POOL.RAIL) * S, line = (x1, y1, x2, y2) => { c.beginPath(); c.moveTo(X(x1), X(y1)); c.lineTo(X(x2), X(y2)); c.stroke(); };
+                        let hit = null, t = Infinity;
+                        g.balls.forEach(b => { if (!b.n || b.in)
+                            return; const ox = b.x - cue.x, oy = b.y - cue.y, along = ox * ux + oy * uy, side2 = ox * ox + oy * oy - along * along;
+                            if (along <= 0 || side2 >= R2 * R2)
+                                return; const tt = along - Math.sqrt(R2 * R2 - side2);
+                            if (tt < t) {
+                                t = tt;
+                                hit = b;
+                            } });
+                        const lo = POOL.R, hiX = POOL.W - POOL.R, hiY = POOL.H - POOL.R;
+                        const tx = ux > 0 ? (hiX - cue.x) / ux : ux < 0 ? (lo - cue.x) / ux : Infinity, ty = uy > 0 ? (hiY - cue.y) / uy : uy < 0 ? (lo - cue.y) / uy : Infinity, tw = Math.max(0, Math.min(tx, ty));
+                        if (!hit || t > tw)
+                            hit = null, t = tw;
+                        const gx = cue.x + ux * t, gy = cue.y + uy * t;
+                        c.strokeStyle = 'rgba(255,255,255,.8)';
+                        c.lineWidth = 2;
+                        line(cue.x, cue.y, gx, gy);
+                        c.beginPath();
+                        c.arc(X(gx), X(gy), POOL.R * S, 0, TAU);
+                        c.stroke();
+                        if (hit) {
+                            const nx = (hit.x - gx) / R2, ny = (hit.y - gy) / R2, dot = ux * nx + uy * ny, L = 24 + 70 * dot;
+                            c.strokeStyle = '#ffe066';
+                            c.lineWidth = 3;
+                            line(hit.x, hit.y, hit.x + nx * L, hit.y + ny * L);
+                            const sx = ux - dot * nx, sy = uy - dot * ny, sl = Math.sqrt(sx * sx + sy * sy);
+                            if (sl > 0.05) {
+                                c.strokeStyle = 'rgba(255,255,255,.45)';
+                                c.setLineDash([4, 5]);
+                                c.lineWidth = 2;
+                                line(gx, gy, gx + sx / sl * 40 * sl, gy + sy / sl * 40 * sl);
+                                c.setLineDash([]);
+                            }
+                        }
+                        else {
+                            const bx = t === tx ? -ux : ux, by = t === tx ? uy : -uy;
+                            c.strokeStyle = 'rgba(255,255,255,.4)';
+                            c.setLineDash([4, 5]);
+                            line(gx, gy, gx + bx * 50, gy + by * 50);
+                            c.setLineDash([]);
+                        }
+                    }
                     c.strokeStyle = '#c8945a';
                     c.lineWidth = 5;
                     c.beginPath();
@@ -52676,7 +52728,7 @@
                 openMail('protect');
             else if (b.dataset.acct === 'out') {
                 saveGame();
-                A.signOut().then(() => location.reload(), () => location.reload());
+                Promise.race([cloudFlush(), new Promise(r => setTimeout(r, 2500))]).catch(() => { }).then(() => A.signOut()).then(() => location.reload(), () => location.reload());
             }
         });
         $('gate-login-email').addEventListener('click', () => { if (ready && ACCT())
