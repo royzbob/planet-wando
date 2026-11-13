@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794531563';
+<script>window.WANDO_BUILD = '1794532287';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -2688,6 +2688,13 @@
     text-shadow: 3px 3px 0 #ffffff, -3px 3px 0 #ffffff, 3px -3px 0 #ffffff, -3px -3px 0 #ffffff, 0 6px 0 #2b2033; }
   .cb-sub { margin: 4px 0 6px; font: 900 clamp(20px, 4.4vw, 32px)/1 var(--font-display); color: #ff5a8a; text-shadow: 2px 2px 0 #ffffff, -2px 2px 0 #ffffff, 2px -2px 0 #ffffff, -2px -2px 0 #ffffff, 0 4px 0 #7a1a4a; }
   .cb-cover-body { display: flex; align-items: flex-end; justify-content: center; gap: 4px; width: 100%; }
+  .cb-link { position: relative; z-index: 2; align-self: flex-end; margin: 6px 0 0 auto; padding: 10px 18px; border: 3px solid #1d1040; border-radius: 999px; background: #2a1a4a; color: #e8d4ff; font: 900 17px/1.15 var(--font-display); cursor: pointer; box-shadow: 0 4px 0 #120830; touch-action: manipulation; }
+  .cb-link:hover { filter: brightness(1.2); }
+  .cb-jump { flex: 0 1 260px; max-width: 42%; min-height: 40px; padding: 6px 10px; border: 3px solid #1d1424; border-radius: 12px; background: #fff8e8; color: #1d1424; font: 800 16px/1.2 var(--font-display); cursor: pointer; }
+  .cb-jump[hidden], .cb-linkf[hidden] { display: none; }
+  .cb-linkf { flex: 0 1 auto; min-height: 40px; padding: 6px 12px; border: 3px solid #1d1040; border-radius: 12px; background: #2a1a4a; color: #e8d4ff; font: 900 14px/1.15 var(--font-display); cursor: pointer; touch-action: manipulation; }
+  .catbook:not(.cbphone) .cb-linkf { display: none; }
+  .catbook.cbphone .cb-foot { flex-wrap: wrap; gap: 6px; } .catbook.cbphone .cb-jump { order: -2; flex: 1 1 50%; max-width: none; } .catbook.cbphone .cb-linkf { order: -1; flex: 1 1 40%; font-size: 13px; } .catbook.cbphone .cb-info { flex: 1 1 100%; max-width: none; padding: 4px 10px; }
   .cb-inside { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; }
   .cb-inside-h { margin: 0 0 2px; color: #ff3d8a; font: 900 32px/1 var(--font-display); text-transform: uppercase; text-shadow: 2px 2px 0 #ffffff, -2px 2px 0 #ffffff, 2px -2px 0 #ffffff, -2px -2px 0 #ffffff, 0 4px 0 #7a1a4a; }
   .cb-inside-go { padding: 1px 0; border: 0; background: none; color: #4a2a9a; font: 900 17px/1.2 var(--font-display); text-transform: uppercase; cursor: pointer; text-align: left; }
@@ -2726,6 +2733,8 @@
   .cb-phone .cb-sec:first-child { margin-top: 0; }
   .catbook.cbphone .cb-tag { position: static; align-self: center; order: 3; }
   .catbook.cbphone { width: calc(100% - 10px); }
+  .catbook.cbphone .cb-book { display: flex; flex-direction: column; }
+  .catbook.cbphone .cb-pages { flex: 1; min-height: 0; max-height: none; }
   .cb-lazy { background: rgba(0, 0, 0, 0.04); border-radius: 12px; }
   .pl-head { display: flex; align-items: center; gap: 10px; margin: 0 40px 8px 0; }
   .pl-keeper { width: 64px; height: auto; flex: none; }
@@ -3186,6 +3195,8 @@
     </div>
     <div class="cb-foot">
       <button id="cb-prev" class="cb-turn" type="button" aria-label="Previous page">◀</button>
+      <select id="cb-jump" class="cb-jump" aria-label="Jump to a section"></select>
+      <button id="cb-linkf" class="cb-linkf" type="button" hidden></button>
       <p class="cb-info"><span id="cb-pageno">Cover</span> · Coins: <b id="cb-coins">0</b><br><span id="cb-msg" class="cb-msg" role="status"></span></p>
       <button id="cb-next" class="cb-turn" type="button" aria-label="Next page">▶</button>
     </div>
@@ -50813,6 +50824,11 @@
                 body.append(cv);
             }
             page.append(body);
+            if (B.link) {
+                const lb = el('button', 'cb-link', { type: 'button', 'data-cblink': '1' });
+                lb.textContent = B.link.label;
+                page.append(lb);
+            }
             if (B.burst)
                 page.append(node('span', 'cb-burst', B.burst));
             page.append(node('p', 'cb-open', 'Turn the page ▶'));
@@ -50961,6 +50977,23 @@
             });
             return wrap;
         }
+        function cbJump(cur, phone, none) {     // (a big 'jump to' menu and the link to the other catalog, under the book)
+            const J = document.getElementById('cb-jump'), L = document.getElementById('cb-linkf'), B = cb.book;
+            if (L) {
+                L.hidden = !!none || !B || !B.link;
+                if (B && B.link)
+                    L.textContent = B.link.label;
+            }
+            if (!J)
+                return;
+            J.hidden = !!none;
+            if (none)
+                return;
+            const opts = (phone ? [{ name: '📑 Jump to a section…', si: '' }] : [{ name: '📖 Cover', si: -2 }]).concat(cb.secs.map((S, si) => ({ name: '📑 ' + S.name, si })));
+            J.replaceChildren(...opts.map(T => { const o = el('option', '', { value: String(T.si) }); o.textContent = T.name; if (T.si === '')
+                o.disabled = true; return o; }));
+            J.value = cur == null ? '' : String(cur);
+        }
         function cbPaint(dir) {
             const B = cb.book;
             if (!B)
@@ -50974,6 +51007,7 @@
                 cbPages.replaceChildren(cbPlain());
                 cbPages.scrollTop = top;
                 cbTabs.replaceChildren();
+                cbJump(null, false, true);
                 cbPageNo.textContent = B.title;
                 cbMsg.textContent = cb.msg;
                 document.getElementById('cb-coins').textContent = G.coins;
@@ -50988,6 +51022,7 @@
                 cbPages.scrollTop = top;
                 cbTabs.replaceChildren(...cb.secs.map((S, si) => { const b = el('button', 'cb-tab', { type: 'button', 'data-cbsec': String(si) }); b.textContent = S.name; b.title = S.name; return b; }));
                 cbFitTabs();
+                cbJump(null, true);
                 cbPageNo.textContent = 'Scroll down to see everything';
                 cbMsg.textContent = cb.msg;
                 document.getElementById('cb-coins').textContent = G.coins;
@@ -51015,6 +51050,7 @@
                 return b;
             }));
             cbFitTabs();
+            cbJump(cb.spread === 0 ? -2 : here == null ? -2 : here, false);
             cbPrev.disabled = cb.spread === 0;
             cbNext.disabled = cb.spread >= cbSpreads() - 1;
             cbPageNo.textContent = cb.spread === 0 ? 'Cover' : 'Pages ' + ((cb.spread - 1) * 2 + 1) + '–' + ((cb.spread - 1) * 2 + 2) + ' of ' + cb.pages.length;
@@ -51025,7 +51061,7 @@
             const T = cbTabs;
             if (!T.children.length || !T.clientHeight)
                 return;
-            const steps = [[12, 10, 60, 5], [11, 8, 48, 4], [10, 6, 36, 3], [9, 5, 28, 3]];
+            const steps = [[15, 12, 70, 6], [14, 10, 60, 5], [13, 8, 50, 4], [12, 6, 40, 3]];
             for (const [f, pad, min, gap] of steps) {
                 T.style.setProperty('--cbf', f + 'px');
                 T.style.setProperty('--cbpad', pad + 'px');
@@ -51091,9 +51127,18 @@
             requestAnimationFrame(() => { if (cbP.isOpen() && cb.book === book && !book.plain)
                 cbFitTabs(); });
         }
+        document.getElementById('cb-jump').addEventListener('change', e => { if (e.target.value !== '')
+            cbGoSec(Number(e.target.value)); });
+        document.getElementById('cb-linkf').addEventListener('click', () => { if (cb.book && cb.book.link)
+            cb.book.link.open(); });
         cbPrev.addEventListener('click', () => cbTurn(-1));
         cbNext.addEventListener('click', () => cbTurn(1));
         cbEl.addEventListener('click', e => {
+            if (e.target.closest('[data-cblink]') && cb.book && cb.book.link) {
+                const L = cb.book.link;
+                setTimeout(() => L.open(), 0);
+                return;
+            }
             const sec = e.target.closest('[data-cbsec]');
             if (sec) {
                 cbGoSec(Number(sec.dataset.cbsec));
@@ -51297,9 +51342,14 @@
                             { name: 'Sell flowers', blurb: 'Golden flowers are super rare!', items: sell },
                             { name: 'For your house', blurb: 'Plants go in your storage.', items: list.map(item) }];
                     } };
+            const collCard = { id: 'f:collector-link', name: "Collector's Corner", tag: 'Rare numbered furniture', priceText: 'Classics for sale every day', btn: 'Open it ✦',
+                draw: cv => { cv.width = 200; cv.height = 150; const c = cv.getContext('2d'); c.fillStyle = '#2a1a4a'; c.beginPath(); c.arc(100, 75, 62, 0, TAU); c.fill(); c.fillStyle = '#c8a0ff'; c.font = '900 92px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('✦', 100, 80); },
+                act: () => { setTimeout(() => openBook(collBook('f')), 0); return ''; } };
+            const JUST = ['wallfire', 'picwindow', 'roundwin'];
             return { id: 'furn', title: 'Homestead', sub: 'Furniture catalog', color: '#7fd06a', burst: 'Everything for your home!', per: 6,
                 keeper: keeperLook({ body: 1, fringe: 2, back: 2, top: 1, topStyle: 2 }),
-                sections: () => [{ name: 'New and back this week', blurb: 'Pieces come and go every week. Rare ones only visit now and then: when they leave, trading is the only way to get one!', items: FURN.filter(d => !d.prize && !d.build && d.cat !== 'build' && furnStock(d).fresh).map(d => item({ id: d.id, d, c: fsColor(d), name: d.name, price: d.price })) }, { name: 'Leaving soon', blurb: 'Last week in the store!', items: FURN.filter(d => !d.prize && !d.build && d.cat !== 'build' && furnStock(d).last).map(d => item({ id: d.id, d, c: fsColor(d), name: d.name, price: d.price })) }, { name: 'This week\'s picks', blurb: '25% off this week only!', items: furnWeekPicks().map(p => Object.assign(item({ id: 'pick:' + p.d.id + ':' + p.c, d: p.d, c: p.c, name: cap(furnName(p.d, p.c)), price: p.price }), { tag: '25% off · was ' + p.d.price })) }]
+                link: { label: "✦ Collector's Corner: rare furniture ✦", open: () => openBook(collBook('f')) },
+                sections: () => [{ name: 'Just added', blurb: 'Brand new in the store: a fireplace built into the wall, and windows that show the weather outside.', items: JUST.map(id => FURN_BY[id]).filter(Boolean).map(d => item({ id: d.id, d, c: fsColor(d), name: d.name, price: d.price })).concat([collCard]) }, { name: 'New and back this week', blurb: 'Pieces come and go every week. Rare ones only visit now and then: when they leave, trading is the only way to get one!', items: FURN.filter(d => !d.prize && !d.build && d.cat !== 'build' && furnStock(d).fresh).map(d => item({ id: d.id, d, c: fsColor(d), name: d.name, price: d.price })) }, { name: 'Leaving soon', blurb: 'Last week in the store!', items: FURN.filter(d => !d.prize && !d.build && d.cat !== 'build' && furnStock(d).last).map(d => item({ id: d.id, d, c: fsColor(d), name: d.name, price: d.price })) }, { name: 'This week\'s picks', blurb: '25% off this week only!', items: furnWeekPicks().map(p => Object.assign(item({ id: 'pick:' + p.d.id + ':' + p.c, d: p.d, c: p.c, name: cap(furnName(p.d, p.c)), price: p.price }), { tag: '25% off · was ' + p.d.price })) }]
                     .concat(FS_CATS.map(([cat, name]) => { const keepCat = fs.cat; fs.cat = cat; const list = furnItems(); fs.cat = keepCat; return { name, items: list.map(item) }; })) };
         }
         function storeBook(shop) {
@@ -51346,7 +51396,7 @@
                 pic: () => collCanvas(kind, d),
                 act: () => { cs.kind = kind; cs.shop = kind; const said = collBuy(kind, d.id); saveGame(); return said; } });
             const name = kind === 'o' ? "The Tailor's Collection" : kind === 'b' ? 'Board Garage' : kind === 'c' ? 'Card Counter' : "Collector's Corner";
-            return { id: 'coll:' + kind, title: name, sub: COLL_KINDS[kind] + ' catalog', color: kind === 'c' ? '#ffc93c' : kind === 'o' ? '#ff7ab0' : kind === 'b' ? '#5ef2ff' : '#c8a0ff', burst: 'Classics, new every day!', per: 4,
+            return { id: 'coll:' + kind, title: name, sub: COLL_KINDS[kind] + ' catalog', link: kind === 'f' ? { label: '🏠 Back to the Homestead catalog', open: () => openBook(furnBook()) } : null, color: kind === 'c' ? '#ffc93c' : kind === 'o' ? '#ff7ab0' : kind === 'b' ? '#5ef2ff' : '#c8a0ff', burst: 'Classics, new every day!', per: 4,
                 keeper: keeperLook({ body: 0, fringe: 1, back: 1, backStyle: 3, top: 2 }),
                 sections: () => {
                     const S = collStock(kind);
