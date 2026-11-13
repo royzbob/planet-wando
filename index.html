@@ -316,7 +316,7 @@
     };
 })();
 </script>
-<script>window.WANDO_BUILD = '1794530347';
+<script>window.WANDO_BUILD = '1794530822';
 (function () {
     if (!/^https?:$/.test(location.protocol))
         return;
@@ -13369,7 +13369,14 @@
     }
     const RAIN = { value: 3, max: 14, from: 30, mins: 2, force: false };
     const WEATHER = { force: '', bite: 0.75, places: ['green', 'beach'] };
-    const weatherNow = (d = new Date()) => WEATHER.force || (dunHash(Math.floor(d.getTime() / 3600000), 6061) % 100 < 22 ? 'rain' : 'clear');
+    const seasonNow = (d = new Date()) => { const m = d.getMonth(); return m === 11 || m <= 1 ? 'winter' : m <= 4 ? 'spring' : m <= 7 ? 'summer' : 'fall'; };
+    const weatherNow = (d = new Date()) => { if (WEATHER.force)
+        return WEATHER.force; const h = dunHash(Math.floor(d.getTime() / 3600000), 6061) % 100, se = seasonNow(d);     // (it changes every hour: snow in winter, blowing leaves in fall, rain any time)
+        if (se === 'winter')
+            return h < 32 ? 'snow' : h < 40 ? 'rain' : 'clear';
+        if (se === 'fall')
+            return h < 34 ? 'leaves' : h < 52 ? 'rain' : 'clear';
+        return h < 22 ? 'rain' : 'clear'; };
     const chatLineSys = t => { if (typeof ui !== 'undefined' && ui.chatSys)
         ui.chatSys(t); };
     const rainOn = (d = new Date()) => RAIN.force || (d.getMinutes() >= RAIN.from && d.getMinutes() < RAIN.from + RAIN.mins);
@@ -15314,9 +15321,13 @@
                 }
                 c.stroke();
                 inked(c, '#2b2233', FL, 2, k => { k.moveTo(28, 102); k.lineTo(28, 62); k.arc(57, 62, 29, Math.PI, 0); k.lineTo(86, 102); k.closePath(); });
-                fpoly(c, [[40, 98], [44, 74], [52, 86], [57, 62], [63, 84], [70, 72], [74, 98]], '#ff7a1a', 1.4);
-                fpoly(c, [[48, 98], [52, 84], [57, 74], [62, 86], [66, 98]], '#ffe066', 1);
-                fbox(c, 38, 94, 38, 7, 3, '#7a4a2e', 1.5);
+                c.fillStyle = 'rgba(255,120,40,.18)';
+                oval(c, 57, 96, 22, 5);
+                fbox(c, 36, 92, 42, 6, 3, '#6a3f26', 1.4);
+                fbox(c, 42, 96, 32, 6, 3, '#7a4a2e', 1.4);
+                c.fillStyle = 'rgba(0,0,0,.25)';
+                disc(c, 40, 95, 2);
+                disc(c, 74, 99, 2);
                 fbox(c, 0, 4, 114, 13, 3, '#c98b4a');
             } },
         { id: 'plant', name: 'Potted plant', cat: 'plant', price: 120, w: 48, h: 74, pal: 'fabric', draw(c, P) {
@@ -16103,13 +16114,48 @@
                 c.strokeStyle = 'rgba(255,255,255,.55)';
                 c.lineWidth = 2;
                 [[40, 10], [70, 6], [96, 10]].forEach(([x, y]) => { c.beginPath(); c.moveTo(x, y + 10); c.quadraticCurveTo(x - 5, y + 4, x, y); c.stroke(); });
+            } },
+        { id: 'picwindow', name: 'Picture window', cat: 'wall', kind: 'wall', price: 600, w: 132, h: 92, pal: 'wood', nu: true, draw(c, P) {
+                fbox(c, 4, 4, 124, 80, 4, P.a);
+                const g = c.createLinearGradient(0, 12, 0, 78);
+                g.addColorStop(0, '#aee4f7');
+                g.addColorStop(1, '#e9f8e4');
+                c.fillStyle = g;
+                c.fillRect(12, 12, 108, 66);
+                c.fillStyle = '#ffffff';
+                oval(c, 38, 30, 12, 5);
+                oval(c, 92, 40, 14, 5);
+                c.fillStyle = '#7cc46a';
+                c.fillRect(12, 66, 108, 12);
+                fbox(c, 64, 12, 4, 66, 1, P.a, 1.2);
+                fbox(c, 0, 80, 132, 10, 3, P.b, 1.6);
+            } },
+        { id: 'roundwin', name: 'Round window', cat: 'wall', kind: 'wall', price: 420, w: 72, h: 72, pal: 'wood', nu: true, draw(c, P) {
+                inked(c, P.a, FL, 2, k => k.arc(36, 36, 33, 0, TAU));
+                const g = c.createLinearGradient(0, 10, 0, 62);
+                g.addColorStop(0, '#aee4f7');
+                g.addColorStop(1, '#e9f8e4');
+                c.fillStyle = g;
+                c.beginPath();
+                c.arc(36, 36, 26, 0, TAU);
+                c.fill();
+                c.fillStyle = '#ffffff';
+                oval(c, 28, 28, 8, 4);
+                c.fillStyle = P.a;
+                c.fillRect(34, 10, 4, 52);
+                c.fillRect(10, 34, 52, 4);
             } }
     ];
     const FURN_BY = {};
     FURN.forEach(d => { d.kind = d.kind || 'floor'; FURN_BY[d.id] = d; });
     const furnColors = d => (d.pal === 'wood' ? FURN_WOODS.length : d.pal === 'fabric' ? FURN_FABRICS.length : 1);
     const furnKey = (id, c) => id + ':' + c;
-    const FURN_CORE = new Set(['chair', 'stool', 'armchair', 'sofa', 'beanbag', 'bench', 'dining', 'coffee', 'side', 'desk', 'round', 'bed', 'double', 'bunk', 'lamp', 'plant', 'nightstand', 'fridge', 'stove', 'sink', 'counter', 'toilet', 'basin', 'shower', 'tub', 'tv', 'bookcase', 'dresser', 'wardrobe', 'rug-round', 'rug', 'curtains', 'window', 'painting']);
+    const HOME_WIN = {     // (glass and window bars, so the weather outside shows through)
+        window: { glass: [[29, 13], [61, 13], [68, 40], [73, 77], [17, 77], [22, 40]], bars: [[43, 13, 4, 64], [22, 43, 46, 4]] },
+        picwindow: { glass: [[12, 12], [120, 12], [120, 78], [12, 78]], bars: [[64, 12, 4, 66]], bar: 'wood' },
+        roundwin: { glass: [[36, 10], [46, 12], [54, 18], [60, 26], [62, 36], [60, 46], [54, 54], [46, 60], [36, 62], [26, 60], [18, 54], [12, 46], [10, 36], [12, 26], [18, 18], [26, 12]], bars: [[34, 10, 4, 52], [10, 34, 52, 4]], bar: 'wood' }
+    };
+    const FURN_CORE = new Set(['picwindow', 'roundwin', 'chair', 'stool', 'armchair', 'sofa', 'beanbag', 'bench', 'dining', 'coffee', 'side', 'desk', 'round', 'bed', 'double', 'bunk', 'lamp', 'plant', 'nightstand', 'fridge', 'stove', 'sink', 'counter', 'toilet', 'basin', 'shower', 'tub', 'tv', 'bookcase', 'dresser', 'wardrobe', 'rug-round', 'rug', 'curtains', 'window', 'painting']);
     const FURN_LAUNCH = { week: 4, ids: new Set(['recliner', 'chaise', 'pingpong', 'airhockey', 'punchbag', 'karaoke', 'console', 'cherrytree', 'succulents', 'kcounter', 'espresso', 'wallclock', 'mirror', 'wallshelf', 'rug-checker', 'hottub']) };
     function furnStock(d, w = armoryWeek()) {     // (the Homestead store changes every week: basics always, the rest come and go, pricey pieces rarely)
         if (!d || d.build || d.prize || FURN_CORE.has(d.id))
@@ -33704,6 +33750,7 @@
             this.homeDrop(false);
             this.homeStand(true);
             this.homeAt = n === -1 ? -1 : clamp(n, 0, rooms.length - 1);
+            this.wxNext = 0;
             this.homeRecs.slice().forEach(rec => this.homeTake(rec));
             this.homeStyle();
             this.homeRoom().items.forEach(it => this.homePut(it));
@@ -33781,6 +33828,10 @@
         homeTake(rec) {
             if (this.seated === rec)
                 this.homeStand(true);
+            if (rec.fx) {
+                rec.fx.destroy();
+                rec.fx = null;
+            }
             if (rec.glow) {
                 this.tweens.killTweensOf(rec.glow);
                 rec.glow.destroy();
@@ -34201,8 +34252,151 @@
             if (this.homeFrame)
                 this.homeFrame.setTexture(yard ? 'ground_yard' : 'ground_home');
         }
+        homeAmbience() {     // (a real fire in the fireplace, and the weather outside showing through the windows)
+            const now = performance.now(), dt = Math.min(0.05, (now - (this.ambAt || now)) / 1000), t = now / 1000;
+            this.ambAt = now;
+            let fireNear = Infinity;
+            const kind = weatherNow(), night = daylight(clockHour()).night;
+            for (const rec of this.homeRecs || []) {
+                const d = rec.d, it = rec.it, W = HOME_WIN[d.id], fire = d.id === 'fireplace' && it.on && !(it.r || 0);
+                if (!W && !fire) {
+                    if (rec.fx) {
+                        rec.fx.destroy();
+                        rec.fx = null;
+                    }
+                    continue;
+                }
+                if (!rec.img || !rec.img.active)
+                    continue;
+                const g = rec.fx || (rec.fx = this.add.graphics());
+                g.setDepth(rec.img.depth + 0.01).clear();
+                const b = rec.img.getBounds(), ex = furnDepth(d), q = ex ? Math.min(0.93, (d.h - 2) / (d.h + ex), d.w / (d.w + 1.5 * ex)) : 0.93, fx = b.width / d.w, fy = b.height / d.h, flip = rec.img.scaleX < 0, sc = q * fx;
+                const X = lx => { const u = d.w / 2 + (lx - d.w / 2) * q; return flip ? b.right - u * fx : b.x + u * fx; }, Y = ly => b.y + (d.h - 1.5 + (ly - d.h) * q) * fy, pt = (lx, ly) => ({ x: X(lx), y: Y(ly) });
+                if (fire) {
+                    fireNear = Math.min(fireNear, Math.hypot(it.x - this.pz.x, it.y - this.pz.y));
+                    const tongue = (bx, h, w, col, a, k) => { const sw = Math.sin(t * 6.3 + k * 2.1) * 2.6 + Math.sin(t * 11 + k) * 1.2; g.fillStyle(col, a); g.fillPoints([pt(bx - w, 95), pt(bx - w * 0.7 + sw * 0.4, 95 - h * 0.45), pt(bx + sw, 95 - h), pt(bx + w * 0.7 + sw * 0.4, 95 - h * 0.45), pt(bx + w, 95)], true); };
+                    for (let k = 0; k < 5; k++) {
+                        const bx = 41 + k * 8, h = 16 + 13 * (0.5 + 0.5 * Math.sin(t * (5 + k) + k * 1.7)) * (k === 2 ? 1.35 : k % 4 ? 1.05 : 0.75) + Math.random() * 2.5;
+                        tongue(bx, h, 6.5, 0xff5a12, 0.92, k);
+                    }
+                    for (let k = 0; k < 4; k++) {
+                        const bx = 45 + k * 8, h = 10 + 8 * (0.5 + 0.5 * Math.sin(t * (7 + k) + k * 2.3)) + Math.random() * 2;
+                        tongue(bx, h, 4.5, 0xffa51f, 0.95, k + 7);
+                    }
+                    for (let k = 0; k < 3; k++)
+                        tongue(49 + k * 8, 6 + 5 * (0.5 + 0.5 * Math.sin(t * 9 + k)), 3, 0xffe680, 0.95, k + 13);
+                    g.fillStyle(0x6a3f26, 1);
+                    g.fillRoundedRect(Math.min(X(36), X(78)), Y(92), Math.abs(X(78) - X(36)), 6 * sc, 3 * sc);
+                    g.fillStyle(0x7a4a2e, 1);
+                    g.fillRoundedRect(Math.min(X(42), X(74)), Y(96), Math.abs(X(74) - X(42)), 6 * sc, 3 * sc);
+                    g.fillStyle(0xff7a1a, 0.55 + 0.3 * Math.sin(t * 13));
+                    g.fillRect(Math.min(X(44), X(70)), Y(97.5), Math.abs(X(70) - X(44)), 1.4 * sc);
+                    const em = rec.embers || (rec.embers = []);
+                    if (!REDUCED && em.length < 7 && Math.random() < dt * 5)
+                        em.push({ x: 46 + Math.random() * 22, y: 86, v: 14 + Math.random() * 16, ph: Math.random() * TAU, life: 1 });
+                    for (let i = em.length - 1; i >= 0; i--) {
+                        const e = em[i];
+                        e.y -= e.v * dt;
+                        e.life -= dt * 0.7;
+                        if (e.life <= 0 || e.y < 40) {
+                            em.splice(i, 1);
+                            continue;
+                        }
+                        g.fillStyle(0xffc04d, e.life);
+                        g.fillCircle(X(e.x + Math.sin(t * 4 + e.ph) * 2), Y(e.y), 0.9 * sc);
+                    }
+                    continue;
+                }
+                const P = W.glass.map(([x, y]) => pt(x, y));     // (the glass: tint it for the hour and the weather, then the weather falling past)
+                const tint = kind === 'rain' ? [0x5a6a82, 0.42] : kind === 'snow' ? [0xd4dde8, 0.3] : null;
+                if (tint) {
+                    g.fillStyle(tint[0], tint[1]);
+                    g.fillPoints(P, true);
+                }
+                if (night > 0.05) {
+                    g.fillStyle(0x0a1030, 0.62 * night);
+                    g.fillPoints(P, true);
+                }
+                const xs = W.glass.map(v => v[0]), ys = W.glass.map(v => v[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+                const inside = (x, y) => { let c = false; const G = W.glass; for (let i = 0, j = G.length - 1; i < G.length; j = i++)
+                    if ((G[i][1] > y) !== (G[j][1] > y) && x < (G[j][0] - G[i][0]) * (y - G[i][1]) / (G[j][1] - G[i][1]) + G[i][0])
+                        c = !c; return c; };
+                const want = kind === 'rain' ? 16 : kind === 'snow' ? 18 : kind === 'leaves' ? 5 : 0, area = (x1 - x0) * (y1 - y0) / 3600, n = Math.round(want * Math.max(0.6, area));
+                if (rec.wk !== kind) {
+                    rec.wk = kind;
+                    rec.ps = [];
+                }
+                const ps = rec.ps || (rec.ps = []), spawn = top => ({ x: x0 + Math.random() * (x1 - x0), y: top ? y0 - Math.random() * 10 : y0 + Math.random() * (y1 - y0), s: Math.random(), ph: Math.random() * TAU, c: [0xe8732c, 0xd9452b, 0xf2b33d, 0xc9302c][Math.floor(Math.random() * 4)] });
+                while (ps.length < n)
+                    ps.push(spawn(false));
+                ps.length = Math.min(ps.length, n);
+                for (let i = 0; i < ps.length; i++) {
+                    const p0 = ps[i];
+                    if (kind === 'rain') {
+                        p0.y += (150 + p0.s * 60) * dt;
+                        p0.x -= 22 * dt;
+                    }
+                    else if (kind === 'snow') {
+                        p0.y += (9 + p0.s * 9) * dt;
+                        p0.x += Math.sin(t * 1.4 + p0.ph) * 6 * dt;
+                    }
+                    else {
+                        p0.y += (10 + p0.s * 10) * dt;
+                        p0.x += (16 + p0.s * 14) * dt;
+                    }
+                    if (p0.y > y1 + 4 || p0.x < x0 - 6 || p0.x > x1 + 6) {
+                        ps[i] = spawn(true);
+                        if (kind === 'leaves')
+                            ps[i].x = x0 - 4 + Math.random() * (x1 - x0) * 0.5;
+                        continue;
+                    }
+                    if (!inside(p0.x, p0.y) || (kind === 'rain' && !inside(p0.x + 1.2, p0.y - 5)))
+                        continue;
+                    if (kind === 'rain') {
+                        g.lineStyle(Math.max(1, 0.7 * sc), 0xd8e8ff, 0.75);
+                        g.lineBetween(X(p0.x), Y(p0.y), X(p0.x + 1.2), Y(p0.y - 5));
+                    }
+                    else if (kind === 'snow') {
+                        g.fillStyle(0xffffff, 0.95);
+                        g.fillCircle(X(p0.x), Y(p0.y), (0.7 + p0.s * 0.8) * sc);
+                    }
+                    else {
+                        const a = t * 3 + p0.ph, ca = Math.cos(a) * 2.2, sa = Math.sin(a) * 1.2;
+                        g.fillStyle(p0.c, 1);
+                        g.fillPoints([pt(p0.x - ca, p0.y - sa), pt(p0.x + sa, p0.y - ca * 0.5), pt(p0.x + ca, p0.y + sa), pt(p0.x - sa, p0.y + ca * 0.5)], true);
+                    }
+                }
+                if (rec.barCol == null)
+                    try {
+                        {
+                            const hx = String(furnPalette(d, it.c).a || '');
+                            rec.barCol = W.bar === 'wood' && /^#[0-9a-f]{6}$/i.test(hx) ? parseInt(hx.slice(1), 16) : 0xf3efe6;
+                        }
+                    }
+                    catch (e) {
+                        rec.barCol = 0xf3efe6;
+                    }
+                g.fillStyle(rec.barCol, 1);
+                W.bars.forEach(([x, y, w, h]) => g.fillRect(Math.min(X(x), X(x + w)), Y(y), Math.abs(X(x + w) - X(x)), h * sc));
+            }
+            if (fireNear < 700 && this.pz) {     // (crackle and a soft roar, louder as you get close)
+                const v = Math.max(0, Math.min(1, 1 - (fireNear - 80) / 600));
+                if ((this.fireRoar = (this.fireRoar || 0) - dt) <= 0) {
+                    this.fireRoar = 0.32;
+                    sfx.noise(0.6, 0.03 * v, 420, 240, 0.6);
+                }
+                if (Math.random() < dt * 4)
+                    sfx.noise(0.02 + Math.random() * 0.04, (0.06 + Math.random() * 0.1) * v, 2600 + Math.random() * 3200, 1400, 1.6);
+                if (Math.random() < dt * 0.6)
+                    sfx.noise(0.08, 0.12 * v, 900 + Math.random() * 600, 500, 1.2);
+            }
+        }
         homeUpdate() {
             const E = this.homeEdit;
+            try {
+                this.homeAmbience();
+            }
+            catch (e) { }
             if (ui.roomTv)
                 try {
                     ui.roomTv(this);
@@ -34261,7 +34455,7 @@
             const near = E.on || !this.pz ? null : this.seated || this.homeNear();
             const text = !near ? '' : this.seated ? 'E · Stand up' : 'E · ' + ({ door: near.it.on ? 'Shut' : 'Open', sit: 'Sit', light: 'Switch', screen: 'Switch', music: 'Play', tune: 'Play', treat: 'Treat', hug: 'Hug', punch: 'Punch', pong: 'Play ping pong', puck: 'Play air hockey', arcade: 'Play', pool: 'Play pool', kick: 'Play', hoop: 'Shoot hoops', darts: 'Throw darts', piano: 'Play', guitar: 'Play', drums: 'Play' })[FURN_USE[near.d.id]];
             if (near)
-                this.homeHint.setPosition(near.it.x, Math.max(22, near.it.y - near.d.h - 22 - (this.seated ? 40 : 0)));
+                this.homeHint.setPosition(near.it.x, this.seated ? near.it.y + 30 : Math.max(22, near.it.y - near.d.h - 22));     // (sitting: the hint goes under the seat, out of the way of the TV)
             if (text !== this.homeHintText) {
                 this.homeHintText = text;
                 this.homeHint.setText(text).setVisible(!!text);
@@ -37523,7 +37717,34 @@
             return kind;
         }
         weatherTick() {
-            const rain = weatherNow() === 'rain';
+            const out = WEATHER.places.includes(this.loc) || (this.loc === 'home' && this.homeAt === -1), kind = out ? weatherNow() : 'clear';
+            if (kind !== this.wxKind) {     // (snow and blowing leaves; rain is below)
+                if (this.wxFx) {
+                    this.wxFx.destroy();
+                    this.wxFx = null;
+                }
+                const w = this.scale.width || 1280, h = this.scale.height || 720, was = this.wxKind;
+                this.wxKind = kind;
+                if (kind === 'snow') {
+                    this.wxFx = this.add.particles(0, 0, 'dust', { x: { min: -60, max: w + 60 }, y: -20, lifespan: 14000, speedY: { min: 45, max: 95 }, speedX: { min: -35, max: 25 },
+                        scale: { min: 0.12, max: 0.3 }, alpha: { start: 0.95, end: 0.7 }, tint: 0xffffff, quantity: 1, frequency: REDUCED ? 220 : 60 }).setScrollFactor(0).setDepth(9795);
+                    if (was && was !== 'snow') {
+                        this.noteUntil = 0;
+                        this.note('It\'s snowing!', '#ffffff');
+                    }
+                }
+                else if (kind === 'leaves') {
+                    if (!this.textures.exists('leaf_fx'))
+                        bake(this, 'leaf_fx', 16, 12, c => { c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(1, 6); c.quadraticCurveTo(8, -2, 15, 6); c.quadraticCurveTo(8, 14, 1, 6); c.fill(); c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(2, 5.5, 12, 1); });
+                    this.wxFx = this.add.particles(0, 0, 'leaf_fx', { x: -30, y: { min: -40, max: h * 0.7 }, lifespan: 9000, speedX: { min: 90, max: 170 }, speedY: { min: 20, max: 60 },
+                        rotate: { start: 0, end: 540 }, scale: { min: 0.8, max: 1.3 }, alpha: { start: 1, end: 0.6 }, tint: [0xe8732c, 0xd9452b, 0xf2b33d, 0xa8642a, 0xc9302c], quantity: 1, frequency: REDUCED ? 700 : 260 }).setScrollFactor(0).setDepth(9795);
+                    if (was && was !== 'leaves') {
+                        this.noteUntil = 0;
+                        this.note('A breeze sends fall leaves swirling.', '#ffb347');
+                    }
+                }
+            }
+            const rain = kind === 'rain';
             if (rain && !this.rainFx) {
                 const w = this.scale.width || 1280, h = this.scale.height || 720;
                 this.rainWash = this.add.rectangle(0, 0, w * 2, h * 2, 0x203048, 0.16).setOrigin(0).setScrollFactor(0).setDepth(9790);
@@ -39711,7 +39932,7 @@
                 this.pgTick(time, dt);
             if (this.goldStar)
                 this.starCheck();
-            if (WEATHER.places.includes(this.loc) && time >= (this.wxNext || 0)) {
+            if ((WEATHER.places.includes(this.loc) || this.loc === 'home') && time >= (this.wxNext || 0)) {
                 this.wxNext = time + 2000;
                 this.weatherTick();
             }
@@ -52277,7 +52498,7 @@
                 art('Who\'s About', here.length ? here.length + (here.length > 1 ? ' players are' : ' player is') + ' on Planet Wando right now' + (busiest ? ', most at ' + busiest : '') + '.' : (ONLINE_OWN() ? 'It is quiet right now. Send a friend the game\'s link and play together!' : 'It is quiet right now. Share the page with a friend to play together.'), ui.wmap ? go('Open the map', () => ui.wmap.open()) : null),
                 (() => { const a = art('Hall of Fame', 'Reading the record books...'); a.id = 'times-fame'; return a; })(),
                 art(starName() + ' Hunt', G.login.star === day ? 'You found today\'s ' + starName() + '. Well done! A new one hides tomorrow.' : 'Today\'s ' + starName() + ' is hiding somewhere in ' + LOCS[starPlace(day)].name + '. Find it for ' + STAR_PRIZE + ' Coins!'),
-                art('Weather', weatherNow() === 'rain' ? 'RAIN over the Village Green and Starfish Beach this hour. Anglers rejoice: fish bite faster in the rain!' : 'Clear skies this hour. When it rains, fish bite faster.'),
+                art('Weather', weatherNow() === 'rain' ? 'RAIN over the Village Green and Starfish Beach this hour. Anglers rejoice: fish bite faster in the rain!' : weatherNow() === 'snow' ? 'SNOW is falling over Planet Wando this hour. Light the fireplace and watch it from the window.' : weatherNow() === 'leaves' ? 'A blustery fall hour: leaves are swirling all over town. When it rains, fish bite faster.' : 'Clear skies this hour. When it rains, fish bite faster.'),
                 (() => { const ads = []; net.peers.forEach(p => { if (!p.mine && p.ad)
                     ads.push(p.name + ': "' + p.ad + '"'); }); return ads.length ? art('Classifieds', ...ads.slice(0, 6), 'Find them at the Trading Manor.') : null; })(),
                 trickOn() ? art('Trick or Treat!', 'It is Halloween on Planet Wando! Walk up to any of the townsfolk, in every place, and they give you a candy (once each a day). Swap your candies at the bubbling cauldron for Coins, a Spooky Violet teddy, or the Friendly Ghost and Pumpkin Patch costumes. You have ' + (G.fan.cy || 0) + ' candies.') : null,
